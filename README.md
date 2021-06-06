@@ -20,7 +20,7 @@ The bot is constantly in development, and issues are bound to come up (especiall
 If you know what you're doing, it is encouraged that you create a pull request. I will make sure to go over it and respond as quickly as possible, and you will receive a role in the Discord for your work if it makes it in.
 
 ## Running your own instance of the bot
-In order to build the bot, you will need to create a file named Credentials.cs in the bot's home directory. The code will need to look exactly like this:
+In order to build the bot, you will need to create a file named Credentials.cs in the bot's main directory. The code will need to look exactly like this:
 ```cs
 namespace RRBot
 {
@@ -34,3 +34,5 @@ namespace RRBot
 You can get the bot token from your instance of the bot's application at https://discord.com/developers, under the "Bot" tab. 
 
 As the bot uses Firestore as its database, you will need to create your own database and generate a credentials file. For information on how to, see [this page for creating the database](https://firebase.google.com/docs/firestore/quickstart) and/or [this page for authentication](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account).
+
+In order to use the music features of the bot, you will need to get the [latest release of Lavalink](https://github.com/freyacodes/Lavalink/releases) and throw it in the bot's main directory. You will need to run it alongside the bot.
