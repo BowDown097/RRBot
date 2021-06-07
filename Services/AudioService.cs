@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -78,15 +77,14 @@ namespace RRBot.Services
                 for (int i = 0; i < player.Queue.Items.Count(); i++)
                 {
                     LavaTrack track = player.Queue.Items.ElementAt(i) as LavaTrack;
-                    playlist.Append($"**{i + 1}**: {track.Title} by {track.Author} ({track.Length.ToString()})\n");
+                    playlist.AppendLine($"**{i + 1}**: {track.Title} by {track.Author} ({track.Length.ToString()})");
                 }
 
                 EmbedBuilder embed = new EmbedBuilder
                 {
                     Color = Color.Red,
                     Title = "Playlist",
-                    Description = playlist.ToString(),
-                    Timestamp = DateTime.Now
+                    Description = playlist.ToString()
                 };
 
                 await context.Channel.SendMessageAsync(embed: embed.Build());

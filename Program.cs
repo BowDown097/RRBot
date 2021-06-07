@@ -103,9 +103,13 @@ namespace RRBot
                 .BuildServiceProvider();
 
             // general events
+            client.JoinedGuild += Client_JoinedGuild;
             client.Log += Client_Log;
             client.ReactionAdded += Client_ReactionAdded;
             client.ReactionRemoved += Client_ReactionRemoved;
+            client.Ready += Client_Ready;
+            client.UserJoined += async (SocketGuildUser user) => await CashSystem.SetCash(user, 10);
+            commands.CommandExecuted += Commands_CommandExecuted;
 
             // logger events
             logger = new Logger(client);
@@ -122,9 +126,6 @@ namespace RRBot
             client.UserLeft += logger.Client_UserLeft;
             client.UserUnbanned += logger.Client_UserUnbanned;
             // client.UserVoiceStateUpdated += logger.Client_UserVoiceStateUpdated;
-            client.JoinedGuild += Client_JoinedGuild;
-            client.Ready += Client_Ready;
-            commands.CommandExecuted += Commands_CommandExecuted;
 
             // client setup
             commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());

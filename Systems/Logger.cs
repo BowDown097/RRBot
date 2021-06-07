@@ -209,7 +209,6 @@ namespace RRBot.Systems
             await WriteToLogs(guild, embed);
         }
 
-        /*
         public async Task Client_UserVoiceStateUpdated(SocketUser user, SocketVoiceState voiceStateOrig, SocketVoiceState voiceState)
         {
             EmbedBuilder embed = new EmbedBuilder
@@ -223,6 +222,7 @@ namespace RRBot.Systems
             else if (voiceStateOrig.IsDeafened && !voiceState.IsDeafened) embed.Title = "User Undeafened";
             else if (!voiceStateOrig.IsMuted && voiceState.IsMuted) embed.Title = "User Server Muted";
             else if (voiceStateOrig.IsMuted && !voiceState.IsMuted) embed.Title = "User Un-Server Muted";
+            else if (voiceStateOrig.VoiceChannel == null) embed.Title = "User Joined Voice Channel";
             else if (voiceStateOrig.VoiceChannel.Id != voiceState.VoiceChannel.Id)
             {
                 embed.Title = "User Moved Voice Channels";
@@ -231,7 +231,6 @@ namespace RRBot.Systems
 
             await WriteToLogs(voiceState.VoiceChannel.Guild, embed);     
         }
-        */
 
         public async Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
         {
@@ -248,7 +247,7 @@ namespace RRBot.Systems
                 EmbedBuilder embed = new EmbedBuilder
                 {
                     Color = Color.Blue,
-                    Title = $"{messages.Count()} Messages Purged",
+                    Title = $"{messages.Count()-1} Messages Purged",
                     Description = $"See them at: {hbUrl}",
                     Timestamp = DateTime.Now
                 };

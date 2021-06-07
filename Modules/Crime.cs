@@ -104,7 +104,8 @@ namespace RRBot.Modules
 
             DocumentReference tDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot tSnap = await tDoc.GetSnapshotAsync();
-            if (tSnap.TryGetValue("cash", out float tCash))
+            float tCash = tSnap.GetValue<float>("cash");
+            if (tCash > 0)
             {
                 Random random = new Random();
                 double rapePercent = 5 + (8 - 5) * random.NextDouble(); // lose between 5-8%
@@ -125,7 +126,7 @@ namespace RRBot.Modules
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError($"{Context.User.Mention} Jesus man, talk about kicking them while they're down! {user.Mention} is broke! Have some decency.");
+            return CommandResult.FromError($"{Context.User.Mention} Jesus man, talk about kicking them while they're down! **{user.ToString()}** is broke! Have some decency.");
         }
 
         /*

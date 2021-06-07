@@ -17,7 +17,8 @@ namespace RRBot.Preconditions
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.Message.Author.Id.ToString());
             DocumentSnapshot snap = doc.GetSnapshotAsync().Result;
 
-            if (snap.TryGetValue("cash", out float cash))
+            float cash = snap.GetValue<float>("cash");
+            if (cash > 0)
             {
                 return cash >= Amount
                     ? Task.FromResult(PreconditionResult.FromSuccess())

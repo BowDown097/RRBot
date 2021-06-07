@@ -12,6 +12,7 @@ namespace RRBot.Systems
     {
         public static async Task SetCash(IGuildUser user, float amount)
         {
+            if (user.IsBot) return;
             if (amount < 0) amount = 0;
 
             DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
@@ -35,17 +36,7 @@ namespace RRBot.Systems
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            if (snap.TryGetValue("cash", out float cash) && snap.TryGetValue("timeTillCash", out long time))
-            {
-                if (time <= Global.UnixTime())
-                {
-                    await SetCash(context.User as IGuildUser, cash + 10);
-                }
-            }
-            else
-            {
-                await SetCash(context.User as IGuildUser, 10);
-            }
+            if (snap.TryGetValue("timeTillCash", out long time) && time <= Global.UnixTime()) await SetCash(context.User as IGuildUser, snap.GetValue<float>("cash") + 10);
 
             await doc.SetAsync(new { timeTillCash = Global.UnixTime(TimeSpan.FromMinutes(1).TotalSeconds) }, SetOptions.MergeAll);
         }

@@ -9,6 +9,7 @@ using Google.Cloud.Firestore;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using RRBot.Preconditions;
+using RRBot.Systems;
 
 namespace RRBot.Modules
 {
@@ -201,6 +202,7 @@ namespace RRBot.Modules
                 case 2:
                     await ReplyAsync($"{Context.User.Mention}, DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await doc.DeleteAsync();
+                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
                     return;
                 case 3:
                     await ReplyAsync($"{Context.User.Mention}, it was quite a struggle, but the noose put you out of your misery. You lost everything.");
