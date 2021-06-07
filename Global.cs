@@ -14,11 +14,7 @@ namespace RRBot
         {
             using (BackgroundWorker bw = new BackgroundWorker())
             {
-                bw.DoWork += delegate (object sender, DoWorkEventArgs e)
-                {
-                    action.Invoke();
-                };
-
+                bw.DoWork += (sender, e) => action.Invoke();
                 bw.RunWorkerAsync();
             }
         }

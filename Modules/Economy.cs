@@ -44,16 +44,19 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            string description = string.Empty;
-            if (snap.TryGetValue("rapeCooldown", out long rapeCd) && rapeCd - Global.UnixTime() > 0L) description += $"**Rape**: {Global.FormatTime(rapeCd - Global.UnixTime())}\n";
-            if (snap.TryGetValue("whoreCooldown", out long whoreCd) && whoreCd - Global.UnixTime() > 0L) description += $"**Whore**: {Global.FormatTime(whoreCd - Global.UnixTime())}\n";
-            if (snap.TryGetValue("lootCooldown", out long lootCd) && lootCd - Global.UnixTime() > 0L) description += $"**Loot**: {Global.FormatTime(lootCd - Global.UnixTime())}\n";
+            StringBuilder description = new StringBuilder();
+            if (snap.TryGetValue("rapeCooldown", out long rapeCd) && rapeCd - Global.UnixTime() > 0L) 
+                description.AppendLine($"**Rape**: {Global.FormatTime(rapeCd - Global.UnixTime())}");
+            if (snap.TryGetValue("whoreCooldown", out long whoreCd) && whoreCd - Global.UnixTime() > 0L) 
+                description.AppendLine($"**Whore**: {Global.FormatTime(whoreCd - Global.UnixTime())}");
+            if (snap.TryGetValue("lootCooldown", out long lootCd) && lootCd - Global.UnixTime() > 0L) 
+                description.AppendLine($"**Loot**: {Global.FormatTime(lootCd - Global.UnixTime())}");
 
             EmbedBuilder embed = new EmbedBuilder
             {
                 Title = "Crime Cooldowns",
                 Color = Color.Blue,
-                Description = description ?? "None"
+                Description = description.Length > 0 ? description.ToString() : "None"
             };
 
             await ReplyAsync(embed: embed.Build());

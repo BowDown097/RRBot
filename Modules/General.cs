@@ -75,7 +75,7 @@ namespace RRBot.Modules
                 {
                     Color = Color.Blue,
                     Title = "Code evaluation",
-                    Description = "Your code, ```cs\n" + code + "``` evaluates to: ```cs\n\"" + evaluation + "\"```"
+                    Description = $"Your code, ```cs\n{code}``` evaluates to: ```cs\n\"{evaluation}\"```"
                 };
                 await ReplyAsync(embed: embed.Build());
                 return CommandResult.FromSuccess();
@@ -119,10 +119,12 @@ namespace RRBot.Modules
             {
                 foreach (CommandInfo commandInfo in moduleInfo.Commands)
                 {
-                    if (commandInfo.Name.Equals(strippedCommand, StringComparison.OrdinalIgnoreCase))
+                    IEnumerable<string> actualAliases = commandInfo.Aliases.Except(new string[] { commandInfo.Name }); // Aliases includes the actual command for some reason
+                    if (commandInfo.Name.Equals(strippedCommand, StringComparison.OrdinalIgnoreCase) || actualAliases.Contains(strippedCommand.ToLower()))
                     {
                         string description = $"**Description**: {commandInfo.Summary}\n**Usage**: {commandInfo.Remarks}";
-                        if (commandInfo.Aliases.Any(a => a != commandInfo.Name)) description += $"\n**Alias(es)**: {string.Join(", ", commandInfo.Aliases.Except(new string[] { commandInfo.Name }))}";
+                        if (commandInfo.Aliases.Any(alias => alias != commandInfo.Name)) 
+                            description += $"\n**Alias(es)**: {string.Join(", ", actualAliases)}";
 
                         EmbedBuilder commandEmbed = new EmbedBuilder
                         {
@@ -207,6 +209,7 @@ namespace RRBot.Modules
                 case 3:
                     await ReplyAsync($"{Context.User.Mention}, it was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await doc.DeleteAsync();
+                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
                     return;
             }
         }

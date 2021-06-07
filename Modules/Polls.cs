@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -39,14 +40,14 @@ namespace RRBot.Modules
                 string[] pollChoices = choices.Split('|');
                 if (pollChoices.Length > 9) return CommandResult.FromError($"{Context.User.Mention}, a maximum of 9 choices are allowed.");
 
-                string choicesText = string.Empty;
-                for (int i = 1; i <= pollChoices.Length; i++) choicesText += $"**[{i}]** {pollChoices[i - 1]}\n";
+                StringBuilder choicesStr = new StringBuilder();
+                for (int i = 1; i <= pollChoices.Length; i++) choicesStr.AppendLine($"**[{i}]** {pollChoices[i - 1]}");
 
                 EmbedBuilder pollEmbed = new EmbedBuilder
                 {
                     Color = Color.Red,
                     Title = title,
-                    Description = choicesText
+                    Description = choicesStr.ToString()
                 };
 
                 RestUserMessage pollMsg = await pollsChannel.SendMessageAsync(embed: pollEmbed.Build());

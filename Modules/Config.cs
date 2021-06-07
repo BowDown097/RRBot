@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -52,6 +53,17 @@ namespace RRBot.Modules
             return CommandResult.FromError("The self roles message has not been set. Please set it using ``$setselfrolesmsg``.");
         }
 
+        [Command("clearconfig")]
+        [Summary("Clear all configuration that has been set.")]
+        [Remarks("``$clearconfig``")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task ClearConfig()
+        {
+            CollectionReference collection = Program.database.Collection($"servers/{Context.Guild.Id}/config");
+            foreach (DocumentReference doc in collection.ListDocumentsAsync().ToEnumerable()) await doc.DeleteAsync();
+            await ReplyAsync("All configuration cleared!");
+        }
+
         [Command("clearselfroles")]
         [Summary("Clear the self roles that are registered, if any.")]
         [Remarks("``$clearselfroles``")]
@@ -70,10 +82,10 @@ namespace RRBot.Modules
         public async Task GetCurrentConfig()
         {
             CollectionReference config = Program.database.Collection($"servers/{Context.Guild.Id}/config");
-            string description = "";
+            StringBuilder description = new StringBuilder();
             foreach (DocumentReference doc in config.ListDocumentsAsync().ToEnumerable())
             {
-                description += $"***{doc.Id}***\n";
+                description.AppendLine($"***{doc.Id}***");
                 DocumentSnapshot snap = await doc.GetSnapshotAsync();
                 if (snap.Exists)
                 {
@@ -83,18 +95,18 @@ namespace RRBot.Modules
                         {
                             case "roles":
                                 SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
-                                description += $"**{kvp.Key}**: {role.Name}\n";
+                                description.AppendLine($"**{kvp.Key}**: {role.Name}");
                                 break;
                             case "channels":
                                 SocketGuildChannel channel = Context.Guild.GetChannel(Convert.ToUInt64(kvp.Value));
-                                description += $"**{kvp.Key}**: #{channel.Name}\n";
+                                description.AppendLine($"**{kvp.Key}**: {channel.ToString()}");
                                 break;
                             case "ranks":
                                 SocketRole rank = Context.Guild.GetRole(ulong.Parse(kvp.Key));
-                                description += $"**{rank.Name}**: ${Convert.ToSingle(kvp.Value)}\n";
+                                description.AppendLine($"**{rank.Name}**: ${Convert.ToSingle(kvp.Value)}");
                                 break;
                             default:
-                                description += $"**{kvp.Key}**: {kvp.Value.ToString()}\n";
+                                description.AppendLine($"**{kvp.Key}**: {kvp.Value.ToString()}");
                                 break;
                         }
                     }
@@ -105,7 +117,7 @@ namespace RRBot.Modules
             {
                 Title = "Current Configuration",
                 Color = Color.Red,
-                Description = description ?? "None"
+                Description = description.ToString()
             };
             await ReplyAsync(embed: embed.Build());
         }

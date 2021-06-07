@@ -125,7 +125,7 @@ namespace RRBot
             client.UserJoined += logger.Client_UserJoined;
             client.UserLeft += logger.Client_UserLeft;
             client.UserUnbanned += logger.Client_UserUnbanned;
-            // client.UserVoiceStateUpdated += logger.Client_UserVoiceStateUpdated;
+            client.UserVoiceStateUpdated += logger.Client_UserVoiceStateUpdated;
 
             // client setup
             commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
