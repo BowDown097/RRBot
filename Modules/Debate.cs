@@ -17,7 +17,7 @@ namespace RRBot.Modules
 
         [Command("startdebate")]
         [Alias("debate")]
-        [Summary("Start up a debate in #debate. Debate Team will be pinged.")]
+        [Summary("Start up a debate in #debate. The debate role will be pinged.")]
         [Remarks("``$startdebate [topic]``")]
         [RequireBeInChannel("debate")]
         [RequireRole("debateRole")]
