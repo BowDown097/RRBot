@@ -8,12 +8,12 @@ using Google.Cloud.Firestore;
 namespace RRBot.Preconditions
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public class RequireRole : PreconditionAttribute
+    public class RequireRoleAttribute : PreconditionAttribute
     {
         public string DatabaseReference { get; }
         public override string ErrorMessage { get; set; }
 
-        public RequireRole(string dbRef) => DatabaseReference = dbRef;
+        public RequireRoleAttribute(string dbRef) => DatabaseReference = dbRef;
 
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {

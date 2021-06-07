@@ -8,7 +8,7 @@ using Google.Cloud.Firestore;
 namespace RRBot.Preconditions
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public class RequireStaff : PreconditionAttribute
+    public class RequireStaffAttribute : PreconditionAttribute
     {
         public override string ErrorMessage { get; set; }
 

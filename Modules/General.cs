@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Google.Cloud.Firestore;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
+using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
 
@@ -122,15 +124,36 @@ namespace RRBot.Modules
                     IEnumerable<string> actualAliases = commandInfo.Aliases.Except(new string[] { commandInfo.Name }); // Aliases includes the actual command for some reason
                     if (commandInfo.Name.Equals(strippedCommand, StringComparison.OrdinalIgnoreCase) || actualAliases.Contains(strippedCommand.ToLower()))
                     {
-                        string description = $"**Description**: {commandInfo.Summary}\n**Usage**: {commandInfo.Remarks}";
-                        if (commandInfo.Aliases.Any(alias => alias != commandInfo.Name)) 
-                            description += $"\n**Alias(es)**: {string.Join(", ", actualAliases)}";
+                        StringBuilder description = new StringBuilder($"**Description**: {commandInfo.Summary}\n**Usage**: {commandInfo.Remarks}");
+                        if (actualAliases.Any()) description.Append($"\n**Alias(es)**: {string.Join(", ", actualAliases)}");
+                        if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC)) description.Append($"\nMust be in #{rBIC.Name}");
+                        if (commandInfo.TryGetPrecondition<RequireDJAttribute>(out _)) description.Append("\nRequires DJ");
+                        if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>(out _)) description.Append("\nRequires Bot Owner");
+                        if (commandInfo.TryGetPrecondition<RequireStaffAttribute>(out _)) description.Append("\nRequires Staff");
+                        if (commandInfo.TryGetPrecondition(out RequireCashAttribute rc))
+                            description.Append((int)rc.Amount == 1 ? "\nRequires any amount of cash" : $"\nRequires ${(int)rc.Amount}");
+                        if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP))
+                            description.Append($"\nRequires {Enum.GetName(rUP.GuildPermission.GetType(), rUP.GuildPermission)} permission");
+                        if (commandInfo.TryGetPrecondition(out RequireRoleAttribute rR))
+                        {
+                            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
+                            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+                            if (snap.TryGetValue(rR.DatabaseReference, out ulong roleId))
+                            {
+                                IRole role = Context.Guild.GetRole(roleId);
+                                description.Append($"\nRequires {role.Name}");
+                            }
+                            else
+                            {
+                                description.Append($"\nRequires {rR.DatabaseReference} (role has not been set)");
+                            }
+                        }
 
                         EmbedBuilder commandEmbed = new EmbedBuilder
                         {
                             Color = Color.Red,
                             Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(strippedCommand),
-                            Description = description
+                            Description = description.ToString()
                         };
 
                         await ReplyAsync(embed: commandEmbed.Build());

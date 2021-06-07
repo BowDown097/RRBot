@@ -52,6 +52,7 @@
     <Compile Include="Services\AudioService.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="Preconditions\RequireDJ.cs" />
+    <Compile Include="Extensions\CommandInfoExt.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -189,6 +190,7 @@
     <Folder Include="Preconditions\" />
     <Folder Include="Systems\" />
     <Folder Include="Services\" />
+    <Folder Include="Extensions\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Grpc.Core.2.31.0\build\net45\Grpc.Core.targets" Condition="Exists('..\packages\Grpc.Core.2.31.0\build\net45\Grpc.Core.targets')" />
