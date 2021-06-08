@@ -27,8 +27,8 @@ namespace RRBot.Modules
             float cash = snap.GetValue<float>("cash");
             if (cash > 0)
             {
-                cash = (float)Math.Round(cash, 2);
-                await ReplyAsync(user == null ? $"{Context.User.Mention}, you have **${cash}**." : $"**{user.ToString()}** has **${cash}**.");
+                await ReplyAsync(user == null ? $"{Context.User.Mention}, you have **${string.Format("{0:0.00}", cash)}**." 
+                : $"**{user.ToString()}** has **${string.Format("{0:0.00}", cash)}**.");
                 return CommandResult.FromSuccess();
             }
 
@@ -62,6 +62,7 @@ namespace RRBot.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
+        /*
         [Alias("lb")]
         [Command("leaderboard")]
         [Summary("Check the leaderboard.")]
@@ -97,5 +98,6 @@ namespace RRBot.Modules
                 ReplyAsync(embed: embed.Build());
             });
         }
+        */
     }
 }

@@ -44,7 +44,7 @@ namespace RRBot.Modules
             {
                 Color = Color.Red,
                 Title = "One hentai coming right up!",
-                Description = $"Well, sir, I've found you **{funny.japaneseTitle}** ({englishTitle}).\nIt's at: {funny.url.ToString()}",
+                Description = $"Well, buddy, I've found you **{funny.japaneseTitle}** ({englishTitle}).\nIt's at: {funny.url.ToString()}",
                 ImageUrl = funny.cover.imageUrl.ToString()
             };
             await ReplyAsync(embed: embed.Build());

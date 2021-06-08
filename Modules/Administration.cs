@@ -45,9 +45,8 @@ namespace RRBot.Modules
         [RequireRole("senateRole")]
         public async Task SetCash(IGuildUser user, float amount)
         {
-            amount = (float)Math.Round(amount, 2);
             await CashSystem.SetCash(user, amount);
-            await ReplyAsync($"Set **{user.ToString()}**'s cash to **${amount}**.");
+            await ReplyAsync($"Set **{user.ToString()}**'s cash to **${string.Format("{0:0.00}", amount)}**.");
         }
 
         [Alias("unbotban")]

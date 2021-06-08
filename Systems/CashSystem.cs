@@ -15,6 +15,7 @@ namespace RRBot.Systems
             if (user.IsBot) return;
             if (amount < 0) amount = 0;
 
+            amount = (float)Math.Round(amount, 2);
             DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
             await userDoc.SetAsync(new { cash = amount }, SetOptions.MergeAll);
 

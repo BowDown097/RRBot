@@ -243,8 +243,6 @@ namespace RRBot.Modules
         [Remarks("``$waifu``")]
         public async Task NewWaifu()
         {
-            if (Context.Channel.Name != "bot-commands") return;
-
             Random random = new Random();
             List<string> keys = Enumerable.ToList(waifus.Keys);
             string waifu = keys[random.Next(waifus.Count)];
