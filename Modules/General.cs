@@ -128,6 +128,7 @@ namespace RRBot.Modules
                         if (actualAliases.Any()) description.Append($"\n**Alias(es)**: {string.Join(", ", actualAliases)}");
                         if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC)) description.Append($"\nMust be in #{rBIC.Name}");
                         if (commandInfo.TryGetPrecondition<RequireDJAttribute>(out _)) description.Append("\nRequires DJ");
+                        if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>(out _)) description.Append("\nMust be in NSFW channel");
                         if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>(out _)) description.Append("\nRequires Bot Owner");
                         if (commandInfo.TryGetPrecondition<RequireStaffAttribute>(out _)) description.Append("\nRequires Staff");
                         if (commandInfo.TryGetPrecondition(out RequireCashAttribute rc))

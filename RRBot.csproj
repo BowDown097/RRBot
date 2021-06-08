@@ -53,6 +53,7 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="Preconditions\RequireDJ.cs" />
     <Compile Include="Extensions\CommandInfoExt.cs" />
+    <Compile Include="Modules\NSFW.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -183,6 +184,11 @@
     </Reference>
     <Reference Include="Victoria">
       <HintPath>..\packages\Victoria.4.0.18\lib\netstandard2.0\Victoria.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks" />
+    <Reference Include="System.Web" />
+    <Reference Include="NHentaiSharp">
+      <HintPath>..\packages\NHentaiSharp.1.1.1\lib\netstandard2.0\NHentaiSharp.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
