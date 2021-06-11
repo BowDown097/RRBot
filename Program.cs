@@ -39,9 +39,9 @@ namespace RRBot
                     {
                         DocumentSnapshot snapshot = await banDoc.GetSnapshotAsync();
                         long timestamp = snapshot.GetValue<long>("Time");
-                        SocketGuildUser user = guild.GetUser(snapshot.GetValue<ulong>("User"));
+                        SocketGuildUser user = guild.GetUser(Convert.ToUInt64(banDoc.Id));
 
-                        if (!(await guild.GetBansAsync()).Any(ban => ban.User.Id == user.Id))
+                        if (user != null && !(await guild.GetBansAsync()).Any(ban => ban.User.Id == user.Id))
                         {
                             await banDoc.DeleteAsync();
                             continue;
@@ -49,7 +49,7 @@ namespace RRBot
 
                         if (timestamp <= Global.UnixTime())
                         {
-                            await guild.RemoveBanAsync(user);
+                            if (user != null) await guild.RemoveBanAsync(user);
                             await banDoc.DeleteAsync();
                         }
                     }
@@ -74,11 +74,11 @@ namespace RRBot
                         {
                             DocumentSnapshot snapshot = await muteDoc.GetSnapshotAsync();
                             long timestamp = snapshot.GetValue<long>("Time");
-                            IGuildUser user = guild.GetUser(snapshot.GetValue<ulong>("User")) as IGuildUser;
+                            SocketGuildUser user = guild.GetUser(Convert.ToUInt64(muteDoc.Id));
 
                             if (timestamp <= Global.UnixTime())
                             {
-                                await user.RemoveRoleAsync(mutedRole);
+                                if (user != null) await user.RemoveRoleAsync(mutedRole);
                                 await muteDoc.DeleteAsync();
                             }
                         }

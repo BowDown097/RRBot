@@ -55,10 +55,11 @@ namespace RRBot.Modules
                         return CommandResult.FromError($"{Context.User.Mention}, you specified an invalid amount of time!");
                 }
 
+                DocumentReference banDoc = Program.database.Collection($"servers/{Context.Guild.Id}/bans").Document(user.Id.ToString());
                 response += string.IsNullOrWhiteSpace(reason) ? ". So long, sack of shit!" : $"for `{reason}`. So long, sack of shit!";
                 await ReplyAsync(response);
                 await Program.logger.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
-                await Program.database.Collection($"servers/{Context.Guild.Id}/bans").AddAsync(new { User = user.Id, Time = Global.UnixTime(timeSpan.TotalSeconds) });
+                await banDoc.SetAsync(new { Time = Global.UnixTime(timeSpan.TotalSeconds) });
                 await user.BanAsync(reason: reason);
                 return CommandResult.FromSuccess();
             }
@@ -164,10 +165,11 @@ namespace RRBot.Modules
                             return CommandResult.FromError($"{Context.User.Mention}, you specified an invalid amount of time!");
                     }
 
+                    DocumentReference muteDoc = Program.database.Collection($"servers/{Context.Guild.Id}/mutes").Document(user.Id.ToString());
                     response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
                     await ReplyAsync(response);
                     await Program.logger.Custom_UserMuted(user, Context.User, duration, reason);
-                    await Program.database.Collection($"servers/{Context.Guild.Id}/mutes").AddAsync(new { User = user.Id, Time = Global.UnixTime(timeSpan.TotalSeconds) });
+                    await muteDoc.SetAsync(new { Time = Global.UnixTime(timeSpan.TotalSeconds) });
                     await user.AddRoleAsync(role);
                     return CommandResult.FromSuccess();
                 }
