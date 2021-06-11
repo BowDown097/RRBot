@@ -15,6 +15,15 @@ using RRBot.Systems;
 
 namespace RRBot.Modules
 {
+    public class FunnyContext
+    {
+        public SocketCommandContext Context;
+
+        public FunnyContext(SocketCommandContext context)
+        {
+            Context = context;
+        }
+    }
     public class General : ModuleBase<SocketCommandContext>
     {
         public static readonly Dictionary<string, string> waifus = new Dictionary<string, string>
@@ -72,10 +81,10 @@ namespace RRBot.Modules
             {
                 code = code.Replace("```cs", "").Trim('`');
                 string[] imports = { "System", "System.Collections.Generic", "System.Text" };
-                string evaluation = (await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports))).ToString();
+                string evaluation = (await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context))).ToString();
                 EmbedBuilder embed = new EmbedBuilder
                 {
-                    Color = Color.Blue,
+                    Color = Color.Red,
                     Title = "Code evaluation",
                     Description = $"Your code, ```cs\n{code}``` evaluates to: ```cs\n\"{evaluation}\"```"
                 };
@@ -104,7 +113,7 @@ namespace RRBot.Modules
             {
                 EmbedBuilder infoEmbed = new EmbedBuilder
                 {
-                    Color = Color.Blue,
+                    Color = Color.Red,
                     Title = "Rush Reborn Bot",
                     Description = "Say hello to the most amazing bot you will ever bare witness to, made by the greatest programmer who has ever lived! ~~definitely not capping~~\n\n" +
                     	"This is what I like to call a \"module-based\" bot, where all of the commands are split up into modules.\n\n" +
@@ -249,7 +258,7 @@ namespace RRBot.Modules
 
             EmbedBuilder waifuEmbed = new EmbedBuilder
             {
-                Color = Color.Purple,
+                Color = Color.Red,
                 Title = "Say hello to your new waifu!",
                 Description = $"Your waifu is **{waifu}**.",
                 ImageUrl = waifus[waifu]

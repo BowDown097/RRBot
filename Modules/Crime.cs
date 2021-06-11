@@ -51,8 +51,7 @@ namespace RRBot.Modules
 
             if (random.Next(10) > 7)
             {
-                float lostCash = (float)(100 + (1000 - 100) * random.NextDouble()); // lose between $100-1000
-
+                float lostCash = (float)(69 + (690 - 69) * random.NextDouble()); // lose between $69-690
                 await CashSystem.SetCash(Context.User as IGuildUser, cash - lostCash);
                 switch (random.Next(2))
                 {
@@ -68,7 +67,7 @@ namespace RRBot.Modules
             }
             else
             {
-                float moneyLooted = (float)(100 + (550 - 100) * random.NextDouble()); // gain between $100-550
+                float moneyLooted = (float)(69 + (550 - 69) * random.NextDouble()); // gain between $69-550
                 switch (random.Next(3))
                 {
                     case 0:
@@ -84,6 +83,7 @@ namespace RRBot.Modules
                         $" You earned **${string.Format("{0:0.00}", moneyLooted)}**, basically nothing.");
                         break;
                 }
+
                 await CashSystem.SetCash(Context.User as IGuildUser, cash + moneyLooted);
             }
 
@@ -163,11 +163,65 @@ namespace RRBot.Modules
         }
         */
 
+        [Alias("slavelabor", "labor")]
+        [Command("slavery")]
+        [Summary("Get some slave labor goin'.")]
+        [Remarks("``$slavery``")]
+        [RequireCash]
+        [RequireCooldown("slaveryCooldown", "the slaves will die if you keep going like this! You should wait {0}.")]
+        [RequireRankLevel(2)]
+        public async Task Slavery()
+        {
+            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            float cash = snap.GetValue<float>("cash");
+            Random random = new Random();
+
+            if (random.Next(10) > 7)
+            {
+                float lostCash = (float)(69 + (690 - 69) * random.NextDouble()); // lose between $69-690
+                await CashSystem.SetCash(Context.User as IGuildUser, cash - lostCash);
+                switch (random.Next(2))
+                {
+                    case 0:
+                        await ReplyAsync($"{Context.User.Mention}, some fucker ratted you out and the police showed up." +
+                        $" Thankfully, they're corrupt and you were able to sauce them **${string.Format("{0:0.00}", lostCash)}** to fuck off. Thank the lord.");
+                        break;
+                    case 1:
+                        await ReplyAsync($"{Context.User.Mention}, a slave got away and yoinked **${string.Format("{0:0.00}", lostCash)}** from you. Sad day.");
+                        break;
+                }
+            }
+            else
+            {
+                float moneyEarned = (float)(69 + (550 - 69) * random.NextDouble()); // gain between $69-550
+                await CashSystem.SetCash(Context.User as IGuildUser, cash + moneyEarned);
+                switch (random.Next(3))
+                {
+                    case 0:
+                        await ReplyAsync($"{Context.User.Mention}, you got loads of newfags to tirelessly mine ender chests on the Oldest Anarchy Server in Minecraft." +
+                        $" You made **${string.Format("{0:0.00}", moneyEarned)}** selling the newfound millions of obsidian to an interested party.");
+                        break;
+                    case 1:
+                        await ReplyAsync($"{Context.User.Mention}, the innocent Uyghur children working in your labor factory did an especially good job making shoes in the past hour." +
+                        $" You made **${string.Format("{0:0.00}", moneyEarned)}** from all of them, and lost only like 2 cents paying them their wages.");
+                        break;
+                    case 2:
+                        await ReplyAsync($"{Context.User.Mention}, this cotton is BUSSIN! The Confederacy is proud." +
+                        $" You have been awarded **${string.Format("{0:0.00}", moneyEarned)}**.");
+                        break;
+                }
+            }
+
+            await doc.SetAsync(new { slaveryCooldown = Global.UnixTime(3600) }, SetOptions.MergeAll);
+        }
+
         [Command("whore")]
         [Summary("Sell your body for quick cash.")]
         [Remarks("``$whore``")]
         [RequireCash]
         [RequireCooldown("whoreCooldown", "you cannot whore yourself out for {0}.")]
+        [RequireRankLevel(1)]
         public async Task Whore()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
@@ -178,7 +232,6 @@ namespace RRBot.Modules
             if (random.Next(10) > 7)
             {
                 float lostCash = (float)(69 + (690 - 69) * random.NextDouble()); // lose between $69-690
-
                 await CashSystem.SetCash(Context.User as IGuildUser, cash - lostCash);
                 switch (random.Next(2))
                 {
@@ -194,6 +247,7 @@ namespace RRBot.Modules
             else
             {
                 float moneyWhored = (float)(69 + (550 - 69) * random.NextDouble()); // gain between $69-550
+                await CashSystem.SetCash(Context.User as IGuildUser, cash + moneyWhored);
                 switch (random.Next(3))
                 {
                     case 0:
@@ -207,7 +261,6 @@ namespace RRBot.Modules
                         $" What a great night.");
                         break;
                 }
-                await CashSystem.SetCash(Context.User as IGuildUser, cash + moneyWhored);
             }
 
             await doc.SetAsync(new { whoreCooldown = Global.UnixTime(3600) }, SetOptions.MergeAll);

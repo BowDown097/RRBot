@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -8,26 +9,32 @@ using Google.Cloud.Firestore;
 namespace RRBot.Preconditions
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public class RequireRoleAttribute : PreconditionAttribute
+    public class RequireRankLevel : PreconditionAttribute
     {
-        public string DatabaseReference { get; }
+        public int RankLevel { get; }
         public override string ErrorMessage { get; set; }
 
-        public RequireRoleAttribute(string dbRef) => DatabaseReference = dbRef;
+        public RequireRankLevel(int level) => RankLevel = level;
 
+        // this entire thing is actually fucking AWFUL. there HAS to be a better way to do this, surely.
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/config").Document("roles");
+            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/config").Document("ranks");
             DocumentSnapshot snap = doc.GetSnapshotAsync().Result;
-
-            if (snap.TryGetValue(DatabaseReference, out ulong roleId))
+            try
             {
+                KeyValuePair<string, object> level = snap.ToDictionary().First(kvp => kvp.Key.StartsWith($"level{RankLevel}", StringComparison.Ordinal) &&
+                kvp.Key.EndsWith("Id", StringComparison.Ordinal));
+
+                ulong roleId = Convert.ToUInt64(level.Value);
                 IRole role = context.Guild.GetRole(roleId);
                 if ((context.Message.Author as IGuildUser).RoleIds.Contains(roleId)) return Task.FromResult(PreconditionResult.FromSuccess());
                 return Task.FromResult(PreconditionResult.FromError(ErrorMessage ?? $"{context.Message.Author.Mention}, you must have the {role.Name} role."));
             }
-                
-            return Task.FromResult(PreconditionResult.FromError($"{DatabaseReference} role is not set!"));
+            catch (Exception)
+            {
+                return Task.FromResult(PreconditionResult.FromError($"No rank is configured at level {RankLevel}!"));
+            }
         }
     }
 }

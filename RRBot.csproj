@@ -54,6 +54,7 @@
     <Compile Include="Preconditions\RequireDJ.cs" />
     <Compile Include="Extensions\CommandInfoExt.cs" />
     <Compile Include="Modules\NSFW.cs" />
+    <Compile Include="Preconditions\RequireRankLevel.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

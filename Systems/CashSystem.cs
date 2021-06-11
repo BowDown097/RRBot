@@ -23,11 +23,12 @@ namespace RRBot.Systems
             DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
             if (snap.Exists)
             {
-                foreach (KeyValuePair<string, object> kvp in snap.ToDictionary())
+                foreach (KeyValuePair<string, object> kvp in snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id", StringComparison.Ordinal)))
                 {
-                    float neededCash = Convert.ToSingle(kvp.Value);
-                    ulong roleId = ulong.Parse(kvp.Key);
+                    float neededCash = snap.GetValue<float>(kvp.Key.Replace("Id", "Cost"));
+                    ulong roleId = Convert.ToUInt64(kvp.Value);
                     if (amount >= neededCash && !user.RoleIds.Contains(roleId)) await user.AddRoleAsync(user.Guild.GetRole(roleId));
+                    else if (amount <= neededCash && user.RoleIds.Contains(roleId)) await user.RemoveRoleAsync(user.Guild.GetRole(roleId));
                 }
             }
         }

@@ -215,7 +215,7 @@ namespace RRBot.Modules
             if (!bans.Any(ban => ban.User.Id == userId)) return CommandResult.FromError($"{Context.User.Mention}, that user is not currently banned.");
 
             string userString = bans.FirstOrDefault(ban => ban.User.Id == userId).User.ToString();
-            await ReplyAsync($"**{Context.User.ToString()} has unbanned **{userString}**.");
+            await ReplyAsync($"**{Context.User.ToString()}** has unbanned **{userString}**.");
             await Context.Guild.RemoveBanAsync(userId);
             return CommandResult.FromSuccess();
         }

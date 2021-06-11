@@ -224,9 +224,9 @@ namespace RRBot.Systems
             else if (!voiceStateOrig.IsMuted && voiceState.IsMuted) embed.Title = "User Server Muted";
             else if (voiceStateOrig.IsMuted && !voiceState.IsMuted) embed.Title = "User Server Unmuted";
             else if (!voiceStateOrig.IsSelfDeafened && voiceState.IsSelfDeafened) embed.Title = "User Self Deafened";
-            else if (voiceStateOrig.IsSelfDeafened && !voiceStateOrig.IsSelfDeafened) embed.Title = "User Self Undeafened";
-            else if (!voiceStateOrig.IsSelfMuted && voiceStateOrig.IsSelfMuted) embed.Title = "User Self Muted";
-            else if (voiceStateOrig.IsSelfMuted && !voiceStateOrig.IsSelfMuted) embed.Title = "User Self Unmuted";
+            else if (voiceStateOrig.IsSelfDeafened && !voiceState.IsSelfDeafened) embed.Title = "User Self Undeafened";
+            else if (!voiceStateOrig.IsSelfMuted && voiceState.IsSelfMuted) embed.Title = "User Self Muted";
+            else if (voiceStateOrig.IsSelfMuted && !voiceState.IsSelfMuted) embed.Title = "User Self Unmuted";
             else if (voiceStateOrig.VoiceChannel == null) embed.Title = "User Joined Voice Channel";
             else if (voiceStateOrig.VoiceChannel.Id != voiceState.VoiceChannel.Id)
             {
@@ -237,7 +237,7 @@ namespace RRBot.Systems
             await WriteToLogs(voiceState.VoiceChannel.Guild, embed);     
         }
 
-        public async Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
+        public Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
         {
             string msgLogs = string.Empty;
             foreach (IMessage message in messages)
@@ -283,6 +283,8 @@ namespace RRBot.Systems
                     File.Delete("messages.txt");
                 }
             });
+
+            return Task.CompletedTask;
         }
 
         public async Task Custom_TrackStarted(SocketGuildUser user, SocketVoiceChannel vc, Uri url)

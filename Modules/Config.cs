@@ -14,19 +14,24 @@ namespace RRBot.Modules
     public class Config : ModuleBase<SocketCommandContext>
     {
         // helpers
-        private async Task CreateEntry(SocketCommandContext context, string document, object data, string message)
+        private async Task CreateEntry(SocketCommandContext context, string document, object data, string message = "")
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document(document);
             await doc.SetAsync(data, SetOptions.MergeAll);
-            await ReplyAsync(message);
+            if (!string.IsNullOrWhiteSpace(message)) await ReplyAsync(message);
         }
 
         // commands
         [Command("addrank")]
-        [Summary("Register the ID for a rank and the money required to get it.")]
-        [Remarks("``$addrank [role-id] [cost]``")]
+        [Summary("Register the ID for a rank, its level, and the money required to get it.")]
+        [Remarks("``$addrank [role-id] [level] [cost]``")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task AddRank(ulong id, float cost) => await CreateEntry(Context, "ranks", new Dictionary<string, object> { { id.ToString(), cost } }, "Added rank successfully!");
+        public async Task AddRank(ulong id, int level, float cost)
+        {
+            SocketRole role = Context.Guild.GetRole(id);
+            await CreateEntry(Context, "ranks", new Dictionary<string, object> { { $"level{level}Id", id.ToString() } });
+            await CreateEntry(Context, "ranks", new Dictionary<string, object> { { $"level{level}Cost", cost } }, "Added rank successfully!");
+        }
 
         [Command("addselfrole")]
         [Summary("Add a self role for the self role message.")]
@@ -102,8 +107,15 @@ namespace RRBot.Modules
                                 description.AppendLine($"**{kvp.Key}**: {channel.ToString()}");
                                 break;
                             case "ranks":
-                                SocketRole rank = Context.Guild.GetRole(ulong.Parse(kvp.Key));
-                                description.AppendLine($"**{rank.Name}**: ${Convert.ToSingle(kvp.Value)}");
+                                if (kvp.Key.EndsWith("Id", StringComparison.Ordinal))
+                                {
+                                    SocketRole rank = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
+                                    description.AppendLine($"**{kvp.Key.Replace("Id", "Role")}**: {rank.Name}");
+                                }
+                                else
+                                {
+                                    description.AppendLine($"**{kvp.Key}**: ${Convert.ToSingle(kvp.Value)}");
+                                }
                                 break;
                             default:
                                 description.AppendLine($"**{kvp.Key}**: {kvp.Value.ToString()}");

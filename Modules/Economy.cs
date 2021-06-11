@@ -51,11 +51,13 @@ namespace RRBot.Modules
                 description.AppendLine($"**Whore**: {Global.FormatTime(whoreCd - Global.UnixTime())}");
             if (snap.TryGetValue("lootCooldown", out long lootCd) && lootCd - Global.UnixTime() > 0L) 
                 description.AppendLine($"**Loot**: {Global.FormatTime(lootCd - Global.UnixTime())}");
+            if (snap.TryGetValue("slaveryCooldown", out long slaveryCd) && slaveryCd - Global.UnixTime() > 0L)
+                description.AppendLine($"**Slavery**: {Global.FormatTime(slaveryCd - Global.UnixTime())}");
 
             EmbedBuilder embed = new EmbedBuilder
             {
                 Title = "Crime Cooldowns",
-                Color = Color.Blue,
+                Color = Color.Red,
                 Description = description.Length > 0 ? description.ToString() : "None"
             };
 
@@ -99,5 +101,37 @@ namespace RRBot.Modules
             });
         }
         */
+
+        [Alias("roles")]
+        [Command("ranks")]
+        [Summary("View all the ranks and their costs.")]
+        [Remarks("``$ranks``")]
+        public async Task ViewRanks()
+        {
+            StringBuilder ranks = new StringBuilder();
+
+            DocumentReference ranksDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("ranks");
+            DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
+
+            IEnumerable<KeyValuePair<string, object>> kvps = snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id", StringComparison.Ordinal)).OrderBy(kvp => kvp.Key);
+            if (kvps.Any())
+            {
+                foreach (KeyValuePair<string, object> kvp in kvps)
+                {
+                    float neededCash = snap.GetValue<float>(kvp.Key.Replace("Id", "Cost"));
+                    SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
+                    ranks.AppendLine($"**{role.Name}**: ${string.Format("{0:0.00}", neededCash)}");
+                }
+            }
+
+            EmbedBuilder embed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                Title = "Available Ranks",
+                Description = ranks.Length > 0 ? ranks.ToString() : "None"
+            };
+
+            await ReplyAsync(embed: embed.Build());
+        }
     }
 }
