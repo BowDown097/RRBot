@@ -218,10 +218,14 @@ namespace RRBot.Systems
                 Timestamp = DateTime.Now
             };
 
-            if (!voiceStateOrig.IsDeafened && voiceState.IsDeafened) embed.Title = "User Deafened";
-            else if (voiceStateOrig.IsDeafened && !voiceState.IsDeafened) embed.Title = "User Undeafened";
+            if (!voiceStateOrig.IsDeafened && voiceState.IsDeafened) embed.Title = "User Server Deafened";
+            else if (voiceStateOrig.IsDeafened && !voiceState.IsDeafened) embed.Title = "User Server Undeafened";
             else if (!voiceStateOrig.IsMuted && voiceState.IsMuted) embed.Title = "User Server Muted";
-            else if (voiceStateOrig.IsMuted && !voiceState.IsMuted) embed.Title = "User Un-Server Muted";
+            else if (voiceStateOrig.IsMuted && !voiceState.IsMuted) embed.Title = "User Server Unmuted";
+            else if (!voiceStateOrig.IsSelfDeafened && voiceState.IsSelfDeafened) embed.Title = "User Self Deafened";
+            else if (voiceStateOrig.IsSelfDeafened && !voiceStateOrig.IsSelfDeafened) embed.Title = "User Self Undeafened";
+            else if (!voiceStateOrig.IsSelfMuted && voiceStateOrig.IsSelfMuted) embed.Title = "User Self Muted";
+            else if (voiceStateOrig.IsSelfMuted && !voiceStateOrig.IsSelfMuted) embed.Title = "User Self Unmuted";
             else if (voiceStateOrig.VoiceChannel == null) embed.Title = "User Joined Voice Channel";
             else if (voiceStateOrig.VoiceChannel.Id != voiceState.VoiceChannel.Id)
             {
