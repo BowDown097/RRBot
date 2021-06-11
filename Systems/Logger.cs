@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -242,22 +243,46 @@ namespace RRBot.Systems
             foreach (IMessage message in messages)
                 msgLogs += $"{message.Author.ToString()} @ {message.Timestamp.ToString()}: {message.Content}\n";
 
-            using (WebClient webClient = new WebClient())
+            Global.RunInBackground(() =>
             {
-                string hbPOST = webClient.UploadString("https://hastebin.com/documents", msgLogs);
-                string hbKey = JObject.Parse(hbPOST)["key"].ToString();
-                string hbUrl = $"https://hastebin.com/{hbKey}";
-
-                EmbedBuilder embed = new EmbedBuilder
+                try
                 {
-                    Color = Color.Blue,
-                    Title = $"{messages.Count()-1} Messages Purged",
-                    Description = $"See them at: {hbUrl}",
-                    Timestamp = DateTime.Now
-                };
+                    using (WebClient webClient = new WebClient())
+                    {
+                        string hbPOST = webClient.UploadString("https://hastebin.com/documents", msgLogs);
+                        string hbKey = JObject.Parse(hbPOST)["key"].ToString();
+                        string hbUrl = $"https://hastebin.com/{hbKey}";
 
-                await WriteToLogs(guild, embed);
-            }
+                        EmbedBuilder embed = new EmbedBuilder
+                        {
+                            Color = Color.Blue,
+                            Title = $"{messages.Count() - 1} Messages Purged",
+                            Description = $"See them at: {hbUrl}",
+                            Timestamp = DateTime.Now
+                        };
+
+                        WriteToLogs(guild, embed);
+                    }
+                }
+                catch (WebException)
+                {
+                    EmbedBuilder embed = new EmbedBuilder
+                    {
+                        Color = Color.Blue,
+                        Title = $"{messages.Count() - 1} Messages Purged",
+                        Description = "I couldn't upload the messages to HasteBin for some reason, attaching them instead.",
+                        Timestamp = DateTime.Now
+                    };
+
+                    File.WriteAllText("messages.txt", msgLogs);
+                    WriteToLogs(guild, embed);
+                    DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/config").Document("channels");
+                    DocumentSnapshot snap = doc.GetSnapshotAsync().Result;
+                    if (snap.TryGetValue("logsChannel", out ulong id))
+                        guild.GetTextChannel(id).SendFileAsync("messages.txt", string.Empty);
+                    File.Delete("messages.txt");
+                }
+            });
         }
 
         public async Task Custom_TrackStarted(SocketGuildUser user, SocketVoiceChannel vc, Uri url)
