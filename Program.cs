@@ -39,9 +39,9 @@ namespace RRBot
                     {
                         DocumentSnapshot snapshot = await banDoc.GetSnapshotAsync();
                         long timestamp = snapshot.GetValue<long>("Time");
-                        SocketGuildUser user = guild.GetUser(Convert.ToUInt64(banDoc.Id));
+                        ulong userId = Convert.ToUInt64(banDoc.Id);
 
-                        if (user != null && !(await guild.GetBansAsync()).Any(ban => ban.User.Id == user.Id))
+                        if (!(await guild.GetBansAsync()).Any(ban => ban.User.Id == userId))
                         {
                             await banDoc.DeleteAsync();
                             continue;
@@ -49,7 +49,7 @@ namespace RRBot
 
                         if (timestamp <= Global.UnixTime())
                         {
-                            if (user != null) await guild.RemoveBanAsync(user);
+                            await guild.RemoveBanAsync(userId);
                             await banDoc.DeleteAsync();
                         }
                     }
