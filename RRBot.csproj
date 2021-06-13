@@ -55,6 +55,8 @@
     <Compile Include="Extensions\CommandInfoExt.cs" />
     <Compile Include="Modules\NSFW.cs" />
     <Compile Include="Preconditions\RequireRankLevel.cs" />
+    <Compile Include="Preconditions\RequireNsfwEnabled.cs" />
+    <Compile Include="Extensions\ModuleInfoExt.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

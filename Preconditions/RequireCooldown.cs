@@ -6,7 +6,7 @@ using Google.Cloud.Firestore;
 
 namespace RRBot.Preconditions
 {
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
     public class RequireCooldownAttribute : PreconditionAttribute
     {
         public string CooldownNode { get; set; }
@@ -18,23 +18,23 @@ namespace RRBot.Preconditions
             Message = message;
         }
 
-        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+        public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.Message.Author.Id.ToString());
-            DocumentSnapshot snap = doc.GetSnapshotAsync().Result;
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             if (snap.TryGetValue(CooldownNode, out long cooldown) && cooldown != 0L)
             {
                 if (cooldown > Global.UnixTime())
-                    return Task.FromResult(PreconditionResult.FromError(string.Format($"{context.Message.Author.Mention}, {Message}", Global.FormatTime(cooldown - Global.UnixTime()))));
+                    return PreconditionResult.FromError(string.Format($"{context.Message.Author.Mention}, {Message}", Global.FormatTime(cooldown - Global.UnixTime())));
 
-                doc.SetAsync(new Dictionary<string, object>
+                await doc.SetAsync(new Dictionary<string, object>
                 {
                     { CooldownNode, 0L }
                 }, SetOptions.MergeAll);
             }
 
-            return Task.FromResult(PreconditionResult.FromSuccess());
+            return PreconditionResult.FromSuccess();
         }
     }
 }

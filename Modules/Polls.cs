@@ -10,6 +10,7 @@ using RRBot.Preconditions;
 
 namespace RRBot.Modules
 {
+    [RequireStaff]
     public class Polls : ModuleBase<SocketCommandContext>
     {
         public static readonly Dictionary<int, string> numberEmotes = new Dictionary<int, string>
@@ -28,7 +29,6 @@ namespace RRBot.Modules
         [Command("createpoll")]
         [Summary("Create a poll.")]
         [Remarks("``$createpoll [title] [choice1|choice2|choice3|...|choice9]``")]
-        [RequireStaff]
         public async Task<RuntimeResult> CreatePoll(string title, string choices)
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("channels");

@@ -7,27 +7,27 @@ using Google.Cloud.Firestore;
 
 namespace RRBot.Preconditions
 {
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
     public class RequireRoleAttribute : PreconditionAttribute
     {
         public string DatabaseReference { get; }
-        public override string ErrorMessage { get; set; }
 
         public RequireRoleAttribute(string dbRef) => DatabaseReference = dbRef;
 
-        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+        public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/config").Document("roles");
-            DocumentSnapshot snap = doc.GetSnapshotAsync().Result;
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             if (snap.TryGetValue(DatabaseReference, out ulong roleId))
             {
                 IRole role = context.Guild.GetRole(roleId);
-                if ((context.Message.Author as IGuildUser).RoleIds.Contains(roleId)) return Task.FromResult(PreconditionResult.FromSuccess());
-                return Task.FromResult(PreconditionResult.FromError(ErrorMessage ?? $"{context.Message.Author.Mention}, you must have the {role.Name} role."));
+                return (context.Message.Author as IGuildUser).RoleIds.Contains(roleId)
+                    ? PreconditionResult.FromSuccess()
+                    : PreconditionResult.FromError($"{context.Message.Author.Mention}, you must have the {role.Name} role.");
             }
-                
-            return Task.FromResult(PreconditionResult.FromError($"{DatabaseReference} role is not set!"));
+
+            return PreconditionResult.FromError($"{DatabaseReference} role is not set!");
         }
     }
 }

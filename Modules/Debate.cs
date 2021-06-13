@@ -10,6 +10,8 @@ using RRBot.Preconditions;
 
 namespace RRBot.Modules
 {
+    [RequireBeInChannel("debate")]
+    [RequireRole("debateRole")]
     public class Debate : ModuleBase<SocketCommandContext>
     {
         public static bool ongoingDebate, endingDebate;
@@ -18,8 +20,6 @@ namespace RRBot.Modules
         [Alias("debate")]
         [Summary("Start up a debate in #debate. The debate role will be pinged.")]
         [Remarks("``$startdebate [topic]``")]
-        [RequireBeInChannel("debate")]
-        [RequireRole("debateRole")]
         public async Task<RuntimeResult> StartDebate([Remainder] string topic = "")
         {
             if (string.IsNullOrEmpty(topic)) return CommandResult.FromError($"{Context.User.Mention} give me a topic!");
@@ -41,8 +41,6 @@ namespace RRBot.Modules
         [Command("enddebate")]
         [Summary("Call for an end to the ongoing debate in #debate by vote. Chat will be purged!")]
         [Remarks("``$enddebate``")]
-        [RequireBeInChannel("debate")]
-        [RequireRole("debateRole")]
         public async Task<RuntimeResult> EndDebate()
         {
             if (!ongoingDebate) return CommandResult.FromError($"{Context.User.Mention} there is not an ongoing debate! If you want to start one, do ``$startdebate [topic]``.");

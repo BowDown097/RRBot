@@ -18,12 +18,9 @@ namespace RRBot.Modules
     public class FunnyContext
     {
         public SocketCommandContext Context;
-
-        public FunnyContext(SocketCommandContext context)
-        {
-            Context = context;
-        }
+        public FunnyContext(SocketCommandContext context) => Context = context;
     }
+
     public class General : ModuleBase<SocketCommandContext>
     {
         public static readonly Dictionary<string, string> waifus = new Dictionary<string, string>
@@ -128,6 +125,17 @@ namespace RRBot.Modules
 
             foreach (ModuleInfo moduleInfo in modules)
             {
+                if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
+                {
+                    DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
+                    DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
+                    if (modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw || !modSnap.TryGetValue<bool>("nsfw", out _))
+                    {
+                        await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
+                        return;
+                    }
+                }
+
                 foreach (CommandInfo commandInfo in moduleInfo.Commands)
                 {
                     IEnumerable<string> actualAliases = commandInfo.Aliases.Except(new string[] { commandInfo.Name }); // Aliases includes the actual command for some reason
@@ -135,16 +143,22 @@ namespace RRBot.Modules
                     {
                         StringBuilder description = new StringBuilder($"**Description**: {commandInfo.Summary}\n**Usage**: {commandInfo.Remarks}");
                         if (actualAliases.Any()) description.Append($"\n**Alias(es)**: {string.Join(", ", actualAliases)}");
-                        if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC)) description.Append($"\nMust be in #{rBIC.Name}");
-                        if (commandInfo.TryGetPrecondition<RequireDJAttribute>(out _)) description.Append("\nRequires DJ");
-                        if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>(out _)) description.Append("\nMust be in NSFW channel");
-                        if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>(out _)) description.Append("\nRequires Bot Owner");
-                        if (commandInfo.TryGetPrecondition<RequireStaffAttribute>(out _)) description.Append("\nRequires Staff");
-                        if (commandInfo.TryGetPrecondition(out RequireCashAttribute rc))
+
+                        if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC) || moduleInfo.TryGetPrecondition(out rBIC))
+                            description.Append($"\nMust be in #{rBIC.Name}");
+                        if (commandInfo.TryGetPrecondition<RequireDJAttribute>() || moduleInfo.TryGetPrecondition<RequireDJAttribute>()) 
+                            description.Append("\nRequires DJ");
+                        if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>() || moduleInfo.TryGetPrecondition<RequireNsfwAttribute>()) 
+                            description.Append("\nMust be in NSFW channel");
+                        if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>() || moduleInfo.TryGetPrecondition<RequireOwnerAttribute>()) 
+                            description.Append("\nRequires Bot Owner");
+                        if (commandInfo.TryGetPrecondition<RequireStaffAttribute>() || moduleInfo.TryGetPrecondition<RequireOwnerAttribute>()) 
+                            description.Append("\nRequires Staff");
+                        if (commandInfo.TryGetPrecondition(out RequireCashAttribute rc) || moduleInfo.TryGetPrecondition(out rc))
                             description.Append((int)rc.Amount == 1 ? "\nRequires any amount of cash" : $"\nRequires ${(int)rc.Amount}");
-                        if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP))
+                        if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP) || moduleInfo.TryGetPrecondition(out rUP))
                             description.Append($"\nRequires {Enum.GetName(rUP.GuildPermission.GetType(), rUP.GuildPermission)} permission");
-                        if (commandInfo.TryGetPrecondition(out RequireRoleAttribute rR))
+                        if (commandInfo.TryGetPrecondition(out RequireRoleAttribute rR) || moduleInfo.TryGetPrecondition(out rR))
                         {
                             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
                             DocumentSnapshot snap = await doc.GetSnapshotAsync();
@@ -199,6 +213,17 @@ namespace RRBot.Modules
 
             foreach (ModuleInfo moduleInfo in modules)
             {
+                if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
+                {
+                    DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
+                    DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
+                    if (modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw || !modSnap.TryGetValue<bool>("nsfw", out _))
+                    {
+                        await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
+                        return;
+                    }
+                }
+
                 if (moduleInfo.Name.Equals(strippedModule, StringComparison.OrdinalIgnoreCase))
                 {
                     EmbedBuilder moduleEmbed = new EmbedBuilder
