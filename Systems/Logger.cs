@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -122,10 +121,10 @@ namespace RRBot.Systems
 
             if (Global.niggerRegex.Matches(new string(msgAfter.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
             {
-                Global.RunInBackground(() =>
+                Global.RunInBackground(async () =>
                 {
-                    Thread.Sleep(TimeSpan.FromSeconds(10));
-                    msgAfter.DeleteAsync();
+                    await Task.Delay(TimeSpan.FromSeconds(10));
+                    await msgAfter.DeleteAsync();
                 });
             }
 
@@ -243,7 +242,7 @@ namespace RRBot.Systems
             foreach (IMessage message in messages)
                 msgLogs += $"{message.Author.ToString()} @ {message.Timestamp.ToString()}: {message.Content}\n";
 
-            Global.RunInBackground(() =>
+            Global.RunInBackground(async () =>
             {
                 try
                 {
@@ -261,7 +260,7 @@ namespace RRBot.Systems
                             Timestamp = DateTime.Now
                         };
 
-                        WriteToLogs(guild, embed);
+                        await WriteToLogs(guild, embed);
                     }
                 }
                 catch (WebException)
@@ -275,11 +274,11 @@ namespace RRBot.Systems
                     };
 
                     File.WriteAllText("messages.txt", msgLogs);
-                    WriteToLogs(guild, embed);
+                    await WriteToLogs(guild, embed);
                     DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/config").Document("channels");
-                    DocumentSnapshot snap = doc.GetSnapshotAsync().Result;
+                    DocumentSnapshot snap = await doc.GetSnapshotAsync();
                     if (snap.TryGetValue("logsChannel", out ulong id))
-                        guild.GetTextChannel(id).SendFileAsync("messages.txt", string.Empty);
+                        await guild.GetTextChannel(id).SendFileAsync("messages.txt", string.Empty);
                     File.Delete("messages.txt");
                 }
             });

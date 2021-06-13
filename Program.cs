@@ -9,7 +9,6 @@ using RRBot.Systems;
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Victoria;
 
@@ -133,13 +132,13 @@ namespace RRBot
             await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
             await client.SetGameAsync("with your father");
             await client.StartAsync();
-            await StartBanCheckAsync();
-            await StartMuteCheckAsync();    
             await Task.Delay(-1);
         }
 
         private async Task Client_Ready()
         {
+            Global.RunInBackground(async () => await StartBanCheckAsync());
+            Global.RunInBackground(async () => await StartMuteCheckAsync());
             await lavaSocketClient.StartAsync(client);
             lavaSocketClient.OnTrackFinished += serviceProvider.GetService<AudioService>().OnFinished;
         }
@@ -223,10 +222,10 @@ namespace RRBot
             // no good very bad word check
             if (arg.Channel.Name != "extremely-funny" && Global.niggerRegex.Matches(new string(message.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
             {
-                Global.RunInBackground(() => 
+                Global.RunInBackground(async () => 
                 {
-                    Thread.Sleep(TimeSpan.FromSeconds(10));
-                    message.DeleteAsync();
+                    await Task.Delay(TimeSpan.FromSeconds(10));
+                    await message.DeleteAsync();
                 });
             }
 

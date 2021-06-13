@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -91,10 +90,10 @@ namespace RRBot.Modules
             await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
             await ReplyAsync($"**{Context.User.ToString()}** would like y'all to sit down and stfu for {duration} seconds!");
 
-            Global.RunInBackground(() =>
+            Global.RunInBackground(async () =>
             {
-                Thread.Sleep(TimeSpan.FromSeconds(duration));
-                channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms);
+                await Task.Delay(TimeSpan.FromSeconds(duration));
+                await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms);
             });
 
             return CommandResult.FromSuccess();

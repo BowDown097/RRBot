@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -57,23 +56,23 @@ namespace RRBot.Modules
                 IUserMessage endMsg = await ReplyAsync($"{Context.Guild.GetRole(id).Mention} {Context.User.Mention} is calling for an end to this chaos!" +
                 $" React with {new Emoji("\uD83D\uDC4D")} if you wish to as well. Three votes is a win!");
                     
-                Global.RunInBackground(() =>
+                Global.RunInBackground(async () =>
                 {
                     // are we waiting?
                     bool waiting = true;
                     while (waiting)
                     {
-                        var reactors = endMsg.GetReactionUsersAsync(new Emoji("\uD83D\uDC4D"), 5).FlattenAsync().Result as ICollection<IUser>;
+                        var reactors = await endMsg.GetReactionUsersAsync(new Emoji("\uD83D\uDC4D"), 5).FlattenAsync() as ICollection<IUser>;
                         waiting = reactors.Count < 3;
-                        Thread.Sleep(TimeSpan.FromSeconds(5));
+                        await Task.Delay(TimeSpan.FromSeconds(10));
                     }
 
                     // we aren't waiting anymore, time to end!
-                    ReplyAsync("Alright. The debate is over! Chat will be purged shortly.");
-                    Thread.Sleep(TimeSpan.FromSeconds(5));
-                    var msgs = Context.Channel.GetMessagesAsync(1000).FlattenAsync().Result;
+                    await ReplyAsync("Alright. The debate is over! Chat will be purged shortly.");
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    var msgs = await Context.Channel.GetMessagesAsync(1000).FlattenAsync();
                     msgs = msgs.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
-                    (Context.Channel as SocketTextChannel).DeleteMessagesAsync(msgs);
+                    await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(msgs);
                     ongoingDebate = endingDebate = false;
                 });
 
