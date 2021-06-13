@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,6 +20,35 @@ namespace RRBot.Services
         {
             lavaRestClient = rest;
             lavaSocketClient = socket;
+        }
+
+        public async Task<RuntimeResult> GetCurrentlyPlayingAsync(SocketCommandContext context)
+        {
+            LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
+            if (player != null && player.IsPlaying)
+            {
+                LavaTrack track = player.CurrentTrack;
+
+                StringBuilder builder = new StringBuilder();
+                builder.AppendLine($"By: {track.Author}");
+                if (!track.IsStream) 
+                {
+                    TimeSpan pos = new TimeSpan(track.Position.Hours, track.Position.Minutes, track.Position.Seconds);
+                    builder.AppendLine($"Length: {track.Length.ToString()}\nPosition: {pos.ToString()}");
+                }
+
+                EmbedBuilder embed = new EmbedBuilder
+                {
+                    Color = Color.Red,
+                    Title = track.Title,
+                    Description = builder.ToString()
+                };
+
+                await context.Channel.SendMessageAsync(embed: embed.Build());
+                return CommandResult.FromSuccess();
+            }
+
+            return CommandResult.FromError($"{context.User.Mention}, there is no currently playing track.");
         }
 
         public async Task<RuntimeResult> PlayAsync(SocketCommandContext context, string query)
@@ -134,18 +164,15 @@ namespace RRBot.Services
 
         public async Task OnFinished(LavaPlayer player, LavaTrack track, TrackEndReason reason)
         {
-            if (!reason.ShouldPlayNext()) return;
-
-            if (!player.Queue.TryDequeue(out IQueueObject item) || !(item is LavaTrack nextTrack))
+            if (!player.Queue.TryDequeue(out IQueueObject item) || !(item is LavaTrack nextTrack) || !reason.ShouldPlayNext())
             {
-                await player.TextChannel.SendMessageAsync("There are no remaining tracks in the queue. I will now leave the voice channel.");
-                await player.StopAsync();
                 await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
+                await player.StopAsync();
             }
             else
             {
                 await player.PlayAsync(nextTrack);
-                string message = $"Now playing: {track.Title}\nBy: {track.Author}\n" + (track.IsStream ? "" : $"Length: {track.Length.ToString()}");
+                string message = $"Now playing: {track.Title}\nBy: {track.Author}\n" + (track.IsStream ? string.Empty : $"Length: {track.Length.ToString()}");
                 await player.TextChannel.SendMessageAsync(message);
             }
         }
