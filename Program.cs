@@ -18,9 +18,9 @@ namespace RRBot
     {
         private static void Main() => new Program().RunBotAsync().GetAwaiter().GetResult();
 
-        public static CommandService commands;
         public static FirestoreDb database = FirestoreDb.Create("rushrebornbot", new FirestoreClientBuilder { CredentialsPath = Credentials.CREDENTIALS_PATH }.Build());
         public static Logger logger;
+        private CommandService commands;
         private DiscordSocketClient client;
         private IServiceProvider serviceProvider;
         private LavaRestClient lavaRestClient;
@@ -140,7 +140,8 @@ namespace RRBot
             Global.RunInBackground(async () => await StartBanCheckAsync());
             Global.RunInBackground(async () => await StartMuteCheckAsync());
             await lavaSocketClient.StartAsync(client);
-            lavaSocketClient.OnTrackFinished += serviceProvider.GetService<AudioService>().OnFinished;
+            lavaSocketClient.OnPlayerUpdated += serviceProvider.GetService<AudioService>().OnPlayerUpdated;
+            lavaSocketClient.OnTrackFinished += serviceProvider.GetService<AudioService>().OnTrackFinished;
         }
 
         private Task Client_Log(LogMessage arg)
@@ -196,13 +197,13 @@ namespace RRBot
                 case CommandResult rwm:
                     if (rwm.Error == CommandError.Unsuccessful) await context.Channel.SendMessageAsync(rwm.Reason);
                     if (rwm.Error == CommandError.BadArgCount) 
-                        await context.Channel.SendMessageAsync($"{context.Message.Author.Mention}, you must specify at least {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!");
+                        await context.Channel.SendMessageAsync($"{context.User.Mention}, you must specify {command.Value.Parameters.Count(p => !p.IsOptional)} (or more) argument(s)!");
                     break;
                 default:
                     if (!result.IsSuccess) Console.WriteLine(result.ErrorReason);
                     if (result.Error == CommandError.UnmetPrecondition) await context.Channel.SendMessageAsync(result.ErrorReason);
                     if (result.Error == CommandError.BadArgCount)
-                        await context.Channel.SendMessageAsync($"{context.Message.Author.Mention}, you must specify at least {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!");
+                        await context.Channel.SendMessageAsync($"{context.User.Mention}, you must specify {command.Value.Parameters.Count(p => !p.IsOptional)} (or more) argument(s)!");
                     break;
             }
         }

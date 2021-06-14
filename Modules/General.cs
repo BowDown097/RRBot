@@ -23,6 +23,8 @@ namespace RRBot.Modules
 
     public class General : ModuleBase<SocketCommandContext>
     {
+        public CommandService Commands { get; set; }
+
         public static readonly Dictionary<string, string> waifus = new Dictionary<string, string>
         {
             { "Adolf Dripler", "https://i.redd.it/cd9v84v46ma21.jpg" },
@@ -104,7 +106,7 @@ namespace RRBot.Modules
         public async Task Help([Remainder] string command = "")
         {
             string strippedCommand = string.Join("", command.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
-            var modules = Program.commands.Modules;
+            var modules = Commands.Modules;
             
             if (string.IsNullOrWhiteSpace(command))
             {
@@ -125,22 +127,22 @@ namespace RRBot.Modules
 
             foreach (ModuleInfo moduleInfo in modules)
             {
-                if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
-                {
-                    DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
-                    DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
-                    if (modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw || !modSnap.TryGetValue<bool>("nsfw", out _))
-                    {
-                        await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
-                        return;
-                    }
-                }
-
                 foreach (CommandInfo commandInfo in moduleInfo.Commands)
                 {
                     IEnumerable<string> actualAliases = commandInfo.Aliases.Except(new string[] { commandInfo.Name }); // Aliases includes the actual command for some reason
                     if (commandInfo.Name.Equals(strippedCommand, StringComparison.OrdinalIgnoreCase) || actualAliases.Contains(strippedCommand.ToLower()))
                     {
+                        if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
+                        {
+                            DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
+                            DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
+                            if (modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw || !modSnap.TryGetValue<bool>("nsfw", out _))
+                            {
+                                await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
+                                return;
+                            }
+                        }
+
                         StringBuilder description = new StringBuilder($"**Description**: {commandInfo.Summary}\n**Usage**: {commandInfo.Remarks}");
                         if (actualAliases.Any()) description.Append($"\n**Alias(es)**: {string.Join(", ", actualAliases)}");
 
@@ -196,7 +198,7 @@ namespace RRBot.Modules
         public async Task Modules([Remainder] string module = "")
         {
             string strippedModule = string.Join("", module.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
-            var modules = Program.commands.Modules;
+            var modules = Commands.Modules;
 
             if (string.IsNullOrWhiteSpace(module))
             {
@@ -213,19 +215,19 @@ namespace RRBot.Modules
 
             foreach (ModuleInfo moduleInfo in modules)
             {
-                if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
-                {
-                    DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
-                    DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
-                    if (modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw || !modSnap.TryGetValue<bool>("nsfw", out _))
-                    {
-                        await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
-                        return;
-                    }
-                }
-
                 if (moduleInfo.Name.Equals(strippedModule, StringComparison.OrdinalIgnoreCase))
                 {
+                    if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
+                    {
+                        DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
+                        DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
+                        if (modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw || !modSnap.TryGetValue<bool>("nsfw", out _))
+                        {
+                            await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
+                            return;
+                        }
+                    }
+
                     EmbedBuilder moduleEmbed = new EmbedBuilder
                     {
                         Color = Color.Red,

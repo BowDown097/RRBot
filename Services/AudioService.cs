@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -127,10 +128,21 @@ namespace RRBot.Services
         public async Task<RuntimeResult> SkipTrackAsync(SocketCommandContext context)
         {
             LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
-            if (player != null && player.Queue.Count >= 1)
+            if (player != null)
             {
-                await player.SkipAsync();
-                await context.Channel.SendMessageAsync("Current track skipped!");
+                if (player.Queue.Count >= 1)
+                {
+                    LavaTrack track = player.Queue.Items.FirstOrDefault() as LavaTrack;
+                    await player.PlayAsync(track);
+                    await context.Channel.SendMessageAsync($"Now playing: {track.Title}\nBy: {track.Author}\n" + (track.IsStream ? string.Empty : $"Length: {track.Length.ToString()}"));
+                }
+                else
+                {
+                    await context.Channel.SendMessageAsync("Current track skipped!");
+                    await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
+                    await player.StopAsync();
+                }
+
                 return CommandResult.FromSuccess();
             }
 
@@ -162,8 +174,28 @@ namespace RRBot.Services
             return CommandResult.FromSuccess();
         }
 
-        public async Task OnFinished(LavaPlayer player, LavaTrack track, TrackEndReason reason)
+        // this is a fix for the player breaking if the bot is manually disconnected
+        public async Task OnPlayerUpdated(LavaPlayer player, LavaTrack track, TimeSpan position)
         {
+            if (!track.IsStream)
+            {
+                IEnumerable<IGuildUser> members = await player.VoiceChannel.GetUsersAsync().FlattenAsync();
+                if (!members.Any(member => member.IsBot) && track.Position.TotalSeconds > 5)
+                {
+                    await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
+                    await player.StopAsync();
+                }
+            }
+        }
+
+        public async Task OnTrackFinished(LavaPlayer player, LavaTrack track, TrackEndReason reason)
+        {
+            if (player.Queue.Count > 0 && !reason.ShouldPlayNext())
+            {
+                player.Queue.Dequeue();
+                return;
+            }
+
             if (!player.Queue.TryDequeue(out IQueueObject item) || !(item is LavaTrack nextTrack) || !reason.ShouldPlayNext())
             {
                 await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
