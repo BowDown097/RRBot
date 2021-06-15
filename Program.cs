@@ -106,7 +106,7 @@ namespace RRBot
             client.ReactionAdded += Client_ReactionAdded;
             client.ReactionRemoved += Client_ReactionRemoved;
             client.Ready += Client_Ready;
-            client.UserJoined += async (SocketGuildUser user) => await CashSystem.SetCash(user, 10);
+            client.UserJoined += Client_UserJoined;
             commands.CommandExecuted += Commands_CommandExecuted;
 
             // logger events
@@ -182,6 +182,13 @@ namespace RRBot
                 if (reaction.MessageId != msgId) return;
                 await user.RemoveRoleAsync(roleId);
             }
+        }
+
+        private async Task Client_UserJoined(SocketGuildUser user)
+        {
+            DocumentReference userDoc = database.Collection($"servers/{user.Guild.Id}/users").Document(user.Id.ToString());
+            DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
+            if (!snap.TryGetValue<float>("cash", out _)) await CashSystem.SetCash(user, 10);
         }
 
         private async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
