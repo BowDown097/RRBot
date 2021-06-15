@@ -27,8 +27,8 @@ namespace RRBot.Systems
                 {
                     float neededCash = snap.GetValue<float>(kvp.Key.Replace("Id", "Cost"));
                     ulong roleId = Convert.ToUInt64(kvp.Value);
-                    if (amount >= neededCash && !user.RoleIds.Contains(roleId)) await user.AddRoleAsync(user.Guild.GetRole(roleId));
-                    else if (amount <= neededCash && user.RoleIds.Contains(roleId)) await user.RemoveRoleAsync(user.Guild.GetRole(roleId));
+                    if (amount >= neededCash && !user.RoleIds.Contains(roleId)) await user.AddRoleAsync(roleId);
+                    else if (amount <= neededCash && user.RoleIds.Contains(roleId)) await user.RemoveRoleAsync(roleId);
                 }
             }
         }

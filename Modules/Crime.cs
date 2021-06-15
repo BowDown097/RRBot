@@ -136,14 +136,13 @@ namespace RRBot.Modules
 
         /*
         [Command("rob")]
-        [Summary("Rob another user for some money.. perhaps.")]
+        [Summary("Rob another user for some money (if you don't suck).")]
         [Remarks("``$rob [user] [money]")]
         [RequireCash]
         [RequireCooldown("robCooldown", "you cannot rob someone for {0}.")]
-        public async Task<RuntimeResult> Rob(IGuildUser user, float amount)
+        public async Task<RuntimeResult> Rob(IGuildUser user, [Remainder] string amountText)
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");
-            if (amount <= 0) return CommandResult.FromError($"{Context.User.Mention}, you can't rob for negative or no money!");
 
             DocumentReference aDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot aSnap = await aDoc.GetSnapshotAsync();
@@ -151,15 +150,24 @@ namespace RRBot.Modules
 
             DocumentReference tDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot tSnap = await tDoc.GetSnapshotAsync();
-            if (tSnap.TryGetValue("cash", out float tCash))
+            float tCash = tSnap.GetValue<float>("cash");
+            if (tCash < 0) return CommandResult.FromError($"{Context.User.Mention}, they're broke!");
+
+            float amount = -1f;
+            if (!float.TryParse(amountText, out amount))
             {
-                if (tCash < amount) return CommandResult.FromError($"{Context.User.Mention}, they don't have ${amount} or more!");
-
-                Random random = new Random();
-
+                if (amountText.Equals("all", StringComparison.OrdinalIgnoreCase))
+                    amount = tCash;
+                else
+                    return CommandResult.FromError($"{Context.User.Mention}, you have specified an invalid amount.");
             }
 
-            return CommandResult.FromError($"{Context.User.Mention}, they're broke!");        
+            if (amount <= 0) return CommandResult.FromError($"{Context.User.Mention}, you can't rob for negative or no money!");
+            if (tCash < amount) return CommandResult.FromError($"{Context.User.Mention}, they don't have ${amount}!");
+
+            Random random = new Random();
+
+            return CommandResult.FromSuccess();     
         }
         */
 

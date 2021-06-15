@@ -67,7 +67,6 @@ namespace RRBot
                     DocumentSnapshot snap = await doc.GetSnapshotAsync();
                     if (snap.TryGetValue("mutedRole", out ulong mutedId))
                     {
-                        SocketRole mutedRole = guild.GetRole(mutedId);
                         CollectionReference mutes = database.Collection($"servers/{guild.Id}/mutes");
                         foreach (DocumentReference muteDoc in mutes.ListDocumentsAsync().ToEnumerable())
                         {
@@ -77,7 +76,7 @@ namespace RRBot
 
                             if (timestamp <= Global.UnixTime())
                             {
-                                if (user != null) await user.RemoveRoleAsync(mutedRole);
+                                if (user != null) await user.RemoveRoleAsync(mutedId);
                                 await muteDoc.DeleteAsync();
                             }
                         }
@@ -157,36 +156,31 @@ namespace RRBot
 
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msgCached, ISocketMessageChannel channel, SocketReaction reaction)
         {
-            if (reaction.User.Value.IsBot) return;
+            SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
+            if (user.IsBot) return;
 
             IGuild guild = (channel as ITextChannel).Guild;
-
             DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
             {
                 if (reaction.MessageId != msgId) return;
-                SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
-                IRole role = guild.GetRole(roleId);
-                await user.AddRoleAsync(role);
+                await user.AddRoleAsync(roleId);
             }
         }
 
         private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msgCached, ISocketMessageChannel channel, SocketReaction reaction)
         {
-            if (reaction.User.Value.IsBot) return;
+            SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
+            if (user.IsBot) return;
 
-            ulong emoteId = (reaction.Emote as GuildEmote).Id;
             IGuild guild = (channel as ITextChannel).Guild;
-
             DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(emoteId.ToString(), out ulong roleId))
+            if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
             {
                 if (reaction.MessageId != msgId) return;
-                SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
-                IRole role = guild.GetRole(roleId);
-                await user.RemoveRoleAsync(role);
+                await user.RemoveRoleAsync(roleId);
             }
         }
 

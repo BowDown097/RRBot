@@ -30,8 +30,7 @@ namespace RRBot.Services
             {
                 LavaTrack track = player.CurrentTrack;
 
-                StringBuilder builder = new StringBuilder();
-                builder.AppendLine($"By: {track.Author}");
+                StringBuilder builder = new StringBuilder($"By: {track.Author}\n");
                 if (!track.IsStream) 
                 {
                     TimeSpan pos = new TimeSpan(track.Position.Hours, track.Position.Minutes, track.Position.Seconds);
@@ -71,7 +70,7 @@ namespace RRBot.Services
                 return CommandResult.FromError($"{context.User.Mention}, I could not find anything given your query.");
             LavaTrack track = search.Tracks.FirstOrDefault();
 
-            if (track.Length.TotalSeconds > 7200 && !track.IsStream)
+            if (!track.IsStream && track.Length.TotalSeconds > 7200)
             {
                 await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
                 return CommandResult.FromError($"{context.User.Mention}, this is too long for me to play! It must be 2 hours or shorter in length.");
@@ -86,8 +85,10 @@ namespace RRBot.Services
 
             await player.PlayAsync(track);
 
-            string message = $"Now playing: {track.Title}\nBy: {track.Author}\n" + (track.IsStream ? "" : $"Length: {track.Length.ToString()}");
-            await context.Channel.SendMessageAsync(message);
+            StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
+            if (!track.IsStream) message.Append($"Length: {track.Length.ToString()}");
+            await context.Channel.SendMessageAsync(message.ToString());
+
             await Program.logger.Custom_TrackStarted(user, user.VoiceChannel, track.Uri);
 
             return CommandResult.FromSuccess();
@@ -108,7 +109,9 @@ namespace RRBot.Services
                 for (int i = 0; i < player.Queue.Items.Count(); i++)
                 {
                     LavaTrack track = player.Queue.Items.ElementAt(i) as LavaTrack;
-                    playlist.AppendLine($"**{i + 1}**: {track.Title} by {track.Author} ({track.Length.ToString()})");
+
+                    playlist.AppendLine($"**{i + 1}**: {track.Title} by {track.Author}");
+                    if (!track.IsStream) playlist.Append($" ({track.Length.ToString()})");
                 }
 
                 EmbedBuilder embed = new EmbedBuilder
@@ -134,7 +137,10 @@ namespace RRBot.Services
                 {
                     LavaTrack track = player.Queue.Items.FirstOrDefault() as LavaTrack;
                     await player.PlayAsync(track);
-                    await context.Channel.SendMessageAsync($"Now playing: {track.Title}\nBy: {track.Author}\n" + (track.IsStream ? string.Empty : $"Length: {track.Length.ToString()}"));
+
+                    StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
+                    if (!track.IsStream) message.Append($"Length: {track.Length.ToString()}");
+                    await context.Channel.SendMessageAsync(message.ToString());
                 }
                 else
                 {
@@ -179,6 +185,7 @@ namespace RRBot.Services
         {
             if (!track.IsStream)
             {
+                Console.WriteLine("Doing your mom");
                 IEnumerable<IGuildUser> members = await player.VoiceChannel.GetUsersAsync().FlattenAsync();
                 if (!members.Any(member => member.IsBot) && track.Position.TotalSeconds > 5)
                 {
@@ -204,8 +211,10 @@ namespace RRBot.Services
             else
             {
                 await player.PlayAsync(nextTrack);
-                string message = $"Now playing: {track.Title}\nBy: {track.Author}\n" + (track.IsStream ? string.Empty : $"Length: {track.Length.ToString()}");
-                await player.TextChannel.SendMessageAsync(message);
+
+                StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
+                if (!track.IsStream) message.Append($"Length: {track.Length.ToString()}");
+                await player.TextChannel.SendMessageAsync(message.ToString());
             }
         }
     }

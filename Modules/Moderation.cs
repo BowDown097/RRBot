@@ -133,8 +133,7 @@ namespace RRBot.Modules
             {
                 if (user.RoleIds.Contains(mutedId) || user.RoleIds.Contains(staffId)) 
                     return CommandResult.FromError($"{Context.User.Mention}, you cannot mute **{user.ToString()}** because they are either already muted or a staff member.");
-
-                SocketRole role = Context.Guild.GetRole(mutedId);
+                    
                 char suffix = char.ToLowerInvariant(duration[duration.Length - 1]);
                 if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
                 {
@@ -167,7 +166,7 @@ namespace RRBot.Modules
                     await ReplyAsync(response);
                     await Program.logger.Custom_UserMuted(user, Context.User, duration, reason);
                     await muteDoc.SetAsync(new { Time = Global.UnixTime(timeSpan.TotalSeconds) });
-                    await user.AddRoleAsync(role);
+                    await user.AddRoleAsync(mutedId);
                     return CommandResult.FromSuccess();
                 }
 
@@ -242,12 +241,11 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("mutedRole", out ulong mutedId))
             {
-                SocketRole role = Context.Guild.GetRole(mutedId);
-                if (user.RoleIds.Contains(role.Id))
+                if (user.RoleIds.Contains(mutedId))
                 {
                     await Program.logger.Custom_UserUnmuted(user, Context.User);
                     await ReplyAsync($"**{Context.User.ToString()}** has unmuted **{user.ToString()}**.");
-                    await user.RemoveRoleAsync(role);
+                    await user.RemoveRoleAsync(mutedId);
                     return CommandResult.FromSuccess();
                 }
                 return CommandResult.FromError($"**{Context.User.ToString()}** is a brainiac and tried to unmute someone that wasn't muted in the first place. Everyone point and laugh!");

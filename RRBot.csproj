@@ -85,19 +85,19 @@
       <HintPath>..\packages\System.Interactive.Async.4.0.0\lib\net461\System.Interactive.Async.dll</HintPath>
     </Reference>
     <Reference Include="Discord.Net.Core">
-      <HintPath>..\packages\Discord.Net.Core.2.3.0\lib\net461\Discord.Net.Core.dll</HintPath>
+      <HintPath>..\packages\Discord.Net.Core.2.4.0\lib\net461\Discord.Net.Core.dll</HintPath>
     </Reference>
     <Reference Include="Discord.Net.Commands">
-      <HintPath>..\packages\Discord.Net.Commands.2.3.0\lib\net461\Discord.Net.Commands.dll</HintPath>
+      <HintPath>..\packages\Discord.Net.Commands.2.4.0\lib\net461\Discord.Net.Commands.dll</HintPath>
     </Reference>
     <Reference Include="Discord.Net.Rest">
-      <HintPath>..\packages\Discord.Net.Rest.2.3.0\lib\net461\Discord.Net.Rest.dll</HintPath>
+      <HintPath>..\packages\Discord.Net.Rest.2.4.0\lib\net461\Discord.Net.Rest.dll</HintPath>
     </Reference>
     <Reference Include="Discord.Net.Webhook">
-      <HintPath>..\packages\Discord.Net.Webhook.2.3.0\lib\netstandard2.0\Discord.Net.Webhook.dll</HintPath>
+      <HintPath>..\packages\Discord.Net.Webhook.2.4.0\lib\netstandard2.0\Discord.Net.Webhook.dll</HintPath>
     </Reference>
     <Reference Include="Discord.Net.WebSocket">
-      <HintPath>..\packages\Discord.Net.WebSocket.2.3.0\lib\net461\Discord.Net.WebSocket.dll</HintPath>
+      <HintPath>..\packages\Discord.Net.WebSocket.2.4.0\lib\net461\Discord.Net.WebSocket.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions">
       <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.5.0.0\lib\net461\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>

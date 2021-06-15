@@ -214,11 +214,14 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder
             {
                 Color = Color.Blue,
-                Description = $"{user.ToString()}\nIn: {voiceState.VoiceChannel.ToString()}",
                 Timestamp = DateTime.Now
             };
+            embed.Description = voiceState.VoiceChannel == null ? $"{user.ToString()}\nIn: {voiceStateOrig.VoiceChannel.ToString()}"
+                : $"{user.ToString()}\nIn: {voiceState.VoiceChannel.ToString()}";
 
-            if (!voiceStateOrig.IsDeafened && voiceState.IsDeafened) embed.Title = "User Server Deafened";
+            if (voiceStateOrig.VoiceChannel == null) embed.Title = "User Joined Voice Channel";
+            else if (voiceState.VoiceChannel == null) embed.Title = "User Left Voice Channel";
+            else if (!voiceStateOrig.IsDeafened && voiceState.IsDeafened) embed.Title = "User Server Deafened";
             else if (voiceStateOrig.IsDeafened && !voiceState.IsDeafened) embed.Title = "User Server Undeafened";
             else if (!voiceStateOrig.IsMuted && voiceState.IsMuted) embed.Title = "User Server Muted";
             else if (voiceStateOrig.IsMuted && !voiceState.IsMuted) embed.Title = "User Server Unmuted";
@@ -226,14 +229,13 @@ namespace RRBot.Systems
             else if (voiceStateOrig.IsSelfDeafened && !voiceState.IsSelfDeafened) embed.Title = "User Self Undeafened";
             else if (!voiceStateOrig.IsSelfMuted && voiceState.IsSelfMuted) embed.Title = "User Self Muted";
             else if (voiceStateOrig.IsSelfMuted && !voiceState.IsSelfMuted) embed.Title = "User Self Unmuted";
-            else if (voiceStateOrig.VoiceChannel == null) embed.Title = "User Joined Voice Channel";
             else if (voiceStateOrig.VoiceChannel.Id != voiceState.VoiceChannel.Id)
             {
                 embed.Title = "User Moved Voice Channels";
-                embed.Description = $"Original: ``{voiceStateOrig.VoiceChannel.ToString()}``\nCurrent: ``{voiceState.VoiceChannel.ToString()}``";
+                embed.Description = $"Original: {voiceStateOrig.VoiceChannel.ToString()}\nCurrent: {voiceState.VoiceChannel.ToString()}";
             }
 
-            await WriteToLogs(voiceState.VoiceChannel.Guild, embed);     
+            await WriteToLogs((user as SocketGuildUser).Guild, embed);     
         }
 
         public Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
