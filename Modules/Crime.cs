@@ -110,12 +110,12 @@ namespace RRBot.Modules
             if (user.IsBot) return CommandResult.FromError("Nope.");
             if (user.Id == Context.User.Id) return CommandResult.FromError($"{Context.User.Mention}, how are you supposed to rape yourself?");
 
-            DocumentReference aDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
+            CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
+            DocumentReference aDoc = users.Document(Context.User.Id.ToString());
             DocumentSnapshot aSnap = await aDoc.GetSnapshotAsync();
             float aCash = aSnap.GetValue<float>("cash");
 
-            DocumentReference tDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(user.Id.ToString());
-            DocumentSnapshot tSnap = await tDoc.GetSnapshotAsync();
+            DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
             float tCash = tSnap.GetValue<float>("cash");
             if (tCash > 0)
             {

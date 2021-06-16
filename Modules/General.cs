@@ -132,10 +132,10 @@ namespace RRBot.Modules
                     IEnumerable<string> actualAliases = commandInfo.Aliases.Except(new string[] { commandInfo.Name }); // Aliases includes the actual command for some reason
                     if (commandInfo.Name.Equals(strippedCommand, StringComparison.OrdinalIgnoreCase) || actualAliases.Contains(strippedCommand.ToLower()))
                     {
+                        CollectionReference config = Program.database.Collection($"servers/{Context.Guild.Id}/config");
                         if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
                         {
-                            DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
-                            DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
+                            DocumentSnapshot modSnap = await config.Document("modules").GetSnapshotAsync();
                             if (modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw || !modSnap.TryGetValue<bool>("nsfw", out _))
                             {
                                 await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
@@ -164,8 +164,7 @@ namespace RRBot.Modules
                             description.Append($"\nRequires {Enum.GetName(rUP.GuildPermission.GetType(), rUP.GuildPermission)} permission");
                         if (commandInfo.TryGetPrecondition(out RequireRoleAttribute rR) || moduleInfo.TryGetPrecondition(out rR))
                         {
-                            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
-                            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+                            DocumentSnapshot snap = await config.Document("roles").GetSnapshotAsync();
                             if (snap.TryGetValue(rR.DatabaseReference, out ulong roleId))
                             {
                                 IRole role = Context.Guild.GetRole(roleId);

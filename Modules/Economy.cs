@@ -137,43 +137,34 @@ namespace RRBot.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
-        /*
         [Alias("lb")]
         [Command("leaderboard")]
         [Summary("Check the leaderboard.")]
         [Remarks("``$leaderboard``")]
         public async Task Leaderboard()
         {
-            await ReplyAsync("Fetching leaderboard.. (this may take a while, db requests aren't very fast)");
-            // slow currently, i don't think i can make it faster. since it's slow, gotta run in background so bot actually works
-            Global.RunInBackground(() =>
+            CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
+            Query ordered = users.OrderByDescending("cash").Limit(10);
+            QuerySnapshot snap = await ordered.GetSnapshotAsync();
+
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < snap.Documents.Count; i++)
             {
-                IAsyncEnumerable<DocumentReference> users = Program.database.Collection($"servers/{Context.Guild.Id}/users").ListDocumentsAsync();
-                IAsyncEnumerable<DocumentReference> topTenUsers = users.OrderByDescendingAwait(async user => (await user.GetSnapshotAsync()).GetValue<float>("cash")).Take(10);
+                DocumentSnapshot doc = snap.Documents[i];
+                SocketGuildUser user = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
+                if (user == null) continue;
+                float cash = doc.GetValue<float>("cash");
+                builder.AppendLine($"{i + 1}: **{user.ToString()}**: ${Math.Round(cash, 2)}");
+            }
 
-                IEnumerable<DocumentReference> tTUEnum = topTenUsers.ToEnumerable();
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < tTUEnum.Count(); i++)
-                {
-                    DocumentReference doc = tTUEnum.ElementAt(i);
-                    DocumentSnapshot snap = doc.GetSnapshotAsync().Result;
-                    SocketGuildUser user = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
-                    if (user == null) continue;
-
-                    float cash = snap.GetValue<float>("cash");
-                    builder.AppendLine($"{i + 1}: **{user.ToString()}**: ${Math.Round(cash, 2)}");
-                }
-
-                EmbedBuilder embed = new EmbedBuilder
-                {
-                    Color = Color.Red,
-                    Title = "Leaderboard",
-                    Description = builder.ToString()
-                };
-                ReplyAsync(embed: embed.Build());
-            });
+            EmbedBuilder embed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                Title = "Leaderboard",
+                Description = builder.ToString()
+            };
+            await ReplyAsync(embed: embed.Build());
         }
-        */
 
         [Alias("roles")]
         [Command("ranks")]
@@ -205,6 +196,39 @@ namespace RRBot.Modules
             };
 
             await ReplyAsync(embed: embed.Build());
+        }
+
+        [Alias("give")]
+        [Command("sauce")]
+        [Summary("Sauce someone some cash.")]
+        [Remarks("``$sauce [user] [amount]")]
+        public async Task<RuntimeResult> Sauce(IGuildUser user, [Remainder] string amountText)
+        {
+            if (user.IsBot) return CommandResult.FromError("Nope.");
+            if (Context.User == user) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce yourself money. Don't even know how you would.");
+
+            CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
+            DocumentSnapshot aSnap = await users.Document(Context.User.Id.ToString()).GetSnapshotAsync();
+            float aCash = aSnap.GetValue<float>("cash");
+            DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
+            float tCash = tSnap.GetValue<float>("cash");
+
+            float amount = -1f;
+            if (!float.TryParse(amountText, out amount))
+            {
+                if (amountText.Equals("all", StringComparison.OrdinalIgnoreCase))
+                    amount = aCash;
+                else
+                    return CommandResult.FromError($"{Context.User.Mention}, you have specified an invalid amount.");
+            }
+            if (amount <= 0 || float.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce negative or no money!");
+            if (amount > aCash) return CommandResult.FromError($"{Context.User.Mention}, you do not have that much money!");
+
+            await CashSystem.SetCash(Context.User as IGuildUser, aCash - amount);
+            await CashSystem.SetCash(user, tCash + amount);
+
+            await ReplyAsync($"{Context.User.Mention}, you have sauced **{user.ToString()}** ${string.Format("{0:0.00}", amount)}.");
+            return CommandResult.FromSuccess();
         }
     }
 }

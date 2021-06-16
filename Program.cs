@@ -30,7 +30,7 @@ namespace RRBot
         {
             while (true)
             {
-                await Task.Delay(TimeSpan.FromSeconds(10));
+                await Task.Delay(TimeSpan.FromSeconds(30));
                 foreach (SocketGuild guild in client.Guilds)
                 {
                     CollectionReference bans = database.Collection($"servers/{guild.Id}/bans");
@@ -60,7 +60,7 @@ namespace RRBot
         {
             while (true)
             {
-                await Task.Delay(TimeSpan.FromSeconds(10));
+                await Task.Delay(TimeSpan.FromSeconds(30));
                 foreach (SocketGuild guild in client.Guilds)
                 {
                     DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("roles");

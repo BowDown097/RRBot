@@ -120,6 +120,7 @@ namespace RRBot.Modules
             return CommandResult.FromSuccess();
         }
 
+        [Alias("dilate")]
         [Command("mute")]
         [Summary("Mute any member for any amount of time with any reason.")]
         [Remarks("``$mute [user] [duration][s/m/h/d] <reason>``")]
