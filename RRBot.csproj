@@ -57,6 +57,8 @@
     <Compile Include="Preconditions\RequireRankLevel.cs" />
     <Compile Include="Preconditions\RequireNsfwEnabled.cs" />
     <Compile Include="Extensions\ModuleInfoExt.cs" />
+    <Compile Include="Modules\Tasks.cs" />
+    <Compile Include="Preconditions\RequireItem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

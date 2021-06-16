@@ -185,7 +185,6 @@ namespace RRBot.Services
         {
             if (!track.IsStream)
             {
-                Console.WriteLine("Doing your mom");
                 IEnumerable<IGuildUser> members = await player.VoiceChannel.GetUsersAsync().FlattenAsync();
                 if (!members.Any(member => member.IsBot) && track.Position.TotalSeconds > 5)
                 {

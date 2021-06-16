@@ -40,7 +40,6 @@ namespace RRBot.Modules
         [Command("loot")]
         [Summary("Loot some locations.")]
         [Remarks("``$loot``")]
-        [RequireCash]
         [RequireCooldown("lootCooldown", "you cannot loot for {0}.")]
         public async Task Loot()
         {
@@ -85,6 +84,16 @@ namespace RRBot.Modules
                 }
 
                 await CashSystem.SetCash(Context.User as IGuildUser, cash + moneyLooted);
+            }
+
+            if (random.Next(25) == 1)
+            {
+                string item = await CashSystem.RandomItem(Context.User as IGuildUser, random);
+                if (!string.IsNullOrEmpty(item))
+                {
+                    await CashSystem.RewardItem(Context.User as IGuildUser, item);
+                    await ReplyAsync($"Well I'll be damned! You also got yourself a {item}! Try going for a ``$mine``.");
+                }
             }
 
             await doc.SetAsync(new { lootCooldown = Global.UnixTime(3600) }, SetOptions.MergeAll);
@@ -175,7 +184,6 @@ namespace RRBot.Modules
         [Command("slavery")]
         [Summary("Get some slave labor goin'.")]
         [Remarks("``$slavery``")]
-        [RequireCash]
         [RequireCooldown("slaveryCooldown", "the slaves will die if you keep going like this! You should wait {0}.")]
         [RequireRankLevel(2)]
         public async Task Slavery()
@@ -221,13 +229,22 @@ namespace RRBot.Modules
                 }
             }
 
+            if (random.Next(25) == 1)
+            {
+                string item = await CashSystem.RandomItem(Context.User as IGuildUser, random);
+                if (!string.IsNullOrEmpty(item))
+                {
+                    await CashSystem.RewardItem(Context.User as IGuildUser, item);
+                    await ReplyAsync($"Well I'll be damned! You also got yourself a {item}! Try going for a ``$mine``.");
+                }
+            }
+
             await doc.SetAsync(new { slaveryCooldown = Global.UnixTime(3600) }, SetOptions.MergeAll);
         }
 
         [Command("whore")]
         [Summary("Sell your body for quick cash.")]
         [Remarks("``$whore``")]
-        [RequireCash]
         [RequireCooldown("whoreCooldown", "you cannot whore yourself out for {0}.")]
         [RequireRankLevel(1)]
         public async Task Whore()

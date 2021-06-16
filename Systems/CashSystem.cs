@@ -10,6 +10,68 @@ namespace RRBot.Systems
 {
     public static class CashSystem
     {
+        private static readonly Dictionary<string, int> rankings = new Dictionary<string, int>
+        {
+            { "Wooden", 0 },
+            { "Stone", 1 },
+            { "Iron", 2 },
+            { "Diamond", 3 }
+        };
+
+        public static readonly Dictionary<int, string> itemMap = new Dictionary<int, string>
+        {
+            { 0, "Wooden Pickaxe" },
+            { 1, "Stone Pickaxe" },
+            { 2, "Iron Pickaxe" },
+            { 3, "Diamond Pickaxe" },
+            { 4, "Wooden Sword" },
+            { 5, "Stone Sword" },
+            { 6, "Iron Sword" },
+            { 7, "Diamond Sword" },
+            { 8, "Wooden Shovel" },
+            { 9, "Stone Shovel" },
+            { 10, "Iron Shovel" },
+            { 11, "Diamond Shovel" },
+            { 12, "Wooden Axe" },
+            { 13, "Stone Axe" },
+            { 14, "Iron Axe" },
+            { 15, "Diamond Axe" },
+            { 16, "Wooden Hoe" },
+            { 17, "Stone Hoe" },
+            { 18, "Iron Hoe" },
+            { 19, "Diamond Hoe" },
+        };
+
+        public static string GetBestItem(List<string> items, string type)
+        {
+            List<string> itemsOfType = items.Where(item => item.EndsWith(type, StringComparison.Ordinal)).ToList();
+            return itemsOfType.Any()
+                ? itemsOfType.OrderByDescending(item => rankings[item.Replace(type, string.Empty).Trim()]).First()
+                : string.Empty;
+        }
+
+        public static async Task<string> RandomItem(IGuildUser user, Random random) 
+        {
+            Dictionary<int, string> newMap = itemMap;
+            DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
+            DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
+            if (snap.TryGetValue("items", out List<string> items)) newMap = newMap.Where(kvp => !items.Contains(kvp.Value)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+            return items.Count <= newMap.Count ? newMap[random.Next(newMap.Count)] : string.Empty;
+        }
+
+        public static async Task RewardItem(IGuildUser user, string item)
+        {
+            if (user.IsBot) return;
+
+            DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
+            DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
+
+            if (!snap.TryGetValue("items", out List<string> usrItems)) usrItems = new List<string>();
+            if (!usrItems.Contains(item)) usrItems.Add(item);
+            await userDoc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
+        }
+
         public static async Task SetCash(IGuildUser user, float amount)
         {
             if (user.IsBot) return;

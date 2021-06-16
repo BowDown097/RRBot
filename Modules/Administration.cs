@@ -27,6 +27,18 @@ namespace RRBot.Modules
             await ReplyAsync($"Blacklisted **{user.ToString()}**.");
         }
 
+        [Command("giveitem")]
+        [Summary("Give a user an item.")]
+        [Remarks("``$giveitem [user] item]``")]
+        [RequireRole("senateRole")]
+        public async Task<RuntimeResult> GiveItem(IGuildUser user, [Remainder] string item)
+        {
+            if (!CashSystem.itemMap.ContainsValue(item)) return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item!");
+            await CashSystem.RewardItem(user, item);
+            await ReplyAsync($"Gave **{user.ToString()}** a(n) **{item}**.");
+            return CommandResult.FromSuccess();
+        }
+
         [Command("resetcd")]
         [Summary("Reset your crime cooldowns.")]
         [Remarks("``$resetcd``")]
@@ -34,7 +46,10 @@ namespace RRBot.Modules
         public async Task ResetCooldowns()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            await doc.SetAsync(new { rapeCooldown = 0L, whoreCooldown = 0L, lootCooldown = 0L }, SetOptions.MergeAll);
+            await doc.SetAsync(
+            new { rapeCooldown = 0L, whoreCooldown = 0L, lootCooldown = 0L, slaveryCooldown = 0L, mineCooldown = 0L, digCooldown = 0L, chopCooldown = 0L, farmCooldown = 0L, 
+                huntCooldown = 0L }, 
+                SetOptions.MergeAll);
             await ReplyAsync($"{Context.User.Mention}, your cooldowns have been reset.");
         }
 

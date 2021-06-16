@@ -158,6 +158,8 @@ namespace RRBot.Modules
                             description.Append("\nRequires Staff");
                         if (commandInfo.TryGetPrecondition(out RequireCashAttribute rc) || moduleInfo.TryGetPrecondition(out rc))
                             description.Append((int)rc.Amount == 1 ? "\nRequires any amount of cash" : $"\nRequires ${(int)rc.Amount}");
+                        if (commandInfo.TryGetPrecondition(out RequireItemAttribute ri) || moduleInfo.TryGetPrecondition(out ri))
+                            description.Append(string.IsNullOrEmpty(ri.ItemType) ? "\nRequires an item" : $"\nRequires a {ri.ItemType}");
                         if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP) || moduleInfo.TryGetPrecondition(out rUP))
                             description.Append($"\nRequires {Enum.GetName(rUP.GuildPermission.GetType(), rUP.GuildPermission)} permission");
                         if (commandInfo.TryGetPrecondition(out RequireRoleAttribute rR) || moduleInfo.TryGetPrecondition(out rR))
