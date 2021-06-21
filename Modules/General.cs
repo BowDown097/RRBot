@@ -24,6 +24,7 @@ namespace RRBot.Modules
     public class General : ModuleBase<SocketCommandContext>
     {
         public CommandService Commands { get; set; }
+        public static readonly Random random = new Random();
 
         public static readonly Dictionary<string, string> waifus = new Dictionary<string, string>
         {
@@ -38,6 +39,7 @@ namespace RRBot.Modules
             { "DaBaby", "https://s3.amazonaws.com/media.thecrimson.com/photos/2021/03/02/205432_1348650.png" },
             { "Drake", "https://cdn.discordapp.com/attachments/804898294873456701/817272071871922226/ee3e7e8c7c26dbef49b8095c1ca90db2.png" },
             { "Drip Goku", "https://i1.sndcdn.com/artworks-000558462795-v3asuu-t500x500.jpg" },
+            { "eduardo", "https://i.imgur.com/1bwSckX.png" },
             { "Emilia", "https://kawaii-mobile.com/wp-content/uploads/2016/10/Re-Zero-Emilia.iPhone-6-Plus-wallpaper-1080x1920.jpg" },
             { "Felix", "https://cdn.discordapp.com/attachments/804898294873456701/817269666845294622/739fa73c-be4f-40c3-a057-50395eb46539.png" },
             { "French Person", "https://live.staticflickr.com/110/297887549_2dc0ee273f_c.jpg" },
@@ -251,7 +253,6 @@ namespace RRBot.Modules
         [RequireCash]
         public async Task Suicide()
         {
-            Random random = new Random();
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
 
             switch (random.Next(4))
@@ -280,7 +281,6 @@ namespace RRBot.Modules
         [Remarks("``$waifu``")]
         public async Task NewWaifu()
         {
-            Random random = new Random();
             List<string> keys = Enumerable.ToList(waifus.Keys);
             string waifu = keys[random.Next(waifus.Count)];
 

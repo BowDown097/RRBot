@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -119,9 +120,10 @@ namespace RRBot.Systems
                 Timestamp = DateTime.Now
             };
 
-            if (Global.niggerRegex.Matches(new string(msgAfter.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
+            Regex nRegex = new Regex(@"[nɴⁿₙñńņňÑŃŅŇ][i1!¡ɪᶦᵢ¹₁jįīïîíì|;:𝗂][g9ɢᵍ𝓰𝓰qģğĢĞ][g9ɢᵍ𝓰𝓰qģğĢĞ][e3€ᴇᵉₑ³₃ĖĘĚĔėęěĕəèéêëē𝖾][rʀʳᵣŔŘŕř]");
+            if (nRegex.Matches(new string(msgAfter.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
             {
-                Global.RunInBackground(async () =>
+                await Task.Factory.StartNew(async () =>
                 {
                     await Task.Delay(TimeSpan.FromSeconds(10));
                     await msgAfter.DeleteAsync();
@@ -238,13 +240,13 @@ namespace RRBot.Systems
             await WriteToLogs((user as SocketGuildUser).Guild, embed);     
         }
 
-        public Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
+        public async Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
         {
             string msgLogs = string.Empty;
             foreach (IMessage message in messages)
                 msgLogs += $"{message.Author.ToString()} @ {message.Timestamp.ToString()}: {message.Content}\n";
 
-            Global.RunInBackground(async () =>
+            await Task.Factory.StartNew(async () =>
             {
                 try
                 {
@@ -284,8 +286,6 @@ namespace RRBot.Systems
                     File.Delete("messages.txt");
                 }
             });
-
-            return Task.CompletedTask;
         }
 
         public async Task Custom_TrackStarted(SocketGuildUser user, SocketVoiceChannel vc, Uri url)

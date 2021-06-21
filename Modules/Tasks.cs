@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Google.Cloud.Firestore;
+using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
 
@@ -11,9 +12,10 @@ namespace RRBot.Modules
 {
     public class Tasks : ModuleBase<SocketCommandContext>
     {
+        public static readonly Random random = new Random();
+
         private async Task GenericTask(string itemType, string activity, string thing, object cooldown)
         {
-            Random random = new Random();
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             List<string> items = snap.GetValue<List<string>>("items");
@@ -36,28 +38,28 @@ namespace RRBot.Modules
         [Remarks("``$chop``")]
         [RequireCooldown("chopCooldown", "you cannot chop wood for {0}.")]
         [RequireItem("Axe")]
-        public async Task Chop() => await GenericTask("Axe", "chopped down", "trees", new { chopCooldown = Global.UnixTime(3600) });
+        public async Task Chop() => await GenericTask("Axe", "chopped down", "trees", new { chopCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
 
         [Command("dig")]
         [Summary("Go digging.")]
         [Remarks("``$dig``")]
         [RequireCooldown("digCooldown", "you cannot go digging for {0}.")]
         [RequireItem("Shovel")]
-        public async Task Dig() => await GenericTask("Shovel", "mined", "dirt", new { digCooldown = Global.UnixTime(3600) });
+        public async Task Dig() => await GenericTask("Shovel", "mined", "dirt", new { digCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
 
         [Command("farm")]
         [Summary("Go farming.")]
         [Remarks("``$farm``")]
         [RequireCooldown("farmCooldown", "you cannot farm for {0}.")]
         [RequireItem("Hoe")]
-        public async Task Farm() => await GenericTask("Hoe", "farmed", "crops", new { farmCooldown = Global.UnixTime(3600) });
+        public async Task Farm() => await GenericTask("Hoe", "farmed", "crops", new { farmCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
 
         [Command("hunt")]
         [Summary("Go hunting.")]
         [Remarks("``$hunt``")]
         [RequireCooldown("huntCooldown", "you cannot go hunting for {0}.")]
         [RequireItem("Sword")]
-        public async Task Hunt() => await GenericTask("Sword", "hunted", "mobs", new { huntCooldown = Global.UnixTime(3600) });
+        public async Task Hunt() => await GenericTask("Sword", "hunted", "mobs", new { huntCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
 
         [Command("mine")]
         [Summary("Go mining.")]
@@ -66,7 +68,6 @@ namespace RRBot.Modules
         [RequireItem("Pickaxe")]
         public async Task Mine()
         {
-            Random random = new Random();
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             List<string> items = snap.GetValue<List<string>>("items");
@@ -96,7 +97,7 @@ namespace RRBot.Modules
             }
             await CashSystem.SetCash(Context.User as IGuildUser, cash + cashGained);
 
-            await doc.SetAsync(new { mineCooldown = Global.UnixTime(3600) }, SetOptions.MergeAll);
+            await doc.SetAsync(new { mineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
         }
     }
 }

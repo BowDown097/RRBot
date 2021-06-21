@@ -19,7 +19,7 @@ namespace RRBot.Preconditions
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.Message.Author.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            if (snap.TryGetValue("items", out List<string> items))
+            if (snap.TryGetValue("items", out List<string> items) && items.Count > 0)
             {
                 if (string.IsNullOrEmpty(ItemType)) return PreconditionResult.FromSuccess();
                 return items.Any(item => item.EndsWith(ItemType, StringComparison.Ordinal))

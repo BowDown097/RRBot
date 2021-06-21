@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Google.Cloud.Firestore;
+using RRBot.Extensions;
 
 namespace RRBot.Systems
 {
@@ -45,7 +46,7 @@ namespace RRBot.Systems
         public static string GetBestItem(List<string> items, string type)
         {
             List<string> itemsOfType = items.Where(item => item.EndsWith(type, StringComparison.Ordinal)).ToList();
-            return itemsOfType.Any()
+            return itemsOfType.Count > 0
                 ? itemsOfType.OrderByDescending(item => rankings[item.Replace(type, string.Empty).Trim()]).First()
                 : string.Empty;
         }
@@ -100,9 +101,10 @@ namespace RRBot.Systems
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            if (snap.TryGetValue("timeTillCash", out long time) && time <= Global.UnixTime()) await SetCash(context.User as IGuildUser, snap.GetValue<float>("cash") + 10);
+            if (snap.TryGetValue("timeTillCash", out long time) && time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds()) 
+                await SetCash(context.User as IGuildUser, snap.GetValue<float>("cash") + 10);
 
-            await doc.SetAsync(new { timeTillCash = Global.UnixTime(TimeSpan.FromMinutes(1).TotalSeconds) }, SetOptions.MergeAll);
+            await doc.SetAsync(new { timeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(TimeSpan.FromMinutes(1).TotalSeconds) }, SetOptions.MergeAll);
         }
     }
 }

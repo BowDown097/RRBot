@@ -7,6 +7,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
+using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
 
@@ -47,24 +48,24 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             StringBuilder description = new StringBuilder();
-            if (snap.TryGetValue("rapeCooldown", out long rapeCd) && rapeCd - Global.UnixTime() > 0L)
-                description.AppendLine($"**Rape**: {Global.FormatTime(rapeCd - Global.UnixTime())}");
-            if (snap.TryGetValue("whoreCooldown", out long whoreCd) && whoreCd - Global.UnixTime() > 0L)
-                description.AppendLine($"**Whore**: {Global.FormatTime(whoreCd - Global.UnixTime())}");
-            if (snap.TryGetValue("lootCooldown", out long lootCd) && lootCd - Global.UnixTime() > 0L)
-                description.AppendLine($"**Loot**: {Global.FormatTime(lootCd - Global.UnixTime())}");
-            if (snap.TryGetValue("slaveryCooldown", out long slaveryCd) && slaveryCd - Global.UnixTime() > 0L)
-                description.AppendLine($"**Slavery**: {Global.FormatTime(slaveryCd - Global.UnixTime())}");
-            if (snap.TryGetValue("chopCooldown", out long chopCd) && chopCd - Global.UnixTime() > 0L)
-                description.AppendLine($"**Chopping Wood**: {Global.FormatTime(chopCd - Global.UnixTime())}");
-            if (snap.TryGetValue("digCooldown", out long digCd) && digCd - Global.UnixTime() > 0L)
-                description.AppendLine($"**Digging**: {Global.FormatTime(digCd - Global.UnixTime())}");
-            if (snap.TryGetValue("farmCooldown", out long farmCd) && farmCd - Global.UnixTime() > 0L)
-                description.AppendLine($"**Farming**: {Global.FormatTime(farmCd - Global.UnixTime())}");
-            if (snap.TryGetValue("huntCooldown", out long huntCd) && huntCd - Global.UnixTime() > 0L)
-                description.AppendLine($"**Hunting**: {Global.FormatTime(huntCd - Global.UnixTime())}");
-            if (snap.TryGetValue("mineCooldown", out long mineCd) && mineCd - Global.UnixTime() > 0L)
-                description.AppendLine($"**Mining**: {Global.FormatTime(mineCd - Global.UnixTime())}");
+            if (snap.TryGetValue("rapeCooldown", out long rapeCd) && rapeCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Rape**: {TimeSpan.FromSeconds(rapeCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("whoreCooldown", out long whoreCd) && whoreCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Whore**: {TimeSpan.FromSeconds(whoreCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("lootCooldown", out long lootCd) && lootCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Loot**: {TimeSpan.FromSeconds(lootCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("slaveryCooldown", out long slaveryCd) && slaveryCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Slavery**: {TimeSpan.FromSeconds(slaveryCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("chopCooldown", out long chopCd) && chopCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Chopping Wood**: {TimeSpan.FromSeconds(chopCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("digCooldown", out long digCd) && digCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Digging**: {TimeSpan.FromSeconds(digCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("farmCooldown", out long farmCd) && farmCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Farming**: {TimeSpan.FromSeconds(farmCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("huntCooldown", out long huntCd) && huntCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Hunting**: {TimeSpan.FromSeconds(huntCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("mineCooldown", out long mineCd) && mineCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Mining**: {TimeSpan.FromSeconds(mineCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
 
             EmbedBuilder embed = new EmbedBuilder
             {

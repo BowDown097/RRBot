@@ -8,6 +8,7 @@ using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
+using RRBot.Extensions;
 using RRBot.Preconditions;
 
 namespace RRBot.Modules
@@ -25,7 +26,8 @@ namespace RRBot.Modules
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId))
+            if ((snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId)) || 
+            (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId)))
                 return CommandResult.FromError($"{Context.User.Mention}, you cannot ban **{user.ToString()}** because they are a staff member.");
 
             if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
@@ -59,7 +61,7 @@ namespace RRBot.Modules
                 response += string.IsNullOrWhiteSpace(reason) ? ". So long, sack of shit!" : $"for `{reason}`. So long, sack of shit!";
                 await ReplyAsync(response);
                 await Program.logger.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
-                await banDoc.SetAsync(new { Time = Global.UnixTime(timeSpan.TotalSeconds) });
+                await banDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(timeSpan.TotalSeconds) });
                 await user.BanAsync(reason: reason);
                 return CommandResult.FromSuccess();
             }
@@ -89,7 +91,7 @@ namespace RRBot.Modules
             await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
             await ReplyAsync($"**{Context.User.ToString()}** would like y'all to sit down and stfu for {duration} seconds!");
 
-            Global.RunInBackground(async () =>
+            await Task.Factory.StartNew(async () =>
             {
                 await Task.Delay(TimeSpan.FromSeconds(duration));
                 await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms);
@@ -108,7 +110,8 @@ namespace RRBot.Modules
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId)) 
+            if (snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId) ||
+            (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId))) 
                 return CommandResult.FromError($"{Context.User.Mention}, you cannot kick **{user.ToString()}** because they are a staff member.");
 
             await user.KickAsync(reason);
@@ -130,9 +133,9 @@ namespace RRBot.Modules
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("mutedRole", out ulong mutedId) && snap.TryGetValue("houseRole", out ulong staffId))
+            if (snap.TryGetValue("mutedRole", out ulong mutedId) && snap.TryGetValue("houseRole", out ulong staffId) && snap.TryGetValue("senateRole", out ulong senateId))
             {
-                if (user.RoleIds.Contains(mutedId) || user.RoleIds.Contains(staffId)) 
+                if (user.RoleIds.Contains(mutedId) || user.RoleIds.Contains(staffId) || user.RoleIds.Contains(senateId)) 
                     return CommandResult.FromError($"{Context.User.Mention}, you cannot mute **{user.ToString()}** because they are either already muted or a staff member.");
                     
                 char suffix = char.ToLowerInvariant(duration[duration.Length - 1]);
@@ -166,7 +169,7 @@ namespace RRBot.Modules
                     response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
                     await ReplyAsync(response);
                     await Program.logger.Custom_UserMuted(user, Context.User, duration, reason);
-                    await muteDoc.SetAsync(new { Time = Global.UnixTime(timeSpan.TotalSeconds) });
+                    await muteDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(timeSpan.TotalSeconds) });
                     await user.AddRoleAsync(mutedId);
                     return CommandResult.FromSuccess();
                 }

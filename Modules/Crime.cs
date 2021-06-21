@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Google.Cloud.Firestore;
+using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
 
@@ -11,6 +13,8 @@ namespace RRBot.Modules
 {
     public class Crime : ModuleBase<SocketCommandContext>
     {
+        public static readonly Random random = new Random();
+
         [Command("bully")]
         [Summary("Change the nickname of any victim you wish!")]
         [Remarks("``$bully [user] [nickname]``")]
@@ -22,9 +26,10 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("houseRole", out ulong staffId))
             {
+                Regex nRegex = new Regex(@"[nɴⁿₙñńņňÑŃŅŇ][i1!¡ɪᶦᵢ¹₁jįīïîíì|;:𝗂][g9ɢᵍ𝓰𝓰qģğĢĞ][g9ɢᵍ𝓰𝓰qģğĢĞ][e3€ᴇᵉₑ³₃ĖĘĚĔėęěĕəèéêëē𝖾][rʀʳᵣŔŘŕř]");
                 if (user.Id == Context.User.Id) return CommandResult.FromError($"{Context.User.Mention}, no masochism here!");
                 if (user.IsBot || user.RoleIds.Contains(staffId)) return CommandResult.FromError($"{Context.User.Mention}, you cannot bully someone who is a bot or staff member.");
-                if (Global.niggerRegex.Matches(new string(nickname.Where(char.IsLetter).ToArray()).ToLower()).Count != 0) 
+                if (nRegex.Matches(new string(nickname.Where(char.IsLetter).ToArray()).ToLower()).Count != 0) 
                     return CommandResult.FromError($"{Context.User.Mention}, you cannot bully someone to the funny word.");
                 if (nickname.Length > 32) return CommandResult.FromError($"{Context.User.Mention}, the bully nickname is longer than the maximum accepted length.");
 
@@ -46,7 +51,6 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             float cash = snap.GetValue<float>("cash");
-            Random random = new Random();
 
             if (random.Next(10) > 7)
             {
@@ -86,7 +90,7 @@ namespace RRBot.Modules
                 await CashSystem.SetCash(Context.User as IGuildUser, cash + moneyLooted);
             }
 
-            if (random.Next(25) == 1)
+            if (random.Next(20) == 1)
             {
                 string item = await CashSystem.RandomItem(Context.User as IGuildUser, random);
                 if (!string.IsNullOrEmpty(item))
@@ -96,7 +100,7 @@ namespace RRBot.Modules
                 }
             }
 
-            await doc.SetAsync(new { lootCooldown = Global.UnixTime(3600) }, SetOptions.MergeAll);
+            await doc.SetAsync(new { lootCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
         }
 
         [Alias("strugglesnuggle")]
@@ -119,7 +123,6 @@ namespace RRBot.Modules
             float tCash = tSnap.GetValue<float>("cash");
             if (tCash > 0)
             {
-                Random random = new Random();
                 double rapePercent = 5 + (8 - 5) * random.NextDouble(); // lose/gain between 5-8% depending on outcome
                 if (random.Next(10) > 4)
                 {
@@ -136,7 +139,7 @@ namespace RRBot.Modules
                     $" You just paid **${string.Format("{0:0.00}", repairs)}** in asshole repairs.");
                 }
 
-                await aDoc.SetAsync(new { rapeCooldown = Global.UnixTime(3600) }, SetOptions.MergeAll);
+                await aDoc.SetAsync(new { rapeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
                 return CommandResult.FromSuccess();
             }
 
@@ -191,7 +194,6 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             float cash = snap.GetValue<float>("cash");
-            Random random = new Random();
 
             if (random.Next(10) > 7)
             {
@@ -229,7 +231,7 @@ namespace RRBot.Modules
                 }
             }
 
-            if (random.Next(25) == 1)
+            if (random.Next(20) == 1)
             {
                 string item = await CashSystem.RandomItem(Context.User as IGuildUser, random);
                 if (!string.IsNullOrEmpty(item))
@@ -239,7 +241,7 @@ namespace RRBot.Modules
                 }
             }
 
-            await doc.SetAsync(new { slaveryCooldown = Global.UnixTime(3600) }, SetOptions.MergeAll);
+            await doc.SetAsync(new { slaveryCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
         }
 
         [Command("whore")]
@@ -252,7 +254,6 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             float cash = snap.GetValue<float>("cash");
-            Random random = new Random();
 
             if (random.Next(10) > 7)
             {
@@ -288,7 +289,7 @@ namespace RRBot.Modules
                 }
             }
 
-            await doc.SetAsync(new { whoreCooldown = Global.UnixTime(3600) }, SetOptions.MergeAll);
+            await doc.SetAsync(new { whoreCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
         }
     }
 }

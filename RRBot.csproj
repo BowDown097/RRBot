@@ -34,7 +34,6 @@
     <Compile Include="Modules\Moderation.cs" />
     <Compile Include="Modules\Polls.cs" />
     <Compile Include="Modules\Debate.cs" />
-    <Compile Include="Global.cs" />
     <Compile Include="Modules\Crime.cs" />
     <Compile Include="Preconditions\RequireBeInChannel.cs" />
     <Compile Include="Preconditions\RequireRole.cs" />
@@ -49,7 +48,6 @@
     <Compile Include="Systems\CashSystem.cs" />
     <Compile Include="Systems\Logger.cs" />
     <Compile Include="Modules\Music.cs" />
-    <Compile Include="Services\AudioService.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="Preconditions\RequireDJ.cs" />
     <Compile Include="Extensions\CommandInfoExt.cs" />
@@ -59,6 +57,9 @@
     <Compile Include="Extensions\ModuleInfoExt.cs" />
     <Compile Include="Modules\Tasks.cs" />
     <Compile Include="Preconditions\RequireItem.cs" />
+    <Compile Include="Systems\AudioSystem.cs" />
+    <Compile Include="Extensions\TimeSpanExt.cs" />
+    <Compile Include="Extensions\DateTimeOffsetExt.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -200,7 +201,6 @@
     <Folder Include="Modules\" />
     <Folder Include="Preconditions\" />
     <Folder Include="Systems\" />
-    <Folder Include="Services\" />
     <Folder Include="Extensions\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

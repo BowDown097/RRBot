@@ -10,14 +10,14 @@ using Victoria;
 using Victoria.Entities;
 using Victoria.Queue;
 
-namespace RRBot.Services
+namespace RRBot.Systems
 {
-    public sealed class AudioService
+    public sealed class AudioSystem
     {
         private LavaRestClient lavaRestClient;
         private LavaSocketClient lavaSocketClient;
 
-        public AudioService(LavaRestClient rest, LavaSocketClient socket)
+        public AudioSystem(LavaRestClient rest, LavaSocketClient socket)
         {
             lavaRestClient = rest;
             lavaSocketClient = socket;
@@ -31,7 +31,7 @@ namespace RRBot.Services
                 LavaTrack track = player.CurrentTrack;
 
                 StringBuilder builder = new StringBuilder($"By: {track.Author}\n");
-                if (!track.IsStream) 
+                if (!track.IsStream)
                 {
                     TimeSpan pos = new TimeSpan(track.Position.Hours, track.Position.Minutes, track.Position.Seconds);
                     builder.AppendLine($"Length: {track.Length.ToString()}\nPosition: {pos.ToString()}");
@@ -66,7 +66,7 @@ namespace RRBot.Services
             }
 
             Victoria.Entities.SearchResult search = await lavaRestClient.SearchYouTubeAsync(query);
-            if (search.LoadType == LoadType.NoMatches || search.LoadType == LoadType.LoadFailed) 
+            if (search.LoadType == LoadType.NoMatches || search.LoadType == LoadType.LoadFailed)
                 return CommandResult.FromError($"{context.User.Mention}, I could not find anything given your query.");
             LavaTrack track = search.Tracks.FirstOrDefault();
 

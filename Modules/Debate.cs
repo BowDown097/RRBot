@@ -54,7 +54,7 @@ namespace RRBot.Modules
                 IUserMessage endMsg = await ReplyAsync($"{Context.Guild.GetRole(id).Mention} {Context.User.Mention} is calling for an end to this chaos!" +
                 $" React with {new Emoji("\uD83D\uDC4D")} if you wish to as well. Three votes is a win!");
                     
-                Global.RunInBackground(async () =>
+                await Task.Factory.StartNew(async () =>
                 {
                     // are we waiting?
                     bool waiting = true;

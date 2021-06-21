@@ -4,11 +4,11 @@ using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using Google.Cloud.Firestore.V1;
 using Microsoft.Extensions.DependencyInjection;
-using RRBot.Services;
 using RRBot.Systems;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Victoria;
 
@@ -46,7 +46,7 @@ namespace RRBot
                             continue;
                         }
 
-                        if (timestamp <= Global.UnixTime())
+                        if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                         {
                             await guild.RemoveBanAsync(userId);
                             await banDoc.DeleteAsync();
@@ -74,7 +74,7 @@ namespace RRBot
                             long timestamp = snapshot.GetValue<long>("Time");
                             SocketGuildUser user = guild.GetUser(Convert.ToUInt64(muteDoc.Id));
 
-                            if (timestamp <= Global.UnixTime())
+                            if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                             {
                                 if (user != null) await user.RemoveRoleAsync(mutedId);
                                 await muteDoc.DeleteAsync();
@@ -97,7 +97,7 @@ namespace RRBot
                 .AddSingleton(commands)
                 .AddSingleton(lavaRestClient)
                 .AddSingleton(lavaSocketClient)
-                .AddSingleton<AudioService>()
+                .AddSingleton<AudioSystem>()
                 .BuildServiceProvider();
 
             // general events
@@ -136,11 +136,11 @@ namespace RRBot
 
         private async Task Client_Ready()
         {
-            Global.RunInBackground(async () => await StartBanCheckAsync());
-            Global.RunInBackground(async () => await StartMuteCheckAsync());
+            await Task.Factory.StartNew(async () => await StartBanCheckAsync());
+            await Task.Factory.StartNew(async () => await StartMuteCheckAsync());
             await lavaSocketClient.StartAsync(client);
-            lavaSocketClient.OnPlayerUpdated += serviceProvider.GetService<AudioService>().OnPlayerUpdated;
-            lavaSocketClient.OnTrackFinished += serviceProvider.GetService<AudioService>().OnTrackFinished;
+            lavaSocketClient.OnPlayerUpdated += serviceProvider.GetService<AudioSystem>().OnPlayerUpdated;
+            lavaSocketClient.OnTrackFinished += serviceProvider.GetService<AudioSystem>().OnTrackFinished;
         }
 
         private Task Client_Log(LogMessage arg)
@@ -215,36 +215,49 @@ namespace RRBot
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
         }
 
-        private async Task HandleCommandAsync(SocketMessage arg)
+        private async Task HandleCommandAsync(SocketMessage msg)
         {
-            SocketUserMessage message = arg as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(client, message);
+            SocketUserMessage userMsg = msg as SocketUserMessage;
+            SocketCommandContext context = new SocketCommandContext(client, userMsg);
             if (context.User.IsBot) return;
 
-            // no good very bad word check
-            if (arg.Channel.Name != "extremely-funny" && Global.niggerRegex.Matches(new string(message.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
+            // steam scam check
+            if (userMsg.Embeds.Count > 0)
             {
-                Global.RunInBackground(async () => 
+                Embed epicEmbed = userMsg.Embeds.FirstOrDefault();
+                if (epicEmbed.Title.StartsWith("Trade offer", StringComparison.Ordinal) && !epicEmbed.Url.Contains("steamcommunity")) await userMsg.DeleteAsync();
+            }
+
+            // no good very bad word check
+            Regex nRegex = new Regex(@"[nɴⁿₙñńņňÑŃŅŇ][i1!¡ɪᶦᵢ¹₁jįīïîíì|;:𝗂][g9ɢᵍ𝓰𝓰qģğĢĞ][g9ɢᵍ𝓰𝓰qģğĢĞ][e3€ᴇᵉₑ³₃ĖĘĚĔėęěĕəèéêëē𝖾][rʀʳᵣŔŘŕř]");
+            if (userMsg.Channel.Name != "extremely-funny" && nRegex.Matches(new string(userMsg.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
+            {
+                await Task.Factory.StartNew(async () => 
                 {
                     await Task.Delay(TimeSpan.FromSeconds(10));
-                    await message.DeleteAsync();
+                    await userMsg.DeleteAsync();
                 });
             }
 
             // command handler
-            DocumentReference doc = database.Collection("globalConfig").Document(context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (!snap.TryGetValue("banned", out bool banned))
+            int argPos = 0;
+            if (userMsg.HasCharPrefix('$', ref argPos))
             {
-                int argPos = 0;
-                if (message.HasCharPrefix('$', ref argPos) || message.HasMentionPrefix(client.CurrentUser, ref argPos))
-                    await commands.ExecuteAsync(context, argPos, serviceProvider);
-                else
-                    await CashSystem.TryMessageReward(context);
+                // ban check
+                DocumentReference doc = database.Collection("globalConfig").Document(context.User.Id.ToString());
+                DocumentSnapshot snap = await doc.GetSnapshotAsync();
+                if (snap.TryGetValue<bool>("banned", out _))
+                {
+                    await context.Channel.SendMessageAsync($"{context.User.Mention}, you are banned from using the bot!");
+                    return;
+                }
+
+                // execute command if all went well
+                await commands.ExecuteAsync(context, argPos, serviceProvider);
             }
             else
             {
-                await context.Channel.SendMessageAsync($"{context.User.Mention}, you are banned from using the bot!");
+                await CashSystem.TryMessageReward(context);
             }
         }
     }
