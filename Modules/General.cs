@@ -7,11 +7,8 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Google.Cloud.Firestore;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
-using Microsoft.CodeAnalysis.Scripting;
 using RRBot.Extensions;
 using RRBot.Preconditions;
-using RRBot.Systems;
 
 namespace RRBot.Modules
 {
@@ -70,37 +67,6 @@ namespace RRBot.Modules
             { "Zero Two", "https://cdn.discordapp.com/attachments/804898294873456701/817269546024042547/c4c54c906261b82f9401b60daf0e5be2.png" },
             { "Zimbabwe", "https://cdn.discordapp.com/attachments/802654650040844380/817273008821108736/unknown.png" }
         };
-
-        [Alias("evaluate")]
-        [Command("eval")]
-        [Summary("Execute C# code.")]
-        [Remarks("``$eval [code]``")]
-        [RequireOwner]
-        public async Task<RuntimeResult> Eval([Remainder] string code)
-        {
-            try
-            {
-                code = code.Replace("```cs", "").Trim('`');
-                string[] imports = { "System", "System.Collections.Generic", "System.Text" };
-                string evaluation = (await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context))).ToString();
-                EmbedBuilder embed = new EmbedBuilder
-                {
-                    Color = Color.Red,
-                    Title = "Code evaluation",
-                    Description = $"Your code, ```cs\n{code}``` evaluates to: ```cs\n\"{evaluation}\"```"
-                };
-                await ReplyAsync(embed: embed.Build());
-                return CommandResult.FromSuccess();
-            }
-            catch (CompilationErrorException cee)
-            {
-                return CommandResult.FromError($"Compilation error: ``{cee.Message}``");
-            }
-            catch (Exception e) when (!(e is NullReferenceException))
-            {
-                return CommandResult.FromError($"Other error: ``{e.Message}``");
-            }
-        }
 
         [Command("help")]
         [Summary("View info about the bot or view info about a command, depending on if you specify a command or not.")]
@@ -244,36 +210,6 @@ namespace RRBot.Modules
             }
 
             await ReplyAsync($"{Context.User.Mention}, you have specified a nonexistent module!");
-        }
-
-        [Alias("kms", "selfend")]
-        [Command("suicide")]
-        [Summary("Kill yourself.")]
-        [Remarks("``$suicide``")]
-        [RequireCash]
-        public async Task Suicide()
-        {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-
-            switch (random.Next(4))
-            {
-                case 0:
-                    await ReplyAsync($"{Context.User.Mention}, you attempted to hang yourself, but the rope snapped. Your parents found out and you got an ass whooping, but you did not die.");
-                    return;
-                case 1:
-                    await ReplyAsync($"{Context.User.Mention}, you shot yourself, but somehow the bullet didn't kill you. Lucky or unlucky?");
-                    return;
-                case 2:
-                    await ReplyAsync($"{Context.User.Mention}, DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
-                    await doc.DeleteAsync();
-                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
-                    return;
-                case 3:
-                    await ReplyAsync($"{Context.User.Mention}, it was quite a struggle, but the noose put you out of your misery. You lost everything.");
-                    await doc.DeleteAsync();
-                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
-                    return;
-            }
         }
 
         [Command("waifu")]

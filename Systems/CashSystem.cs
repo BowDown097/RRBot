@@ -43,6 +43,18 @@ namespace RRBot.Systems
             { 19, "Diamond Hoe" },
         };
 
+        public static async Task<float> CashFromString(IGuildUser user, string cashStr)
+        {
+            float.TryParse(cashStr, out float cash);
+            if (cashStr.Equals("all", StringComparison.OrdinalIgnoreCase))
+            {
+                DocumentReference doc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
+                DocumentSnapshot snap = await doc.GetSnapshotAsync();
+                cash = snap.GetValue<float>("cash");
+            }
+
+            return cash;
+        }
         public static string GetBestItem(List<string> items, string type)
         {
             List<string> itemsOfType = items.Where(item => item.EndsWith(type, StringComparison.Ordinal)).ToList();

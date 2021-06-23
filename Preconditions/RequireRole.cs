@@ -22,9 +22,9 @@ namespace RRBot.Preconditions
             if (snap.TryGetValue(DatabaseReference, out ulong roleId))
             {
                 IRole role = context.Guild.GetRole(roleId);
-                return (context.Message.Author as IGuildUser).RoleIds.Contains(roleId)
+                return (context.User as IGuildUser).RoleIds.Contains(roleId)
                     ? PreconditionResult.FromSuccess()
-                    : PreconditionResult.FromError($"{context.Message.Author.Mention}, you must have the {role.Name} role.");
+                    : PreconditionResult.FromError($"{context.User.Mention}, you must have the {role.Name} role.");
             }
 
             return PreconditionResult.FromError($"{DatabaseReference} role is not set!");

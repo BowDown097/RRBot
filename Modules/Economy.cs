@@ -30,8 +30,7 @@ namespace RRBot.Modules
             float cash = snap.GetValue<float>("cash");
             if (cash > 0)
             {
-                await ReplyAsync(user == null ? $"{Context.User.Mention}, you have **${string.Format("{0:0.00}", cash)}**."
-                : $"**{user.ToString()}** has **${string.Format("{0:0.00}", cash)}**.");
+                await ReplyAsync(user == null ? $"{Context.User.Mention}, you have **{cash.ToString("C2")}**." : $"**{user.ToString()}** has **{cash.ToString("C2")}**.");
                 return CommandResult.FromSuccess();
             }
 
@@ -118,6 +117,36 @@ namespace RRBot.Modules
             return CommandResult.FromError($"{Context.User.Mention}, you do not have a {item}!");
         }
 
+        [Alias("kms", "selfend")]
+        [Command("suicide")]
+        [Summary("Kill yourself.")]
+        [Remarks("``$suicide``")]
+        public async Task Suicide()
+        {
+            Random random = new Random();
+            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
+
+            switch (random.Next(4))
+            {
+                case 0:
+                    await ReplyAsync($"{Context.User.Mention}, you attempted to hang yourself, but the rope snapped. Your parents found out and you got an ass whooping, but you did not die.");
+                    return;
+                case 1:
+                    await ReplyAsync($"{Context.User.Mention}, you shot yourself, but somehow the bullet didn't kill you. Lucky or unlucky?");
+                    return;
+                case 2:
+                    await ReplyAsync($"{Context.User.Mention}, DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
+                    await doc.DeleteAsync();
+                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
+                    return;
+                case 3:
+                    await ReplyAsync($"{Context.User.Mention}, it was quite a struggle, but the noose put you out of your misery. You lost everything.");
+                    await doc.DeleteAsync();
+                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
+                    return;
+            }
+        }
+
         [Command("items")]
         [Summary("Check your items.")]
         [Remarks("``$items``")]
@@ -155,7 +184,7 @@ namespace RRBot.Modules
                 SocketGuildUser user = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
                 if (user == null) continue;
                 float cash = doc.GetValue<float>("cash");
-                builder.AppendLine($"{i + 1}: **{user.ToString()}**: ${Math.Round(cash, 2)}");
+                builder.AppendLine($"{i + 1}: **{user.ToString()}**: {cash.ToString("C2")}");
             }
 
             EmbedBuilder embed = new EmbedBuilder
@@ -185,7 +214,7 @@ namespace RRBot.Modules
                 {
                     float neededCash = snap.GetValue<float>(kvp.Key.Replace("Id", "Cost"));
                     SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
-                    ranks.AppendLine($"**{role.Name}**: ${string.Format("{0:0.00}", neededCash)}");
+                    ranks.AppendLine($"**{role.Name}**: {neededCash.ToString("C2")}");
                 }
             }
 
@@ -228,7 +257,7 @@ namespace RRBot.Modules
             await CashSystem.SetCash(Context.User as IGuildUser, aCash - amount);
             await CashSystem.SetCash(user, tCash + amount);
 
-            await ReplyAsync($"{Context.User.Mention}, you have sauced **{user.ToString()}** ${string.Format("{0:0.00}", amount)}.");
+            await ReplyAsync($"{Context.User.Mention}, you have sauced **{user.ToString()}** {amount.ToString("C2")}.");
             return CommandResult.FromSuccess();
         }
     }

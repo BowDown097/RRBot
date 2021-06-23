@@ -22,6 +22,7 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
@@ -60,6 +61,7 @@
     <Compile Include="Systems\AudioSystem.cs" />
     <Compile Include="Extensions\TimeSpanExt.cs" />
     <Compile Include="Extensions\DateTimeOffsetExt.cs" />
+    <Compile Include="Modules\Gambling.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

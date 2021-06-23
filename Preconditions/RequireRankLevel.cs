@@ -27,9 +27,9 @@ namespace RRBot.Preconditions
 
                 ulong roleId = Convert.ToUInt64(level.Value);
                 IRole role = context.Guild.GetRole(roleId);
-                return (context.Message.Author as IGuildUser).RoleIds.Contains(roleId)
+                return (context.User as IGuildUser).RoleIds.Contains(roleId)
                     ? PreconditionResult.FromSuccess()
-                    : PreconditionResult.FromError($"{context.Message.Author.Mention}, you must have the {role.Name} role.");
+                    : PreconditionResult.FromError($"{context.User.Mention}, you must have the {role.Name} role.");
             }
             catch (Exception)
             {

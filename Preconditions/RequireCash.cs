@@ -14,7 +14,7 @@ namespace RRBot.Preconditions
 
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.Message.Author.Id.ToString());
+            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             float cash = snap.GetValue<float>("cash");
@@ -22,10 +22,10 @@ namespace RRBot.Preconditions
             {
                 return cash >= Amount
                     ? PreconditionResult.FromSuccess()
-                    : PreconditionResult.FromError($"{context.Message.Author.Mention}, you must have at least **${Amount}**.");
+                    : PreconditionResult.FromError($"{context.User.Mention}, you must have at least **${Amount}**.");
             }
 
-            return PreconditionResult.FromError($"{context.Message.Author.Mention}, you're broke!");
+            return PreconditionResult.FromError($"{context.User.Mention}, you're broke!");
         }
     }
 }

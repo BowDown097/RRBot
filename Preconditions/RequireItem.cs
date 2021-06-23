@@ -16,7 +16,7 @@ namespace RRBot.Preconditions
 
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.Message.Author.Id.ToString());
+            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             if (snap.TryGetValue("items", out List<string> items) && items.Count > 0)
@@ -24,10 +24,10 @@ namespace RRBot.Preconditions
                 if (string.IsNullOrEmpty(ItemType)) return PreconditionResult.FromSuccess();
                 return items.Any(item => item.EndsWith(ItemType, StringComparison.Ordinal))
                     ? PreconditionResult.FromSuccess()
-                    : PreconditionResult.FromError($"{context.Message.Author.Mention}, you need to have a {ItemType}.");
+                    : PreconditionResult.FromError($"{context.User.Mention}, you need to have a {ItemType}.");
             }
 
-            return PreconditionResult.FromError($"{context.Message.Author.Mention}, you have no items!");
+            return PreconditionResult.FromError($"{context.User.Mention}, you have no items!");
         }
     }
 }

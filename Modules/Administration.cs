@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Google.Cloud.Firestore;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 using RRBot.Preconditions;
 using RRBot.Systems;
 
@@ -25,6 +28,37 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.SetAsync(new { banned = true }, SetOptions.MergeAll);
             await ReplyAsync($"Blacklisted **{user.ToString()}**.");
+        }
+
+        [Alias("evaluate")]
+        [Command("eval")]
+        [Summary("Execute C# code.")]
+        [Remarks("``$eval [code]``")]
+        [RequireOwner]
+        public async Task<RuntimeResult> Eval([Remainder] string code)
+        {
+            try
+            {
+                code = code.Replace("```cs", "").Trim('`');
+                string[] imports = { "System", "System.Collections.Generic", "System.Text" };
+                string evaluation = (await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context))).ToString();
+                EmbedBuilder embed = new EmbedBuilder
+                {
+                    Color = Color.Red,
+                    Title = "Code evaluation",
+                    Description = $"Your code, ```cs\n{code}``` evaluates to: ```cs\n\"{evaluation}\"```"
+                };
+                await ReplyAsync(embed: embed.Build());
+                return CommandResult.FromSuccess();
+            }
+            catch (CompilationErrorException cee)
+            {
+                return CommandResult.FromError($"Compilation error: ``{cee.Message}``");
+            }
+            catch (Exception e) when (!(e is NullReferenceException))
+            {
+                return CommandResult.FromError($"Other error: ``{e.Message}``");
+            }
         }
 
         [Command("giveitem")]
@@ -60,7 +94,7 @@ namespace RRBot.Modules
         public async Task SetCash(IGuildUser user, float amount)
         {
             await CashSystem.SetCash(user, amount);
-            await ReplyAsync($"Set **{user.ToString()}**'s cash to **${string.Format("{0:0.00}", amount)}**.");
+            await ReplyAsync($"Set **{user.ToString()}**'s cash to **{amount.ToString("C2")}**.");
         }
 
         [Alias("unbotban")]

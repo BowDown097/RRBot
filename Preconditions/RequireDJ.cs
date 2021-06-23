@@ -15,9 +15,9 @@ namespace RRBot.Preconditions
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            return snap.TryGetValue("djRole", out ulong djId) && (context.Message.Author as IGuildUser).RoleIds.Contains(djId)
+            return snap.TryGetValue("djRole", out ulong djId) && (context.User as IGuildUser).RoleIds.Contains(djId)
                 ? PreconditionResult.FromSuccess()
-                : PreconditionResult.FromError($"{context.Message.Author.Mention}, you must be DJ!");
+                : PreconditionResult.FromError($"{context.User.Mention}, you must be DJ!");
         }
     }
 }

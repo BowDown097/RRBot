@@ -60,11 +60,11 @@ namespace RRBot.Modules
                 {
                     case 0:
                         await ReplyAsync($"{Context.User.Mention}, there happened to be a cop coming out of the donut shop next door." + 
-                        $" You had to pay **${string.Format("{0:0.00}", lostCash)}** in fines.");
+                        $" You had to pay **{lostCash.ToString("C2")}** in fines.");
                         break;
                     case 1:
                         await ReplyAsync($"{Context.User.Mention}, the manager gave no fucks and beat the **SHIT** out of you." + 
-                        $" You lost **${string.Format("{0:0.00}", lostCash)}** paying for face stitches.");
+                        $" You lost **{lostCash.ToString("C2")}** paying for face stitches.");
                         break;
                 }
             }
@@ -75,15 +75,15 @@ namespace RRBot.Modules
                 {
                     case 0:
                         await ReplyAsync($"{Context.User.Mention}, you joined your local BLM protest, looted a Footlocker, and sold what you got." + 
-                        $" You earned **${string.Format("{0:0.00}", moneyLooted)}**.");
+                        $" You earned **{moneyLooted.ToString("C2")}**.");
                         break;
                     case 1:
-                        await ReplyAsync($"{Context.User.Mention}, that mall had a lot of shit! You earned **${string.Format("{0:0.00}", moneyLooted)}**.");
+                        await ReplyAsync($"{Context.User.Mention}, that mall had a lot of shit! You earned **{moneyLooted.ToString("C2")}**.");
                         break;
                     case 2:
                         moneyLooted /= 10;
                         await ReplyAsync($"{Context.User.Mention}, you stole from a gas station because you're a fucking idiot." + 
-                        $" You earned **${string.Format("{0:0.00}", moneyLooted)}**, basically nothing.");
+                        $" You earned **{moneyLooted.ToString("C2")}**, basically nothing.");
                         break;
                 }
 
@@ -128,15 +128,13 @@ namespace RRBot.Modules
                 {
                     float repairs = (float)(tCash / 100.0 * rapePercent);
                     await CashSystem.SetCash(user, tCash - repairs);
-                    await ReplyAsync($"{Context.User.Mention}, you fucking DEMOLISHED **{user.ToString()}**'s asshole!" + 
-                    $" They just paid **${string.Format("{0:0.00}", repairs)}** in asshole repairs.");
+                    await ReplyAsync($"{Context.User.Mention}, you DEMOLISHED **{user.ToString()}**'s asshole! They just paid **{repairs.ToString("C2")}** in asshole repairs.");
                 }
                 else
                 {
                     float repairs = (float)(aCash / 100.0 * rapePercent);
                     await CashSystem.SetCash(Context.User as IGuildUser, aCash - repairs);
-                    await ReplyAsync($"{Context.User.Mention}, you just got COUNTER-RAPED by **{user.ToString()}**!" + 
-                    $" You just paid **${string.Format("{0:0.00}", repairs)}** in asshole repairs.");
+                    await ReplyAsync($"{Context.User.Mention}, you just got COUNTER-RAPED by **{user.ToString()}**! You just paid **{repairs.ToString("C2")}** in asshole repairs.");
                 }
 
                 await aDoc.SetAsync(new { rapeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
@@ -203,10 +201,10 @@ namespace RRBot.Modules
                 {
                     case 0:
                         await ReplyAsync($"{Context.User.Mention}, some fucker ratted you out and the police showed up." +
-                        $" Thankfully, they're corrupt and you were able to sauce them **${string.Format("{0:0.00}", lostCash)}** to fuck off. Thank the lord.");
+                        $" Thankfully, they're corrupt and you were able to sauce them **{lostCash.ToString("C2")}** to fuck off. Thank the lord.");
                         break;
                     case 1:
-                        await ReplyAsync($"{Context.User.Mention}, a slave got away and yoinked **${string.Format("{0:0.00}", lostCash)}** from you. Sad day.");
+                        await ReplyAsync($"{Context.User.Mention}, a slave got away and yoinked **{lostCash.ToString("C2")}** from you. Sad day.");
                         break;
                 }
             }
@@ -218,15 +216,15 @@ namespace RRBot.Modules
                 {
                     case 0:
                         await ReplyAsync($"{Context.User.Mention}, you got loads of newfags to tirelessly mine ender chests on the Oldest Anarchy Server in Minecraft." +
-                        $" You made **${string.Format("{0:0.00}", moneyEarned)}** selling the newfound millions of obsidian to an interested party.");
+                        $" You made **{moneyEarned.ToString("C2")}** selling the newfound millions of obsidian to an interested party.");
                         break;
                     case 1:
                         await ReplyAsync($"{Context.User.Mention}, the innocent Uyghur children working in your labor factory did an especially good job making shoes in the past hour." +
-                        $" You made **${string.Format("{0:0.00}", moneyEarned)}** from all of them, and lost only like 2 cents paying them their wages.");
+                        $" You made **{moneyEarned.ToString("C2")}** from all of them, and lost only like 2 cents paying them their wages.");
                         break;
                     case 2:
                         await ReplyAsync($"{Context.User.Mention}, this cotton is BUSSIN! The Confederacy is proud." +
-                        $" You have been awarded **${string.Format("{0:0.00}", moneyEarned)}**.");
+                        $" You have been awarded **{moneyEarned.ToString("C2")}**.");
                         break;
                 }
             }
@@ -262,11 +260,10 @@ namespace RRBot.Modules
                 switch (random.Next(2))
                 {
                     case 0:
-                        await ReplyAsync($"{Context.User.Mention}, you were too ugly and nobody wanted you." + 
-                        $" You lost **${string.Format("{0:0.00}", lostCash)}** buying clothes for the night.");
+                        await ReplyAsync($"{Context.User.Mention}, you were too ugly and nobody wanted you. You lost **{lostCash.ToString("C2")}** buying clothes for the night.");
                         break;
                     case 1:
-                        await ReplyAsync($"{Context.User.Mention}, you didn't give good enough head to the cop! You had to pay **${string.Format("{0:0.00}", lostCash)}** in fines.");
+                        await ReplyAsync($"{Context.User.Mention}, you didn't give good enough head to the cop! You had to pay **{lostCash.ToString("C2")}** in fines.");
                         break;
                 }
             }
@@ -277,13 +274,13 @@ namespace RRBot.Modules
                 switch (random.Next(3))
                 {
                     case 0:
-                        await ReplyAsync($"{Context.User.Mention}, you went to the club and some weird fat dude sauced you **${string.Format("{0:0.00}", moneyWhored)}**.");
+                        await ReplyAsync($"{Context.User.Mention}, you went to the club and some weird fat dude sauced you **{moneyWhored.ToString("C2")}**.");
                         break;
                     case 1:
-                        await ReplyAsync($"{Context.User.Mention}, the dude you fucked looked super shady, but he did pay up. You earned **${string.Format("{0:0.00}", moneyWhored)}**.");
+                        await ReplyAsync($"{Context.User.Mention}, the dude you fucked looked super shady, but he did pay up. You earned **{moneyWhored.ToString("C2")}**.");
                         break;
                     case 2:
-                        await ReplyAsync($"{Context.User.Mention}, you found the Chad Thundercock himself! **${string.Format("{0:0.00}", moneyWhored)}** and some amazing sex." + 
+                        await ReplyAsync($"{Context.User.Mention}, you found the Chad Thundercock himself! **{moneyWhored.ToString("C2")}** and some amazing sex." + 
                         $" What a great night.");
                         break;
                 }
