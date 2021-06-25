@@ -46,10 +46,13 @@ namespace RRBot.Modules
         [Summary("Loot some locations.")]
         [Remarks("``$loot``")]
         [RequireCooldown("lootCooldown", "you cannot loot for {0}.")]
-        public async Task Loot()
+        public async Task<RuntimeResult> Loot()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+
             float cash = snap.GetValue<float>("cash");
 
             if (random.Next(10) > 7)
@@ -101,6 +104,7 @@ namespace RRBot.Modules
             }
 
             await doc.SetAsync(new { lootCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
+            return CommandResult.FromSuccess();
         }
 
         [Alias("strugglesnuggle")]
@@ -117,6 +121,9 @@ namespace RRBot.Modules
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
             DocumentReference aDoc = users.Document(Context.User.Id.ToString());
             DocumentSnapshot aSnap = await aDoc.GetSnapshotAsync();
+            if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+
             float aCash = aSnap.GetValue<float>("cash");
 
             DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
@@ -187,10 +194,13 @@ namespace RRBot.Modules
         [Remarks("``$slavery``")]
         [RequireCooldown("slaveryCooldown", "the slaves will die if you keep going like this! You should wait {0}.")]
         [RequireRankLevel(2)]
-        public async Task Slavery()
+        public async Task<RuntimeResult> Slavery()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+
             float cash = snap.GetValue<float>("cash");
 
             if (random.Next(10) > 7)
@@ -240,6 +250,7 @@ namespace RRBot.Modules
             }
 
             await doc.SetAsync(new { slaveryCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
+            return CommandResult.FromSuccess();
         }
 
         [Command("whore")]
@@ -247,10 +258,13 @@ namespace RRBot.Modules
         [Remarks("``$whore``")]
         [RequireCooldown("whoreCooldown", "you cannot whore yourself out for {0}.")]
         [RequireRankLevel(1)]
-        public async Task Whore()
+        public async Task<RuntimeResult> Whore()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+
             float cash = snap.GetValue<float>("cash");
 
             if (random.Next(10) > 7)
@@ -287,6 +301,7 @@ namespace RRBot.Modules
             }
 
             await doc.SetAsync(new { whoreCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
+            return CommandResult.FromSuccess();
         }
     }
 }

@@ -84,6 +84,9 @@ namespace RRBot.Modules
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+
             List<string> usrItems = snap.GetValue<List<string>>("items");
             float cash = snap.GetValue<float>("cash");
 
@@ -121,30 +124,35 @@ namespace RRBot.Modules
         [Command("suicide")]
         [Summary("Kill yourself.")]
         [Remarks("``$suicide``")]
-        public async Task Suicide()
+        public async Task<RuntimeResult> Suicide()
         {
             Random random = new Random();
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
 
             switch (random.Next(4))
             {
                 case 0:
                     await ReplyAsync($"{Context.User.Mention}, you attempted to hang yourself, but the rope snapped. Your parents found out and you got an ass whooping, but you did not die.");
-                    return;
+                    break;
                 case 1:
                     await ReplyAsync($"{Context.User.Mention}, you shot yourself, but somehow the bullet didn't kill you. Lucky or unlucky?");
-                    return;
+                    break;
                 case 2:
                     await ReplyAsync($"{Context.User.Mention}, DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await doc.DeleteAsync();
                     await CashSystem.SetCash(Context.User as IGuildUser, 10);
-                    return;
+                    break;
                 case 3:
                     await ReplyAsync($"{Context.User.Mention}, it was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await doc.DeleteAsync();
                     await CashSystem.SetCash(Context.User as IGuildUser, 10);
-                    return;
+                    break;
             }
+
+            return CommandResult.FromSuccess();
         }
 
         [Command("items")]
@@ -228,7 +236,7 @@ namespace RRBot.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Alias("give")]
+        [Alias("give", "transfer")]
         [Command("sauce")]
         [Summary("Sauce someone some cash.")]
         [Remarks("``$sauce [user] [amount]")]
@@ -239,7 +247,10 @@ namespace RRBot.Modules
 
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
             DocumentSnapshot aSnap = await users.Document(Context.User.Id.ToString()).GetSnapshotAsync();
+            if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
             float aCash = aSnap.GetValue<float>("cash");
+
             DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
             float tCash = tSnap.GetValue<float>("cash");
 

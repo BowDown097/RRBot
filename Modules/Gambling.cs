@@ -64,16 +64,21 @@ namespace RRBot.Modules
         [Summary("Double your cash...?")]
         [Remarks("``$double``")]
         [RequireCash(500f)]
-        public async Task Double()
+        public async Task<RuntimeResult> Double()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+
             float cash = snap.GetValue<float>("cash");
 
             if (random.Next(0, 2) != 0) await CashSystem.SetCash(Context.User as IGuildUser, cash * 2);
             else await CashSystem.SetCash(Context.User as IGuildUser, 10);
 
             await ReplyAsync($"{Context.User.Mention}, I have doubled your cash.");
+
+            return CommandResult.FromSuccess();
         }
 
         [Command("slots")]
@@ -87,9 +92,13 @@ namespace RRBot.Modules
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            float cash = snap.GetValue<float>("cash");
 
+            float cash = snap.GetValue<float>("cash");
             if (cash < bet) return CommandResult.FromError($"{Context.User.Mention}, you can't bet more than what you have!");
+
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots) 
+                return CommandResult.FromError($"{Context.User.Mention}, you are already using the slot machine!");
+            await doc.SetAsync(new { usingSlots = true }, SetOptions.MergeAll);
 
             await Task.Factory.StartNew(async () =>
             {
@@ -102,7 +111,7 @@ namespace RRBot.Modules
                     Title = "Slots"
                 };
                 IUserMessage slotMsg = await ReplyAsync(embed: embed.Build());
-                for (int i = 0; i < 7; i++)
+                for (int i = 0; i < 5; i++)
                 {
                     results[0] = random.Next(1, 5);
                     results[1] = random.Next(1, 5);
@@ -144,8 +153,9 @@ namespace RRBot.Modules
                     await CashSystem.SetCash(Context.User as IGuildUser, cash - bet);
                     await ReplyAsync($"{Context.User.Mention}, you won nothing! Well, you can't win 'em all. You lost **{bet.ToString("C2")}**.");
                 }
-            });
 
+                await doc.SetAsync(new { usingSlots = false }, SetOptions.MergeAll);
+            });
             return CommandResult.FromSuccess();
         }
     }
