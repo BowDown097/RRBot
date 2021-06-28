@@ -5,6 +5,7 @@ using Google.Cloud.Firestore;
 using Google.Cloud.Firestore.V1;
 using Microsoft.Extensions.DependencyInjection;
 using RRBot.Systems;
+using RRBot.TypeReaders;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -127,6 +128,7 @@ namespace RRBot
 
             // client setup
             commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
+            commands.AddTypeReader(typeof(float), new FloatTypeReader());
             await RegisterCommandsAsync();
             await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
             await client.SetGameAsync("with your father");

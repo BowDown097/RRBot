@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 
-namespace RRBot
+namespace RRBot.TypeReaders
 {
     public class EmoteTypeReader : TypeReader
     {

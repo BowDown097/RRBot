@@ -120,41 +120,6 @@ namespace RRBot.Modules
             return CommandResult.FromError($"{Context.User.Mention}, you do not have a {item}!");
         }
 
-        [Alias("kms", "selfend")]
-        [Command("suicide")]
-        [Summary("Kill yourself.")]
-        [Remarks("``$suicide``")]
-        public async Task<RuntimeResult> Suicide()
-        {
-            Random random = new Random();
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-
-            switch (random.Next(4))
-            {
-                case 0:
-                    await ReplyAsync($"{Context.User.Mention}, you attempted to hang yourself, but the rope snapped. Your parents found out and you got an ass whooping, but you did not die.");
-                    break;
-                case 1:
-                    await ReplyAsync($"{Context.User.Mention}, you shot yourself, but somehow the bullet didn't kill you. Lucky or unlucky?");
-                    break;
-                case 2:
-                    await ReplyAsync($"{Context.User.Mention}, DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
-                    await doc.DeleteAsync();
-                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
-                    break;
-                case 3:
-                    await ReplyAsync($"{Context.User.Mention}, it was quite a struggle, but the noose put you out of your misery. You lost everything.");
-                    await doc.DeleteAsync();
-                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
-                    break;
-            }
-
-            return CommandResult.FromSuccess();
-        }
-
         [Command("items")]
         [Summary("Check your items.")]
         [Remarks("``$items``")]
@@ -208,7 +173,7 @@ namespace RRBot.Modules
         [Command("ranks")]
         [Summary("View all the ranks and their costs.")]
         [Remarks("``$ranks``")]
-        public async Task ViewRanks()
+        public async Task Ranks()
         {
             StringBuilder ranks = new StringBuilder();
 
@@ -240,10 +205,11 @@ namespace RRBot.Modules
         [Command("sauce")]
         [Summary("Sauce someone some cash.")]
         [Remarks("``$sauce [user] [amount]")]
-        public async Task<RuntimeResult> Sauce(IGuildUser user, [Remainder] string amountText)
+        public async Task<RuntimeResult> Sauce(IGuildUser user, float amount)
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");
             if (Context.User == user) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce yourself money. Don't even know how you would.");
+            if (amount <= 0 || float.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce negative or no money!");
 
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
             DocumentSnapshot aSnap = await users.Document(Context.User.Id.ToString()).GetSnapshotAsync();
@@ -254,21 +220,47 @@ namespace RRBot.Modules
             DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
             float tCash = tSnap.GetValue<float>("cash");
 
-            float amount = -1f;
-            if (!float.TryParse(amountText, out amount))
-            {
-                if (amountText.Equals("all", StringComparison.OrdinalIgnoreCase))
-                    amount = aCash;
-                else
-                    return CommandResult.FromError($"{Context.User.Mention}, you have specified an invalid amount.");
-            }
-            if (amount <= 0 || float.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce negative or no money!");
             if (amount > aCash) return CommandResult.FromError($"{Context.User.Mention}, you do not have that much money!");
 
             await CashSystem.SetCash(Context.User as IGuildUser, aCash - amount);
             await CashSystem.SetCash(user, tCash + amount);
 
             await ReplyAsync($"{Context.User.Mention}, you have sauced **{user.ToString()}** {amount.ToString("C2")}.");
+            return CommandResult.FromSuccess();
+        }
+
+        [Alias("kms", "selfend")]
+        [Command("suicide")]
+        [Summary("Kill yourself.")]
+        [Remarks("``$suicide``")]
+        public async Task<RuntimeResult> Suicide()
+        {
+            Random random = new Random();
+            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+
+            switch (random.Next(4))
+            {
+                case 0:
+                    await ReplyAsync($"{Context.User.Mention}, you attempted to hang yourself, but the rope snapped. Your parents found out and you got an ass whooping, but you did not die.");
+                    break;
+                case 1:
+                    await ReplyAsync($"{Context.User.Mention}, you shot yourself, but somehow the bullet didn't kill you. Lucky or unlucky?");
+                    break;
+                case 2:
+                    await ReplyAsync($"{Context.User.Mention}, DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
+                    await doc.DeleteAsync();
+                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
+                    break;
+                case 3:
+                    await ReplyAsync($"{Context.User.Mention}, it was quite a struggle, but the noose put you out of your misery. You lost everything.");
+                    await doc.DeleteAsync();
+                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
+                    break;
+            }
+
             return CommandResult.FromSuccess();
         }
     }

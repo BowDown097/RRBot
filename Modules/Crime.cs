@@ -57,7 +57,7 @@ namespace RRBot.Modules
 
             if (random.Next(10) > 7)
             {
-                float lostCash = (float)(69 + (690 - 69) * random.NextDouble()); // lose between $69-690
+                float lostCash = (float)random.NextDouble(69, 691);
                 await CashSystem.SetCash(Context.User as IGuildUser, cash - lostCash);
                 switch (random.Next(2))
                 {
@@ -73,7 +73,7 @@ namespace RRBot.Modules
             }
             else
             {
-                float moneyLooted = (float)(69 + (550 - 69) * random.NextDouble()); // gain between $69-550
+                float moneyLooted = (float)random.NextDouble(69, 551);
                 switch (random.Next(3))
                 {
                     case 0:
@@ -130,7 +130,7 @@ namespace RRBot.Modules
             float tCash = tSnap.GetValue<float>("cash");
             if (tCash > 0)
             {
-                double rapePercent = 5 + (8 - 5) * random.NextDouble(); // lose/gain between 5-8% depending on outcome
+                double rapePercent = random.NextDouble(5, 9);
                 if (random.Next(10) > 4)
                 {
                     float repairs = (float)(tCash / 100.0 * rapePercent);
@@ -205,7 +205,7 @@ namespace RRBot.Modules
 
             if (random.Next(10) > 7)
             {
-                float lostCash = (float)(69 + (690 - 69) * random.NextDouble()); // lose between $69-690
+                float lostCash = (float)random.NextDouble(69, 691);
                 await CashSystem.SetCash(Context.User as IGuildUser, cash - lostCash);
                 switch (random.Next(2))
                 {
@@ -220,7 +220,7 @@ namespace RRBot.Modules
             }
             else
             {
-                float moneyEarned = (float)(69 + (550 - 69) * random.NextDouble()); // gain between $69-550
+                float moneyEarned = (float)random.NextDouble(69, 551);
                 await CashSystem.SetCash(Context.User as IGuildUser, cash + moneyEarned);
                 switch (random.Next(3))
                 {
@@ -269,7 +269,7 @@ namespace RRBot.Modules
 
             if (random.Next(10) > 7)
             {
-                float lostCash = (float)(69 + (690 - 69) * random.NextDouble()); // lose between $69-690
+                float lostCash = (float)random.NextDouble(69, 691);
                 await CashSystem.SetCash(Context.User as IGuildUser, cash - lostCash);
                 switch (random.Next(2))
                 {
@@ -283,7 +283,7 @@ namespace RRBot.Modules
             }
             else
             {
-                float moneyWhored = (float)(69 + (550 - 69) * random.NextDouble()); // gain between $69-550
+                float moneyWhored = (float)random.NextDouble(69, 551);
                 await CashSystem.SetCash(Context.User as IGuildUser, cash + moneyWhored);
                 switch (random.Next(3))
                 {

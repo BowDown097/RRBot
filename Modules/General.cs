@@ -143,6 +143,21 @@ namespace RRBot.Modules
                                 description.Append($"\nRequires {rR.DatabaseReference} (role has not been set)");
                             }
                         }
+                        if (commandInfo.TryGetPrecondition(out RequireRankLevelAttribute rRL) || moduleInfo.TryGetPrecondition(out rRL))
+                        {
+                            try
+                            {
+                                DocumentSnapshot snap = await config.Document("ranks").GetSnapshotAsync();
+                                KeyValuePair<string, object> level = snap.ToDictionary().First(kvp => kvp.Key.StartsWith($"level{rRL.RankLevel}", StringComparison.Ordinal) &&
+                                kvp.Key.EndsWith("Id", StringComparison.Ordinal));
+                                IRole rank = Context.Guild.GetRole(Convert.ToUInt64(level.Value));
+                                description.AppendLine($"\nRequires {rank.Name}");
+                            }
+                            catch (Exception)
+                            {
+                                description.Append($"\nRequires rank level {rRL.RankLevel} (rank has not been set)");
+                            }
+                        }
 
                         EmbedBuilder commandEmbed = new EmbedBuilder
                         {

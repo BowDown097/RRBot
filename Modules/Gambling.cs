@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Google.Cloud.Firestore;
+using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
 
@@ -34,9 +35,9 @@ namespace RRBot.Modules
             { 4, CHERRIES }
         };
 
-        private async Task<RuntimeResult> GenericGamble(float bet, double odds, float mult)
+        private async Task<RuntimeResult> GenericGamble(float bet, double odds, float mult, bool exactRoll = false)
         {
-            if (bet < 500f) return CommandResult.FromError($"{Context.User.Mention}, you can't bet less than $500!");
+            if (bet < 500f || float.IsNaN(bet)) return CommandResult.FromError($"{Context.User.Mention}, you can't bet less than $500!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
@@ -44,8 +45,9 @@ namespace RRBot.Modules
 
             if (cash < bet) return CommandResult.FromError($"{Context.User.Mention}, you can't bet more than what you have!");
 
-            int roll = random.Next(1, 101);
-            if (roll >= odds)
+            double roll = Math.Round(random.NextDouble(1, 101), 2);
+            bool success = !exactRoll ? roll >= odds : roll.CompareTo(odds) == 0;
+            if (success)
             {
                 float payout = bet * mult;
                 await CashSystem.SetCash(Context.User as IGuildUser, cash + payout);
@@ -59,6 +61,37 @@ namespace RRBot.Modules
 
             return CommandResult.FromSuccess();
         }
+
+        [Command("50x2")]
+        [Summary("Roll 50 or higher on a 100 sided die, get 2x what you put in.")]
+        [Remarks("``$50x2 [bet]``")]
+        [RequireCash(500f)]
+        [RequireRankLevel(4)]
+        public async Task<RuntimeResult> Roll50(float bet) => await GenericGamble(bet, 50, 1);
+
+        [Command("55x2")]
+        [Summary("Roll 55 or higher on a 100 sided die, get 2x what you put in.")]
+        [Remarks("``$55x2 [bet]``")]
+        [RequireCash(500f)]
+        public async Task<RuntimeResult> Roll55(float bet) => await GenericGamble(bet, 55, 1);
+
+        [Command("69.69")]
+        [Summary("Roll 69.69 on a 100 sided die, get 6969x what you put in.")]
+        [Remarks("``$69.69 [bet]``")]
+        [RequireCash(500f)]
+        public async Task<RuntimeResult> Roll6969(float bet) => await GenericGamble(bet, 69.69, 6968f, true);
+
+        [Command("75+")]
+        [Summary("Roll 75 or higher on a 100 sided die, get 3.6x what you put in.")]
+        [Remarks("``$75+ [bet]``")]
+        [RequireCash(500f)]
+        public async Task<RuntimeResult> Roll75(float bet) => await GenericGamble(bet, 75, 2.6f);
+
+        [Command("99+")]
+        [Summary("Roll 99 or higher on a 100 sided die, get 90x whatyou put in.")]
+        [Remarks("``$99+ [bet]``")]
+        [RequireCash(500f)]
+        public async Task<RuntimeResult> Roll99(float bet) => await GenericGamble(bet, 99, 89f);
 
         [Command("double")]
         [Summary("Double your cash...?")]
@@ -83,12 +116,11 @@ namespace RRBot.Modules
 
         [Command("slots")]
         [Summary("Take the slot machine for a spin!")]
-        [Remarks("``$slots [bet]")]
+        [Remarks("``$slots [bet]``")]
         [RequireCash(500f)]
-        public async Task<RuntimeResult> Slots(string betStr)
+        public async Task<RuntimeResult> Slots(float bet)
         {
-            float bet = await CashSystem.CashFromString(Context.User as IGuildUser, betStr);
-            if (bet < 500f) return CommandResult.FromError($"{Context.User.Mention}, you can't bet less than $500!");
+            if (bet < 500f || float.IsNaN(bet)) return CommandResult.FromError($"{Context.User.Mention}, you can't bet less than $500!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
@@ -156,6 +188,7 @@ namespace RRBot.Modules
 
                 await doc.SetAsync(new { usingSlots = false }, SetOptions.MergeAll);
             });
+
             return CommandResult.FromSuccess();
         }
     }

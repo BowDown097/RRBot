@@ -41,7 +41,6 @@
     <Compile Include="Modules\Config.cs" />
     <Compile Include="CommandResult.cs" />
     <Compile Include="Preconditions\RequireStaff.cs" />
-    <Compile Include="EmoteTypeReader.cs" />
     <Compile Include="Modules\Economy.cs" />
     <Compile Include="Preconditions\RequireCash.cs" />
     <Compile Include="Modules\Administration.cs" />
@@ -62,6 +61,9 @@
     <Compile Include="Extensions\TimeSpanExt.cs" />
     <Compile Include="Extensions\DateTimeOffsetExt.cs" />
     <Compile Include="Modules\Gambling.cs" />
+    <Compile Include="TypeReaders\EmoteTypeReader.cs" />
+    <Compile Include="TypeReaders\FloatTypeReader.cs" />
+    <Compile Include="Extensions\RandomExt.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -204,6 +206,7 @@
     <Folder Include="Preconditions\" />
     <Folder Include="Systems\" />
     <Folder Include="Extensions\" />
+    <Folder Include="TypeReaders\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Grpc.Core.2.31.0\build\net45\Grpc.Core.targets" Condition="Exists('..\packages\Grpc.Core.2.31.0\build\net45\Grpc.Core.targets')" />

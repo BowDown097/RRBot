@@ -9,11 +9,11 @@ using Google.Cloud.Firestore;
 namespace RRBot.Preconditions
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-    public class RequireRankLevel : PreconditionAttribute
+    public class RequireRankLevelAttribute : PreconditionAttribute
     {
         public int RankLevel { get; }
 
-        public RequireRankLevel(int level) => RankLevel = level;
+        public RequireRankLevelAttribute(int level) => RankLevel = level;
 
         // this entire thing is AWFUL. there HAS to be a better way to do this, surely.
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
