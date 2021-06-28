@@ -64,6 +64,8 @@
     <Compile Include="TypeReaders\EmoteTypeReader.cs" />
     <Compile Include="TypeReaders\FloatTypeReader.cs" />
     <Compile Include="Extensions\RandomExt.cs" />
+    <Compile Include="Modules\UserSettings.cs" />
+    <Compile Include="Extensions\SocketUserExt.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

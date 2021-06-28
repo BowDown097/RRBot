@@ -5,6 +5,7 @@ using Discord.Commands;
 using Google.Cloud.Firestore;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
+using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
 
@@ -84,7 +85,7 @@ namespace RRBot.Modules
             new { rapeCooldown = 0L, whoreCooldown = 0L, lootCooldown = 0L, slaveryCooldown = 0L, mineCooldown = 0L, digCooldown = 0L, chopCooldown = 0L, farmCooldown = 0L, 
                 huntCooldown = 0L }, 
                 SetOptions.MergeAll);
-            await ReplyAsync($"{Context.User.Mention}, your cooldowns have been reset.");
+            await Context.User.NotifyAsync(Context.Channel, "Your cooldowns have been reset.");
         }
 
         [Command("setcash")]
@@ -93,7 +94,7 @@ namespace RRBot.Modules
         [RequireRole("senateRole")]
         public async Task SetCash(IGuildUser user, float amount)
         {
-            await CashSystem.SetCash(user, amount);
+            await CashSystem.SetCash(user, Context.Channel, amount);
             await ReplyAsync($"Set **{user.ToString()}**'s cash to **{amount.ToString("C2")}**.");
         }
 

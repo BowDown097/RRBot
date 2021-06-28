@@ -13,7 +13,6 @@ namespace RRBot.Modules
     [RequireUserPermission(GuildPermission.Administrator)]
     public class Config : ModuleBase<SocketCommandContext>
     {
-        // helpers
         private async Task CreateEntry(SocketCommandContext context, string document, object data, string message = "")
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document(document);
@@ -21,7 +20,6 @@ namespace RRBot.Modules
             if (!string.IsNullOrWhiteSpace(message)) await ReplyAsync(message);
         }
 
-        // commands
         [Command("addrank")]
         [Summary("Register the ID for a rank, its level, and the money required to get it.")]
         [Remarks("``$addrank [role-id] [level] [cost]``")]

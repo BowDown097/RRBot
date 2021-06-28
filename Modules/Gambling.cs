@@ -50,13 +50,13 @@ namespace RRBot.Modules
             if (success)
             {
                 float payout = bet * mult;
-                await CashSystem.SetCash(Context.User as IGuildUser, cash + payout);
-                await ReplyAsync($"{Context.User.Mention}, good shit my guy! You rolled a {roll} and got yourself **{payout.ToString("C2")}**!");
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + payout);
+                await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout.ToString("C2")}**!");
             }
             else
             {
-                await CashSystem.SetCash(Context.User as IGuildUser, cash - bet);
-                await ReplyAsync($"{Context.User.Mention}, well damn, you rolled a {roll}, which wasn't enough. You lost **{bet.ToString("C2")}**.");
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - bet);
+                await Context.User.NotifyAsync(Context.Channel, $"Well damn, you rolled a {roll}, which wasn't enough. You lost **{bet.ToString("C2")}**.");
             }
 
             return CommandResult.FromSuccess();
@@ -106,11 +106,10 @@ namespace RRBot.Modules
 
             float cash = snap.GetValue<float>("cash");
 
-            if (random.Next(0, 2) != 0) await CashSystem.SetCash(Context.User as IGuildUser, cash * 2);
-            else await CashSystem.SetCash(Context.User as IGuildUser, 10);
+            if (random.Next(0, 2) != 0) await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash * 2);
+            else await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 10);
 
-            await ReplyAsync($"{Context.User.Mention}, I have doubled your cash.");
-
+            await Context.User.NotifyAsync(Context.Channel, "I have doubled your cash.");
             return CommandResult.FromSuccess();
         }
 
@@ -175,15 +174,17 @@ namespace RRBot.Modules
                 if (payoutMult > 1f)
                 {
                     float payout = (bet * payoutMult) - bet;
-                    await CashSystem.SetCash(Context.User as IGuildUser, cash + payout);
-                    await ReplyAsync(payoutMult == 30f 
-                    ? $"{Context.User.Mention}, SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout.ToString("C2")}**!"
-                    : $"{Context.User.Mention}, nicely done! You won **{payout.ToString("C2")}** ({payoutMult}x your bet, minus the {bet.ToString("C2")} you put in).");
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + payout);
+
+                    if (payoutMult == 30f)
+                        await Context.User.NotifyAsync(Context.Channel, $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout.ToString("C2")}**!");
+                    else
+                        await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout.ToString("C2")}** ({payoutMult}x your bet, minus the {bet.ToString("C2")} you put in).");
                 }
                 else
                 {
-                    await CashSystem.SetCash(Context.User as IGuildUser, cash - bet);
-                    await ReplyAsync($"{Context.User.Mention}, you won nothing! Well, you can't win 'em all. You lost **{bet.ToString("C2")}**.");
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - bet);
+                    await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet.ToString("C2")}**.");
                 }
 
                 await doc.SetAsync(new { usingSlots = false }, SetOptions.MergeAll);

@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using Google.Cloud.Firestore.V1;
 using Microsoft.Extensions.DependencyInjection;
+using RRBot.Extensions;
 using RRBot.Systems;
 using RRBot.TypeReaders;
 using System;
@@ -190,7 +191,7 @@ namespace RRBot
         {
             DocumentReference userDoc = database.Collection($"servers/{user.Guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
-            if (!snap.TryGetValue<float>("cash", out _)) await CashSystem.SetCash(user, 10);
+            if (!snap.TryGetValue<float>("cash", out _)) await CashSystem.SetCash(user, null, 10);
         }
 
         private async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
@@ -199,14 +200,16 @@ namespace RRBot
             {
                 case CommandResult rwm:
                     if (rwm.Error == CommandError.Unsuccessful) await context.Channel.SendMessageAsync(rwm.Reason);
-                    if (rwm.Error == CommandError.BadArgCount) 
-                        await context.Channel.SendMessageAsync($"{context.User.Mention}, you must specify {command.Value.Parameters.Count(p => !p.IsOptional)} (or more) argument(s)!");
+                    if (rwm.Error == CommandError.BadArgCount)
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, 
+                            $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} (or more) argument(s)!");
                     break;
                 default:
                     if (!result.IsSuccess) Console.WriteLine(result.ErrorReason);
                     if (result.Error == CommandError.UnmetPrecondition) await context.Channel.SendMessageAsync(result.ErrorReason);
                     if (result.Error == CommandError.BadArgCount)
-                        await context.Channel.SendMessageAsync($"{context.User.Mention}, you must specify {command.Value.Parameters.Count(p => !p.IsOptional)} (or more) argument(s)!");
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                            $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} (or more) argument(s)!");
                     break;
             }
         }

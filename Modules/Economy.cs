@@ -30,11 +30,15 @@ namespace RRBot.Modules
             float cash = snap.GetValue<float>("cash");
             if (cash > 0)
             {
-                await ReplyAsync(user == null ? $"{Context.User.Mention}, you have **{cash.ToString("C2")}**." : $"**{user.ToString()}** has **{cash.ToString("C2")}**.");
+                if (user == null)
+                    await Context.User.NotifyAsync(Context.Channel, $"You have **{cash.ToString("C2")}**.");
+                else
+                    await ReplyAsync($"**{user.ToString()}** has **{cash.ToString("C2")}**.");
+
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError(user == null ? $"{Context.User.Mention}, you're broke!" : $"{user.Mention} is broke!");
+            return CommandResult.FromError(user == null ? $"{Context.User.Mention}, you're broke!" : $"**{user.ToString()}** is broke!");
         }
 
         [Alias("cd")]
@@ -94,23 +98,23 @@ namespace RRBot.Modules
             {
                 if (item.StartsWith("Wooden", StringComparison.Ordinal))
                 {
-                    await CashSystem.SetCash(Context.User as IGuildUser, cash + 3000f);
-                    await ReplyAsync($"{Context.User.Mention}, you sold your {item} to some dude for **$3000.00**.");
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + 3000f);
+                    await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **$3000.00**.");
                 }
                 else if (item.StartsWith("Stone", StringComparison.Ordinal))
                 {
-                    await CashSystem.SetCash(Context.User as IGuildUser, cash + 4000f);
-                    await ReplyAsync($"{Context.User.Mention}, you sold your {item} to some dude for **$4000.00**.");
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + 4000f);
+                    await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **$4000.00**.");
                 }
                 else if (item.StartsWith("Iron", StringComparison.Ordinal))
                 {
-                    await CashSystem.SetCash(Context.User as IGuildUser, cash + 5000f);
-                    await ReplyAsync($"{Context.User.Mention}, you sold your {item} to some dude for **$5000.00**.");
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + 5000f);
+                    await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **$5000.00**.");
                 }
                 else if (item.StartsWith("Diamond", StringComparison.Ordinal))
                 {
-                    await CashSystem.SetCash(Context.User as IGuildUser, cash + 6000f);
-                    await ReplyAsync($"{Context.User.Mention}, you sold your {item} to some dude for **$6000.00**.");
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + 6000f);
+                    await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **$6000.00**.");
                 }
 
                 await doc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
@@ -222,10 +226,10 @@ namespace RRBot.Modules
 
             if (amount > aCash) return CommandResult.FromError($"{Context.User.Mention}, you do not have that much money!");
 
-            await CashSystem.SetCash(Context.User as IGuildUser, aCash - amount);
-            await CashSystem.SetCash(user, tCash + amount);
+            await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - amount);
+            await CashSystem.SetCash(user, Context.Channel, tCash + amount);
 
-            await ReplyAsync($"{Context.User.Mention}, you have sauced **{user.ToString()}** {amount.ToString("C2")}.");
+            await Context.User.NotifyAsync(Context.Channel, $"You have sauced **{user.ToString()}** {amount.ToString("C2")}.");
             return CommandResult.FromSuccess();
         }
 
@@ -244,20 +248,20 @@ namespace RRBot.Modules
             switch (random.Next(4))
             {
                 case 0:
-                    await ReplyAsync($"{Context.User.Mention}, you attempted to hang yourself, but the rope snapped. Your parents found out and you got an ass whooping, but you did not die.");
+                    await Context.User.NotifyAsync(Context.Channel, "You attempted to hang yourself, but the rope snapped. You did not die.");
                     break;
                 case 1:
-                    await ReplyAsync($"{Context.User.Mention}, you shot yourself, but somehow the bullet didn't kill you. Lucky or unlucky?");
+                    await Context.User.NotifyAsync(Context.Channel, "You shot yourself, but somehow the bullet didn't kill you. Lucky or unlucky?");
                     break;
                 case 2:
-                    await ReplyAsync($"{Context.User.Mention}, DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
+                    await Context.User.NotifyAsync(Context.Channel, "DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await doc.DeleteAsync();
-                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 10);
                     break;
                 case 3:
-                    await ReplyAsync($"{Context.User.Mention}, it was quite a struggle, but the noose put you out of your misery. You lost everything.");
+                    await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await doc.DeleteAsync();
-                    await CashSystem.SetCash(Context.User as IGuildUser, 10);
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 10);
                     break;
             }
 

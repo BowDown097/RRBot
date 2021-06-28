@@ -27,8 +27,8 @@ namespace RRBot.Modules
             else if (item.StartsWith("Iron", StringComparison.Ordinal)) numMined = random.Next(113, 161);
             else if (item.StartsWith("Diamond", StringComparison.Ordinal)) numMined = random.Next(161, 209);
             float cashGained = (float)(numMined * 2.5);
-            await ReplyAsync($"{Context.User.Mention}, you {activity} {numMined} {thing} with your {item} and earned **{cashGained.ToString("C2")}**.");
-            await CashSystem.SetCash(Context.User as IGuildUser, cash + cashGained);
+            await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained.ToString("C2")}**.");
+            await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + cashGained);
 
             await doc.SetAsync(cooldown, SetOptions.MergeAll);
         }
@@ -78,25 +78,25 @@ namespace RRBot.Modules
             float cashGained = numMined * 4;
             if (item.StartsWith("Wooden", StringComparison.Ordinal))
             {
-                await ReplyAsync($"{Context.User.Mention}, you mined {numMined} stone with your {item} and earned **{cashGained.ToString("C2")}**.");
+                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} stone with your {item} and earned **{cashGained.ToString("C2")}**.");
             }
             else if (item.StartsWith("Stone", StringComparison.Ordinal))
             {
                 cashGained *= 1.33f;
-                await ReplyAsync($"{Context.User.Mention}, you mined {numMined} iron with your {item} and earned **{cashGained.ToString("C2")}**.");
+                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} iron with your {item} and earned **{cashGained.ToString("C2")}**.");
             }
             else if (item.StartsWith("Iron", StringComparison.Ordinal))
             {
                 cashGained *= 1.66f;
-                await ReplyAsync($"{Context.User.Mention}, you mined {numMined} diamonds with your {item} and earned **{cashGained.ToString("C2")}**.");
+                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} diamonds with your {item} and earned **{cashGained.ToString("C2")}**.");
             }
             else if (item.StartsWith("Diamond", StringComparison.Ordinal))
             {
                 cashGained *= 2;
-                await ReplyAsync($"{Context.User.Mention}, you mined {numMined} obsidian with your {item} and earned **{cashGained.ToString("C2")}**.");
+                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained.ToString("C2")}**.");
             }
-            await CashSystem.SetCash(Context.User as IGuildUser, cash + cashGained);
 
+            await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + cashGained);
             await doc.SetAsync(new { mineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
         }
     }
