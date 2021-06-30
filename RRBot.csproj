@@ -66,6 +66,7 @@
     <Compile Include="Extensions\RandomExt.cs" />
     <Compile Include="Modules\UserSettings.cs" />
     <Compile Include="Extensions\SocketUserExt.cs" />
+    <Compile Include="Systems\Items.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

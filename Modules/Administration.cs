@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -68,8 +69,8 @@ namespace RRBot.Modules
         [RequireRole("senateRole")]
         public async Task<RuntimeResult> GiveItem(IGuildUser user, [Remainder] string item)
         {
-            if (!CashSystem.itemMap.ContainsValue(item)) return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item!");
-            await CashSystem.RewardItem(user, item);
+            if (!Items.items.Contains(item)) return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item!");
+            await Items.RewardItem(user, item);
             await ReplyAsync($"Gave **{user.ToString()}** a(n) **{item}**.");
             return CommandResult.FromSuccess();
         }

@@ -21,7 +21,7 @@ namespace RRBot.Modules
             List<string> items = snap.GetValue<List<string>>("items");
             float cash = snap.GetValue<float>("cash");
 
-            string item = CashSystem.GetBestItem(items, itemType);
+            string item = Items.GetBestItem(items, itemType);
             int numMined = random.Next(32, 65); // default for wooden
             if (item.StartsWith("Stone", StringComparison.Ordinal)) numMined = random.Next(65, 113);
             else if (item.StartsWith("Iron", StringComparison.Ordinal)) numMined = random.Next(113, 161);
@@ -73,7 +73,7 @@ namespace RRBot.Modules
             List<string> items = snap.GetValue<List<string>>("items");
             float cash = snap.GetValue<float>("cash");
 
-            string item = CashSystem.GetBestItem(items, "Pickaxe");
+            string item = Items.GetBestItem(items, "Pickaxe");
             int numMined = random.Next(32, 65);
             float cashGained = numMined * 4;
             if (item.StartsWith("Wooden", StringComparison.Ordinal))

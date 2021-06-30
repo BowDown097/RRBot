@@ -41,6 +41,40 @@ namespace RRBot.Modules
             return CommandResult.FromError(user == null ? $"{Context.User.Mention}, you're broke!" : $"**{user.ToString()}** is broke!");
         }
 
+        [Alias("purchase")]
+        [Command("buy")]
+        [Summary("Buy an item or perk from the shop.")]
+        [Remarks("``$buy [item]``")]
+        public async Task<RuntimeResult> Buy([Remainder] string item)
+        {
+            if (!Items.items.Contains(item)) return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item!");
+
+            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+
+            List<string> usrItems = snap.GetValue<List<string>>("items");
+            float cash = snap.GetValue<float>("cash");
+
+            if (!usrItems.Contains(item))
+            {
+                float price = Items.ComputeItemPrice(item);
+                if (price < cash)
+                {
+                    usrItems.Add(item);
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - price);
+                    await Context.User.NotifyAsync(Context.Channel, $"You got yourself a fresh {item} for **{price.ToString("C2")}**!");
+                    await doc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
+                    return CommandResult.FromSuccess();
+                }
+
+                return CommandResult.FromError($"{Context.User.Mention}, you do not have enough to buy a {item}!");
+            }
+
+            return CommandResult.FromError($"{Context.User.Mention}, you already have a {item}!");
+        }
+
         [Alias("cd")]
         [Command("cooldowns")]
         [Summary("Check your crime cooldowns.")]
@@ -96,27 +130,9 @@ namespace RRBot.Modules
 
             if (usrItems.Remove(item))
             {
-                if (item.StartsWith("Wooden", StringComparison.Ordinal))
-                {
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + 3000f);
-                    await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **$3000.00**.");
-                }
-                else if (item.StartsWith("Stone", StringComparison.Ordinal))
-                {
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + 4000f);
-                    await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **$4000.00**.");
-                }
-                else if (item.StartsWith("Iron", StringComparison.Ordinal))
-                {
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + 5000f);
-                    await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **$5000.00**.");
-                }
-                else if (item.StartsWith("Diamond", StringComparison.Ordinal))
-                {
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + 6000f);
-                    await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **$6000.00**.");
-                }
-
+                float price = Items.ComputeItemPrice(item) / 1.5f;
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + price);
+                await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{price.ToString("C2")}**.");
                 await doc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
                 return CommandResult.FromSuccess();
             }
@@ -128,7 +144,7 @@ namespace RRBot.Modules
         [Summary("Check your items.")]
         [Remarks("``$items``")]
         [RequireItem]
-        public async Task Items()
+        public async Task GetItems()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
@@ -231,6 +247,41 @@ namespace RRBot.Modules
 
             await Context.User.NotifyAsync(Context.Channel, $"You have sauced **{user.ToString()}** {amount.ToString("C2")}.");
             return CommandResult.FromSuccess();
+        }
+
+        [Command("shop")]
+        [Summary("Check out what's available for purchase in the shop.")]
+        [Remarks("``$shop``")]
+        public async Task Shop()
+        {
+            StringBuilder items = new StringBuilder();
+            StringBuilder perks = new StringBuilder();
+
+            foreach (string item in Items.items)
+            {
+                float price = Items.ComputeItemPrice(item);
+                items.AppendLine($"**{item}**: {price.ToString("C2")}");
+            }
+
+            foreach (Tuple<string, string, float> perk in Items.perks)
+                perks.AppendLine($"**{perk.Item1}**: {perk.Item2}. Price: {perk.Item3.ToString("C2")}");
+
+            EmbedBuilder itemsEmbed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                Title = "⛏️Items⛏️️",
+                Description = items.ToString()
+            };
+
+            EmbedBuilder perksEmbed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                Title = "️️🧪Perks🧪",
+                Description = perks.ToString()
+            };
+
+            await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: itemsEmbed.Build());
+            await ReplyAsync(embed: perksEmbed.Build());
         }
 
         [Alias("kms", "selfend")]

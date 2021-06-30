@@ -231,6 +231,7 @@ namespace RRBot
             {
                 Embed epicEmbed = userMsg.Embeds.FirstOrDefault();
                 if (epicEmbed.Title.StartsWith("Trade offer", StringComparison.Ordinal) && !epicEmbed.Url.Contains("steamcommunity")) await userMsg.DeleteAsync();
+                else if (epicEmbed.Title.StartsWith("Steam Community", StringComparison.Ordinal) && epicEmbed.Url.Contains("y.ru")) await userMsg.DeleteAsync();
             }
 
             // no good very bad word check

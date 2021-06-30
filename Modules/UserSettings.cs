@@ -19,7 +19,7 @@ namespace RRBot.Modules
         }
 
         public static async Task<bool> GetDMNotifications(IGuildUser user) => await GenericGet(user, "dmNotifs", false);
-        public static async Task<bool> GetRankupNotifications(IGuildUser user) => await GenericGet(user, "rankupNotifs", true);
+        public static async Task<bool> GetRankupNotifications(IGuildUser user) => await GenericGet(user, "rankupNotifs", false);
         public static async Task<bool> GetReplyPings(IGuildUser user) => await GenericGet(user, "replyPings", true);
     }
 
@@ -41,14 +41,14 @@ namespace RRBot.Modules
 
             StringBuilder description = new StringBuilder();
             description.AppendLine($"**DM Notifications**: {snap.TryGetValue("dmNotifs", out bool dmNotifs) && dmNotifs}");
-            description.AppendLine($"**Rankup Notifications**: {!snap.TryGetValue("rankupNotifs", out bool rankupNotifs) || rankupNotifs}");
+            description.AppendLine($"**Rankup Notifications**: {snap.TryGetValue("rankupNotifs", out bool rankupNotifs) && rankupNotifs}");
             description.AppendLine($"**Reply Pings**: {!snap.TryGetValue("replyPings", out bool replyPings) || replyPings}");
 
             EmbedBuilder embed = new EmbedBuilder
             {
                 Title = "Your Settings",
                 Color = Color.Red,
-                Description = description.Length > 0 ? description.ToString() : "None"
+                Description = description.ToString()
             };
 
             await ReplyAsync(embed: embed.Build());
@@ -66,7 +66,7 @@ namespace RRBot.Modules
 
         [Alias("setrankupnotifs")]
         [Command("setrankupnotifications")]
-        [Summary("Set whether or not you will be notified of rank-ups/deranks. *(default: true)*")]
+        [Summary("Set whether or not you will be notified of rank-ups/deranks. *(default: false)*")]
         [Remarks("``$setrankupnotifications [true/false]``")]
         public async Task SetRankupNotifications(bool status)
         {

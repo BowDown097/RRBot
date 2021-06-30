@@ -95,10 +95,10 @@ namespace RRBot.Modules
 
             if (random.Next(20) == 1)
             {
-                string item = await CashSystem.RandomItem(Context.User as IGuildUser, random);
+                string item = await Items.RandomItem(Context.User as IGuildUser, random);
                 if (!string.IsNullOrEmpty(item))
                 {
-                    await CashSystem.RewardItem(Context.User as IGuildUser, item);
+                    await Items.RewardItem(Context.User as IGuildUser, item);
                     await ReplyAsync($"Well I'll be damned! You also got yourself a {item}! Check out ``$module tasks`` to see how you can use it.");
                 }
             }
@@ -240,10 +240,10 @@ namespace RRBot.Modules
 
             if (random.Next(20) == 1)
             {
-                string item = await CashSystem.RandomItem(Context.User as IGuildUser, random);
+                string item = await Items.RandomItem(Context.User as IGuildUser, random);
                 if (!string.IsNullOrEmpty(item))
                 {
-                    await CashSystem.RewardItem(Context.User as IGuildUser, item);
+                    await Items.RewardItem(Context.User as IGuildUser, item);
                     await ReplyAsync($"Well I'll be damned! You also got yourself a {item}! Check out ``$module tasks`` to see how you can use it.");
                 }
             }
