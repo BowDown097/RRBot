@@ -54,7 +54,7 @@ namespace RRBot.Modules
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
 
-            List<string> usrItems = snap.GetValue<List<string>>("items");
+            List<string> usrItems = snap.TryGetValue("items", out List<string> tmpItems) ? tmpItems : new List<string>();
             float cash = snap.GetValue<float>("cash");
 
             if (!usrItems.Contains(item))
