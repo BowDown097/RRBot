@@ -111,7 +111,7 @@ namespace RRBot.Modules
         [Command("rape")]
         [Summary("Go out on the prowl for some ass!")]
         [Remarks("``$rape [user]``")]
-        [RequireCash(500f)]
+        [RequireCash]
         [RequireCooldown("rapeCooldown", "you cannot rape for {0}.")]
         public async Task<RuntimeResult> Rape(IGuildUser user)
         {

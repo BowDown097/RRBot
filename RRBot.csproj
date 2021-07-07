@@ -34,7 +34,6 @@
     <Compile Include="Modules\General.cs" />
     <Compile Include="Modules\Moderation.cs" />
     <Compile Include="Modules\Polls.cs" />
-    <Compile Include="Modules\Debate.cs" />
     <Compile Include="Modules\Crime.cs" />
     <Compile Include="Preconditions\RequireBeInChannel.cs" />
     <Compile Include="Preconditions\RequireRole.cs" />

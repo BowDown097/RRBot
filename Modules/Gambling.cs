@@ -37,7 +37,7 @@ namespace RRBot.Modules
 
         private async Task<RuntimeResult> GenericGamble(float bet, double odds, float mult, bool exactRoll = false)
         {
-            if (bet < 500f || float.IsNaN(bet)) return CommandResult.FromError($"{Context.User.Mention}, you can't bet less than $500!");
+            if (bet < 0f || float.IsNaN(bet)) return CommandResult.FromError($"{Context.User.Mention}, you can't bet nothing!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
@@ -65,38 +65,38 @@ namespace RRBot.Modules
         [Command("50x2")]
         [Summary("Roll 50 or higher on a 100 sided die, get 2x what you put in.")]
         [Remarks("``$50x2 [bet]``")]
-        [RequireCash(500f)]
+        [RequireCash]
         [RequireRankLevel(4)]
         public async Task<RuntimeResult> Roll50(float bet) => await GenericGamble(bet, 50, 1);
 
         [Command("55x2")]
         [Summary("Roll 55 or higher on a 100 sided die, get 2x what you put in.")]
         [Remarks("``$55x2 [bet]``")]
-        [RequireCash(500f)]
+        [RequireCash]
         public async Task<RuntimeResult> Roll55(float bet) => await GenericGamble(bet, 55, 1);
 
         [Command("69.69")]
         [Summary("Roll 69.69 on a 100 sided die, get 6969x what you put in.")]
         [Remarks("``$69.69 [bet]``")]
-        [RequireCash(500f)]
+        [RequireCash]
         public async Task<RuntimeResult> Roll6969(float bet) => await GenericGamble(bet, 69.69, 6968f, true);
 
         [Command("75+")]
         [Summary("Roll 75 or higher on a 100 sided die, get 3.6x what you put in.")]
         [Remarks("``$75+ [bet]``")]
-        [RequireCash(500f)]
+        [RequireCash]
         public async Task<RuntimeResult> Roll75(float bet) => await GenericGamble(bet, 75, 2.6f);
 
         [Command("99+")]
         [Summary("Roll 99 or higher on a 100 sided die, get 90x whatyou put in.")]
         [Remarks("``$99+ [bet]``")]
-        [RequireCash(500f)]
+        [RequireCash]
         public async Task<RuntimeResult> Roll99(float bet) => await GenericGamble(bet, 99, 89f);
 
         [Command("double")]
         [Summary("Double your cash...?")]
         [Remarks("``$double``")]
-        [RequireCash(500f)]
+        [RequireCash]
         public async Task<RuntimeResult> Double()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
@@ -116,7 +116,7 @@ namespace RRBot.Modules
         [Command("slots")]
         [Summary("Take the slot machine for a spin!")]
         [Remarks("``$slots [bet]``")]
-        [RequireCash(500f)]
+        [RequireCash]
         public async Task<RuntimeResult> Slots(float bet)
         {
             if (bet < 500f || float.IsNaN(bet)) return CommandResult.FromError($"{Context.User.Mention}, you can't bet less than $500!");
@@ -159,7 +159,7 @@ namespace RRBot.Modules
                 int apples = results.Count(num => num == 2);
                 int grapes = results.Count(num => num == 3);
                 int cherries = results.Count(num => num == 4);
-                if (sevens == 4) payoutMult = 15f;
+                if (sevens == 4) payoutMult = 25f;
                 else if (apples == 4 || grapes == 4 || cherries == 4) payoutMult = 5f;
                 else if (ThreeInARow(results, 1)) payoutMult = 3f;
                 else if (ThreeInARow(results, 2) || ThreeInARow(results, 3) || ThreeInARow(results, 4)) payoutMult = 2f;
@@ -176,7 +176,7 @@ namespace RRBot.Modules
                     float payout = (bet * payoutMult) - bet;
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + payout);
 
-                    if (payoutMult == 30f)
+                    if (payoutMult == 25f)
                         await Context.User.NotifyAsync(Context.Channel, $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout.ToString("C2")}**!");
                     else
                         await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout.ToString("C2")}** ({payoutMult}x your bet, minus the {bet.ToString("C2")} you put in).");
