@@ -62,13 +62,6 @@ namespace RRBot.Modules
             return CommandResult.FromSuccess();
         }
 
-        [Command("50x2")]
-        [Summary("Roll 50 or higher on a 100 sided die, get 2x what you put in.")]
-        [Remarks("``$50x2 [bet]``")]
-        [RequireCash]
-        [RequireRankLevel(4)]
-        public async Task<RuntimeResult> Roll50(float bet) => await GenericGamble(bet, 50, 1);
-
         [Command("55x2")]
         [Summary("Roll 55 or higher on a 100 sided die, get 2x what you put in.")]
         [Remarks("``$55x2 [bet]``")]

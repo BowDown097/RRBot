@@ -66,6 +66,7 @@
     <Compile Include="Modules\UserSettings.cs" />
     <Compile Include="Extensions\SocketUserExt.cs" />
     <Compile Include="Systems\Items.cs" />
+    <Compile Include="Filters.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -201,6 +202,18 @@
     <Reference Include="System.Web" />
     <Reference Include="NHentaiSharp">
       <HintPath>..\packages\NHentaiSharp.1.1.1\lib\netstandard2.0\NHentaiSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="AngleSharp">
+      <HintPath>..\packages\AngleSharp.0.14.0\lib\net461\AngleSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Encodings.Web">
+      <HintPath>..\packages\System.Text.Encodings.Web.4.7.1\lib\net461\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ValueTuple">
+      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json">
+      <HintPath>..\packages\System.Text.Json.4.7.2\lib\net461\System.Text.Json.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

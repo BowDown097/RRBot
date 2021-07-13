@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -120,8 +119,7 @@ namespace RRBot.Systems
                 Timestamp = DateTime.Now
             };
 
-            Regex nRegex = new Regex(@"[nɴⁿₙñńņňÑŃŅŇ][i1!¡ɪᶦᵢ¹₁jįīïîíì|;:𝗂][g9ɢᵍ𝓰𝓰qģğĢĞ][g9ɢᵍ𝓰𝓰qģğĢĞ][e3€ᴇᵉₑ³₃ĖĘĚĔėęěĕəèéêëē𝖾][rʀʳᵣŔŘŕř]");
-            if (nRegex.Matches(new string(msgAfter.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
+            if (Filters.FUNNY_REGEX.Matches(new string(msgAfter.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
             {
                 await Task.Factory.StartNew(async () =>
                 {

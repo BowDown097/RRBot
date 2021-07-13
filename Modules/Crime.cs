@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -26,10 +25,9 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("houseRole", out ulong staffId))
             {
-                Regex nRegex = new Regex(@"[nɴⁿₙñńņňÑŃŅŇ][i1!¡ɪᶦᵢ¹₁jįīïîíì|;:𝗂][g9ɢᵍ𝓰𝓰qģğĢĞ][g9ɢᵍ𝓰𝓰qģğĢĞ][e3€ᴇᵉₑ³₃ĖĘĚĔėęěĕəèéêëē𝖾][rʀʳᵣŔŘŕř]");
                 if (user.Id == Context.User.Id) return CommandResult.FromError($"{Context.User.Mention}, no masochism here!");
                 if (user.IsBot || user.RoleIds.Contains(staffId)) return CommandResult.FromError($"{Context.User.Mention}, you cannot bully someone who is a bot or staff member.");
-                if (nRegex.Matches(new string(nickname.Where(char.IsLetter).ToArray()).ToLower()).Count != 0) 
+                if (Filters.FUNNY_REGEX.Matches(new string(nickname.Where(char.IsLetter).ToArray()).ToLower()).Count != 0) 
                     return CommandResult.FromError($"{Context.User.Mention}, you cannot bully someone to the funny word.");
                 if (nickname.Length > 32) return CommandResult.FromError($"{Context.User.Mention}, the bully nickname is longer than the maximum accepted length.");
 

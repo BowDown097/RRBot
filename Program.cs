@@ -10,7 +10,6 @@ using RRBot.TypeReaders;
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Victoria;
 
@@ -104,6 +103,7 @@ namespace RRBot
 
             // general events
             client.JoinedGuild += Client_JoinedGuild;
+            client.MessageReceived += HandleCommandAsync;
             client.Log += Client_Log;
             client.ReactionAdded += Client_ReactionAdded;
             client.ReactionRemoved += Client_ReactionRemoved;
@@ -130,7 +130,7 @@ namespace RRBot
             // client setup
             commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
             commands.AddTypeReader(typeof(float), new FloatTypeReader());
-            await RegisterCommandsAsync();
+            await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
             await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
             await client.SetGameAsync("with your father");
             await client.StartAsync();
@@ -214,38 +214,12 @@ namespace RRBot
             }
         }
 
-        private async Task RegisterCommandsAsync()
-        {
-            client.MessageReceived += HandleCommandAsync;
-            await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
-        }
-
         private async Task HandleCommandAsync(SocketMessage msg)
         {
             SocketUserMessage userMsg = msg as SocketUserMessage;
             SocketCommandContext context = new SocketCommandContext(client, userMsg);
             if (context.User.IsBot) return;
 
-            // steam scam check
-            if (userMsg.Embeds.Count > 0)
-            {
-                Embed epicEmbed = userMsg.Embeds.FirstOrDefault();
-                if (epicEmbed.Title.StartsWith("Trade offer", StringComparison.Ordinal) && !epicEmbed.Url.Contains("steamcommunity")) await userMsg.DeleteAsync();
-                else if (epicEmbed.Title.StartsWith("Steam Community", StringComparison.Ordinal) && epicEmbed.Url.Contains("y.ru")) await userMsg.DeleteAsync();
-            }
-
-            // no good very bad word check
-            Regex nRegex = new Regex(@"[nɴⁿₙñńņňÑŃŅŇ][i1!¡ɪᶦᵢ¹₁jįīïîíì|;:𝗂][g9ɢᵍ𝓰𝓰qģğĢĞ][g9ɢᵍ𝓰𝓰qģğĢĞ][e3€ᴇᵉₑ³₃ĖĘĚĔėęěĕəèéêëē𝖾][rʀʳᵣŔŘŕř]");
-            if (userMsg.Channel.Name != "extremely-funny" && nRegex.Matches(new string(userMsg.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
-            {
-                await Task.Factory.StartNew(async () => 
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(10));
-                    await userMsg.DeleteAsync();
-                });
-            }
-
-            // command handler
             int argPos = 0;
             if (userMsg.HasCharPrefix('$', ref argPos))
             {
@@ -265,6 +239,9 @@ namespace RRBot
             {
                 await CashSystem.TryMessageReward(context);
             }
+
+            await Filters.DoScamCheckAsync(context);
+            await Filters.DoNWordCheckAsync(context);
         }
     }
 }

@@ -72,7 +72,6 @@ namespace RRBot.Systems
 
             if (!track.IsStream && track.Length.TotalSeconds > 7200)
             {
-                await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
                 return CommandResult.FromError($"{context.User.Mention}, this is too long for me to play! It must be 2 hours or shorter in length.");
             }
 
@@ -85,8 +84,9 @@ namespace RRBot.Systems
 
             await player.PlayAsync(track);
 
-            StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
-            if (!track.IsStream) message.Append($"Length: {track.Length.ToString()}");
+            StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}");
+            if (!track.IsStream) message.AppendLine($"Length: {track.Length.ToString()}");
+            message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
             await context.Channel.SendMessageAsync(message.ToString());
 
             await Program.logger.Custom_TrackStarted(user, user.VoiceChannel, track.Uri);
@@ -111,7 +111,7 @@ namespace RRBot.Systems
                     LavaTrack track = player.Queue.Items.ElementAt(i) as LavaTrack;
 
                     playlist.AppendLine($"**{i + 1}**: {track.Title} by {track.Author}");
-                    if (!track.IsStream) playlist.Append($" ({track.Length.ToString()})");
+                    if (!track.IsStream) playlist.AppendLine($" ({track.Length.ToString()})");
                 }
 
                 EmbedBuilder embed = new EmbedBuilder
