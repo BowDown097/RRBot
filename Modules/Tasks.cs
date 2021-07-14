@@ -30,6 +30,12 @@ namespace RRBot.Modules
             await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained.ToString("C2")}**.");
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + cashGained);
 
+            await Context.User.AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+            {
+                { "Tasks Done", "1" },
+                { "Money Gained from Tasks", cashGained.ToString("C2") }
+            });
+
             await doc.SetAsync(cooldown, SetOptions.MergeAll);
         }
 
@@ -95,6 +101,12 @@ namespace RRBot.Modules
                 cashGained *= 2;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained.ToString("C2")}**.");
             }
+
+            await Context.User.AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+            {
+                { "Tasks Done", "1" },
+                { "Money Gained from Tasks", cashGained.ToString("C2") }
+            });
 
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + cashGained);
             await doc.SetAsync(new { mineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);

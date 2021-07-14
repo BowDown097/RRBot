@@ -63,12 +63,20 @@ namespace RRBot.Modules
                 await Program.logger.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
                 await banDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(timeSpan.TotalSeconds) });
                 await user.BanAsync(reason: reason);
+                await (user as SocketUser).AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                {
+                    { "Bans", "1" }
+                });
                 return CommandResult.FromSuccess();
             }
 
             if (string.IsNullOrWhiteSpace(reason))
             {
                 await user.BanAsync(reason: duration);
+                await (user as SocketUser).AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                {
+                    { "Bans", "1" }
+                });
                 return CommandResult.FromSuccess();
             }
 
@@ -116,9 +124,14 @@ namespace RRBot.Modules
 
             await user.KickAsync(reason);
 
-            string response = $"**{Context.User.ToString()}** has kicked **{user.ToString()}";
+            string response = $"**{Context.User.ToString()}** has kicked **{user.ToString()}**";
             response += string.IsNullOrWhiteSpace(reason) ? "." : $"for '{reason}'";
             await ReplyAsync(response);
+
+            await (user as SocketUser).AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+            {
+                { "Kicks", "1" }
+            });
 
             return CommandResult.FromSuccess();
         }
@@ -171,6 +184,10 @@ namespace RRBot.Modules
                     await Program.logger.Custom_UserMuted(user, Context.User, duration, reason);
                     await muteDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(timeSpan.TotalSeconds) });
                     await user.AddRoleAsync(mutedId);
+                    await (user as SocketUser).AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                    {
+                        { "Mutes", "1" }
+                    });
                     return CommandResult.FromSuccess();
                 }
 
@@ -205,15 +222,15 @@ namespace RRBot.Modules
 
         [Command("unban")]
         [Summary("Unban any currently banned member.")]
-        [Remarks("``$unban [user-id]``")]
-        public async Task<RuntimeResult> Unban(ulong userId)
+        [Remarks("``$unban [user]``")]
+        public async Task<RuntimeResult> Unban(IUser user)
         {
             IReadOnlyCollection<RestBan> bans = await Context.Guild.GetBansAsync();
-            if (!bans.Any(ban => ban.User.Id == userId)) return CommandResult.FromError($"{Context.User.Mention}, that user is not currently banned.");
+            if (!bans.Any(ban => ban.User.Id == user.Id)) return CommandResult.FromError($"{Context.User.Mention}, that user is not currently banned.");
 
-            string userString = bans.FirstOrDefault(ban => ban.User.Id == userId).User.ToString();
+            string userString = bans.FirstOrDefault(ban => ban.User.Id == user.Id).User.ToString();
             await ReplyAsync($"**{Context.User.ToString()}** has unbanned **{userString}**.");
-            await Context.Guild.RemoveBanAsync(userId);
+            await Context.Guild.RemoveBanAsync(user.Id);
             return CommandResult.FromSuccess();
         }
 

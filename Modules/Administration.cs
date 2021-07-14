@@ -30,6 +30,7 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.SetAsync(new { banned = true }, SetOptions.MergeAll);
             await ReplyAsync($"Blacklisted **{user.ToString()}**.");
+            Program.bannedUsers.Add(user.Id);
         }
 
         [Alias("evaluate")]
@@ -115,6 +116,7 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.DeleteAsync();
             await ReplyAsync($"Unblacklisted **{user.ToString()}**.");
+            Program.bannedUsers.Remove(user.Id);
         }
     }
 }

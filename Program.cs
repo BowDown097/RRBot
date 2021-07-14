@@ -8,6 +8,7 @@ using RRBot.Extensions;
 using RRBot.Systems;
 using RRBot.TypeReaders;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -20,6 +21,7 @@ namespace RRBot
         private static void Main() => new Program().RunBotAsync().GetAwaiter().GetResult();
 
         public static FirestoreDb database = FirestoreDb.Create("rushrebornbot", new FirestoreClientBuilder { CredentialsPath = Credentials.CREDENTIALS_PATH }.Build());
+        public static List<ulong> bannedUsers = new List<ulong>();
         public static Logger logger;
         private CommandService commands;
         private DiscordSocketClient client;
@@ -139,6 +141,12 @@ namespace RRBot
 
         private async Task Client_Ready()
         {
+            foreach (DocumentReference blacklistDoc in database.Collection("globalConfig").ListDocumentsAsync().ToEnumerable())
+            {
+                DocumentSnapshot blacklistSnap = await blacklistDoc.GetSnapshotAsync();
+                if (blacklistSnap.ContainsField("banned")) bannedUsers.Add(ulong.Parse(blacklistDoc.Id));
+            }
+
             await Task.Factory.StartNew(async () => await StartBanCheckAsync());
             await Task.Factory.StartNew(async () => await StartMuteCheckAsync());
             await lavaSocketClient.StartAsync(client);
@@ -224,9 +232,7 @@ namespace RRBot
             if (userMsg.HasCharPrefix('$', ref argPos))
             {
                 // ban check
-                DocumentReference doc = database.Collection("globalConfig").Document(context.User.Id.ToString());
-                DocumentSnapshot snap = await doc.GetSnapshotAsync();
-                if (snap.TryGetValue<bool>("banned", out _))
+                if (bannedUsers.Contains(context.User.Id))
                 {
                     await context.Channel.SendMessageAsync($"{context.User.Mention}, you are banned from using the bot!");
                     return;

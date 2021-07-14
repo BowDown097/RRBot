@@ -104,7 +104,7 @@ namespace RRBot.Modules
                         if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
                         {
                             DocumentSnapshot modSnap = await config.Document("modules").GetSnapshotAsync();
-                            if (modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw || !modSnap.TryGetValue<bool>("nsfw", out _))
+                            if (!modSnap.TryGetValue("nsfw", out bool nsfw) || !nsfw)
                             {
                                 await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
                                 return;
@@ -227,10 +227,46 @@ namespace RRBot.Modules
             await ReplyAsync($"{Context.User.Mention}, you have specified a nonexistent module!");
         }
 
+        [Alias("statistics")]
+        [Command("stats")]
+        [Summary("View various statistics about your own, or another user's, bot usage.")]
+        [Remarks("``$stats <user>``")]
+        public async Task<RuntimeResult> Stats(IGuildUser user = null)
+        {
+            if (user != null && user.IsBot) return CommandResult.FromError("Nope.");
+
+            ulong userId = user == null ? Context.User.Id : user.Id;
+            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(userId.ToString());
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            StringBuilder description = new StringBuilder();
+
+            if (snap.TryGetValue("stats", out Dictionary<string, string> stats) && stats.Count > 0)
+            {
+                List<string> keys = stats.Keys.ToList();
+                keys.Sort();
+                foreach (string key in keys)
+                {
+                    description.AppendLine($"**{key}**: {stats[key]}");
+                }
+
+                EmbedBuilder embed = new EmbedBuilder
+                {
+                    Title = (user == null ? "Your " : $"{user.ToString()}'s ") + "Stats",
+                    Color = Color.Red,
+                    Description = description.ToString()
+                };
+
+                await ReplyAsync(embed: embed.Build());
+                return CommandResult.FromSuccess();
+            }
+
+            return CommandResult.FromError(user == null ? $"{Context.User.Mention}, you have no available stats!" : $"**{user.ToString()}** has no available stats!");
+        }
+
         [Command("waifu")]
         [Summary("Get yourself a random waifu from our vast and sexy collection of scrumptious waifus.")]
         [Remarks("``$waifu``")]
-        public async Task NewWaifu()
+        public async Task Waifu()
         {
             List<string> keys = Enumerable.ToList(waifus.Keys);
             string waifu = keys[random.Next(waifus.Count)];

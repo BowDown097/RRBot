@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using RRBot.Extensions;
 using RRBot.Preconditions;
@@ -13,6 +16,30 @@ namespace RRBot.Modules
     public class Crime : ModuleBase<SocketCommandContext>
     {
         public static readonly Random random = new Random();
+
+        private async Task StatUpdate(SocketUser user, bool success, float gain)
+        {
+            CultureInfo ci = CultureInfo.CreateSpecificCulture("en-US");
+            ci.NumberFormat.CurrencyNegativePattern = 2;
+            if (success)
+            {
+                await user.AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                {
+                    { "Crimes Succeeded", "1" },
+                    { "Money Gained from Crimes", gain.ToString("C2", ci) },
+                    { "Net Gain/Loss from Crimes", gain.ToString("C2", ci) }
+                });
+            }
+            else
+            {
+                await user.AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                {
+                    { "Crimes Failed", "1" },
+                    { "Money Lost to Crimes", gain.ToString("C2", ci) },
+                    { "Net Gain/Loss from Crimes", (-gain).ToString("C2", ci) }
+                });
+            }
+        }
 
         [Command("bully")]
         [Summary("Change the nickname of any victim you wish!")]
@@ -53,25 +80,11 @@ namespace RRBot.Modules
 
             float cash = snap.GetValue<float>("cash");
 
-            if (random.Next(10) > 7)
-            {
-                float lostCash = (float)random.NextDouble(69, 691);
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
-                switch (random.Next(2))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel, "There happened to be a cop coming out of the donut shop next door." +
-                        $" You had to pay **{lostCash.ToString("C2")}** in fines.");
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel, "The manager gave no fucks and beat the **SHIT** out of you." +
-                        $" You lost **{lostCash.ToString("C2")}** paying for face stitches.");
-                        break;
-                }
-            }
-            else
+            if (random.Next(10) < 8)
             {
                 float moneyLooted = (float)random.NextDouble(69, 551);
+                await StatUpdate(Context.User, true, moneyLooted);
+
                 switch (random.Next(3))
                 {
                     case 0:
@@ -89,6 +102,26 @@ namespace RRBot.Modules
                 }
 
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + moneyLooted);
+            }
+            else
+            {
+                float lostCash = (float)random.NextDouble(69, 691);
+                lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
+                await StatUpdate(Context.User, false, lostCash);
+
+                switch (random.Next(2))
+                {
+                    case 0:
+                        await Context.User.NotifyAsync(Context.Channel, "There happened to be a cop coming out of the donut shop next door." +
+                        $" You had to pay **{lostCash.ToString("C2")}** in fines.");
+                        break;
+                    case 1:
+                        await Context.User.NotifyAsync(Context.Channel, "The manager gave no fucks and beat the **SHIT** out of you." +
+                        $" You lost **{lostCash.ToString("C2")}** paying for face stitches.");
+                        break;
+                }
+
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
             }
 
             if (random.Next(20) == 1)
@@ -132,12 +165,14 @@ namespace RRBot.Modules
                 if (random.Next(10) > 4)
                 {
                     float repairs = (float)(tCash / 100.0 * rapePercent);
+                    await StatUpdate(user as SocketUser, false, repairs);
                     await CashSystem.SetCash(user, Context.Channel, tCash - repairs);
                     await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user.ToString()}**'s asshole! They just paid **{repairs.ToString("C2")}** in asshole repairs.");
                 }
                 else
                 {
                     float repairs = (float)(aCash / 100.0 * rapePercent);
+                    await StatUpdate(Context.User, false, repairs);
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - repairs);
                     await Context.User.NotifyAsync(Context.Channel, $"You just got COUNTER-RAPED by **{user.ToString()}**! You just paid **{repairs.ToString("C2")}** in asshole repairs.");
                 }
@@ -201,25 +236,11 @@ namespace RRBot.Modules
 
             float cash = snap.GetValue<float>("cash");
 
-            if (random.Next(10) > 7)
-            {
-                float lostCash = (float)random.NextDouble(69, 691);
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
-                switch (random.Next(2))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel, "Some fucker ratted you out and the police showed up." +
-                        $" Thankfully, they're corrupt and you were able to sauce them **{lostCash.ToString("C2")}** to fuck off. Thank the lord.");
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel, $"A slave got away and yoinked **{lostCash.ToString("C2")}** from you. Sad day.");
-                        break;
-                }
-            }
-            else
+            if (random.Next(10) < 8)
             {
                 float moneyEarned = (float)random.NextDouble(69, 551);
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + moneyEarned);
+                await StatUpdate(Context.User, true, moneyEarned);
+
                 switch (random.Next(3))
                 {
                     case 0:
@@ -234,6 +255,27 @@ namespace RRBot.Modules
                         await Context.User.NotifyAsync(Context.Channel, $"This cotton is BUSSIN! The Confederacy is proud. You have been awarded **{moneyEarned.ToString("C2")}**.");
                         break;
                 }
+
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + moneyEarned);
+            }
+            else
+            {
+                float lostCash = (float)random.NextDouble(69, 691);
+                lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
+                await StatUpdate(Context.User, false, lostCash);
+
+                switch (random.Next(2))
+                {
+                    case 0:
+                        await Context.User.NotifyAsync(Context.Channel, "Some fucker ratted you out and the police showed up." +
+                        $" Thankfully, they're corrupt and you were able to sauce them **{lostCash.ToString("C2")}** to fuck off. Thank the lord.");
+                        break;
+                    case 1:
+                        await Context.User.NotifyAsync(Context.Channel, $"A slave got away and yoinked **{lostCash.ToString("C2")}** from you. Sad day.");
+                        break;
+                }
+
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
             }
 
             if (random.Next(20) == 1)
@@ -264,24 +306,11 @@ namespace RRBot.Modules
 
             float cash = snap.GetValue<float>("cash");
 
-            if (random.Next(10) > 7)
-            {
-                float lostCash = (float)random.NextDouble(69, 691);
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
-                switch (random.Next(2))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel, $"You were too ugly and nobody wanted you. You lost **{lostCash.ToString("C2")}** buying clothes for the night.");
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel, $"You didn't give good enough head to the cop! You had to pay **{lostCash.ToString("C2")}** in fines.");
-                        break;
-                }
-            }
-            else
+            if (random.Next(10) < 8)
             {
                 float moneyWhored = (float)random.NextDouble(69, 551);
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + moneyWhored);
+                await StatUpdate(Context.User, true, moneyWhored);
+
                 switch (random.Next(3))
                 {
                     case 0:
@@ -295,6 +324,26 @@ namespace RRBot.Modules
                         $" What a great night.");
                         break;
                 }
+
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + moneyWhored);
+            }
+            else
+            {
+                float lostCash = (float)random.NextDouble(69, 691);
+                lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
+                await StatUpdate(Context.User, false, lostCash);
+
+                switch (random.Next(2))
+                {
+                    case 0:
+                        await Context.User.NotifyAsync(Context.Channel, $"You were too ugly and nobody wanted you. You lost **{lostCash.ToString("C2")}** buying clothes for the night.");
+                        break;
+                    case 1:
+                        await Context.User.NotifyAsync(Context.Channel, $"You didn't give good enough head to the cop! You had to pay **{lostCash.ToString("C2")}** in fines.");
+                        break;
+                }
+
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
             }
 
             await doc.SetAsync(new { whoreCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);

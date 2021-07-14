@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using RRBot.Extensions;
 using RRBot.Preconditions;
@@ -35,6 +37,30 @@ namespace RRBot.Modules
             { 4, CHERRIES }
         };
 
+        private async Task StatUpdate(SocketUser user, bool success, float gain)
+        {
+            CultureInfo ci = CultureInfo.CreateSpecificCulture("en-US");
+            ci.NumberFormat.CurrencyNegativePattern = 2;
+            if (success)
+            {
+                await user.AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                {
+                    { "Gambles Won", "1" },
+                    { "Money Gained from Gambling", gain.ToString("C2", ci) },
+                    { "Net Gain/Loss from Gambling", gain.ToString("C2", ci) }
+                });
+            }
+            else
+            {
+                await user.AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                {
+                    { "Gambles Lost", "1" },
+                    { "Money Lost to Gambling", gain.ToString("C2", ci) },
+                    { "Net Gain/Loss from Gambling", (-gain).ToString("C2", ci) }
+                });
+            }
+        }
+
         private async Task<RuntimeResult> GenericGamble(float bet, double odds, float mult, bool exactRoll = false)
         {
             if (bet < 0f || float.IsNaN(bet)) return CommandResult.FromError($"{Context.User.Mention}, you can't bet nothing!");
@@ -50,11 +76,13 @@ namespace RRBot.Modules
             if (success)
             {
                 float payout = bet * mult;
+                await StatUpdate(Context.User, true, payout);
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + payout);
                 await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout.ToString("C2")}**!");
             }
             else
             {
+                await StatUpdate(Context.User, false, bet);
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - bet);
                 await Context.User.NotifyAsync(Context.Channel, $"Well damn, you rolled a {roll}, which wasn't enough. You lost **{bet.ToString("C2")}**.");
             }
@@ -99,8 +127,16 @@ namespace RRBot.Modules
 
             float cash = snap.GetValue<float>("cash");
 
-            if (random.Next(0, 2) != 0) await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash * 2);
-            else await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 10);
+            if (random.Next(0, 2) != 0)
+            {
+                await StatUpdate(Context.User, true, cash);
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash * 2);
+            }
+            else
+            {
+                await StatUpdate(Context.User, false, cash - 10);
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 10);
+            }
 
             await Context.User.NotifyAsync(Context.Channel, "I have doubled your cash.");
             return CommandResult.FromSuccess();
@@ -167,6 +203,7 @@ namespace RRBot.Modules
                 if (payoutMult > 1f)
                 {
                     float payout = (bet * payoutMult) - bet;
+                    await StatUpdate(Context.User, true, payout);
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + payout);
 
                     if (payoutMult == 25f)
@@ -176,6 +213,7 @@ namespace RRBot.Modules
                 }
                 else
                 {
+                    await StatUpdate(Context.User, false, bet);
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - bet);
                     await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet.ToString("C2")}**.");
                 }
