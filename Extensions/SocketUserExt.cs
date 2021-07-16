@@ -10,10 +10,8 @@ namespace RRBot.Extensions
 {
     public static class SocketUserExt
     {
-        public static async Task AddToStatsAsync(this SocketUser user, SocketGuild guild, Dictionary<string, string> statsToAddTo)
+        public static async Task AddToStatsAsync(this SocketUser user, CultureInfo culture, SocketGuild guild, Dictionary<string, string> statsToAddTo)
         {
-            CultureInfo ci = CultureInfo.CreateSpecificCulture("en-US");
-            ci.NumberFormat.CurrencyNegativePattern = 2;
             DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.TryGetValue("stats", out Dictionary<string, string> userStats)) userStats = new Dictionary<string, string>();
@@ -26,7 +24,7 @@ namespace RRBot.Extensions
                     {
                         float oldValue = float.Parse(userStats[kvp.Key].Substring(1));
                         float toAdd = float.Parse(kvp.Value.Substring(1));
-                        userStats[kvp.Key] = (oldValue + toAdd).ToString("C2", ci);
+                        userStats[kvp.Key] = (oldValue + toAdd).ToString("C2", culture);
                     }
                     else
                     {

@@ -16,11 +16,13 @@ namespace RRBot.Systems
     {
         private LavaRestClient lavaRestClient;
         private LavaSocketClient lavaSocketClient;
+        private Logger logger;
 
-        public AudioSystem(LavaRestClient rest, LavaSocketClient socket)
+        public AudioSystem(LavaRestClient rest, LavaSocketClient socket, Logger logger)
         {
             lavaRestClient = rest;
             lavaSocketClient = socket;
+            this.logger = logger;
         }
 
         public async Task<RuntimeResult> GetCurrentlyPlayingAsync(SocketCommandContext context)
@@ -71,9 +73,7 @@ namespace RRBot.Systems
             LavaTrack track = search.Tracks.FirstOrDefault();
 
             if (!track.IsStream && track.Length.TotalSeconds > 7200)
-            {
                 return CommandResult.FromError($"{context.User.Mention}, this is too long for me to play! It must be 2 hours or shorter in length.");
-            }
 
             if (player.CurrentTrack != null && player.IsPlaying)
             {
@@ -84,12 +84,13 @@ namespace RRBot.Systems
 
             await player.PlayAsync(track);
 
-            StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}");
+            StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
             if (!track.IsStream) message.AppendLine($"Length: {track.Length.ToString()}");
             message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
+
             await context.Channel.SendMessageAsync(message.ToString());
 
-            await Program.logger.Custom_TrackStarted(user, user.VoiceChannel, track.Uri);
+            await logger.Custom_TrackStarted(user, user.VoiceChannel, track.Uri);
 
             return CommandResult.FromSuccess();
         }
@@ -109,7 +110,6 @@ namespace RRBot.Systems
                 for (int i = 0; i < player.Queue.Items.Count(); i++)
                 {
                     LavaTrack track = player.Queue.Items.ElementAt(i) as LavaTrack;
-
                     playlist.AppendLine($"**{i + 1}**: {track.Title} by {track.Author}");
                     if (!track.IsStream) playlist.AppendLine($" ({track.Length.ToString()})");
                 }
@@ -122,6 +122,7 @@ namespace RRBot.Systems
                 };
 
                 await context.Channel.SendMessageAsync(embed: embed.Build());
+
                 return CommandResult.FromSuccess();
             }
 
@@ -140,6 +141,7 @@ namespace RRBot.Systems
 
                     StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
                     if (!track.IsStream) message.Append($"Length: {track.Length.ToString()}");
+
                     await context.Channel.SendMessageAsync(message.ToString());
                 }
                 else

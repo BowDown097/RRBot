@@ -34,9 +34,7 @@ namespace RRBot.Systems
         public static string GetBestItem(List<string> itemsList, string type)
         {
             List<string> itemsOfType = itemsList.Where(item => item.EndsWith(type, StringComparison.Ordinal)).ToList();
-            return itemsOfType.Count > 0
-                ? itemsOfType.OrderByDescending(item => rankings[item.Replace(type, string.Empty).Trim()]).First()
-                : string.Empty;
+            return itemsOfType.Count > 0 ? itemsOfType.OrderByDescending(item => rankings[item.Replace(type, "").Trim()]).First() : "";
         }
 
         public static float ComputeItemPrice(string item)
@@ -57,7 +55,7 @@ namespace RRBot.Systems
             DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
             if (snap.TryGetValue("items", out List<string> itemsList)) newItems = newItems.Where(item => !itemsList.Contains(item)).ToArray();
 
-            return items.Length <= newItems.Length ? newItems[random.Next(newItems.Length)] : string.Empty;
+            return items.Length <= newItems.Length ? newItems[random.Next(newItems.Length)] : "";
         }
 
         public static async Task RewardItem(IGuildUser user, string item)

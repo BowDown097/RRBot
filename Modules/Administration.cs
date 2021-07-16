@@ -19,18 +19,16 @@ namespace RRBot.Modules
         [Summary("Ban a user from using the bot.")]
         [Remarks("``$blacklist [user]``")]
         [RequireOwner]
-        public async Task BotBan(IGuildUser user)
+        public async Task<RuntimeResult> BotBan(IGuildUser user)
         {
-            if (user.IsBot)
-            {
-                await ReplyAsync("Nope.");
-                return;
-            }
+            if (user.IsBot) return CommandResult.FromError("Nope.");
 
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.SetAsync(new { banned = true }, SetOptions.MergeAll);
             await ReplyAsync($"Blacklisted **{user.ToString()}**.");
             Program.bannedUsers.Add(user.Id);
+
+            return CommandResult.FromSuccess();
         }
 
         [Alias("evaluate")]
@@ -70,6 +68,7 @@ namespace RRBot.Modules
         [RequireRole("senateRole")]
         public async Task<RuntimeResult> GiveItem(IGuildUser user, [Remainder] string item)
         {
+            if (user.IsBot) return CommandResult.FromError("Nope.");
             if (!Items.items.Contains(item)) return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item!");
             await Items.RewardItem(user, item);
             await ReplyAsync($"Gave **{user.ToString()}** a(n) **{item}**.");
@@ -83,10 +82,8 @@ namespace RRBot.Modules
         public async Task ResetCooldowns()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            await doc.SetAsync(
-            new { rapeCooldown = 0L, whoreCooldown = 0L, lootCooldown = 0L, slaveryCooldown = 0L, mineCooldown = 0L, digCooldown = 0L, chopCooldown = 0L, farmCooldown = 0L, 
-                huntCooldown = 0L }, 
-                SetOptions.MergeAll);
+            await doc.SetAsync(new { rapeCooldown = 0L, whoreCooldown = 0L, lootCooldown = 0L, slaveryCooldown = 0L, mineCooldown = 0L, digCooldown = 0L, chopCooldown = 0L, 
+                farmCooldown = 0L, huntCooldown = 0L }, SetOptions.MergeAll);
             await Context.User.NotifyAsync(Context.Channel, "Your cooldowns have been reset.");
         }
 
@@ -94,10 +91,13 @@ namespace RRBot.Modules
         [Summary("Set a user's cash.")]
         [Remarks("``$setcash [user] [amount]``")]
         [RequireRole("senateRole")]
-        public async Task SetCash(IGuildUser user, float amount)
+        public async Task<RuntimeResult> SetCash(IGuildUser user, float amount)
         {
+            if (user.IsBot) return CommandResult.FromError("Nope.");
             await CashSystem.SetCash(user, Context.Channel, amount);
             await ReplyAsync($"Set **{user.ToString()}**'s cash to **{amount.ToString("C2")}**.");
+
+            return CommandResult.FromSuccess();
         }
 
         [Alias("unbotban")]
@@ -105,18 +105,16 @@ namespace RRBot.Modules
         [Summary("Unban a user from using the bot.")]
         [Remarks("``$unblacklist [user]``")]
         [RequireOwner]
-        public async Task UnBotBan(IGuildUser user)
+        public async Task<RuntimeResult> UnBotBan(IGuildUser user)
         {
-            if (user.IsBot)
-            {
-                await ReplyAsync("Nope.");
-                return;
-            }
+            if (user.IsBot) return CommandResult.FromError("Nope.");
 
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.DeleteAsync();
             await ReplyAsync($"Unblacklisted **{user.ToString()}**.");
             Program.bannedUsers.Remove(user.Id);
+
+            return CommandResult.FromSuccess();
         }
     }
 }

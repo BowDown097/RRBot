@@ -15,10 +15,13 @@ namespace RRBot.Modules
 {
     public class Gambling : ModuleBase<SocketCommandContext>
     {
+        public CultureInfo CurrencyCulture { get; set; }
+
         private bool ThreeInARow(int[] results, int emoji)
         {
             return (results[0] == emoji && results[1] == emoji && results[2] == emoji) || (results[1] == emoji && results[2] == emoji && results[3] == emoji);
         }
+
         private bool TwoInARow(int[] results, int emoji)
         {
             return (results[0] == emoji && results[1] == emoji) || (results[1] == emoji && results[2] == emoji) || (results[2] == emoji && results[3] == emoji);
@@ -39,24 +42,22 @@ namespace RRBot.Modules
 
         private async Task StatUpdate(SocketUser user, bool success, float gain)
         {
-            CultureInfo ci = CultureInfo.CreateSpecificCulture("en-US");
-            ci.NumberFormat.CurrencyNegativePattern = 2;
             if (success)
             {
-                await user.AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                await user.AddToStatsAsync(CurrencyCulture, Context.Guild, new Dictionary<string, string>
                 {
                     { "Gambles Won", "1" },
-                    { "Money Gained from Gambling", gain.ToString("C2", ci) },
-                    { "Net Gain/Loss from Gambling", gain.ToString("C2", ci) }
+                    { "Money Gained from Gambling", gain.ToString("C2", CurrencyCulture) },
+                    { "Net Gain/Loss from Gambling", gain.ToString("C2", CurrencyCulture) }
                 });
             }
             else
             {
-                await user.AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                await user.AddToStatsAsync(CurrencyCulture, Context.Guild, new Dictionary<string, string>
                 {
                     { "Gambles Lost", "1" },
-                    { "Money Lost to Gambling", gain.ToString("C2", ci) },
-                    { "Net Gain/Loss from Gambling", (-gain).ToString("C2", ci) }
+                    { "Money Lost to Gambling", gain.ToString("C2", CurrencyCulture) },
+                    { "Net Gain/Loss from Gambling", (-gain).ToString("C2", CurrencyCulture) }
                 });
             }
         }
@@ -124,7 +125,6 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-
             float cash = snap.GetValue<float>("cash");
 
             if (random.Next(0, 2) != 0)
@@ -152,12 +152,13 @@ namespace RRBot.Modules
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-
             float cash = snap.GetValue<float>("cash");
+
             if (cash < bet) return CommandResult.FromError($"{Context.User.Mention}, you can't bet more than what you have!");
 
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots) 
                 return CommandResult.FromError($"{Context.User.Mention}, you are already using the slot machine!");
+
             await doc.SetAsync(new { usingSlots = true }, SetOptions.MergeAll);
 
             await Task.Factory.StartNew(async () =>
@@ -170,6 +171,7 @@ namespace RRBot.Modules
                     Color = Color.Red,
                     Title = "Slots"
                 };
+
                 IUserMessage slotMsg = await ReplyAsync(embed: embed.Build());
                 for (int i = 0; i < 5; i++)
                 {
@@ -178,10 +180,10 @@ namespace RRBot.Modules
                     results[2] = random.Next(1, 5);
                     results[3] = random.Next(1, 5);
 
-                    embed.WithDescription($"{emojis[results[0]]}{emojis[results[1]]}{emojis[results[2]]}{emojis[results[3]]}");
+                    embed.WithDescription($"{emojis[results[0]]} {emojis[results[1]]} {emojis[results[2]]} {emojis[results[3]]}");
                     await slotMsg.ModifyAsync(msg => msg.Embed = embed.Build());
 
-                    await Task.Delay(TimeSpan.FromSeconds(1.5));
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                 }
 
                 int sevens = results.Count(num => num == 1);
@@ -209,7 +211,7 @@ namespace RRBot.Modules
                     if (payoutMult == 25f)
                         await Context.User.NotifyAsync(Context.Channel, $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout.ToString("C2")}**!");
                     else
-                        await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout.ToString("C2")}** ({payoutMult}x your bet, minus the {bet.ToString("C2")} you put in).");
+                        await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout.ToString("C2")}**.");
                 }
                 else
                 {

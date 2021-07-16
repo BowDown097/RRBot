@@ -9,6 +9,7 @@ using RRBot.Systems;
 using RRBot.TypeReaders;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -22,12 +23,13 @@ namespace RRBot
 
         public static FirestoreDb database = FirestoreDb.Create("rushrebornbot", new FirestoreClientBuilder { CredentialsPath = Credentials.CREDENTIALS_PATH }.Build());
         public static List<ulong> bannedUsers = new List<ulong>();
-        public static Logger logger;
+        private AudioSystem audioSystem;
         private CommandService commands;
         private DiscordSocketClient client;
         private IServiceProvider serviceProvider;
         private LavaRestClient lavaRestClient;
         private LavaSocketClient lavaSocketClient;
+        private Logger logger;
 
         public async Task StartBanCheckAsync()
         {
@@ -95,12 +97,19 @@ namespace RRBot
             lavaRestClient = new LavaRestClient("127.0.0.1", 2333, "youshallnotpass");
             lavaSocketClient = new LavaSocketClient();
             commands = new CommandService();
+            logger = new Logger(client);
+            audioSystem = new AudioSystem(lavaRestClient, lavaSocketClient, logger);
+            CultureInfo currencyCulture = CultureInfo.CreateSpecificCulture("en-US");
+            currencyCulture.NumberFormat.CurrencyNegativePattern = 2;
+
             serviceProvider = new ServiceCollection()
+                .AddSingleton(audioSystem)
                 .AddSingleton(client)
                 .AddSingleton(commands)
+                .AddSingleton(currencyCulture)
                 .AddSingleton(lavaRestClient)
                 .AddSingleton(lavaSocketClient)
-                .AddSingleton<AudioSystem>()
+                .AddSingleton(logger)
                 .BuildServiceProvider();
 
             // general events
@@ -114,7 +123,6 @@ namespace RRBot
             commands.CommandExecuted += Commands_CommandExecuted;
 
             // logger events
-            logger = new Logger(client);
             client.ChannelCreated += logger.Client_ChannelCreated;
             client.ChannelDestroyed += logger.Client_ChannelDestroyed;
             client.ChannelUpdated += logger.Client_ChannelUpdated;
@@ -130,8 +138,8 @@ namespace RRBot
             client.UserVoiceStateUpdated += logger.Client_UserVoiceStateUpdated;
 
             // client setup
-            commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
             commands.AddTypeReader(typeof(float), new FloatTypeReader());
+            commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
             await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
             await client.SetGameAsync("with your father");
@@ -150,8 +158,8 @@ namespace RRBot
             await Task.Factory.StartNew(async () => await StartBanCheckAsync());
             await Task.Factory.StartNew(async () => await StartMuteCheckAsync());
             await lavaSocketClient.StartAsync(client);
-            lavaSocketClient.OnPlayerUpdated += serviceProvider.GetService<AudioSystem>().OnPlayerUpdated;
-            lavaSocketClient.OnTrackFinished += serviceProvider.GetService<AudioSystem>().OnTrackFinished;
+            lavaSocketClient.OnPlayerUpdated += audioSystem.OnPlayerUpdated;
+            lavaSocketClient.OnTrackFinished += audioSystem.OnTrackFinished;
         }
 
         private Task Client_Log(LogMessage arg)
@@ -231,14 +239,12 @@ namespace RRBot
             int argPos = 0;
             if (userMsg.HasCharPrefix('$', ref argPos))
             {
-                // ban check
                 if (bannedUsers.Contains(context.User.Id))
                 {
                     await context.Channel.SendMessageAsync($"{context.User.Mention}, you are banned from using the bot!");
                     return;
                 }
 
-                // execute command if all went well
                 await commands.ExecuteAsync(context, argPos, serviceProvider);
             }
             else

@@ -19,7 +19,7 @@ namespace RRBot.Modules
         {
             GalleryElement funny = new GalleryElement();
             Random random = new Random();
-            if (string.IsNullOrWhiteSpace(keyword)) // generate random funny if no keyword(s) is given
+            if (string.IsNullOrWhiteSpace(keyword))
             {
                 NHentaiSharp.Search.SearchResult result = await NHentaiSharp.Core.SearchClient.SearchAsync();
                 funny = result.elements[random.Next(0, result.elements.Length)];
@@ -27,6 +27,7 @@ namespace RRBot.Modules
             else
             {
                 string[] keywords = keyword.Contains(',') ? keyword.Split(',') : new string[] { keyword };
+
                 try
                 {
                     // the search code kinda garbage but according to the README.md of the NHentaiSharp project you have to do this i guess
@@ -49,7 +50,9 @@ namespace RRBot.Modules
                 Description = $"Well, buddy, I've found you **{funny.japaneseTitle}** ({englishTitle}).\nIt's at: {funny.url.ToString()}",
                 ImageUrl = funny.cover.imageUrl.ToString()
             };
+
             await ReplyAsync(embed: embed.Build());
+
             return CommandResult.FromSuccess();
         }
     }

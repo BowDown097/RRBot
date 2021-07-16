@@ -26,15 +26,12 @@ namespace RRBot.Modules
             ulong userId = user == null ? Context.User.Id : user.Id;
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(userId.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-
             float cash = snap.GetValue<float>("cash");
+
             if (cash > 0)
             {
-                if (user == null)
-                    await Context.User.NotifyAsync(Context.Channel, $"You have **{cash.ToString("C2")}**.");
-                else
-                    await ReplyAsync($"**{user.ToString()}** has **{cash.ToString("C2")}**.");
-
+                if (user == null) await Context.User.NotifyAsync(Context.Channel, $"You have **{cash.ToString("C2")}**.");
+                else await ReplyAsync($"**{user.ToString()}** has **{cash.ToString("C2")}**.");
                 return CommandResult.FromSuccess();
             }
 
@@ -53,7 +50,6 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-
             List<string> usrItems = snap.TryGetValue("items", out List<string> tmpItems) ? tmpItems : new List<string>();
             float cash = snap.GetValue<float>("cash");
 
@@ -118,13 +114,12 @@ namespace RRBot.Modules
         [Summary("Discard an item.")]
         [Remarks("``$discard [item]``")]
         [RequireItem]
-        public async Task<RuntimeResult> DiscardItem([Remainder] string item)
+        public async Task<RuntimeResult> Discard([Remainder] string item)
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-
             List<string> usrItems = snap.GetValue<List<string>>("items");
             float cash = snap.GetValue<float>("cash");
 
@@ -186,6 +181,7 @@ namespace RRBot.Modules
                 Title = "Leaderboard",
                 Description = builder.ToString()
             };
+
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -201,14 +197,11 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
 
             IEnumerable<KeyValuePair<string, object>> kvps = snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id", StringComparison.Ordinal)).OrderBy(kvp => kvp.Key);
-            if (kvps.Any())
+            foreach (KeyValuePair<string, object> kvp in kvps)
             {
-                foreach (KeyValuePair<string, object> kvp in kvps)
-                {
-                    float neededCash = snap.GetValue<float>(kvp.Key.Replace("Id", "Cost"));
-                    SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
-                    ranks.AppendLine($"**{role.Name}**: {neededCash.ToString("C2")}");
-                }
+                float neededCash = snap.GetValue<float>(kvp.Key.Replace("Id", "Cost"));
+                SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
+                ranks.AppendLine($"**{role.Name}**: {neededCash.ToString("C2")}");
             }
 
             EmbedBuilder embed = new EmbedBuilder
@@ -227,9 +220,9 @@ namespace RRBot.Modules
         [Remarks("``$sauce [user] [amount]")]
         public async Task<RuntimeResult> Sauce(IGuildUser user, float amount)
         {
-            if (user.IsBot) return CommandResult.FromError("Nope.");
-            if (Context.User == user) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce yourself money. Don't even know how you would.");
             if (amount <= 0 || float.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce negative or no money!");
+            if (Context.User == user) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce yourself money. Don't even know how you would.");
+            if (user.IsBot) return CommandResult.FromError("Nope.");
 
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
             DocumentSnapshot aSnap = await users.Document(Context.User.Id.ToString()).GetSnapshotAsync();

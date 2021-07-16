@@ -27,7 +27,10 @@ namespace RRBot.Preconditions
             if (snap.TryGetValue(CooldownNode, out long cooldown) && cooldown != 0L)
             {
                 if (cooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                    return PreconditionResult.FromError(string.Format($"{context.User.Mention}, {Message}", TimeSpan.FromSeconds(cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()));
+                {
+                    return PreconditionResult.FromError(string.Format($"{context.User.Mention}, {Message}",
+                            TimeSpan.FromSeconds(cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()));
+                }
 
                 await doc.SetAsync(new Dictionary<string, object>
                 {

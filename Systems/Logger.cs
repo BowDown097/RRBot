@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -216,6 +217,7 @@ namespace RRBot.Systems
                 Color = Color.Blue,
                 Timestamp = DateTime.Now
             };
+
             embed.Description = voiceState.VoiceChannel == null ? $"{user.ToString()}\nIn: {voiceStateOrig.VoiceChannel.ToString()}"
                 : $"{user.ToString()}\nIn: {voiceState.VoiceChannel.ToString()}";
 
@@ -234,15 +236,19 @@ namespace RRBot.Systems
                 embed.Title = "User Moved Voice Channels";
                 embed.Description = $"Original: {voiceStateOrig.VoiceChannel.ToString()}\nCurrent: {voiceState.VoiceChannel.ToString()}";
             }
+            else
+            {
+                embed.Title = "User Voice Status Changed";
+            }
 
             await WriteToLogs((user as SocketGuildUser).Guild, embed);     
         }
 
         public async Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
         {
-            string msgLogs = string.Empty;
+            StringBuilder msgLogs = new StringBuilder();
             foreach (IMessage message in messages)
-                msgLogs += $"{message.Author.ToString()} @ {message.Timestamp.ToString()}: {message.Content}\n";
+                msgLogs.AppendLine($"{message.Author.ToString()} @ {message.Timestamp.ToString()}: {message.Content}");
 
             await Task.Factory.StartNew(async () =>
             {
@@ -250,7 +256,7 @@ namespace RRBot.Systems
                 {
                     using (WebClient webClient = new WebClient())
                     {
-                        string hbPOST = webClient.UploadString("https://hastebin.com/documents", msgLogs);
+                        string hbPOST = webClient.UploadString("https://hastebin.com/documents", msgLogs.ToString());
                         string hbKey = JObject.Parse(hbPOST)["key"].ToString();
                         string hbUrl = $"https://hastebin.com/{hbKey}";
 
@@ -275,12 +281,14 @@ namespace RRBot.Systems
                         Timestamp = DateTime.Now
                     };
 
-                    File.WriteAllText("messages.txt", msgLogs);
+                    File.WriteAllText("messages.txt", msgLogs.ToString());
                     await WriteToLogs(guild, embed);
+
                     DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/config").Document("channels");
                     DocumentSnapshot snap = await doc.GetSnapshotAsync();
                     if (snap.TryGetValue("logsChannel", out ulong id))
-                        await guild.GetTextChannel(id).SendFileAsync("messages.txt", string.Empty);
+                        await guild.GetTextChannel(id).SendFileAsync("messages.txt", "");
+
                     File.Delete("messages.txt");
                 }
             });

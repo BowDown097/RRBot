@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -10,12 +11,15 @@ using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using RRBot.Extensions;
 using RRBot.Preconditions;
+using RRBot.Systems;
 
 namespace RRBot.Modules
 {
     [RequireStaff]
     public class Moderation : ModuleBase<SocketCommandContext>
     {
+        public Logger Logger { get; set; }
+
         [Alias("seethe")]
         [Command("ban")]
         [Summary("Ban any member.")]
@@ -28,7 +32,9 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if ((snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId)) || 
             (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId)))
+            {
                 return CommandResult.FromError($"{Context.User.Mention}, you cannot ban **{user.ToString()}** because they are a staff member.");
+            }
 
             if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
             {
@@ -60,23 +66,25 @@ namespace RRBot.Modules
                 DocumentReference banDoc = Program.database.Collection($"servers/{Context.Guild.Id}/bans").Document(user.Id.ToString());
                 response += string.IsNullOrWhiteSpace(reason) ? ". So long, sack of shit!" : $"for `{reason}`. So long, sack of shit!";
                 await ReplyAsync(response);
-                await Program.logger.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
+                await Logger.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
                 await banDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(timeSpan.TotalSeconds) });
                 await user.BanAsync(reason: reason);
-                await (user as SocketUser).AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                await (user as SocketUser).AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
                 {
                     { "Bans", "1" }
                 });
+
                 return CommandResult.FromSuccess();
             }
 
             if (string.IsNullOrWhiteSpace(reason))
             {
                 await user.BanAsync(reason: duration);
-                await (user as SocketUser).AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                await (user as SocketUser).AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
                 {
                     { "Bans", "1" }
                 });
+
                 return CommandResult.FromSuccess();
             }
 
@@ -93,7 +101,6 @@ namespace RRBot.Modules
 
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
             OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole).Value;
-
             if (perms.SendMessages == PermValue.Deny) return CommandResult.FromError($"{Context.User.Mention}, this chat is already chilled.");
 
             await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
@@ -119,8 +126,10 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId) ||
-            (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId))) 
+            (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId)))
+            {
                 return CommandResult.FromError($"{Context.User.Mention}, you cannot kick **{user.ToString()}** because they are a staff member.");
+            }
 
             await user.KickAsync(reason);
 
@@ -128,7 +137,7 @@ namespace RRBot.Modules
             response += string.IsNullOrWhiteSpace(reason) ? "." : $"for '{reason}'";
             await ReplyAsync(response);
 
-            await (user as SocketUser).AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+            await (user as SocketUser).AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
             {
                 { "Kicks", "1" }
             });
@@ -181,13 +190,14 @@ namespace RRBot.Modules
                     DocumentReference muteDoc = Program.database.Collection($"servers/{Context.Guild.Id}/mutes").Document(user.Id.ToString());
                     response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
                     await ReplyAsync(response);
-                    await Program.logger.Custom_UserMuted(user, Context.User, duration, reason);
+                    await Logger.Custom_UserMuted(user, Context.User, duration, reason);
                     await muteDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(timeSpan.TotalSeconds) });
                     await user.AddRoleAsync(mutedId);
-                    await (user as SocketUser).AddToStatsAsync(Context.Guild, new Dictionary<string, string>
+                    await (user as SocketUser).AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
                     {
                         { "Mutes", "1" }
                     });
+
                     return CommandResult.FromSuccess();
                 }
 
@@ -207,15 +217,16 @@ namespace RRBot.Modules
 
             IEnumerable<IMessage> messages = await Context.Channel.GetMessagesAsync(count + 1).FlattenAsync();
             messages = messages.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
-
             if (user != null) messages = messages.Where(msg => msg.Author.Id == user.Id);
-            if (!messages.Any()) return CommandResult.FromError("No messages were deleted.");
+
+            if (!messages.Any()) 
+                return CommandResult.FromError("No messages were deleted.");
             if (messages.Any(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays > 14)) 
                 await ReplyAsync($"{Context.User.Mention}, some messages were found to be older than 2 weeks and cannot be deleted.");
 
             await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
 
-            await Program.logger.Custom_MessagesPurged(messages, Context.Guild);
+            await Logger.Custom_MessagesPurged(messages, Context.Guild);
 
             return CommandResult.FromSuccess();
         }
@@ -242,7 +253,6 @@ namespace RRBot.Modules
         {
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
             OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole).Value;
-
             if (perms.SendMessages == PermValue.Allow) return CommandResult.FromError($"{Context.User.Mention}, this chat is not chilled.");
 
             await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Allow));
@@ -264,12 +274,13 @@ namespace RRBot.Modules
             {
                 if (user.RoleIds.Contains(mutedId))
                 {
-                    await Program.logger.Custom_UserUnmuted(user, Context.User);
+                    await Logger.Custom_UserUnmuted(user, Context.User);
                     await ReplyAsync($"**{Context.User.ToString()}** has unmuted **{user.ToString()}**.");
                     await user.RemoveRoleAsync(mutedId);
                     return CommandResult.FromSuccess();
                 }
-                return CommandResult.FromError($"**{Context.User.ToString()}** is a brainiac and tried to unmute someone that wasn't muted in the first place. Everyone point and laugh!");
+
+                return CommandResult.FromError($"**{Context.User.ToString()}** tried to unmute someone that wasn't muted in the first place. Everyone point and laugh!");
             }
 
             return CommandResult.FromError("This server's muted role has yet to be set.");

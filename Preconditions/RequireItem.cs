@@ -22,6 +22,7 @@ namespace RRBot.Preconditions
             if (snap.TryGetValue("items", out List<string> items) && items.Count > 0)
             {
                 if (string.IsNullOrEmpty(ItemType)) return PreconditionResult.FromSuccess();
+
                 return items.Any(item => item.EndsWith(ItemType, StringComparison.Ordinal))
                     ? PreconditionResult.FromSuccess()
                     : PreconditionResult.FromError($"{context.User.Mention}, you need to have a {ItemType}.");

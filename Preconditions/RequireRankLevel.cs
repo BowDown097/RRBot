@@ -15,7 +15,6 @@ namespace RRBot.Preconditions
 
         public RequireRankLevelAttribute(int level) => RankLevel = level;
 
-        // this entire thing is AWFUL. there HAS to be a better way to do this, surely.
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/config").Document("ranks");
