@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -28,6 +29,23 @@ namespace RRBot.Modules
             await ReplyAsync($"Blacklisted **{user.ToString()}**.");
             Program.bannedUsers.Add(user.Id);
 
+            return CommandResult.FromSuccess();
+        }
+
+        [Command("cancelticket")]
+        [Summary("Pre-emptively cancel a support ticket.")]
+        [Remarks("``$cancelticket [number]``")]
+        [RequireRole("senateRole")]
+        [RequireRushReborn]
+        public async Task<RuntimeResult> CancelTicket(int number)
+        {
+            CollectionReference tickets = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");
+            IAsyncEnumerable<DocumentReference> ticketDocs = tickets.ListDocumentsAsync();
+            if (number > await ticketDocs.CountAsync()) return CommandResult.FromError($"{Context.User.Mention}, there is not a support ticket with the number {number}!");
+
+            DocumentReference doc = await ticketDocs.ElementAtAsync(number - 1);
+            await doc.DeleteAsync();
+            await ReplyAsync($"{Context.User.Mention}, support ticket #{number} has been deleted successfully!");
             return CommandResult.FromSuccess();
         }
 

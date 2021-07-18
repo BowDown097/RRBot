@@ -300,12 +300,12 @@ namespace RRBot.Modules
                 case 2:
                     await Context.User.NotifyAsync(Context.Channel, "DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await doc.DeleteAsync();
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 10);
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 0);
                     break;
                 case 3:
                     await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await doc.DeleteAsync();
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 10);
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 0);
                     break;
             }
 

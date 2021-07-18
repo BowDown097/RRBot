@@ -67,6 +67,8 @@
     <Compile Include="Extensions\SocketUserExt.cs" />
     <Compile Include="Systems\Items.cs" />
     <Compile Include="Filters.cs" />
+    <Compile Include="Modules\Support.cs" />
+    <Compile Include="Preconditions\RequireRushReborn.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

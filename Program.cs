@@ -207,7 +207,7 @@ namespace RRBot
         {
             DocumentReference userDoc = database.Collection($"servers/{user.Guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
-            if (!snap.TryGetValue<float>("cash", out _)) await CashSystem.SetCash(user, null, 10);
+            if (!snap.TryGetValue<float>("cash", out _)) await CashSystem.SetCash(user, null, 100);
         }
 
         private async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)

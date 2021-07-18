@@ -134,8 +134,8 @@ namespace RRBot.Modules
             }
             else
             {
-                await StatUpdate(Context.User, false, cash - 10);
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 10);
+                await StatUpdate(Context.User, false, cash);
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 0);
             }
 
             await Context.User.NotifyAsync(Context.Channel, "I have doubled your cash.");

@@ -114,8 +114,6 @@ namespace RRBot.Modules
                         StringBuilder description = new StringBuilder($"**Description**: {commandInfo.Summary}\n**Usage**: {commandInfo.Remarks}");
                         if (actualAliases.Any()) description.Append($"\n**Alias(es)**: {string.Join(", ", actualAliases)}");
 
-                        if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC) || moduleInfo.TryGetPrecondition(out rBIC))
-                            description.Append($"\nMust be in #{rBIC.Name}");
                         if (commandInfo.TryGetPrecondition<RequireDJAttribute>() || moduleInfo.TryGetPrecondition<RequireDJAttribute>()) 
                             description.Append("\nRequires DJ");
                         if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>() || moduleInfo.TryGetPrecondition<RequireNsfwAttribute>()) 
@@ -124,25 +122,14 @@ namespace RRBot.Modules
                             description.Append("\nRequires Bot Owner");
                         if (commandInfo.TryGetPrecondition<RequireStaffAttribute>() || moduleInfo.TryGetPrecondition<RequireOwnerAttribute>()) 
                             description.Append("\nRequires Staff");
+                        if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC) || moduleInfo.TryGetPrecondition(out rBIC))
+                            description.Append($"\nMust be in #{rBIC.Name}");
                         if (commandInfo.TryGetPrecondition(out RequireCashAttribute rc) || moduleInfo.TryGetPrecondition(out rc))
                             description.Append((int)rc.Amount == 1 ? "\nRequires any amount of cash" : $"\nRequires ${(int)rc.Amount}");
                         if (commandInfo.TryGetPrecondition(out RequireItemAttribute ri) || moduleInfo.TryGetPrecondition(out ri))
                             description.Append(string.IsNullOrEmpty(ri.ItemType) ? "\nRequires an item" : $"\nRequires a {ri.ItemType}");
                         if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP) || moduleInfo.TryGetPrecondition(out rUP))
                             description.Append($"\nRequires {Enum.GetName(rUP.GuildPermission.GetType(), rUP.GuildPermission)} permission");
-                        if (commandInfo.TryGetPrecondition(out RequireRoleAttribute rR) || moduleInfo.TryGetPrecondition(out rR))
-                        {
-                            DocumentSnapshot snap = await config.Document("roles").GetSnapshotAsync();
-                            if (snap.TryGetValue(rR.DatabaseReference, out ulong roleId))
-                            {
-                                IRole role = Context.Guild.GetRole(roleId);
-                                description.Append($"\nRequires {role.Name}");
-                            }
-                            else
-                            {
-                                description.Append($"\nRequires {rR.DatabaseReference} (role has not been set)");
-                            }
-                        }
                         if (commandInfo.TryGetPrecondition(out RequireRankLevelAttribute rRL) || moduleInfo.TryGetPrecondition(out rRL))
                         {
                             try
@@ -157,6 +144,26 @@ namespace RRBot.Modules
                             {
                                 description.Append($"\nRequires rank level {rRL.RankLevel} (rank has not been set)");
                             }
+                        }
+                        if (commandInfo.TryGetPrecondition(out RequireRoleAttribute rR) || moduleInfo.TryGetPrecondition(out rR))
+                        {
+                            DocumentSnapshot snap = await config.Document("roles").GetSnapshotAsync();
+                            if (snap.TryGetValue(rR.DatabaseReference, out ulong roleId))
+                            {
+                                IRole role = Context.Guild.GetRole(roleId);
+                                description.Append($"\nRequires {role.Name}");
+                            }
+                            else
+                            {
+                                description.Append($"\nRequires {rR.DatabaseReference} (role has not been set)");
+                            }
+                        }
+                        if (commandInfo.TryGetPrecondition<RequireRushRebornAttribute>() || moduleInfo.TryGetPrecondition<RequireRushRebornAttribute>())
+                        {
+                            if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+                                break;
+                            else
+                                description.Append($"\nExclusive to Rush Reborn");
                         }
 
                         EmbedBuilder commandEmbed = new EmbedBuilder
@@ -186,11 +193,14 @@ namespace RRBot.Modules
 
             if (string.IsNullOrWhiteSpace(module))
             {
+                List<string> modulesList = modules.Select(x => x.Name).ToList();
+                if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST) modulesList.Remove("Support");
+
                 EmbedBuilder modulesEmbed = new EmbedBuilder
                 {
                     Color = Color.Red,
                     Title = "Currently available modules",
-                    Description = string.Join(", ", modules.Select(x => x.Name).ToArray())
+                    Description = string.Join(", ", modulesList)
                 };
 
                 await ReplyAsync(embed: modulesEmbed.Build());
@@ -210,6 +220,12 @@ namespace RRBot.Modules
                             await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
                             return;
                         }
+                    }
+
+                    if (moduleInfo.TryGetPrecondition<RequireRushRebornAttribute>())
+                    {
+                        if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+                            break;
                     }
 
                     EmbedBuilder moduleEmbed = new EmbedBuilder
