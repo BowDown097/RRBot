@@ -91,6 +91,24 @@ namespace RRBot.Modules
             return CommandResult.FromError($"{Context.User.Mention}, you specified an invalid amount of time!");
         }
 
+        [Command("cancelticket")]
+        [Summary("Pre-emptively cancel a support ticket.")]
+        [Remarks("``$cancelticket [index]``")]
+        [RequireBeInChannel("help-requests")]
+        [RequireRushReborn]
+        public async Task<RuntimeResult> CancelTicket(int index)
+        {
+            CollectionReference ticketsCollection = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");
+            IAsyncEnumerable<DocumentReference> tickets = ticketsCollection.ListDocumentsAsync();
+            if (index > await tickets.CountAsync() || index <= 0) return CommandResult.FromError($"{Context.User.Mention}, there is not a support ticket at that index!");
+
+            DocumentReference doc = await tickets.ElementAtAsync(index - 1);
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+
+            await Support.CloseTicket(Context.Channel, Context.User, doc, snap, $"Support ticket #{index} deleted successfully!");
+            return CommandResult.FromSuccess();
+        }
+
         [Command("chill")]
         [Summary("Shut chat the fuck up for a specific amount of time in seconds.")]
         [Remarks("``$chill [duration]``")]

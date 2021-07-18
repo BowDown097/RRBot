@@ -32,23 +32,6 @@ namespace RRBot.Modules
             return CommandResult.FromSuccess();
         }
 
-        [Command("cancelticket")]
-        [Summary("Pre-emptively cancel a support ticket.")]
-        [Remarks("``$cancelticket [number]``")]
-        [RequireRole("senateRole")]
-        [RequireRushReborn]
-        public async Task<RuntimeResult> CancelTicket(int number)
-        {
-            CollectionReference tickets = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");
-            IAsyncEnumerable<DocumentReference> ticketDocs = tickets.ListDocumentsAsync();
-            if (number > await ticketDocs.CountAsync()) return CommandResult.FromError($"{Context.User.Mention}, there is not a support ticket with the number {number}!");
-
-            DocumentReference doc = await ticketDocs.ElementAtAsync(number - 1);
-            await doc.DeleteAsync();
-            await ReplyAsync($"{Context.User.Mention}, support ticket #{number} has been deleted successfully!");
-            return CommandResult.FromSuccess();
-        }
-
         [Alias("evaluate")]
         [Command("eval")]
         [Summary("Execute C# code.")]
