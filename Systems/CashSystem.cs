@@ -19,30 +19,30 @@ namespace RRBot.Systems
     {
         public static readonly WebClient client = new WebClient();
 
-        public static async Task AddCrypto(IGuildUser user, string crypto, float amount)
+        public static async Task AddCrypto(IGuildUser user, string crypto, double amount)
         {
-            amount = (float)Math.Round(amount, 4);
-            float currentAmount = 0f;
+            amount = Math.Round(amount, 4);
+            double currentAmount = 0;
             DocumentReference doc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             snap.TryGetValue(crypto, out currentAmount);
-            await doc.SetAsync(new Dictionary<string, float> { { crypto, currentAmount + amount } }, SetOptions.MergeAll);
+            await doc.SetAsync(new Dictionary<string, double> { { crypto, currentAmount + amount } }, SetOptions.MergeAll);
         }
 
-        public static async Task<float> CashFromString(IGuildUser user, string cashStr)
+        public static async Task<double> CashFromString(IGuildUser user, string cashStr)
         {
-            float.TryParse(cashStr, out float cash);
+            double.TryParse(cashStr, out double cash);
             if (cashStr.Equals("all", StringComparison.OrdinalIgnoreCase))
             {
                 DocumentReference doc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
                 DocumentSnapshot snap = await doc.GetSnapshotAsync();
-                cash = snap.GetValue<float>("cash");
+                cash = snap.GetValue<double>("cash");
             }
 
             return cash;
         }
 
-        public static async Task<float> QueryCryptoValue(string crypto)
+        public static async Task<double> QueryCryptoValue(string crypto)
         {
             string current = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
             string today = DateTime.Now.ToString("yyyy-MM-dd") + "T00:00";
@@ -50,15 +50,15 @@ namespace RRBot.Systems
 
             dynamic obj = JsonConvert.DeserializeObject(data);
             JToken latestEntry = JArray.FromObject(obj.data.entries).Last;
-            return (float)Math.Round(latestEntry[1].Value<double>(), 2);
+            return Math.Round(latestEntry[1].Value<double>(), 2);
         }
 
-        public static async Task SetCash(IGuildUser user, ISocketMessageChannel channel, float amount)
+        public static async Task SetCash(IGuildUser user, ISocketMessageChannel channel, double amount)
         {
             if (user.IsBot) return;
             if (amount < 0) amount = 0;
 
-            amount = (float)Math.Round(amount, 2);
+            amount = Math.Round(amount, 2);
             DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
             await userDoc.SetAsync(new { cash = amount }, SetOptions.MergeAll);
 
@@ -68,7 +68,7 @@ namespace RRBot.Systems
             {
                 foreach (KeyValuePair<string, object> kvp in snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id", StringComparison.Ordinal)))
                 {
-                    float neededCash = snap.GetValue<float>(kvp.Key.Replace("Id", "Cost"));
+                    double neededCash = snap.GetValue<double>(kvp.Key.Replace("Id", "Cost"));
                     ulong roleId = Convert.ToUInt64(kvp.Value);
 
                     if (amount >= neededCash && !user.RoleIds.Contains(roleId))
@@ -100,7 +100,7 @@ namespace RRBot.Systems
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             if (snap.TryGetValue("timeTillCash", out long time) && time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds()) 
-                await SetCash(context.User as IGuildUser, context.Channel, snap.GetValue<float>("cash") + 10);
+                await SetCash(context.User as IGuildUser, context.Channel, snap.GetValue<double>("cash") + 10);
 
             await doc.SetAsync(new { timeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(TimeSpan.FromMinutes(1).TotalSeconds) }, SetOptions.MergeAll);
         }

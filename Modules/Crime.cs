@@ -33,7 +33,7 @@ namespace RRBot.Modules
             }
         }
 
-        private async Task StatUpdate(SocketUser user, bool success, float gain)
+        private async Task StatUpdate(SocketUser user, bool success, double gain)
         {
             if (success)
             {
@@ -99,11 +99,11 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-            float cash = snap.GetValue<float>("cash");
+            double cash = snap.GetValue<double>("cash");
 
             if (random.Next(10) < 8)
             {
-                float moneyLooted = (float)random.NextDouble(69, 691);
+                double moneyLooted = random.NextDouble(69, 691);
                 await StatUpdate(Context.User, true, moneyLooted);
 
                 switch (random.Next(3))
@@ -126,7 +126,7 @@ namespace RRBot.Modules
             }
             else
             {
-                float lostCash = (float)random.NextDouble(69, 461);
+                double lostCash = random.NextDouble(69, 461);
                 lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
                 await StatUpdate(Context.User, false, lostCash);
 
@@ -168,23 +168,23 @@ namespace RRBot.Modules
             if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
 
-            float aCash = aSnap.GetValue<float>("cash");
+            double aCash = aSnap.GetValue<double>("cash");
             DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
-            float tCash = tSnap.GetValue<float>("cash");
+            double tCash = tSnap.GetValue<double>("cash");
 
             if (tCash > 0)
             {
                 double rapePercent = random.NextDouble(5, 9);
                 if (random.Next(10) > 4)
                 {
-                    float repairs = (float)(tCash / 100.0 * rapePercent);
+                    double repairs = tCash / 100.0 * rapePercent;
                     await StatUpdate(user as SocketUser, false, repairs);
                     await CashSystem.SetCash(user, Context.Channel, tCash - repairs);
                     await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user.ToString()}**'s asshole! They just paid **{repairs.ToString("C2")}** in asshole repairs.");
                 }
                 else
                 {
-                    float repairs = (float)(aCash / 100.0 * rapePercent);
+                    double repairs = aCash / 100.0 * rapePercent;
                     await StatUpdate(Context.User, false, repairs);
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - repairs);
                     await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user.ToString()}**! You just paid **{repairs.ToString("C2")}** in asshole repairs.");
@@ -209,11 +209,11 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-            float cash = snap.GetValue<float>("cash");
+            double cash = snap.GetValue<double>("cash");
 
             if (random.Next(10) < 8)
             {
-                float moneyEarned = (float)random.NextDouble(69, 691);
+                double moneyEarned = random.NextDouble(69, 691);
                 await StatUpdate(Context.User, true, moneyEarned);
 
                 switch (random.Next(3))
@@ -235,7 +235,7 @@ namespace RRBot.Modules
             }
             else
             {
-                float lostCash = (float)random.NextDouble(69, 461);
+                double lostCash = random.NextDouble(69, 461);
                 lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
                 await StatUpdate(Context.User, false, lostCash);
 
@@ -271,11 +271,11 @@ namespace RRBot.Modules
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
 
-            float cash = snap.GetValue<float>("cash");
+            double cash = snap.GetValue<double>("cash");
 
             if (random.Next(10) < 8)
             {
-                float moneyWhored = (float)random.NextDouble(69, 691);
+                double moneyWhored = random.NextDouble(69, 691);
                 await StatUpdate(Context.User, true, moneyWhored);
 
                 switch (random.Next(3))
@@ -296,7 +296,7 @@ namespace RRBot.Modules
             }
             else
             {
-                float lostCash = (float)random.NextDouble(69, 461);
+                double lostCash = random.NextDouble(69, 461);
                 lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
                 await StatUpdate(Context.User, false, lostCash);
 

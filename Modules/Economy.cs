@@ -16,6 +16,19 @@ namespace RRBot.Modules
     [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
     public class Economy : ModuleBase<SocketCommandContext>
     {
+        private async Task AddBackUserSettings(DocumentReference doc, double btc, double doge, double eth, double xrp, bool dmNotifsV, bool rankupNotifsV, bool replyPingsV, 
+            Dictionary<string, string> userStats)
+        {
+            if (btc > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "btc", btc);
+            if (doge > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "doge", doge);
+            if (eth > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "eth", eth);
+            if (xrp > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "xrp", xrp);
+            if (dmNotifsV) await doc.SetAsync(new { dmNotifs = dmNotifsV }, SetOptions.MergeAll);
+            if (rankupNotifsV) await doc.SetAsync(new { rankupNotifs = rankupNotifsV }, SetOptions.MergeAll);
+            if (!replyPingsV) await doc.SetAsync(new { replyPings = replyPingsV }, SetOptions.MergeAll);
+            if (userStats.Count > 0) await doc.SetAsync(new { stats = userStats }, SetOptions.MergeAll);
+        }
+
         [Alias("bal", "cash")]
         [Command("balance")]
         [Summary("Check your own or someone else's balance.")]
@@ -27,7 +40,7 @@ namespace RRBot.Modules
             ulong userId = user == null ? Context.User.Id : user.Id;
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(userId.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            float cash = snap.GetValue<float>("cash");
+            double cash = snap.GetValue<double>("cash");
 
             if (cash > 0)
             {
@@ -52,11 +65,11 @@ namespace RRBot.Modules
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
             List<string> usrItems = snap.TryGetValue("items", out List<string> tmpItems) ? tmpItems : new List<string>();
-            float cash = snap.GetValue<float>("cash");
+            double cash = snap.GetValue<double>("cash");
 
             if (!usrItems.Contains(item))
             {
-                float price = Items.ComputeItemPrice(item);
+                double price = Items.ComputeItemPrice(item);
                 if (price < cash)
                 {
                     usrItems.Add(item);
@@ -122,11 +135,11 @@ namespace RRBot.Modules
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
             List<string> usrItems = snap.GetValue<List<string>>("items");
-            float cash = snap.GetValue<float>("cash");
+            double cash = snap.GetValue<double>("cash");
 
             if (usrItems.Remove(item))
             {
-                float price = Items.ComputeItemPrice(item) / 1.5f;
+                double price = Items.ComputeItemPrice(item) / 1.5;
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + price);
                 await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{price.ToString("C2")}**.");
                 await doc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
@@ -172,7 +185,7 @@ namespace RRBot.Modules
                 DocumentSnapshot doc = snap.Documents[i];
                 SocketGuildUser user = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
                 if (user == null) continue;
-                float cash = doc.GetValue<float>("cash");
+                double cash = doc.GetValue<double>("cash");
                 builder.AppendLine($"{i + 1}: **{user.ToString()}**: {cash.ToString("C2")}");
             }
 
@@ -200,7 +213,7 @@ namespace RRBot.Modules
             IEnumerable<KeyValuePair<string, object>> kvps = snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id", StringComparison.Ordinal)).OrderBy(kvp => kvp.Key);
             foreach (KeyValuePair<string, object> kvp in kvps)
             {
-                float neededCash = snap.GetValue<float>(kvp.Key.Replace("Id", "Cost"));
+                double neededCash = snap.GetValue<double>(kvp.Key.Replace("Id", "Cost"));
                 SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
                 ranks.AppendLine($"**{role.Name}**: {neededCash.ToString("C2")}");
             }
@@ -219,9 +232,9 @@ namespace RRBot.Modules
         [Command("sauce")]
         [Summary("Sauce someone some cash.")]
         [Remarks("``$sauce [user] [amount]")]
-        public async Task<RuntimeResult> Sauce(IGuildUser user, float amount)
+        public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
         {
-            if (amount <= 0 || float.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce negative or no money!");
+            if (amount <= 0) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce negative or no money!");
             if (Context.User == user) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce yourself money. Don't even know how you would.");
             if (user.IsBot) return CommandResult.FromError("Nope.");
 
@@ -229,10 +242,10 @@ namespace RRBot.Modules
             DocumentSnapshot aSnap = await users.Document(Context.User.Id.ToString()).GetSnapshotAsync();
             if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-            float aCash = aSnap.GetValue<float>("cash");
+            double aCash = aSnap.GetValue<double>("cash");
 
             DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
-            float tCash = tSnap.GetValue<float>("cash");
+            double tCash = tSnap.GetValue<double>("cash");
 
             if (amount > aCash) return CommandResult.FromError($"{Context.User.Mention}, you do not have that much money!");
 
@@ -253,11 +266,11 @@ namespace RRBot.Modules
 
             foreach (string item in Items.items)
             {
-                float price = Items.ComputeItemPrice(item);
+                double price = Items.ComputeItemPrice(item);
                 items.AppendLine($"**{item}**: {price.ToString("C2")}");
             }
 
-            foreach (Tuple<string, string, float> perk in Items.perks)
+            foreach (Tuple<string, string, double> perk in Items.perks)
                 perks.AppendLine($"**{perk.Item1}**: {perk.Item2}. Price: {perk.Item3.ToString("C2")}");
 
             EmbedBuilder itemsEmbed = new EmbedBuilder
@@ -290,6 +303,14 @@ namespace RRBot.Modules
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
 
+            snap.TryGetValue("btc", out double btc);
+            snap.TryGetValue("doge", out double doge);
+            snap.TryGetValue("eth", out double eth);
+            snap.TryGetValue("xrp", out double xrp);
+            snap.TryGetValue("dmNotifs", out bool dmNotifsV);
+            snap.TryGetValue("rankupNotifs", out bool rankupNotifsV);
+            snap.TryGetValue("replyPings", out bool replyPingsV);
+            snap.TryGetValue("stats", out Dictionary<string, string> userStats);
             switch (random.Next(4))
             {
                 case 0:
@@ -302,11 +323,13 @@ namespace RRBot.Modules
                     await Context.User.NotifyAsync(Context.Channel, "DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await doc.DeleteAsync();
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 0);
+                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, rankupNotifsV, replyPingsV, userStats);
                     break;
                 case 3:
                     await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await doc.DeleteAsync();
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 0);
+                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, rankupNotifsV, replyPingsV, userStats);
                     break;
             }
 

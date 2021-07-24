@@ -24,7 +24,7 @@ namespace RRBot.Modules
         [Command("addrank")]
         [Summary("Register the ID for a rank, its level, and the money required to get it.")]
         [Remarks("``$addrank [role-id] [level] [cost]``")]
-        public async Task AddRank(ulong id, int level, float cost)
+        public async Task AddRank(ulong id, int level, double cost)
         {
             SocketRole role = Context.Guild.GetRole(id);
             await CreateEntry(Context, "ranks", new Dictionary<string, object> { { $"level{level}Id", id.ToString() } });

@@ -26,9 +26,9 @@ namespace RRBot.Systems
             "Wooden Hoe", "Stone Hoe", "Iron Hoe", "Diamond Hoe"
         };
 
-        public static readonly Tuple<string, string, float>[] perks = 
+        public static readonly Tuple<string, string, double>[] perks = 
         { 
-            new Tuple<string, string, float>("test perk", "Test Perk (cannot purchase)", 69696969f)
+            new Tuple<string, string, double>("test perk", "Test Perk (cannot purchase)", 69696969)
         };
 
         public static string GetBestItem(List<string> itemsList, string type)
@@ -37,13 +37,13 @@ namespace RRBot.Systems
             return itemsOfType.Count > 0 ? itemsOfType.OrderByDescending(item => rankings[item.Replace(type, "").Trim()]).First() : "";
         }
 
-        public static float ComputeItemPrice(string item)
+        public static double ComputeItemPrice(string item)
         {
-            float price = 4500f; // wood price
+            double price = 4500; // wood price
 
-            if (item.StartsWith("Stone", StringComparison.Ordinal)) price = 6000f;
-            else if (item.StartsWith("Iron", StringComparison.Ordinal)) price = 7500f;
-            else if (item.StartsWith("Diamond", StringComparison.Ordinal)) price = 9000f;
+            if (item.StartsWith("Stone", StringComparison.Ordinal)) price = 6000;
+            else if (item.StartsWith("Iron", StringComparison.Ordinal)) price = 7500;
+            else if (item.StartsWith("Diamond", StringComparison.Ordinal)) price = 9000;
 
             return price;
         }

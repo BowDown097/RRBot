@@ -21,14 +21,14 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             List<string> items = snap.GetValue<List<string>>("items");
-            float cash = snap.GetValue<float>("cash");
+            double cash = snap.GetValue<double>("cash");
 
             string item = Items.GetBestItem(items, itemType);
             int numMined = random.Next(32, 65); // default for wooden
             if (item.StartsWith("Stone", StringComparison.Ordinal)) numMined = random.Next(65, 113);
             else if (item.StartsWith("Iron", StringComparison.Ordinal)) numMined = random.Next(113, 161);
             else if (item.StartsWith("Diamond", StringComparison.Ordinal)) numMined = random.Next(161, 209);
-            float cashGained = (float)(numMined * 2.5);
+            double cashGained = numMined * 2.5;
             await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained.ToString("C2")}**.");
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + cashGained);
 
@@ -79,23 +79,23 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             List<string> items = snap.GetValue<List<string>>("items");
-            float cash = snap.GetValue<float>("cash");
+            double cash = snap.GetValue<double>("cash");
 
             string item = Items.GetBestItem(items, "Pickaxe");
             int numMined = random.Next(32, 65);
-            float cashGained = numMined * 4;
+            double cashGained = numMined * 4;
             if (item.StartsWith("Wooden", StringComparison.Ordinal))
             {
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} stone with your {item} and earned **{cashGained.ToString("C2")}**.");
             }
             else if (item.StartsWith("Stone", StringComparison.Ordinal))
             {
-                cashGained *= 1.33f;
+                cashGained *= 1.33;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} iron with your {item} and earned **{cashGained.ToString("C2")}**.");
             }
             else if (item.StartsWith("Iron", StringComparison.Ordinal))
             {
-                cashGained *= 1.66f;
+                cashGained *= 1.66;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} diamonds with your {item} and earned **{cashGained.ToString("C2")}**.");
             }
             else if (item.StartsWith("Diamond", StringComparison.Ordinal))

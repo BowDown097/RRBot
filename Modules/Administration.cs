@@ -19,7 +19,7 @@ namespace RRBot.Modules
         [Summary("Add to a user's cryptocurrency amount.")]
         [Remarks("``$addcrypto [user] [crypto] [amount]``")]
         [RequireRole("senateRole")]
-        public async Task<RuntimeResult> AddCrypto(IGuildUser user, string crypto, float amount)
+        public async Task<RuntimeResult> AddCrypto(IGuildUser user, string crypto, double amount)
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");
 
@@ -108,7 +108,7 @@ namespace RRBot.Modules
         [Summary("Set a user's cash.")]
         [Remarks("``$setcash [user] [amount]``")]
         [RequireRole("senateRole")]
-        public async Task<RuntimeResult> SetCash(IGuildUser user, float amount)
+        public async Task<RuntimeResult> SetCash(IGuildUser user, double amount)
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");
             await CashSystem.SetCash(user, Context.Channel, amount);

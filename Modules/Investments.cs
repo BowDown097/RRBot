@@ -16,18 +16,18 @@ namespace RRBot.Modules
         [Summary("Invest in a cryptocurrency. Currently accepted currencies are \"BTC\", \"DOGE\", \"ETH\", and \"XRP\". It's important to mention that cash values are rounded to 2 decimals, therefore investing in amounts of crypto with very specific or low decimals may be detrimental.")]
         [Remarks("``$invest [crypto] [amount]``")]
         [RequireCash]
-        public async Task<RuntimeResult> Invest(string crypto, float amount)
+        public async Task<RuntimeResult> Invest(string crypto, double amount)
         {
             string cUp = crypto.ToUpper();
 
-            if (amount < 0.1f || float.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you must invest in a tenth or more of the crypto!");
+            if (amount < 0.01) return CommandResult.FromError($"{Context.User.Mention}, you must invest in a hundredth or more of the crypto!");
             if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "XRP") return CommandResult.FromError($"{Context.User.Mention}, **{crypto}** is not a currently accepted currency!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            float cash = snap.GetValue<float>("cash");
-            float cryptoValue = await CashSystem.QueryCryptoValue(crypto) * amount;
+            double cash = snap.GetValue<double>("cash");
+            double cryptoValue = await CashSystem.QueryCryptoValue(crypto) * amount;
             if (cash < cryptoValue) return CommandResult.FromError($"{Context.User.Mention}, you don't have enough money for this! You need at least **{cryptoValue.ToString("C2")}**.");
 
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - cryptoValue);
@@ -49,13 +49,13 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             StringBuilder investmentsBuilder = new StringBuilder();
-            if (snap.TryGetValue("btc", out float btc) && btc > 0)
+            if (snap.TryGetValue("btc", out double btc) && btc > 0)
                 investmentsBuilder.AppendLine($"**Bitcoin (BTC)**: {btc} ({(await CashSystem.QueryCryptoValue("BTC") * btc).ToString("C2")})");
-            if (snap.TryGetValue("doge", out float doge) && doge > 0)
+            if (snap.TryGetValue("doge", out double doge) && doge > 0)
                 investmentsBuilder.AppendLine($"**Dogecoin (DOGE)**: {doge} ({(await CashSystem.QueryCryptoValue("DOGE") * doge).ToString("C2")})");
-            if (snap.TryGetValue("eth", out float eth) && eth > 0)
+            if (snap.TryGetValue("eth", out double eth) && eth > 0)
                 investmentsBuilder.AppendLine($"**Ethereum (ETH)**: {eth} ({(await CashSystem.QueryCryptoValue("ETH") * eth).ToString("C2")})");
-            if (snap.TryGetValue("xrp", out float xrp) && xrp > 0)
+            if (snap.TryGetValue("xrp", out double xrp) && xrp > 0)
                 investmentsBuilder.AppendLine($"**XRP**: {xrp} ({(await CashSystem.QueryCryptoValue("XRP") * xrp).ToString("C2")})");
 
             string investments = investmentsBuilder.ToString();
@@ -77,10 +77,10 @@ namespace RRBot.Modules
         [Remarks("``$prices``")]
         public async Task Prices()
         {
-            float btc = await CashSystem.QueryCryptoValue("BTC");
-            float doge = await CashSystem.QueryCryptoValue("DOGE");
-            float eth = await CashSystem.QueryCryptoValue("ETH");
-            float xrp = await CashSystem.QueryCryptoValue("XRP");
+            double btc = await CashSystem.QueryCryptoValue("BTC");
+            double doge = await CashSystem.QueryCryptoValue("DOGE");
+            double eth = await CashSystem.QueryCryptoValue("ETH");
+            double xrp = await CashSystem.QueryCryptoValue("XRP");
 
             EmbedBuilder embed = new EmbedBuilder
             {
@@ -95,21 +95,21 @@ namespace RRBot.Modules
         [Command("withdraw")]
         [Summary("Withdraw a specified cryptocurrency to RR Cash, with a 2% withdrawal fee. See help info for $invest on currently accepted currencies.")]
         [Remarks("``$withdraw [crypto] [amount]``")]
-        public async Task<RuntimeResult> Withdraw(string crypto, float amount)
+        public async Task<RuntimeResult> Withdraw(string crypto, double amount)
         {
             string cUp = crypto.ToUpper();
 
-            if (amount < 0.1f || float.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you must withdraw a tenth or more of the crypto!");
+            if (amount < 0.01) return CommandResult.FromError($"{Context.User.Mention}, you must withdraw a hundredth or more of the crypto!");
             if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "XRP") return CommandResult.FromError($"{Context.User.Mention}, **{crypto}** is not a currently accepted currency!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (!snap.TryGetValue(crypto.ToLower(), out float cryptoBal) || cryptoBal <= 0) return CommandResult.FromError($"{Context.User.Mention}, you have no {crypto}!");
+            if (!snap.TryGetValue(crypto.ToLower(), out double cryptoBal) || cryptoBal <= 0) return CommandResult.FromError($"{Context.User.Mention}, you have no {crypto}!");
             if (cryptoBal < amount) return CommandResult.FromError($"{Context.User.Mention}, you don't have {amount} {crypto}! You've only got **{cryptoBal}** of it.");
 
-            float cash = snap.GetValue<float>("cash");
-            float cryptoValue = await CashSystem.QueryCryptoValue(crypto) * amount;
-            float finalValue = cryptoValue * 0.98f;
+            double cash = snap.GetValue<double>("cash");
+            double cryptoValue = await CashSystem.QueryCryptoValue(crypto) * amount;
+            double finalValue = cryptoValue * 0.98;
 
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + finalValue);
             await CashSystem.AddCrypto(Context.User as IGuildUser, crypto.ToLower(), -amount);

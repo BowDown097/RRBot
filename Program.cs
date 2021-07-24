@@ -138,7 +138,7 @@ namespace RRBot
             client.UserVoiceStateUpdated += logger.Client_UserVoiceStateUpdated;
 
             // client setup
-            commands.AddTypeReader(typeof(float), new FloatTypeReader());
+            commands.AddTypeReader(typeof(double), new DoubleTypeReader());
             commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
             await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
@@ -207,7 +207,7 @@ namespace RRBot
         {
             DocumentReference userDoc = database.Collection($"servers/{user.Guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
-            if (!snap.TryGetValue<float>("cash", out _)) await CashSystem.SetCash(user, null, 100);
+            if (!snap.TryGetValue<double>("cash", out _)) await CashSystem.SetCash(user, null, 100);
         }
 
         private async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)

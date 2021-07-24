@@ -8,16 +8,16 @@ namespace RRBot.Preconditions
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
     public class RequireCashAttribute : PreconditionAttribute
     {
-        public float Amount { get; }
+        public double Amount { get; }
 
-        public RequireCashAttribute(float amount = 1) => Amount = amount;
+        public RequireCashAttribute(double amount = 1) => Amount = amount;
 
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            float cash = snap.GetValue<float>("cash");
+            double cash = snap.GetValue<double>("cash");
             if (cash > 0)
             {
                 return cash >= Amount
