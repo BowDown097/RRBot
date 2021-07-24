@@ -99,7 +99,7 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder
             {
                 Color = Color.Blue,
-                Title = $"Message sent by {msg.Author.ToString()} deleted in {channel.ToString()}",
+                Title = $"Message sent by {msg.Author.ToString()} deleted in #{channel.ToString()}",
                 Description = msg.Content,
                 Timestamp = msg.Timestamp
             };
@@ -115,7 +115,7 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder
             {
                 Color = Color.Blue,
-                Title = $"Message sent by {msgAfter.Author.ToString()} updated in {channel.ToString()}",
+                Title = $"Message sent by {msgAfter.Author.ToString()} updated in #{channel.ToString()}",
                 Description = "**Previous Content:** ``" + msgBefore.Content + "``\n**New Content:** ``" + msgAfter.Content + "``",
                 Timestamp = DateTime.Now
             };

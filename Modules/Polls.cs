@@ -10,6 +10,7 @@ using RRBot.Preconditions;
 
 namespace RRBot.Modules
 {
+    [Summary("Self explanatory.")]
     [RequireStaff]
     public class Polls : ModuleBase<SocketCommandContext>
     {

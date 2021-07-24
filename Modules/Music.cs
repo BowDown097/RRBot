@@ -5,6 +5,7 @@ using RRBot.Systems;
 
 namespace RRBot.Modules
 {
+    [Summary("Jam out with the boys!")]
     public class Music : ModuleBase<SocketCommandContext>
     {
         public AudioSystem AudioSystem { get; set; }

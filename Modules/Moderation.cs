@@ -15,6 +15,7 @@ using RRBot.Systems;
 
 namespace RRBot.Modules
 {
+    [Summary("Impose an Orwellian life on the poor normies in chat, through bans, kicks, mutes, you name it.")]
     [RequireStaff]
     public class Moderation : ModuleBase<SocketCommandContext>
     {

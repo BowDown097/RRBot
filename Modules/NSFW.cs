@@ -8,6 +8,7 @@ using RRBot.Preconditions;
 
 namespace RRBot.Modules
 {
+    [Summary("Degenerates and retards with no significant other (and probably no friends either) unite!")]
     [RequireNsfwEnabled]
     [RequireNsfw]
     public class NSFW : ModuleBase<SocketCommandContext>

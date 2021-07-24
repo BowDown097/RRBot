@@ -13,6 +13,7 @@ using RRBot.Systems;
 
 namespace RRBot.Modules
 {
+    [Summary("Do you want to test your luck? Do you want to probably go broke? Here you go! By the way, you don't need to be 21 or over in this joint ;)")]
     public class Gambling : ModuleBase<SocketCommandContext>
     {
         public CultureInfo CurrencyCulture { get; set; }

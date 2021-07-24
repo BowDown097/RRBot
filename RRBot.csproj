@@ -69,6 +69,7 @@
     <Compile Include="Filters.cs" />
     <Compile Include="Modules\Support.cs" />
     <Compile Include="Preconditions\RequireRushReborn.cs" />
+    <Compile Include="Modules\Investments.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

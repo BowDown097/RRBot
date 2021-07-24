@@ -23,6 +23,7 @@ namespace RRBot.Modules
         public static async Task<bool> GetReplyPings(IGuildUser user) => await GenericGet(user, "replyPings", true);
     }
 
+    [Summary("Choose how you want me to bug you. I can do it in DM, I can do it when you rank up, and I can even ping you, too.")]
     public class UserSettings : ModuleBase<SocketCommandContext>
     {
         private async Task GenericSet(object documentData)

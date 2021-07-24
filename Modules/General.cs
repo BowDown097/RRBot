@@ -18,6 +18,7 @@ namespace RRBot.Modules
         public FunnyContext(SocketCommandContext context) => Context = context;
     }
 
+    [Summary("The name really explains it all. Fun fact, you used one of the commands under this module to view info about this module.")]
     public class General : ModuleBase<SocketCommandContext>
     {
         public CommandService Commands { get; set; }
@@ -231,8 +232,8 @@ namespace RRBot.Modules
                     EmbedBuilder moduleEmbed = new EmbedBuilder
                     {
                         Color = Color.Red,
-                        Title = $"**Commands for {CultureInfo.CurrentCulture.TextInfo.ToTitleCase(strippedModule)}**",
-                        Description = string.Join(", ", moduleInfo.Commands.Select(x => x.Name).ToArray())
+                        Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(strippedModule),
+                        Description = $"**Available commands**: {string.Join(", ", moduleInfo.Commands.Select(x => x.Name).ToArray())}\n**Description**: {moduleInfo.Summary}"
                     };
 
                     await ReplyAsync(embed: moduleEmbed.Build());

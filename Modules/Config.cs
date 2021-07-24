@@ -10,6 +10,7 @@ using Google.Cloud.Firestore;
 
 namespace RRBot.Modules
 {
+    [Summary("This is where all the BORING administration stuff goes. Here, you can change how the bot does things in the server in a variety of ways. Huge generalization, but that's the best I can do.")]
     [RequireUserPermission(GuildPermission.Administrator)]
     public class Config : ModuleBase<SocketCommandContext>
     {

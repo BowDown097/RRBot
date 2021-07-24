@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -13,8 +12,25 @@ using RRBot.Systems;
 
 namespace RRBot.Modules
 {
+    [Summary("Commands for admin stuff. Whether you wanna screw with the economy or completely blacklist people from using the bot, I'm sure you'll have fun. However, you'll need to be a Bot Owner or have a very high role to have all this fun. Sorry!")]
     public class Administration : ModuleBase<SocketCommandContext>
     {
+        [Command("addcrypto")]
+        [Summary("Add to a user's cryptocurrency amount.")]
+        [Remarks("``$addcrypto [user] [crypto] [amount]``")]
+        [RequireRole("senateRole")]
+        public async Task<RuntimeResult> AddCrypto(IGuildUser user, string crypto, float amount)
+        {
+            if (user.IsBot) return CommandResult.FromError("Nope.");
+
+            string cUp = crypto.ToUpper();
+            if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "XRP") return CommandResult.FromError($"{Context.User.Mention}, **{crypto}** is not a currently accepted currency!");
+
+            await CashSystem.AddCrypto(Context.User as IGuildUser, crypto.ToLower(), amount);
+            await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user.ToString()}**'s {cUp} balance.");
+            return CommandResult.FromSuccess();
+        }
+
         [Alias("botban")]
         [Command("blacklist")]
         [Summary("Ban a user from using the bot.")]

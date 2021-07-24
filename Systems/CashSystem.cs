@@ -1,18 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RRBot.Extensions;
 using RRBot.Modules;
+#pragma warning disable IDE0018 // Inline variable declaration
 
 namespace RRBot.Systems
 {
     public static class CashSystem
     {
+        public static readonly WebClient client = new WebClient();
+
+        public static async Task AddCrypto(IGuildUser user, string crypto, float amount)
+        {
+            amount = (float)Math.Round(amount, 4);
+            float currentAmount = 0f;
+            DocumentReference doc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            snap.TryGetValue(crypto, out currentAmount);
+            await doc.SetAsync(new Dictionary<string, float> { { crypto, currentAmount + amount } }, SetOptions.MergeAll);
+        }
+
         public static async Task<float> CashFromString(IGuildUser user, string cashStr)
         {
             float.TryParse(cashStr, out float cash);
@@ -24,6 +40,17 @@ namespace RRBot.Systems
             }
 
             return cash;
+        }
+
+        public static async Task<float> QueryCryptoValue(string crypto)
+        {
+            string current = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
+            string today = DateTime.Now.ToString("yyyy-MM-dd") + "T00:00";
+            string data = await client.DownloadStringTaskAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
+
+            dynamic obj = JsonConvert.DeserializeObject(data);
+            JToken latestEntry = JArray.FromObject(obj.data.entries).Last;
+            return (float)Math.Round(latestEntry[1].Value<double>(), 2);
         }
 
         public static async Task SetCash(IGuildUser user, ISocketMessageChannel channel, float amount)

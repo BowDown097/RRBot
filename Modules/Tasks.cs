@@ -11,6 +11,7 @@ using RRBot.Systems;
 
 namespace RRBot.Modules
 {
+    [Summary("The best way to earn money by far, at least for those lucky or rich enough to get themselves an item.")]
     public class Tasks : ModuleBase<SocketCommandContext>
     {
         public static readonly Random random = new Random();

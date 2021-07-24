@@ -13,6 +13,7 @@ using RRBot.Systems;
 
 namespace RRBot.Modules
 {
+    [Summary("Hell yeah! Crime! Reject the ways of being a law-abiding citizen for some cold hard cash and maybe even an item. Or, maybe not. Depends how good you are at being a criminal.")]
     public class Crime : ModuleBase<SocketCommandContext>
     {
         public CultureInfo CurrencyCulture { get; set; }

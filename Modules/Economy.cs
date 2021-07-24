@@ -13,6 +13,7 @@ using RRBot.Systems;
 
 namespace RRBot.Modules
 {
+    [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
     public class Economy : ModuleBase<SocketCommandContext>
     {
         [Alias("bal", "cash")]

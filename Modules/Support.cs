@@ -12,6 +12,7 @@ using RRBot.Systems;
 
 namespace RRBot.Modules
 {
+    [Summary("Technical support, not from bots and not from creepy dudes out of New Delhi. Your wish is our command!")]
     [RequireBeInChannel("help-requests")]
     [RequireRushReborn]
     public class Support : ModuleBase<SocketCommandContext>
