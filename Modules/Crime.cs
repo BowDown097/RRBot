@@ -57,7 +57,7 @@ namespace RRBot.Modules
 
         [Command("bully")]
         [Summary("Change the nickname of any victim you wish!")]
-        [Remarks("``$bully [user] [nickname]``")]
+        [Remarks("$bully [user] [nickname]")]
         [RequireCooldown("bullyCooldown", "you cannot bully anyone for {0}.")]
         public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
         {
@@ -91,7 +91,7 @@ namespace RRBot.Modules
 
         [Command("loot")]
         [Summary("Loot some locations.")]
-        [Remarks("``$loot``")]
+        [Remarks("$loot")]
         [RequireCooldown("lootCooldown", "you cannot loot for {0}.")]
         public async Task<RuntimeResult> Loot()
         {
@@ -154,7 +154,7 @@ namespace RRBot.Modules
         [Alias("strugglesnuggle")]
         [Command("rape")]
         [Summary("Go out on the prowl for some ass!")]
-        [Remarks("``$rape [user]``")]
+        [Remarks("$rape [user]")]
         [RequireCash]
         [RequireCooldown("rapeCooldown", "you cannot rape for {0}.")]
         public async Task<RuntimeResult> Rape(IGuildUser user)
@@ -200,7 +200,7 @@ namespace RRBot.Modules
         [Alias("slavelabor", "labor")]
         [Command("slavery")]
         [Summary("Get some slave labor goin'.")]
-        [Remarks("``$slavery``")]
+        [Remarks("$slavery")]
         [RequireCooldown("slaveryCooldown", "the slaves will die if you keep going like this! You should wait {0}.")]
         [RequireRankLevel(2)]
         public async Task<RuntimeResult> Slavery()
@@ -261,7 +261,7 @@ namespace RRBot.Modules
 
         [Command("whore")]
         [Summary("Sell your body for quick cash.")]
-        [Remarks("``$whore``")]
+        [Remarks("$whore")]
         [RequireCooldown("whoreCooldown", "you cannot whore yourself out for {0}.")]
         [RequireRankLevel(1)]
         public async Task<RuntimeResult> Whore()

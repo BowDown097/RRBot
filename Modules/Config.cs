@@ -23,7 +23,7 @@ namespace RRBot.Modules
 
         [Command("addrank")]
         [Summary("Register the ID for a rank, its level, and the money required to get it.")]
-        [Remarks("``$addrank [role-id] [level] [cost]``")]
+        [Remarks("$addrank [role-id] [level] [cost]")]
         public async Task AddRank(ulong id, int level, double cost)
         {
             SocketRole role = Context.Guild.GetRole(id);
@@ -33,7 +33,7 @@ namespace RRBot.Modules
 
         [Command("addselfrole")]
         [Summary("Add a self role for the self role message.")]
-        [Remarks("``$addselfrole [emoji-id] [role-id]``")]
+        [Remarks("$addselfrole [emoji-id] [role-id]")]
         public async Task<RuntimeResult> AddSelfRole(IEmote emote, ulong roleId)
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("selfroles");
@@ -57,7 +57,7 @@ namespace RRBot.Modules
 
         [Command("clearconfig")]
         [Summary("Clear all configuration that has been set.")]
-        [Remarks("``$clearconfig``")]
+        [Remarks("$clearconfig")]
         public async Task ClearConfig()
         {
             CollectionReference collection = Program.database.Collection($"servers/{Context.Guild.Id}/config");
@@ -67,7 +67,7 @@ namespace RRBot.Modules
 
         [Command("clearselfroles")]
         [Summary("Clear the self roles that are registered, if any.")]
-        [Remarks("``$clearselfroles``")]
+        [Remarks("$clearselfroles")]
         public async Task ClearSelfRoles()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("selfroles");
@@ -77,7 +77,7 @@ namespace RRBot.Modules
 
         [Command("currentconfig")]
         [Summary("List the current configuration that has been set for the bot.")]
-        [Remarks("``$currentconfig``")]
+        [Remarks("$currentconfig")]
         public async Task GetCurrentConfig()
         {
             CollectionReference config = Program.database.Collection($"servers/{Context.Guild.Id}/config");
@@ -131,42 +131,42 @@ namespace RRBot.Modules
 
         [Command("setdjrole")]
         [Summary("Register the ID for the DJ role in your server so that most of the music commands work properly with the bot.")]
-        [Remarks("``$setdjrole [role]``")]
+        [Remarks("$setdjrole [role]")]
         public async Task SetDJRole(IRole role) => await CreateEntry(Context, "roles", new { djRole = role.Id }, "Set DJ role successfully!");
 
         [Command("setlogschannel")]
         [Summary("Register the ID for the logs channel in your server so that logging works properly with the bot.")]
-        [Remarks("``$setlogschannel [channel]``")]
+        [Remarks("$setlogschannel [channel]")]
         public async Task SetLogsChannel(IChannel channel) => await CreateEntry(Context, "channels", new { logsChannel = channel.Id }, "Set logs channel successfully!");
 
         [Command("setmutedrole")]
         [Summary("Register the ID for the Muted role in your server so that mutes work properly with the bot.")]
-        [Remarks("``$setmutedrole [role]``")]
+        [Remarks("$setmutedrole [role]")]
         public async Task SetMutedRole(IRole role) => await CreateEntry(Context, "roles", new { mutedRole = role.Id }, "Set muted role successfully!");
 
         [Command("setpollschannel")]
         [Summary("Register the ID for the polls channel in your server so that polls work properly with the bot.")]
-        [Remarks("``$setpollschannel [channel]``")]
+        [Remarks("$setpollschannel [channel]")]
         public async Task SetPollsChannel(IChannel channel) => await CreateEntry(Context, "channels", new { pollsChannel = channel.Id }, "Set polls channel successfully!");
 
         [Command("setselfrolesmsg")]
         [Summary("Register the ID for the message that users can react to to receive roles.")]
-        [Remarks("``$setselfrolesmsg [channel] [msg-id]``")]
+        [Remarks("$setselfrolesmsg [channel] [msg-id]")]
         public async Task SetSelfRolesMsg(IChannel channel, IMessage msg) => await CreateEntry(Context, "selfroles", new { channel = channel.Id, message = msg.Id }, "Set self roles message successfully!");
 
         [Command("setstafflvl1role")]
         [Summary("Register the ID for the first level Staff role in your server so that staff-related operations work properly with the bot.")]
-        [Remarks("``$setstafflvl1role [role]``")]
+        [Remarks("$setstafflvl1role [role]")]
         public async Task SetStaffLvl1Role(IRole role) => await CreateEntry(Context, "roles", new { houseRole = role.Id }, "Set first level Staff role successfully!");
 
         [Command("setstafflvl2role")]
         [Summary("Register the ID for the second level Staff role in your server so that staff-related operations work properly with the bot.")]
-        [Remarks("``$setstafflvl2role [role]``")]
+        [Remarks("$setstafflvl2role [role]")]
         public async Task SetStaffLvl2Role(IRole role) => await CreateEntry(Context, "roles", new { senateRole = role.Id }, "Set second level Staff role successfully!");
 
         [Command("togglensfw")]
         [Summary("Toggle the NSFW module.")]
-        [Remarks("``$togglensfw``")]
+        [Remarks("$togglensfw")]
         public async Task ToggleNSFW()
         {
             bool status = false;

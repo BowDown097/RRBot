@@ -71,7 +71,7 @@ namespace RRBot.Modules
 
         [Command("help")]
         [Summary("View info about the bot or view info about a command, depending on if you specify a command or not.")]
-        [Remarks("``$help <command>``")]
+        [Remarks("$help <command>")]
         public async Task Help([Remainder] string command = "")
         {
             string strippedCommand = string.Join("", command.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
@@ -112,7 +112,7 @@ namespace RRBot.Modules
                             }
                         }
 
-                        StringBuilder description = new StringBuilder($"**Description**: {commandInfo.Summary}\n**Usage**: {commandInfo.Remarks}");
+                        StringBuilder description = new StringBuilder($"**Description**: {commandInfo.Summary}\n**Usage**: ``{commandInfo.Remarks}``");
                         if (actualAliases.Any()) description.Append($"\n**Alias(es)**: {string.Join(", ", actualAliases)}");
 
                         if (commandInfo.TryGetPrecondition<RequireDJAttribute>() || moduleInfo.TryGetPrecondition<RequireDJAttribute>()) 
@@ -186,7 +186,7 @@ namespace RRBot.Modules
         [Alias("module")]
         [Command("modules")]
         [Summary("View info about the bot's modules or view info about a module, depending on if you specify a module or not.")]
-        [Remarks("``$modules <module>``")]
+        [Remarks("$modules <module>")]
         public async Task Modules([Remainder] string module = "")
         {
             string strippedModule = string.Join("", module.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
@@ -247,7 +247,7 @@ namespace RRBot.Modules
         [Alias("statistics")]
         [Command("stats")]
         [Summary("View various statistics about your own, or another user's, bot usage.")]
-        [Remarks("``$stats <user>``")]
+        [Remarks("$stats <user>")]
         public async Task<RuntimeResult> Stats(IGuildUser user = null)
         {
             if (user != null && user.IsBot) return CommandResult.FromError("Nope.");
@@ -282,7 +282,7 @@ namespace RRBot.Modules
 
         [Command("waifu")]
         [Summary("Get yourself a random waifu from our vast and sexy collection of scrumptious waifus.")]
-        [Remarks("``$waifu``")]
+        [Remarks("$waifu")]
         public async Task Waifu()
         {
             List<string> keys = Enumerable.ToList(waifus.Keys);

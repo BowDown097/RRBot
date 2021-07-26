@@ -34,7 +34,7 @@ namespace RRBot.Modules
 
         [Command("mysettings")]
         [Summary("List your user settings.")]
-        [Remarks("``$mysettings``")]
+        [Remarks("$mysettings")]
         public async Task MySettings()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
@@ -58,7 +58,7 @@ namespace RRBot.Modules
         [Alias("setdmnotifs")]
         [Command("setdmnotifications")]
         [Summary("Set whether or not you will be DM'd by commands/general notifications that support it. *(default: false)*")]
-        [Remarks("``$setdmnotifications [true/false]``")]
+        [Remarks("$setdmnotifications [true/false]")]
         public async Task SetDMNotifications(bool status) 
         {
             await GenericSet(new { dmNotifs = status });
@@ -68,7 +68,7 @@ namespace RRBot.Modules
         [Alias("setrankupnotifs")]
         [Command("setrankupnotifications")]
         [Summary("Set whether or not you will be notified of rank-ups/deranks. *(default: false)*")]
-        [Remarks("``$setrankupnotifications [true/false]``")]
+        [Remarks("$setrankupnotifications [true/false]")]
         public async Task SetRankupNotifications(bool status)
         {
             await GenericSet(new { rankupNotifs = status });
@@ -77,7 +77,7 @@ namespace RRBot.Modules
 
         [Command("setreplypings")]
         [Summary("Set whether or not you will be pinged in command responses (that are not errors). *(default: true)*")]
-        [Remarks("``$setreplypings [true/false]``")]
+        [Remarks("$setreplypings [true/false]")]
         public async Task SetReplyPings(bool status) 
         {
             await GenericSet(new { replyPings = status });

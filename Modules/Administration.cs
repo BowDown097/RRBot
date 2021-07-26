@@ -17,14 +17,15 @@ namespace RRBot.Modules
     {
         [Command("addcrypto")]
         [Summary("Add to a user's cryptocurrency amount.")]
-        [Remarks("``$addcrypto [user] [crypto] [amount]``")]
+        [Remarks("$addcrypto [user] [crypto] [amount]")]
         [RequireRole("senateRole")]
         public async Task<RuntimeResult> AddCrypto(IGuildUser user, string crypto, double amount)
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");
 
             string cUp = crypto.ToUpper();
-            if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "XRP") return CommandResult.FromError($"{Context.User.Mention}, **{crypto}** is not a currently accepted currency!");
+            if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "LTC" && cUp != "XRP") 
+                return CommandResult.FromError($"{Context.User.Mention}, **{crypto}** is not a currently accepted currency!");
 
             await CashSystem.AddCrypto(Context.User as IGuildUser, crypto.ToLower(), amount);
             await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user.ToString()}**'s {cUp} balance.");
@@ -34,7 +35,7 @@ namespace RRBot.Modules
         [Alias("botban")]
         [Command("blacklist")]
         [Summary("Ban a user from using the bot.")]
-        [Remarks("``$blacklist [user]``")]
+        [Remarks("$blacklist [user]")]
         [RequireOwner]
         public async Task<RuntimeResult> BotBan(IGuildUser user)
         {
@@ -51,7 +52,7 @@ namespace RRBot.Modules
         [Alias("evaluate")]
         [Command("eval")]
         [Summary("Execute C# code.")]
-        [Remarks("``$eval [code]``")]
+        [Remarks("$eval [code]")]
         [RequireOwner]
         public async Task<RuntimeResult> Eval([Remainder] string code)
         {
@@ -81,7 +82,7 @@ namespace RRBot.Modules
 
         [Command("giveitem")]
         [Summary("Give a user an item.")]
-        [Remarks("``$giveitem [user] item]``")]
+        [Remarks("$giveitem [user] item]")]
         [RequireRole("senateRole")]
         public async Task<RuntimeResult> GiveItem(IGuildUser user, [Remainder] string item)
         {
@@ -94,7 +95,7 @@ namespace RRBot.Modules
 
         [Command("resetcd")]
         [Summary("Reset your crime cooldowns.")]
-        [Remarks("``$resetcd``")]
+        [Remarks("$resetcd")]
         [RequireRole("senateRole")]
         public async Task ResetCooldowns()
         {
@@ -106,7 +107,7 @@ namespace RRBot.Modules
 
         [Command("setcash")]
         [Summary("Set a user's cash.")]
-        [Remarks("``$setcash [user] [amount]``")]
+        [Remarks("$setcash [user] [amount]")]
         [RequireRole("senateRole")]
         public async Task<RuntimeResult> SetCash(IGuildUser user, double amount)
         {
@@ -120,7 +121,7 @@ namespace RRBot.Modules
         [Alias("unbotban")]
         [Command("unblacklist")]
         [Summary("Unban a user from using the bot.")]
-        [Remarks("``$unblacklist [user]``")]
+        [Remarks("$unblacklist [user]")]
         [RequireOwner]
         public async Task<RuntimeResult> UnBotBan(IGuildUser user)
         {

@@ -33,7 +33,7 @@ namespace RRBot.Modules
 
         [Command("close")]
         [Summary("Close your currently active support ticket or a support ticket that you have been assigned to (if there is one).")]
-        [Remarks("``$close <user>``")]
+        [Remarks("$close <user>")]
         public async Task<RuntimeResult> Close(IGuildUser user = null)
         {
             ulong targetUserId = user == null ? Context.User.Id : user.Id;
@@ -60,7 +60,7 @@ namespace RRBot.Modules
         [Alias("askforhelp")]
         [Command("support")]
         [Summary("Ask for help from a Helper.")]
-        [Remarks("``$support [request]``")]
+        [Remarks("$support [request]")]
         public async Task<RuntimeResult> GetSupport([Remainder] string request)
         {
             CollectionReference tickets = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");
@@ -90,7 +90,7 @@ namespace RRBot.Modules
 
         [Command("tickets")]
         [Summary("Check the amount of currently open support tickets.")]
-        [Remarks("``$tickets``")]
+        [Remarks("$tickets")]
         public async Task Tickets()
         {
             CollectionReference tickets = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");
@@ -102,7 +102,7 @@ namespace RRBot.Modules
 
         [Command("viewticket")]
         [Summary("View a currently open ticket.")]
-        [Remarks("``$viewticket [index]``")]
+        [Remarks("$viewticket [index]")]
         public async Task<RuntimeResult> ViewTicket(int index)
         {
             CollectionReference ticketsCollection = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");

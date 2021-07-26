@@ -15,7 +15,7 @@ namespace RRBot.Modules
     {
         [Command("nhentai")]
         [Summary("Search for a doujinshi/manga from NHentai, or go for a completely random one! If you provide multiple keywords for a search, separate them with a comma with no spaces.")]
-        [Remarks("``$nhentai``")]
+        [Remarks("$nhentai")]
         public async Task<RuntimeResult> NHentai([Remainder] string keyword = "")
         {
             GalleryElement funny = new GalleryElement();

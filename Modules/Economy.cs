@@ -32,7 +32,7 @@ namespace RRBot.Modules
         [Alias("bal", "cash")]
         [Command("balance")]
         [Summary("Check your own or someone else's balance.")]
-        [Remarks("``$balance <user>``")]
+        [Remarks("$balance <user>")]
         public async Task<RuntimeResult> Balance(IGuildUser user = null)
         {
             if (user != null && user.IsBot) return CommandResult.FromError("Nope.");
@@ -55,7 +55,7 @@ namespace RRBot.Modules
         [Alias("purchase")]
         [Command("buy")]
         [Summary("Buy an item or perk from the shop.")]
-        [Remarks("``$buy [item]``")]
+        [Remarks("$buy [item]")]
         public async Task<RuntimeResult> Buy([Remainder] string item)
         {
             if (!Items.items.Contains(item)) return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item!");
@@ -88,7 +88,7 @@ namespace RRBot.Modules
         [Alias("cd")]
         [Command("cooldowns")]
         [Summary("Check your crime cooldowns.")]
-        [Remarks("``$cooldowns``")]
+        [Remarks("$cooldowns")]
         public async Task Cooldowns()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
@@ -126,7 +126,7 @@ namespace RRBot.Modules
 
         [Command("discard")]
         [Summary("Discard an item.")]
-        [Remarks("``$discard [item]``")]
+        [Remarks("$discard [item]")]
         [RequireItem]
         public async Task<RuntimeResult> Discard([Remainder] string item)
         {
@@ -151,7 +151,7 @@ namespace RRBot.Modules
 
         [Command("items")]
         [Summary("Check your items.")]
-        [Remarks("``$items``")]
+        [Remarks("$items")]
         [RequireItem]
         public async Task GetItems()
         {
@@ -172,7 +172,7 @@ namespace RRBot.Modules
         [Alias("lb")]
         [Command("leaderboard")]
         [Summary("Check the leaderboard.")]
-        [Remarks("``$leaderboard``")]
+        [Remarks("$leaderboard")]
         public async Task Leaderboard()
         {
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
@@ -202,7 +202,7 @@ namespace RRBot.Modules
         [Alias("roles")]
         [Command("ranks")]
         [Summary("View all the ranks and their costs.")]
-        [Remarks("``$ranks``")]
+        [Remarks("$ranks")]
         public async Task Ranks()
         {
             StringBuilder ranks = new StringBuilder();
@@ -231,7 +231,7 @@ namespace RRBot.Modules
         [Alias("give", "transfer")]
         [Command("sauce")]
         [Summary("Sauce someone some cash.")]
-        [Remarks("``$sauce [user] [amount]")]
+        [Remarks("$sauce [user] [amount]")]
         public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
         {
             if (amount <= 0) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce negative or no money!");
@@ -258,7 +258,7 @@ namespace RRBot.Modules
 
         [Command("shop")]
         [Summary("Check out what's available for purchase in the shop.")]
-        [Remarks("``$shop``")]
+        [Remarks("$shop")]
         public async Task Shop()
         {
             StringBuilder items = new StringBuilder();
@@ -294,7 +294,7 @@ namespace RRBot.Modules
         [Alias("kms", "selfend")]
         [Command("suicide")]
         [Summary("Kill yourself.")]
-        [Remarks("``$suicide``")]
+        [Remarks("$suicide")]
         public async Task<RuntimeResult> Suicide()
         {
             Random random = new Random();

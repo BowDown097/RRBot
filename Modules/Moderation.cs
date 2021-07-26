@@ -24,7 +24,7 @@ namespace RRBot.Modules
         [Alias("seethe")]
         [Command("ban")]
         [Summary("Ban any member.")]
-        [Remarks("``$ban [user] <duration> <reason>``")]
+        [Remarks("$ban [user] <duration> <reason>")]
         public async Task<RuntimeResult> Ban(IGuildUser user, string duration = "", [Remainder] string reason = "")
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");
@@ -94,7 +94,7 @@ namespace RRBot.Modules
 
         [Command("cancelticket")]
         [Summary("Pre-emptively cancel a support ticket.")]
-        [Remarks("``$cancelticket [index]``")]
+        [Remarks("$cancelticket [index]")]
         [RequireBeInChannel("help-requests")]
         [RequireRushReborn]
         public async Task<RuntimeResult> CancelTicket(int index)
@@ -112,7 +112,7 @@ namespace RRBot.Modules
 
         [Command("chill")]
         [Summary("Shut chat the fuck up for a specific amount of time in seconds.")]
-        [Remarks("``$chill [duration]``")]
+        [Remarks("$chill [duration]")]
         public async Task<RuntimeResult> Chill(int duration)
         {
             if (duration < 30) return CommandResult.FromError($"{Context.User.Mention}, you cannot chill for less than 30 seconds.");
@@ -137,7 +137,7 @@ namespace RRBot.Modules
         [Alias("cope")]
         [Command("kick")]
         [Summary("Kick any member.")]
-        [Remarks("``$kick [user] <reason>``")]
+        [Remarks("$kick [user] <reason>")]
         public async Task<RuntimeResult> Kick(IGuildUser user, [Remainder] string reason = "")
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");
@@ -167,7 +167,7 @@ namespace RRBot.Modules
         [Alias("dilate")]
         [Command("mute")]
         [Summary("Mute any member for any amount of time with any reason.")]
-        [Remarks("``$mute [user] [duration][s/m/h/d] <reason>``")]
+        [Remarks("$mute [user] [duration][s/m/h/d] <reason>")]
         public async Task<RuntimeResult> Mute(IGuildUser user, string duration, [Remainder] string reason = "")
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");
@@ -229,7 +229,7 @@ namespace RRBot.Modules
         [Alias("clear", "1984")]
         [Command("purge")]
         [Summary("Purge any amount of messages (Note: messages that are two weeks old or older will fail to delete).")]
-        [Remarks("``$purge [count] <user>``")]
+        [Remarks("$purge [count] <user>")]
         public async Task<RuntimeResult> Purge(int count, IGuildUser user = null)
         {
             if (count == 0) return CommandResult.FromError($"{Context.User.Mention}, count must be more than zero.");
@@ -252,7 +252,7 @@ namespace RRBot.Modules
 
         [Command("unban")]
         [Summary("Unban any currently banned member.")]
-        [Remarks("``$unban [user]``")]
+        [Remarks("$unban [user]")]
         public async Task<RuntimeResult> Unban(IUser user)
         {
             IReadOnlyCollection<RestBan> bans = await Context.Guild.GetBansAsync();
@@ -267,7 +267,7 @@ namespace RRBot.Modules
         [Alias("thaw")]
         [Command("unchill")]
         [Summary("Let chat talk now.")]
-        [Remarks("``$unchill``")]
+        [Remarks("$unchill")]
         public async Task<RuntimeResult> Unchill()
         {
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
@@ -282,7 +282,7 @@ namespace RRBot.Modules
 
         [Command("unmute")]
         [Summary("Unmute any member.")]
-        [Remarks("``$unmute [user]``")]
+        [Remarks("$unmute [user]")]
         public async Task<RuntimeResult> Unmute(IGuildUser user)
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");

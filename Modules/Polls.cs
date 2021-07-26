@@ -29,7 +29,7 @@ namespace RRBot.Modules
 
         [Command("createpoll")]
         [Summary("Create a poll.")]
-        [Remarks("``$createpoll [title] [choice1|choice2|choice3|...|choice9]``")]
+        [Remarks("$createpoll [title] [choice1|choice2|choice3|...|choice9]")]
         public async Task<RuntimeResult> CreatePoll(string title, string choices)
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("channels");

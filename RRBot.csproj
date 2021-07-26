@@ -201,7 +201,6 @@
     <Reference Include="Victoria">
       <HintPath>..\packages\Victoria.4.0.18\lib\netstandard2.0\Victoria.dll</HintPath>
     </Reference>
-    <Reference Include="System.Threading.Tasks" />
     <Reference Include="System.Web" />
     <Reference Include="NHentaiSharp">
       <HintPath>..\packages\NHentaiSharp.1.1.1\lib\netstandard2.0\NHentaiSharp.dll</HintPath>

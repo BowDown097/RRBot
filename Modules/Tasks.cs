@@ -43,35 +43,35 @@ namespace RRBot.Modules
 
         [Command("chop")]
         [Summary("Go chop some wood.")]
-        [Remarks("``$chop``")]
+        [Remarks("$chop")]
         [RequireCooldown("chopCooldown", "you cannot chop wood for {0}.")]
         [RequireItem("Axe")]
         public async Task Chop() => await GenericTask("Axe", "chopped down", "trees", new { chopCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
 
         [Command("dig")]
         [Summary("Go digging.")]
-        [Remarks("``$dig``")]
+        [Remarks("$dig")]
         [RequireCooldown("digCooldown", "you cannot go digging for {0}.")]
         [RequireItem("Shovel")]
         public async Task Dig() => await GenericTask("Shovel", "mined", "dirt", new { digCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
 
         [Command("farm")]
         [Summary("Go farming.")]
-        [Remarks("``$farm``")]
+        [Remarks("$farm")]
         [RequireCooldown("farmCooldown", "you cannot farm for {0}.")]
         [RequireItem("Hoe")]
         public async Task Farm() => await GenericTask("Hoe", "farmed", "crops", new { farmCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
 
         [Command("hunt")]
         [Summary("Go hunting.")]
-        [Remarks("``$hunt``")]
+        [Remarks("$hunt")]
         [RequireCooldown("huntCooldown", "you cannot go hunting for {0}.")]
         [RequireItem("Sword")]
         public async Task Hunt() => await GenericTask("Sword", "hunted", "mobs", new { huntCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
 
         [Command("mine")]
         [Summary("Go mining.")]
-        [Remarks("``$mine``")]
+        [Remarks("$mine")]
         [RequireCooldown("mineCooldown", "you cannot go mining for {0}.")]
         [RequireItem("Pickaxe")]
         public async Task Mine()
