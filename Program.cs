@@ -27,8 +27,7 @@ namespace RRBot
         private CommandService commands;
         private DiscordSocketClient client;
         private IServiceProvider serviceProvider;
-        private LavaRestClient lavaRestClient;
-        private LavaSocketClient lavaSocketClient;
+        private LavaNode lavaNode;
         private Logger logger;
 
         public async Task StartBanCheckAsync()
@@ -94,11 +93,10 @@ namespace RRBot
         {
             // services setup
             client = new DiscordSocketClient(new DiscordSocketConfig { AlwaysDownloadUsers = true, ExclusiveBulkDelete = true, MessageCacheSize = 100 });
-            lavaRestClient = new LavaRestClient("127.0.0.1", 2333, "youshallnotpass");
-            lavaSocketClient = new LavaSocketClient();
+            lavaNode = new LavaNode(client, new LavaConfig { Hostname = "127.0.0.1", Port = 2333, Authorization = "youshallnotpass" });
             commands = new CommandService();
             logger = new Logger(client);
-            audioSystem = new AudioSystem(lavaRestClient, lavaSocketClient, logger);
+            audioSystem = new AudioSystem(lavaNode, logger);
             CultureInfo currencyCulture = CultureInfo.CreateSpecificCulture("en-US");
             currencyCulture.NumberFormat.CurrencyNegativePattern = 2;
 
@@ -107,8 +105,7 @@ namespace RRBot
                 .AddSingleton(client)
                 .AddSingleton(commands)
                 .AddSingleton(currencyCulture)
-                .AddSingleton(lavaRestClient)
-                .AddSingleton(lavaSocketClient)
+                .AddSingleton(lavaNode)
                 .AddSingleton(logger)
                 .BuildServiceProvider();
 
@@ -157,9 +154,9 @@ namespace RRBot
 
             await Task.Factory.StartNew(async () => await StartBanCheckAsync());
             await Task.Factory.StartNew(async () => await StartMuteCheckAsync());
-            await lavaSocketClient.StartAsync(client);
-            lavaSocketClient.OnPlayerUpdated += audioSystem.OnPlayerUpdated;
-            lavaSocketClient.OnTrackFinished += audioSystem.OnTrackFinished;
+            await lavaNode.ConnectAsync();
+            lavaNode.OnPlayerUpdated += audioSystem.OnPlayerUpdated;
+            lavaNode.OnTrackEnded += audioSystem.OnTrackEnded;
         }
 
         private Task Client_Log(LogMessage arg)

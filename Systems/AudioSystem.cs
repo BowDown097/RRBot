@@ -7,36 +7,35 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Victoria;
-using Victoria.Entities;
-using Victoria.Queue;
+using Victoria.Enums;
+using Victoria.EventArgs;
+using Victoria.Responses.Search;
 
 namespace RRBot.Systems
 {
     public sealed class AudioSystem
     {
-        private LavaRestClient lavaRestClient;
-        private LavaSocketClient lavaSocketClient;
+        private readonly LavaNode lavaNode;
         private Logger logger;
 
-        public AudioSystem(LavaRestClient rest, LavaSocketClient socket, Logger logger)
+        public AudioSystem(LavaNode lavaNode, Logger logger)
         {
-            lavaRestClient = rest;
-            lavaSocketClient = socket;
+            this.lavaNode = lavaNode;
             this.logger = logger;
         }
 
         public async Task<RuntimeResult> GetCurrentlyPlayingAsync(SocketCommandContext context)
         {
-            LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
-            if (player != null && player.IsPlaying)
+            LavaPlayer player = lavaNode.GetPlayer(context.Guild);
+            if (player != null && player.PlayerState == PlayerState.Playing)
             {
-                LavaTrack track = player.CurrentTrack;
+                LavaTrack track = player.Track;
 
                 StringBuilder builder = new StringBuilder($"By: {track.Author}\n");
                 if (!track.IsStream)
                 {
                     TimeSpan pos = new TimeSpan(track.Position.Hours, track.Position.Minutes, track.Position.Seconds);
-                    builder.AppendLine($"Length: {track.Length.ToString()}\nPosition: {pos.ToString()}");
+                    builder.AppendLine($"Length: {track.Duration.ToString()}\nPosition: {pos.ToString()}");
                 }
 
                 EmbedBuilder embed = new EmbedBuilder
@@ -53,65 +52,23 @@ namespace RRBot.Systems
             return CommandResult.FromError($"{context.User.Mention}, there is no currently playing track.");
         }
 
-        public async Task<RuntimeResult> PlayAsync(SocketCommandContext context, string query)
-        {
-            SocketGuildUser user = context.User as SocketGuildUser;
-            if (user.VoiceChannel is null) return CommandResult.FromError($"{context.User.Mention}, you must be in a voice channel.");
-
-            await lavaSocketClient.ConnectAsync(user.VoiceChannel);
-            LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
-
-            if (player is null)
-            {
-                await lavaSocketClient.ConnectAsync(player.VoiceChannel);
-                player = lavaSocketClient.GetPlayer(context.Guild.Id);
-            }
-
-            Victoria.Entities.SearchResult search = await lavaRestClient.SearchYouTubeAsync(query);
-            if (search.LoadType == LoadType.NoMatches || search.LoadType == LoadType.LoadFailed)
-                return CommandResult.FromError($"{context.User.Mention}, I could not find anything given your query.");
-            LavaTrack track = search.Tracks.FirstOrDefault();
-
-            if (!track.IsStream && track.Length.TotalSeconds > 7200)
-                return CommandResult.FromError($"{context.User.Mention}, this is too long for me to play! It must be 2 hours or shorter in length.");
-
-            if (player.CurrentTrack != null && player.IsPlaying)
-            {
-                await context.Channel.SendMessageAsync($"**{track.Title}** has been added to the queue.");
-                player.Queue.Enqueue(track);
-                return CommandResult.FromSuccess();
-            }
-
-            await player.PlayAsync(track);
-
-            StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
-            if (!track.IsStream) message.AppendLine($"Length: {track.Length.ToString()}");
-            message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
-
-            await context.Channel.SendMessageAsync(message.ToString());
-
-            await logger.Custom_TrackStarted(user, user.VoiceChannel, track.Uri);
-
-            return CommandResult.FromSuccess();
-        }
-
         public async Task<RuntimeResult> ListAsync(SocketCommandContext context)
         {
-            LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
-            if (player != null && player.IsPlaying)
+            LavaPlayer player = lavaNode.GetPlayer(context.Guild);
+            if (player != null && player.PlayerState == PlayerState.Playing)
             {
-                if (player.Queue.Count < 1 && player.CurrentTrack != null)
+                if (player.Queue.Count < 1 && player.Track != null)
                 {
-                    await context.Channel.SendMessageAsync($"Now playing: {player.CurrentTrack.Title}. Nothing else is queued.");
+                    await context.Channel.SendMessageAsync($"Now playing: **{player.Track.Title}**. Nothing else is queued.");
                     return CommandResult.FromSuccess();
                 }
 
                 StringBuilder playlist = new StringBuilder();
-                for (int i = 0; i < player.Queue.Items.Count(); i++)
+                for (int i = 0; i < player.Queue.Count; i++)
                 {
-                    LavaTrack track = player.Queue.Items.ElementAt(i) as LavaTrack;
+                    LavaTrack track = player.Queue.ElementAt(i) as LavaTrack;
                     playlist.AppendLine($"**{i + 1}**: {track.Title} by {track.Author}");
-                    if (!track.IsStream) playlist.AppendLine($" ({track.Length.ToString()})");
+                    if (!track.IsStream) playlist.AppendLine($" ({track.Duration.ToString()})");
                 }
 
                 EmbedBuilder embed = new EmbedBuilder
@@ -129,25 +86,67 @@ namespace RRBot.Systems
             return CommandResult.FromError($"{context.User.Mention}, there are no tracks to list.");
         }
 
+        public async Task<RuntimeResult> PlayAsync(SocketCommandContext context, string query)
+        {
+            SocketGuildUser user = context.User as SocketGuildUser;
+            if (user.VoiceChannel is null) return CommandResult.FromError($"{context.User.Mention}, you must be in a voice channel.");
+            
+            await lavaNode.JoinAsync(user.VoiceChannel);
+            LavaPlayer player = lavaNode.GetPlayer(context.Guild);
+
+            if (player is null)
+            {
+                await lavaNode.JoinAsync(user.VoiceChannel);
+                player = lavaNode.GetPlayer(context.Guild);
+            }
+
+            SearchResponse search = Uri.IsWellFormedUriString(query, UriKind.Absolute) 
+                ? await lavaNode.SearchAsync(SearchType.Direct, query) 
+                : await lavaNode.SearchYouTubeAsync(query);
+            if (search.Status == SearchStatus.NoMatches || search.Status == SearchStatus.LoadFailed)
+                return CommandResult.FromError($"{context.User.Mention}, I could not find anything given your query.");
+
+            LavaTrack track = search.Tracks.FirstOrDefault();
+            if (!track.IsStream && track.Duration.TotalSeconds > 7200)
+                return CommandResult.FromError($"{context.User.Mention}, this is too long for me to play! It must be 2 hours or shorter in length.");
+
+            if (player.Track != null && player.PlayerState == PlayerState.Playing)
+            {
+                await context.Channel.SendMessageAsync($"**{track.Title}** has been added to the queue.");
+                player.Queue.Enqueue(track);
+                return CommandResult.FromSuccess();
+            }
+
+            await player.PlayAsync(track);
+
+            StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
+            if (!track.IsStream) message.AppendLine($"Length: {track.Duration.ToString()}");
+            message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
+
+            await context.Channel.SendMessageAsync(message.ToString());
+            await logger.Custom_TrackStarted(user, user.VoiceChannel, track.Url);
+            return CommandResult.FromSuccess();
+        }
+
         public async Task<RuntimeResult> SkipTrackAsync(SocketCommandContext context)
         {
-            LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
+            LavaPlayer player = lavaNode.GetPlayer(context.Guild);
             if (player != null)
             {
                 if (player.Queue.Count >= 1)
                 {
-                    LavaTrack track = player.Queue.Items.FirstOrDefault() as LavaTrack;
+                    LavaTrack track = player.Queue.FirstOrDefault() as LavaTrack;
                     await player.PlayAsync(track);
 
-                    StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
-                    if (!track.IsStream) message.Append($"Length: {track.Length.ToString()}");
+                    StringBuilder message = new StringBuilder($"Now playing: {player.Track.Title}\nBy: {player.Track.Author}\n");
+                    if (!player.Track.IsStream) message.Append($"Length: {player.Track.Duration.ToString()}");
 
                     await context.Channel.SendMessageAsync(message.ToString());
                 }
                 else
                 {
                     await context.Channel.SendMessageAsync("Current track skipped!");
-                    await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
+                    await lavaNode.LeaveAsync(player.VoiceChannel);
                     await player.StopAsync();
                 }
 
@@ -159,63 +158,63 @@ namespace RRBot.Systems
 
         public async Task<RuntimeResult> StopAsync(SocketCommandContext context)
         {
-            LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
+            LavaPlayer player = lavaNode.GetPlayer(context.Guild);
             if (player is null) return CommandResult.FromError($"{context.User.Mention}, the bot is not currently being used.");
 
-            if (player.IsPlaying) await player.StopAsync();
-            foreach (LavaTrack track in player.Queue.Items) player.Queue.Dequeue();
-            await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
+            if (player.PlayerState == PlayerState.Playing) await player.StopAsync();
+            foreach (LavaTrack track in player.Queue) player.Queue.TryDequeue(out _);
+            await lavaNode.LeaveAsync(player.VoiceChannel);
 
             await context.Channel.SendMessageAsync("Stopped playing the current track and removed any existing tracks in the queue.");
             return CommandResult.FromSuccess();
         }
 
-        public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, int volume)
+        public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, ushort volume)
         {
             if (volume < 5 || volume > 200) return CommandResult.FromError($"{context.User.Mention}, volume must be between 5% and 200%.");
 
-            LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
+            LavaPlayer player = lavaNode.GetPlayer(context.Guild);
             if (player is null) return CommandResult.FromError($"{context.User.Mention}, the bot is not currently being used.");
 
-            await player.SetVolumeAsync(volume);
+            await player.UpdateVolumeAsync(volume);
             await context.Channel.SendMessageAsync($"Set volume to {volume}%.");
             return CommandResult.FromSuccess();
         }
 
         // this is a fix for the player breaking if the bot is manually disconnected
-        public async Task OnPlayerUpdated(LavaPlayer player, LavaTrack track, TimeSpan position)
+        public async Task OnPlayerUpdated(PlayerUpdateEventArgs args)
         {
-            if (!track.IsStream)
+            if (!args.Track.IsStream)
             {
-                IEnumerable<IGuildUser> members = await player.VoiceChannel.GetUsersAsync().FlattenAsync();
-                if (!members.Any(member => member.IsBot) && track.Position.TotalSeconds > 5)
+                IEnumerable<IGuildUser> members = await args.Player.VoiceChannel.GetUsersAsync().FlattenAsync();
+                if (!members.Any(member => member.IsBot) && args.Track.Position.TotalSeconds > 5)
                 {
-                    await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
-                    await player.StopAsync();
+                    await lavaNode.LeaveAsync(args.Player.VoiceChannel);
+                    await args.Player.StopAsync();
                 }
             }
         }
 
-        public async Task OnTrackFinished(LavaPlayer player, LavaTrack track, TrackEndReason reason)
+        public async Task OnTrackEnded(TrackEndedEventArgs args)
         {
-            if (player.Queue.Count > 0 && !reason.ShouldPlayNext())
+            if (args.Player.Queue.Count > 0 && !args.Reason.ShouldPlayNext())
             {
-                player.Queue.Dequeue();
+                args.Player.Queue.TryDequeue(out _);
                 return;
             }
 
-            if (!player.Queue.TryDequeue(out IQueueObject item) || !(item is LavaTrack nextTrack) || !reason.ShouldPlayNext())
+            if (!args.Player.Queue.TryDequeue(out LavaTrack track) || !args.Reason.ShouldPlayNext())
             {
-                await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
-                await player.StopAsync();
+                await lavaNode.LeaveAsync(args.Player.VoiceChannel);
+                await args.Player.StopAsync();
             }
             else
             {
-                await player.PlayAsync(nextTrack);
+                await args.Player.PlayAsync(track);
 
                 StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
-                if (!track.IsStream) message.Append($"Length: {track.Length.ToString()}");
-                await player.TextChannel.SendMessageAsync(message.ToString());
+                if (!track.IsStream) message.Append($"Length: {track.Duration.ToString()}");
+                await args.Player.TextChannel.SendMessageAsync(message.ToString());
             }
         }
     }

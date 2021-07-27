@@ -43,6 +43,6 @@ namespace RRBot.Modules
         [Summary("Changes the volume of the currently playing track (must be between 5% and 200%).")]
         [Remarks("$volume [volume]")]
         [RequireDJ]
-        public async Task<RuntimeResult> Volume(int volume) => await AudioSystem.ChangeVolumeAsync(Context, volume);
+        public async Task<RuntimeResult> Volume(ushort volume) => await AudioSystem.ChangeVolumeAsync(Context, volume);
     }
 }
