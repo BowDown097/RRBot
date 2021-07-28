@@ -17,7 +17,7 @@ namespace RRBot.Modules
         public CultureInfo CurrencyCulture { get; set; }
 
         [Command("invest")]
-        [Summary("Invest in a cryptocurrency. Currently accepted currencies are \"BTC\", \"DOGE\", \"ETH\", and \"XRP\". It's important to mention that cash values are rounded to 2 decimals, therefore investing in amounts of crypto with very specific or low decimals may be detrimental.")]
+        [Summary("Invest in a cryptocurrency. Currently accepted currencies are \"BTC\", \"DOGE\", \"ETH\", \"LTC\", and \"XRP\". It's important to mention that cash values are rounded to 2 decimals, therefore investing in amounts of crypto with very specific or low decimals may be detrimental.")]
         [Remarks("$invest [crypto] [amount]")]
         [RequireCash]
         public async Task<RuntimeResult> Invest(string crypto, double amount)
@@ -108,7 +108,7 @@ namespace RRBot.Modules
         }
 
         [Command("withdraw")]
-        [Summary("Withdraw a specified cryptocurrency to RR Cash, with a 2% withdrawal fee. See help info for $invest on currently accepted currencies.")]
+        [Summary("Withdraw a specified cryptocurrency to RR Cash, with a 2% withdrawal fee. See $invest's help info for currently accepted currencies.")]
         [Remarks("$withdraw [crypto] [amount]")]
         public async Task<RuntimeResult> Withdraw(string crypto, double amount)
         {

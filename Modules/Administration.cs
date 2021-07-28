@@ -16,7 +16,7 @@ namespace RRBot.Modules
     public class Administration : ModuleBase<SocketCommandContext>
     {
         [Command("addcrypto")]
-        [Summary("Add to a user's cryptocurrency amount.")]
+        [Summary("Add to a user's cryptocurrency amount. See $invest's help info for currently accepted currencies.")]
         [Remarks("$addcrypto [user] [crypto] [amount]")]
         [RequireRole("senateRole")]
         public async Task<RuntimeResult> AddCrypto(IGuildUser user, string crypto, double amount)
