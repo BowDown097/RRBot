@@ -95,14 +95,16 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             StringBuilder description = new StringBuilder();
-            if (snap.TryGetValue("rapeCooldown", out long rapeCd) && rapeCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Rape**: {TimeSpan.FromSeconds(rapeCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
-            if (snap.TryGetValue("whoreCooldown", out long whoreCd) && whoreCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Whore**: {TimeSpan.FromSeconds(whoreCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("dealCooldown", out long dealCd) && dealCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Deal**: {TimeSpan.FromSeconds(dealCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
             if (snap.TryGetValue("lootCooldown", out long lootCd) && lootCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
                 description.AppendLine($"**Loot**: {TimeSpan.FromSeconds(lootCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("rapeCooldown", out long rapeCd) && rapeCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Rape**: {TimeSpan.FromSeconds(rapeCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
             if (snap.TryGetValue("slaveryCooldown", out long slaveryCd) && slaveryCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
                 description.AppendLine($"**Slavery**: {TimeSpan.FromSeconds(slaveryCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            if (snap.TryGetValue("whoreCooldown", out long whoreCd) && whoreCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
+                description.AppendLine($"**Whore**: {TimeSpan.FromSeconds(whoreCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
             if (snap.TryGetValue("chopCooldown", out long chopCd) && chopCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
                 description.AppendLine($"**Chopping Wood**: {TimeSpan.FromSeconds(chopCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
             if (snap.TryGetValue("digCooldown", out long digCd) && digCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)

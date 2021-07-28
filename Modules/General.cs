@@ -183,32 +183,14 @@ namespace RRBot.Modules
             await ReplyAsync($"{Context.User.Mention}, you have specified a nonexistent command!");
         }
 
-        [Alias("module")]
-        [Command("modules")]
-        [Summary("View info about the bot's modules or view info about a module, depending on if you specify a module or not.")]
-        [Remarks("$modules <module>")]
-        public async Task Modules([Remainder] string module = "")
+        [Command("module")]
+        [Summary("View info about a module.")]
+        [Remarks("$module [module]")]
+        public async Task Module([Remainder] string module)
         {
             string strippedModule = string.Join("", module.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
-            var modules = Commands.Modules;
 
-            if (string.IsNullOrWhiteSpace(module))
-            {
-                List<string> modulesList = modules.Select(x => x.Name).ToList();
-                if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST) modulesList.Remove("Support");
-
-                EmbedBuilder modulesEmbed = new EmbedBuilder
-                {
-                    Color = Color.Red,
-                    Title = "Currently available modules",
-                    Description = string.Join(", ", modulesList)
-                };
-
-                await ReplyAsync(embed: modulesEmbed.Build());
-                return;
-            }
-
-            foreach (ModuleInfo moduleInfo in modules)
+            foreach (ModuleInfo moduleInfo in Commands.Modules)
             {
                 if (moduleInfo.Name.Equals(strippedModule, StringComparison.OrdinalIgnoreCase))
                 {
@@ -223,10 +205,10 @@ namespace RRBot.Modules
                         }
                     }
 
-                    if (moduleInfo.TryGetPrecondition<RequireRushRebornAttribute>())
+                    if (moduleInfo.TryGetPrecondition<RequireRushRebornAttribute>() &&
+                        (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST))
                     {
-                        if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
-                            break;
+                        break;
                     }
 
                     EmbedBuilder moduleEmbed = new EmbedBuilder
@@ -242,6 +224,24 @@ namespace RRBot.Modules
             }
 
             await ReplyAsync($"{Context.User.Mention}, you have specified a nonexistent module!");
+        }
+
+        [Command("modules")]
+        [Summary("View info about the bot's modules.")]
+        [Remarks("$modules")]
+        public async Task Modules()
+        {
+            List<string> modulesList = Commands.Modules.Select(x => x.Name).ToList();
+            if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST) modulesList.Remove("Support");
+
+            EmbedBuilder modulesEmbed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                Title = "Currently available modules",
+                Description = string.Join(", ", modulesList)
+            };
+
+            await ReplyAsync(embed: modulesEmbed.Build());
         }
 
         [Alias("statistics")]
