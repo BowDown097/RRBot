@@ -20,6 +20,60 @@ namespace RRBot.Modules
         public Logger Logger { get; set; }
         public static readonly Random random = new Random();
 
+        private async Task<RuntimeResult> GenericCrime(string outcome1, string outcome2, string outcome3, string outcome4, string outcome5, object cooldown, bool funny = false)
+        {
+            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+            double cash = snap.GetValue<double>("cash");
+
+            if (random.Next(10) < 8)
+            {
+                double moneyEarned = random.NextDouble(69, 691);
+                await StatUpdate(Context.User, true, moneyEarned);
+
+                switch (random.Next(3))
+                {
+                    case 0:
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome1, moneyEarned.ToString("C2")));
+                        break;
+                    case 1:
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome2, moneyEarned.ToString("C2")));
+                        break;
+                    case 2:
+                        if (funny) moneyEarned /= 5;
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome3, moneyEarned.ToString("C2")));
+                        break;
+                }
+
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + moneyEarned);
+            }
+            else
+            {
+                double lostCash = random.NextDouble(69, 461);
+                lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
+                await StatUpdate(Context.User, false, lostCash);
+
+                switch (random.Next(2))
+                {
+                    case 0:
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome4, lostCash.ToString("C2")));
+                        break;
+                    case 1:
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome5, lostCash.ToString("C2")));
+                        break;
+                }
+
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
+            }
+
+            await RollRandomItem();
+
+            await doc.SetAsync(cooldown, SetOptions.MergeAll);
+            return CommandResult.FromSuccess();
+        }
+
         private async Task RollRandomItem()
         {
             if (random.Next(20) == 1)
@@ -89,66 +143,32 @@ namespace RRBot.Modules
             return CommandResult.FromError("This server's staff role has yet to be set.");
         }
 
+        [Command("deal")]
+        [Summary("Deal some drugs.")]
+        [Remarks("$deal")]
+        [RequireCooldown("dealCooldown", "you don't have any more drugs to deal! Your next shipment comes in {0}.")]
+        public async Task<RuntimeResult> Deal()
+        {
+            return await GenericCrime("Border patrol let your cocaine-stuffed dog through! You earned **{0}** from the cartel.",
+                "You continue to capitalize off of some 17 year old's meth addiction, yielding you **{0}**.",
+                "You sold grass to some elementary schoolers and passed it off as weed. They didn't have a lot of course, only **{0}**, but money's money.",
+                "You tripped balls on acid with the boys at a party. After waking up, you realize not only did someone take money from your piggy bank, but you also gave out too much free acid, leaving you a whopping **{0}** poorer.",
+                "The Democrats have launched yet another crime bill, leading to your hood being under heavy investigation. You could not escape the feds and paid **{0}** in fines.",
+                new { dealCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, true);
+        }
+
         [Command("loot")]
         [Summary("Loot some locations.")]
         [Remarks("$loot")]
         [RequireCooldown("lootCooldown", "you cannot loot for {0}.")]
         public async Task<RuntimeResult> Loot()
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-            double cash = snap.GetValue<double>("cash");
-
-            if (random.Next(10) < 8)
-            {
-                double moneyLooted = random.NextDouble(69, 691);
-                await StatUpdate(Context.User, true, moneyLooted);
-
-                switch (random.Next(3))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel, "You joined your local BLM protest, looted a Footlocker, and sold what you got." +
-                        $" You earned **{moneyLooted.ToString("C2")}**.");
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel, $"That mall had a lot of shit! You earned **{moneyLooted.ToString("C2")}**.");
-                        break;
-                    case 2:
-                        moneyLooted /= 5;
-                        await Context.User.NotifyAsync(Context.Channel, "You stole from a gas station because you're a fucking idiot." +
-                        $" You earned **{moneyLooted.ToString("C2")}**, basically nothing.");
-                        break;
-                }
-
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + moneyLooted);
-            }
-            else
-            {
-                double lostCash = random.NextDouble(69, 461);
-                lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
-                await StatUpdate(Context.User, false, lostCash);
-
-                switch (random.Next(2))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel, "There happened to be a cop coming out of the donut shop next door." +
-                        $" You had to pay **{lostCash.ToString("C2")}** in fines.");
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel, "The manager gave no fucks and beat the **SHIT** out of you." +
-                        $" You lost **{lostCash.ToString("C2")}** paying for face stitches.");
-                        break;
-                }
-
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
-            }
-
-            await RollRandomItem();
-
-            await doc.SetAsync(new { lootCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
-            return CommandResult.FromSuccess();
+            return await GenericCrime("You joined your local BLM protest, looted a Footlocker, and sold what you got. You earned **{0}**.",
+                "That mall had a lot of shit! You earned **{0}**.",
+                "You stole from a gas station because you're a fucking idiot. You earned **{0}**, basically nothing.",
+                "There happened to be a cop coming out of the donut shop next door. You had to pay **{0}** in fines.",
+                "The manager gave no fucks and beat the SHIT out of you. You lost **{0}** paying for face stitches.",
+                new { lootCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, true);
         }
 
         [Alias("strugglesnuggle")]
@@ -205,58 +225,12 @@ namespace RRBot.Modules
         [RequireRankLevel(2)]
         public async Task<RuntimeResult> Slavery()
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-            double cash = snap.GetValue<double>("cash");
-
-            if (random.Next(10) < 8)
-            {
-                double moneyEarned = random.NextDouble(69, 691);
-                await StatUpdate(Context.User, true, moneyEarned);
-
-                switch (random.Next(3))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel, "You got loads of newfags to tirelessly mine ender chests on the Oldest Anarchy Server in Minecraft." +
-                        $" You made **{moneyEarned.ToString("C2")}** selling the newfound millions of obsidian to an interested party.");
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel, "The innocent Uyghur children working in your labor factory did an especially good job making shoes in the past hour." +
-                        $" You made **{moneyEarned.ToString("C2")}** from all of them, and lost only like 2 cents paying them their wages.");
-                        break;
-                    case 2:
-                        await Context.User.NotifyAsync(Context.Channel, $"This cotton is BUSSIN! The Confederacy is proud. You have been awarded **{moneyEarned.ToString("C2")}**.");
-                        break;
-                }
-
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + moneyEarned);
-            }
-            else
-            {
-                double lostCash = random.NextDouble(69, 461);
-                lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
-                await StatUpdate(Context.User, false, lostCash);
-
-                switch (random.Next(2))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel, "Some fucker ratted you out and the police showed up." +
-                        $" Thankfully, they're corrupt and you were able to sauce them **{lostCash.ToString("C2")}** to fuck off. Thank the lord.");
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel, $"A slave got away and yoinked **{lostCash.ToString("C2")}** from you. Sad day.");
-                        break;
-                }
-
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
-            }
-
-            await RollRandomItem();
-
-            await doc.SetAsync(new { slaveryCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
-            return CommandResult.FromSuccess();
+            return await GenericCrime("You got loads of newfags to tirelessly mine ender chests on the Oldest Anarchy Server in Minecraft. You made **{0}** selling the newfound millions of obsidian to an interested party.",
+                "The innocent Uyghur children working in your labor factory did an especially good job making shoes in the past hour. You made **{0}** from all of them, and lost only like 2 cents paying them their wages.",
+                "This cotton is BUSSIN! The Confederacy is proud. You have been awarded **{0}**.",
+                "Some fucker ratted you out and the police showed up. Thankfully, they're corrupt and you were able to sauce them **{0}** to fuck off. Thank the lord.",
+                "A slave got away and yoinked **{0}** from you. Sad day.",
+                new { slaveryCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
         }
 
         [Command("whore")]
@@ -266,55 +240,12 @@ namespace RRBot.Modules
         [RequireRankLevel(1)]
         public async Task<RuntimeResult> Whore()
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-
-            double cash = snap.GetValue<double>("cash");
-
-            if (random.Next(10) < 8)
-            {
-                double moneyWhored = random.NextDouble(69, 691);
-                await StatUpdate(Context.User, true, moneyWhored);
-
-                switch (random.Next(3))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel, $"You went to the club and some weird fat dude sauced you **{moneyWhored.ToString("C2")}**.");
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel, $"The dude you fucked looked super shady, but he did pay up. You earned **{moneyWhored.ToString("C2")}**.");
-                        break;
-                    case 2:
-                        await Context.User.NotifyAsync(Context.Channel, $"You found the Chad Thundercock himself! **{moneyWhored.ToString("C2")}** and some amazing sex." +
-                        $" What a great night.");
-                        break;
-                }
-
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + moneyWhored);
-            }
-            else
-            {
-                double lostCash = random.NextDouble(69, 461);
-                lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
-                await StatUpdate(Context.User, false, lostCash);
-
-                switch (random.Next(2))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel, $"You were too ugly and nobody wanted you. You lost **{lostCash.ToString("C2")}** buying clothes for the night.");
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel, $"You didn't give good enough head to the cop! You had to pay **{lostCash.ToString("C2")}** in fines.");
-                        break;
-                }
-
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
-            }
-
-            await doc.SetAsync(new { whoreCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
-            return CommandResult.FromSuccess();
+            return await GenericCrime("You went to the club and some weird fat dude sauced you **{0}**.",
+                "The dude you fucked looked super shady, but he did pay up. You earned **{0}**.",
+                "You found the Chad Thundercock himself! **{0}** and some amazing sex. What a great night.",
+                "You were too ugly and nobody wanted you. You lost **{0}** buying clothes for the night.",
+                "You didn't give good enough head to the cop! You had to pay **{0}** in fines.",
+                new { whoreCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
         }
     }
 }

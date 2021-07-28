@@ -149,7 +149,7 @@ namespace RRBot.Modules
         [RequireCash]
         public async Task<RuntimeResult> Slots(double bet)
         {
-            if (bet < 500) return CommandResult.FromError($"{Context.User.Mention}, you can't bet less than $500!");
+            if (bet < 0) return CommandResult.FromError($"{Context.User.Mention}, you can't bet nothing!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
