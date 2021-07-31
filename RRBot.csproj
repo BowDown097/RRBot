@@ -12,7 +12,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.10.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
     <PackageReference Include="NHentaiSharp" Version="1.1.1" />
-    <PackageReference Include="Victoria" Version="5.2.0" />
+    <PackageReference Include="Victoria" Version="4.0.18" />
   </ItemGroup>
 
 </Project>

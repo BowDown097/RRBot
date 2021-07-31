@@ -294,7 +294,7 @@ namespace RRBot.Systems
             });
         }
 
-        public async Task Custom_TrackStarted(SocketGuildUser user, SocketVoiceChannel vc, string url)
+        public async Task Custom_TrackStarted(SocketGuildUser user, SocketVoiceChannel vc, Uri url)
         {
             EmbedBuilder embed = new EmbedBuilder
             {
