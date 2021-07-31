@@ -138,8 +138,8 @@ namespace RRBot.Systems
                     LavaTrack track = player.Queue.FirstOrDefault() as LavaTrack;
                     await player.PlayAsync(track);
 
-                    StringBuilder message = new StringBuilder($"Now playing: {player.Track.Title}\nBy: {player.Track.Author}\n");
-                    if (!player.Track.IsStream) message.Append($"Length: {player.Track.Duration.ToString()}");
+                    StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
+                    if (!track.IsStream) message.Append($"Length: {track.Duration.ToString()}");
 
                     await context.Channel.SendMessageAsync(message.ToString());
                 }

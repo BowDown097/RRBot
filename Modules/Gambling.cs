@@ -78,15 +78,19 @@ namespace RRBot.Modules
             if (success)
             {
                 double payout = bet * mult;
+                double totalCash = cash + payout;
                 await StatUpdate(Context.User, true, payout);
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + payout);
-                await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout.ToString("C2")}**!");
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
+                await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout.ToString("C2")}**!" +
+                    $"\nBalance: {totalCash.ToString("C2")}");
             }
             else
             {
+                double totalCash = (cash - bet) > 0 ? cash - bet : 0;
                 await StatUpdate(Context.User, false, bet);
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - bet);
-                await Context.User.NotifyAsync(Context.Channel, $"Well damn, you rolled a {roll}, which wasn't enough. You lost **{bet.ToString("C2")}**.");
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
+                await Context.User.NotifyAsync(Context.Channel, $"Well damn, you rolled a {roll}, which wasn't enough. You lost **{bet.ToString("C2")}**." +
+                    $"\nBalance: {totalCash.ToString("C2")}");
             }
 
             return CommandResult.FromSuccess();
@@ -206,19 +210,27 @@ namespace RRBot.Modules
                 if (payoutMult > 1)
                 {
                     double payout = (bet * payoutMult) - bet;
+                    double totalCash = cash + payout;
                     await StatUpdate(Context.User, true, payout);
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + payout);
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
 
                     if (payoutMult == 25)
-                        await Context.User.NotifyAsync(Context.Channel, $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout.ToString("C2")}**!");
+                    {
+                        await Context.User.NotifyAsync(Context.Channel, $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout.ToString("C2")}**!" +
+                            $"\nBalance: {totalCash.ToString("C2")}");
+                    }
                     else
-                        await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout.ToString("C2")}**.");
+                    {
+                        await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout.ToString("C2")}**.\nBalance: {totalCash.ToString("C2")}");
+                    }
                 }
                 else
                 {
+                    double totalCash = (cash - bet) > 0 ? cash - bet : 0;
                     await StatUpdate(Context.User, false, bet);
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - bet);
-                    await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet.ToString("C2")}**.");
+                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
+                    await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet.ToString("C2")}**." +
+                        $"\nBalance: {totalCash.ToString("C2")}");
                 }
 
                 await doc.SetAsync(new { usingSlots = false }, SetOptions.MergeAll);

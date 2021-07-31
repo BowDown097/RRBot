@@ -31,41 +31,48 @@ namespace RRBot.Modules
             if (random.Next(10) < 8)
             {
                 double moneyEarned = random.NextDouble(69, 691);
+                double totalCash = cash + moneyEarned;
                 await StatUpdate(Context.User, true, moneyEarned);
 
                 switch (random.Next(3))
                 {
                     case 0:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome1, moneyEarned.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome1 + "\nBalance: {1}", moneyEarned.ToString("C2"), totalCash.ToString("C2")));
                         break;
                     case 1:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome2, moneyEarned.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome2 + "\nBalance: {1}", moneyEarned.ToString("C2"), totalCash.ToString("C2")));
                         break;
                     case 2:
-                        if (funny) moneyEarned /= 5;
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome3, moneyEarned.ToString("C2")));
+                        if (funny)
+                        {
+                            moneyEarned /= 5;
+                            totalCash = cash + moneyEarned;
+                        }
+
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome3 + "\nBalance: {1}", moneyEarned.ToString("C2"), totalCash.ToString("C2")));
                         break;
                 }
 
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + moneyEarned);
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
             }
             else
             {
                 double lostCash = random.NextDouble(69, 461);
                 lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
+                double totalCash = (cash - lostCash) > 0 ? cash - lostCash : 0;
                 await StatUpdate(Context.User, false, lostCash);
 
                 switch (random.Next(2))
                 {
                     case 0:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome4, lostCash.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome4 + "\nBalance: {1}", lostCash.ToString("C2"), totalCash.ToString("C2")));
                         break;
                     case 1:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome5, lostCash.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome5 + "\nBalance: {1}", lostCash.ToString("C2"), totalCash.ToString("C2")));
                         break;
                 }
 
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - lostCash);
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
             }
 
             await RollRandomItem();

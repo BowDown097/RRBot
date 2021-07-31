@@ -215,14 +215,14 @@ namespace RRBot
                     if (rwm.Error == CommandError.Unsuccessful) await context.Channel.SendMessageAsync(rwm.Reason);
                     if (rwm.Error == CommandError.BadArgCount)
                         await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, 
-                            $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} (or more) argument(s)!");
+                            $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``");
                     break;
                 default:
                     if (!result.IsSuccess) Console.WriteLine(result.ErrorReason);
                     if (result.Error == CommandError.UnmetPrecondition) await context.Channel.SendMessageAsync(result.ErrorReason);
                     if (result.Error == CommandError.BadArgCount)
                         await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                            $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} (or more) argument(s)!");
+                            $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``");
                     break;
             }
         }
