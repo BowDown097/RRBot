@@ -33,7 +33,7 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             double cash = snap.GetValue<double>("cash");
-            double cryptoValue = await CashSystem.QueryCryptoValue(crypto) * amount;
+            double cryptoValue = await CashSystem.QueryCryptoValue(cUp) * amount;
             if (cash < cryptoValue) return CommandResult.FromError($"{Context.User.Mention}, you don't have enough money for this! You need at least **{cryptoValue.ToString("C2")}**.");
 
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - cryptoValue);
@@ -125,7 +125,7 @@ namespace RRBot.Modules
             if (cryptoBal < amount) return CommandResult.FromError($"{Context.User.Mention}, you don't have {amount} {crypto}! You've only got **{cryptoBal}** of it.");
 
             double cash = snap.GetValue<double>("cash");
-            double cryptoValue = await CashSystem.QueryCryptoValue(crypto) * amount;
+            double cryptoValue = await CashSystem.QueryCryptoValue(cUp) * amount;
             double finalValue = cryptoValue * 0.98;
 
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + finalValue);
