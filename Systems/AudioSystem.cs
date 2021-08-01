@@ -14,32 +14,30 @@ namespace RRBot.Systems
 {
     public sealed class AudioSystem
     {
-        private LavaRestClient lavaRestClient;
-        private LavaSocketClient lavaSocketClient;
-        private Logger logger;
+        private readonly LavaRestClient lavaRestClient;
+        private readonly LavaSocketClient lavaSocketClient;
 
-        public AudioSystem(LavaRestClient rest, LavaSocketClient socket, Logger logger)
+        public AudioSystem(LavaRestClient rest, LavaSocketClient socket)
         {
             lavaRestClient = rest;
             lavaSocketClient = socket;
-            this.logger = logger;
         }
 
         public async Task<RuntimeResult> GetCurrentlyPlayingAsync(SocketCommandContext context)
         {
             LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
-            if (player != null && player.IsPlaying)
+            if (player?.IsPlaying == true)
             {
                 LavaTrack track = player.CurrentTrack;
 
-                StringBuilder builder = new StringBuilder($"By: {track.Author}\n");
+                StringBuilder builder = new($"By: {track.Author}\n");
                 if (!track.IsStream)
                 {
-                    TimeSpan pos = new TimeSpan(track.Position.Hours, track.Position.Minutes, track.Position.Seconds);
-                    builder.AppendLine($"Length: {track.Length.ToString()}\nPosition: {pos.ToString()}");
+                    TimeSpan pos = new(track.Position.Hours, track.Position.Minutes, track.Position.Seconds);
+                    builder.AppendLine($"Length: {track.Length}\nPosition: {pos}");
                 }
 
-                EmbedBuilder embed = new EmbedBuilder
+                EmbedBuilder embed = new()
                 {
                     Color = Color.Red,
                     Title = track.Title,
@@ -84,13 +82,13 @@ namespace RRBot.Systems
 
             await player.PlayAsync(track);
 
-            StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
-            if (!track.IsStream) message.AppendLine($"Length: {track.Length.ToString()}");
+            StringBuilder message = new($"Now playing: {track.Title}\nBy: {track.Author}\n");
+            if (!track.IsStream) message.AppendLine($"Length: {track.Length}");
             message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
 
             await context.Channel.SendMessageAsync(message.ToString());
 
-            await logger.Custom_TrackStarted(user, user.VoiceChannel, track.Uri);
+            await Logger.Custom_TrackStarted(user, track.Uri);
 
             return CommandResult.FromSuccess();
         }
@@ -98,7 +96,7 @@ namespace RRBot.Systems
         public async Task<RuntimeResult> ListAsync(SocketCommandContext context)
         {
             LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
-            if (player != null && player.IsPlaying)
+            if (player?.IsPlaying == true)
             {
                 if (player.Queue.Count < 1 && player.CurrentTrack != null)
                 {
@@ -106,15 +104,15 @@ namespace RRBot.Systems
                     return CommandResult.FromSuccess();
                 }
 
-                StringBuilder playlist = new StringBuilder();
+                StringBuilder playlist = new();
                 for (int i = 0; i < player.Queue.Items.Count(); i++)
                 {
                     LavaTrack track = player.Queue.Items.ElementAt(i) as LavaTrack;
                     playlist.AppendLine($"**{i + 1}**: {track.Title} by {track.Author}");
-                    if (!track.IsStream) playlist.AppendLine($" ({track.Length.ToString()})");
+                    if (!track.IsStream) playlist.AppendLine($" ({track.Length})");
                 }
 
-                EmbedBuilder embed = new EmbedBuilder
+                EmbedBuilder embed = new()
                 {
                     Color = Color.Red,
                     Title = "Playlist",
@@ -139,8 +137,8 @@ namespace RRBot.Systems
                     LavaTrack track = player.Queue.Items.FirstOrDefault() as LavaTrack;
                     await player.PlayAsync(track);
 
-                    StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
-                    if (!track.IsStream) message.Append($"Length: {track.Length.ToString()}");
+                    StringBuilder message = new($"Now playing: {track.Title}\nBy: {track.Author}\n");
+                    if (!track.IsStream) message.Append($"Length: {track.Length}");
 
                     await context.Channel.SendMessageAsync(message.ToString());
                 }
@@ -163,7 +161,7 @@ namespace RRBot.Systems
             if (player is null) return CommandResult.FromError($"{context.User.Mention}, the bot is not currently being used.");
 
             if (player.IsPlaying) await player.StopAsync();
-            foreach (LavaTrack track in player.Queue.Items) player.Queue.Dequeue();
+            player.Queue.Clear();
             await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
 
             await context.Channel.SendMessageAsync("Stopped playing the current track and removed any existing tracks in the queue.");
@@ -183,7 +181,7 @@ namespace RRBot.Systems
         }
 
         // this is a fix for the player breaking if the bot is manually disconnected
-        public async Task OnPlayerUpdated(LavaPlayer player, LavaTrack track, TimeSpan position)
+        public async Task OnPlayerUpdated(LavaPlayer player, LavaTrack track, TimeSpan duration)
         {
             if (!track.IsStream)
             {
@@ -204,7 +202,7 @@ namespace RRBot.Systems
                 return;
             }
 
-            if (!player.Queue.TryDequeue(out IQueueObject item) || !(item is LavaTrack nextTrack) || !reason.ShouldPlayNext())
+            if (!player.Queue.TryDequeue(out IQueueObject item) || item is not LavaTrack nextTrack || !reason.ShouldPlayNext())
             {
                 await lavaSocketClient.DisconnectAsync(player.VoiceChannel);
                 await player.StopAsync();
@@ -213,8 +211,8 @@ namespace RRBot.Systems
             {
                 await player.PlayAsync(nextTrack);
 
-                StringBuilder message = new StringBuilder($"Now playing: {track.Title}\nBy: {track.Author}\n");
-                if (!track.IsStream) message.Append($"Length: {track.Length.ToString()}");
+                StringBuilder message = new($"Now playing: {track.Title}\nBy: {track.Author}\n");
+                if (!track.IsStream) message.Append($"Length: {track.Length}");
                 await player.TextChannel.SendMessageAsync(message.ToString());
             }
         }

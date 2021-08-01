@@ -8,7 +8,6 @@ using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using RRBot.Extensions;
 using RRBot.Preconditions;
-using RRBot.Systems;
 
 namespace RRBot.Modules
 {
@@ -17,8 +16,7 @@ namespace RRBot.Modules
     [RequireRushReborn]
     public class Support : ModuleBase<SocketCommandContext>
     {
-        public Logger Logger { get; set; }
-        public static readonly Random random = new Random();
+        public static readonly Random random = new();
 
         public static async Task CloseTicket(ISocketMessageChannel helpRequests, SocketUser user, DocumentReference doc, DocumentSnapshot snap, string response)
         {
@@ -48,9 +46,9 @@ namespace RRBot.Modules
 
             IGuildUser helper = Context.Guild.GetUser(snap.GetValue<ulong>("helper"));
             if (user == null)
-                await CloseTicket(Context.Channel, Context.User, doc, snap, $"Your support ticket with **{helper.ToString()}** has been closed.");
+                await CloseTicket(Context.Channel, Context.User, doc, snap, $"Your support ticket with **{helper}** has been closed.");
             else if (helper.Id == Context.User.Id)
-                await CloseTicket(Context.Channel, Context.User, doc, snap, $"Your support ticket with **{user.ToString()}** has been closed.");
+                await CloseTicket(Context.Channel, Context.User, doc, snap, $"Your support ticket with **{user}** has been closed.");
             else
                 await Context.User.NotifyAsync(Context.Channel, "That user has created a support ticket, but you are not assigned as the helper.");
 
@@ -69,14 +67,14 @@ namespace RRBot.Modules
             if (snap.Exists)
             {
                 IGuildUser dbHelper = Context.Guild.GetUser(snap.GetValue<ulong>("helper"));
-                return CommandResult.FromError($"{Context.User.Mention}, you already have a support ticket open with **{dbHelper.ToString()}**.\n" +
+                return CommandResult.FromError($"{Context.User.Mention}, you already have a support ticket open with **{dbHelper}**.\n" +
                     "If they have taken an extraordinarily long time to respond, or if the issue has been solved by yourself or someone else, you can use ``$end``.");
             }
 
             IEnumerable<SocketGuildUser> helpers = Context.Guild.Roles.FirstOrDefault(role => role.Name == "Helper").Members.Where(user => user.Id != Context.User.Id);
             SocketGuildUser helperUser = helpers.ElementAt(random.Next(0, helpers.Count()));
 
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Red,
                 Title = $"Support Ticket #{await tickets.ListDocumentsAsync().CountAsync() + 1}",
@@ -115,7 +113,7 @@ namespace RRBot.Modules
             SocketGuildUser helper = Context.Guild.GetUser(ticket.GetValue<ulong>("helper"));
             SocketGuildUser issuer = Context.Guild.GetUser(ticket.GetValue<ulong>("issuer"));
             string request = ticket.GetValue<string>("req");
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Red,
                 Title = $"Support Ticket #{index}",

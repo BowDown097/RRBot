@@ -9,7 +9,7 @@ namespace RRBot.Systems
 {
     public static class Items
     {
-        private static readonly Dictionary<string, int> rankings = new Dictionary<string, int>
+        private static readonly Dictionary<string, int> rankings = new()
         {
             { "Wooden", 0 },
             { "Stone", 1 },
@@ -17,7 +17,7 @@ namespace RRBot.Systems
             { "Diamond", 3 }
         };
 
-        public static readonly string[] items = 
+        public static readonly string[] items =
         {
             "Wooden Pickaxe", "Stone Pickaxe", "Iron Pickaxe", "Diamond Pickaxe",
             "Wooden Sword", "Stone Sword", "Iron Sword", "Diamond Sword",
@@ -26,8 +26,8 @@ namespace RRBot.Systems
             "Wooden Hoe", "Stone Hoe", "Iron Hoe", "Diamond Hoe"
         };
 
-        public static readonly Tuple<string, string, double>[] perks = 
-        { 
+        public static readonly Tuple<string, string, double>[] perks =
+        {
             new Tuple<string, string, double>("test perk", "Test Perk (cannot purchase)", 69696969)
         };
 
@@ -39,13 +39,11 @@ namespace RRBot.Systems
 
         public static double ComputeItemPrice(string item)
         {
-            double price = 4500; // wood price
+            if (item.StartsWith("Stone", StringComparison.Ordinal)) return 6000;
+            else if (item.StartsWith("Iron", StringComparison.Ordinal)) return 7500;
+            else if (item.StartsWith("Diamond", StringComparison.Ordinal)) return 9000;
 
-            if (item.StartsWith("Stone", StringComparison.Ordinal)) price = 6000;
-            else if (item.StartsWith("Iron", StringComparison.Ordinal)) price = 7500;
-            else if (item.StartsWith("Diamond", StringComparison.Ordinal)) price = 9000;
-
-            return price;
+            return 4500; // wood price
         }
 
         public static async Task<string> RandomItem(IGuildUser user, Random random)

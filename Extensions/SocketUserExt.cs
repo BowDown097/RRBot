@@ -23,8 +23,8 @@ namespace RRBot.Extensions
                 {
                     if (kvp.Value[0] == '$')
                     {
-                        double oldValue = double.Parse(userStats[kvp.Key].Substring(1));
-                        double toAdd = double.Parse(kvp.Value.Substring(1));
+                        double oldValue = double.Parse(userStats[kvp.Key][1..]);
+                        double toAdd = double.Parse(kvp.Value[1..]);
                         userStats[kvp.Key] = (oldValue + toAdd).ToString("C2", culture);
                     }
                     else
@@ -53,10 +53,10 @@ namespace RRBot.Extensions
             }
 
             bool replyPings = await UserSettingsGetters.GetReplyPings(user as IGuildUser);
-            if (!string.IsNullOrEmpty(altMsg)) 
+            if (!string.IsNullOrEmpty(altMsg))
                 message = replyPings ? altMsg : message;
-            else 
-                message = replyPings ? $"{user.Mention}, {char.ToLowerInvariant(message[0]) + message.Substring(1)}" : message;
+            else
+                message = replyPings ? $"{user.Mention}, {char.ToLowerInvariant(message[0]) + message[1..]}" : message;
 
             return await channel.SendMessageAsync(message);
         }

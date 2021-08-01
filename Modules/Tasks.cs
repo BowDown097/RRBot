@@ -14,7 +14,7 @@ namespace RRBot.Modules
     [Summary("The best way to earn money by far, at least for those lucky or rich enough to get themselves an item.")]
     public class Tasks : ModuleBase<SocketCommandContext>
     {
-        public static readonly Random random = new Random();
+        public static readonly Random random = new();
 
         private async Task GenericTask(string itemType, string activity, string thing, object cooldown)
         {
@@ -30,8 +30,8 @@ namespace RRBot.Modules
             else if (item.StartsWith("Diamond", StringComparison.Ordinal)) numMined = random.Next(161, 209);
             double cashGained = numMined * 2.5;
             double totalCash = cash + cashGained;
-            await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained.ToString("C2")}**." +
-                $"\nBalance: {totalCash.ToString("C2")}");
+            await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained:C2}**." +
+                $"\nBalance: {totalCash:C2}");
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
 
             await Context.User.AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
@@ -90,26 +90,22 @@ namespace RRBot.Modules
 
             if (item.StartsWith("Wooden", StringComparison.Ordinal))
             {
-                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} stone with your {item} and earned **{cashGained.ToString("C2")}**." +
-                    $"\nBalance: {totalCash.ToString("C2")}");
+                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} stone with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
             else if (item.StartsWith("Stone", StringComparison.Ordinal))
             {
                 cashGained *= 1.33;
-                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} iron with your {item} and earned **{cashGained.ToString("C2")}**." +
-                    $"\nBalance: {totalCash.ToString("C2")}");
+                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} iron with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
             else if (item.StartsWith("Iron", StringComparison.Ordinal))
             {
                 cashGained *= 1.66;
-                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} diamonds with your {item} and earned **{cashGained.ToString("C2")}**." +
-                    $"\nBalance: {totalCash.ToString("C2")}");
+                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} diamonds with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
             else if (item.StartsWith("Diamond", StringComparison.Ordinal))
             {
                 cashGained *= 2;
-                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained.ToString("C2")}**." +
-                    $"\nBalance: {totalCash.ToString("C2")}");
+                await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
 
             await Context.User.AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>

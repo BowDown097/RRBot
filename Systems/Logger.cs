@@ -12,13 +12,9 @@ using Newtonsoft.Json.Linq;
 
 namespace RRBot.Systems
 {
-    public class Logger
+    public static class Logger
     {
-        private readonly DiscordSocketClient client;
-
-        public Logger(DiscordSocketClient client) => this.client = client;
-
-        private async Task WriteToLogs(SocketGuild guild, EmbedBuilder embed)
+        private static async Task WriteToLogs(SocketGuild guild, EmbedBuilder embed)
         {
             DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/config").Document("channels");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
@@ -26,11 +22,11 @@ namespace RRBot.Systems
                 await guild.GetTextChannel(id).SendMessageAsync(embed: embed.Build());
         }
 
-        public async Task Client_ChannelCreated(SocketChannel channel)
+        public static async Task Client_ChannelCreated(SocketChannel channel)
         {
             if (channel is SocketGuildChannel channelGuild)
             {
-                EmbedBuilder embed = new EmbedBuilder
+                EmbedBuilder embed = new()
                 {
                     Color = Color.Blue,
                     Title = "Channel Created",
@@ -42,11 +38,11 @@ namespace RRBot.Systems
             }
         }
 
-        public async Task Client_ChannelDestroyed(SocketChannel channel)
+        public static async Task Client_ChannelDestroyed(SocketChannel channel)
         {
             if (channel is SocketGuildChannel channelGuild)
             {
-                EmbedBuilder embed = new EmbedBuilder
+                EmbedBuilder embed = new()
                 {
                     Color = Color.Blue,
                     Title = "Channel Deleted",
@@ -58,11 +54,11 @@ namespace RRBot.Systems
             }
         }
 
-        public async Task Client_ChannelUpdated(SocketChannel before, SocketChannel after)
+        public static async Task Client_ChannelUpdated(SocketChannel before, SocketChannel after)
         {
             if (before is SocketGuildChannel beforeGuild && after is SocketGuildChannel afterGuild)
             {
-                EmbedBuilder embed = new EmbedBuilder
+                EmbedBuilder embed = new()
                 {
                     Color = Color.Blue,
                     Title = "Channel Updated",
@@ -77,9 +73,9 @@ namespace RRBot.Systems
             }
         }
 
-        public async Task Client_InviteCreated(SocketInvite invite)
+        public static async Task Client_InviteCreated(SocketInvite invite)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = "Invite Created",
@@ -91,32 +87,33 @@ namespace RRBot.Systems
             await WriteToLogs(invite.Guild, embed);
         }
 
-        public async Task Client_MessageDeleted(Cacheable<IMessage, ulong> msgCached, ISocketMessageChannel channel)
+        public static async Task Client_MessageDeleted(Cacheable<IMessage, ulong> msgCached, ISocketMessageChannel channel)
         {
             if (!msgCached.HasValue) return;
 
             IMessage msg = msgCached.Value;
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
-                Title = $"Message sent by {msg.Author.ToString()} deleted in #{channel.ToString()}",
+                Title = $"Message sent by {msg.Author} deleted in #{channel}",
                 Description = msg.Content,
                 Timestamp = msg.Timestamp
             };
 
-            await WriteToLogs((channel as SocketGuildChannel).Guild, embed);
+            await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
         }
 
-        public async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
+        public static async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
         {
             if (!msgBeforeCached.HasValue) return;
 
             IMessage msgBefore = msgBeforeCached.Value;
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
-                Title = $"Message sent by {msgAfter.Author.ToString()} updated in #{channel.ToString()}",
-                Description = "**Previous Content:** ``" + msgBefore.Content + "``\n**New Content:** ``" + msgAfter.Content + "``",
+                Title = $"Message sent by {msgAfter.Author} updated in #{channel}",
+                Description = "**Previous Content:** " + (string.IsNullOrWhiteSpace(msgBefore.Content) ? "None" : $"``{msgBefore.Content}``") +
+                    "\n**New Content:** " + (string.IsNullOrWhiteSpace(msgAfter.Content) ? "None" : $"``{msgAfter.Content}``"),
                 Timestamp = DateTime.Now
             };
 
@@ -129,12 +126,12 @@ namespace RRBot.Systems
                 });
             }
 
-            await WriteToLogs((channel as SocketGuildChannel).Guild, embed);
+            await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
         }
 
-        public async Task Client_RoleCreated(SocketRole role)
+        public static async Task Client_RoleCreated(SocketRole role)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = "Role Created",
@@ -145,9 +142,9 @@ namespace RRBot.Systems
             await WriteToLogs(role.Guild, embed);
         }
 
-        public async Task Client_RoleDeleted(SocketRole role)
+        public static async Task Client_RoleDeleted(SocketRole role)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = "Role Deleted",
@@ -158,9 +155,9 @@ namespace RRBot.Systems
             await WriteToLogs(role.Guild, embed);
         }
 
-        public async Task Client_UserBanned(SocketUser user, SocketGuild guild)
+        public static async Task Client_UserBanned(SocketUser user, SocketGuild guild)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = "User Banned",
@@ -171,9 +168,9 @@ namespace RRBot.Systems
             await WriteToLogs(guild, embed);
         }
 
-        public async Task Client_UserJoined(SocketGuildUser user)
+        public static async Task Client_UserJoined(SocketGuildUser user)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = "User Joined",
@@ -184,9 +181,9 @@ namespace RRBot.Systems
             await WriteToLogs(user.Guild, embed);
         }
 
-        public async Task Client_UserLeft(SocketGuildUser user)
+        public static async Task Client_UserLeft(SocketGuildUser user)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = "User Left",
@@ -197,9 +194,9 @@ namespace RRBot.Systems
             await WriteToLogs(user.Guild, embed);
         }
 
-        public async Task Client_UserUnbanned(SocketUser user, SocketGuild guild)
+        public static async Task Client_UserUnbanned(SocketUser user, SocketGuild guild)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = "User Unbanned",
@@ -210,70 +207,97 @@ namespace RRBot.Systems
             await WriteToLogs(guild, embed);
         }
 
-        public async Task Client_UserVoiceStateUpdated(SocketUser user, SocketVoiceState voiceStateOrig, SocketVoiceState voiceState)
+        public static async Task Client_UserVoiceStateUpdated(SocketUser user, SocketVoiceState voiceStateOrig, SocketVoiceState voiceState)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Timestamp = DateTime.Now
             };
 
-            embed.Description = voiceState.VoiceChannel == null ? $"{user.ToString()}\nIn: {voiceStateOrig.VoiceChannel.ToString()}"
-                : $"{user.ToString()}\nIn: {voiceState.VoiceChannel.ToString()}";
+            embed.Description = voiceState.VoiceChannel == null ? $"{user}\nIn: {voiceStateOrig.VoiceChannel}" : $"{user}\nIn: {voiceState.VoiceChannel}";
 
-            if (voiceStateOrig.VoiceChannel == null) embed.Title = "User Joined Voice Channel";
-            else if (voiceState.VoiceChannel == null) embed.Title = "User Left Voice Channel";
-            else if (!voiceStateOrig.IsDeafened && voiceState.IsDeafened) embed.Title = "User Server Deafened";
-            else if (voiceStateOrig.IsDeafened && !voiceState.IsDeafened) embed.Title = "User Server Undeafened";
-            else if (!voiceStateOrig.IsMuted && voiceState.IsMuted) embed.Title = "User Server Muted";
-            else if (voiceStateOrig.IsMuted && !voiceState.IsMuted) embed.Title = "User Server Unmuted";
-            else if (!voiceStateOrig.IsSelfDeafened && voiceState.IsSelfDeafened) embed.Title = "User Self Deafened";
-            else if (voiceStateOrig.IsSelfDeafened && !voiceState.IsSelfDeafened) embed.Title = "User Self Undeafened";
-            else if (!voiceStateOrig.IsSelfMuted && voiceState.IsSelfMuted) embed.Title = "User Self Muted";
-            else if (voiceStateOrig.IsSelfMuted && !voiceState.IsSelfMuted) embed.Title = "User Self Unmuted";
+            if (voiceStateOrig.VoiceChannel == null)
+            {
+                embed.Title = "User Joined Voice Channel";
+            }
+            else if (voiceState.VoiceChannel == null)
+            {
+                embed.Title = "User Left Voice Channel";
+            }
+            else if (!voiceStateOrig.IsDeafened && voiceState.IsDeafened)
+            {
+                embed.Title = "User Server Deafened";
+            }
+            else if (voiceStateOrig.IsDeafened && !voiceState.IsDeafened)
+            {
+                embed.Title = "User Server Undeafened";
+            }
+            else if (!voiceStateOrig.IsMuted && voiceState.IsMuted)
+            {
+                embed.Title = "User Server Muted";
+            }
+            else if (voiceStateOrig.IsMuted && !voiceState.IsMuted)
+            {
+                embed.Title = "User Server Unmuted";
+            }
+            else if (!voiceStateOrig.IsSelfDeafened && voiceState.IsSelfDeafened)
+            {
+                embed.Title = "User Self Deafened";
+            }
+            else if (voiceStateOrig.IsSelfDeafened && !voiceState.IsSelfDeafened)
+            {
+                embed.Title = "User Self Undeafened";
+            }
+            else if (!voiceStateOrig.IsSelfMuted && voiceState.IsSelfMuted)
+            {
+                embed.Title = "User Self Muted";
+            }
+            else if (voiceStateOrig.IsSelfMuted && !voiceState.IsSelfMuted)
+            {
+                embed.Title = "User Self Unmuted";
+            }
             else if (voiceStateOrig.VoiceChannel.Id != voiceState.VoiceChannel.Id)
             {
                 embed.Title = "User Moved Voice Channels";
-                embed.Description = $"Original: {voiceStateOrig.VoiceChannel.ToString()}\nCurrent: {voiceState.VoiceChannel.ToString()}";
+                embed.Description = $"Original: {voiceStateOrig.VoiceChannel}\nCurrent: {voiceState.VoiceChannel}";
             }
             else
             {
                 embed.Title = "User Voice Status Changed";
             }
 
-            await WriteToLogs((user as SocketGuildUser).Guild, embed);     
+            await WriteToLogs((user as SocketGuildUser)?.Guild, embed);
         }
 
-        public async Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
+        public static async Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
         {
-            StringBuilder msgLogs = new StringBuilder();
+            StringBuilder msgLogs = new();
             foreach (IMessage message in messages)
-                msgLogs.AppendLine($"{message.Author.ToString()} @ {message.Timestamp.ToString()}: {message.Content}");
+                msgLogs.AppendLine($"{message.Author} @ {message.Timestamp}: {message.Content}");
 
             await Task.Factory.StartNew(async () =>
             {
                 try
                 {
-                    using (WebClient webClient = new WebClient())
+                    using WebClient webClient = new();
+                    string hbPOST = webClient.UploadString("https://hastebin.com/documents", msgLogs.ToString());
+                    string hbKey = JObject.Parse(hbPOST)["key"].ToString();
+                    string hbUrl = $"https://hastebin.com/{hbKey}";
+
+                    EmbedBuilder embed = new()
                     {
-                        string hbPOST = webClient.UploadString("https://hastebin.com/documents", msgLogs.ToString());
-                        string hbKey = JObject.Parse(hbPOST)["key"].ToString();
-                        string hbUrl = $"https://hastebin.com/{hbKey}";
+                        Color = Color.Blue,
+                        Title = $"{messages.Count() - 1} Messages Purged",
+                        Description = $"See them at: {hbUrl}",
+                        Timestamp = DateTime.Now
+                    };
 
-                        EmbedBuilder embed = new EmbedBuilder
-                        {
-                            Color = Color.Blue,
-                            Title = $"{messages.Count() - 1} Messages Purged",
-                            Description = $"See them at: {hbUrl}",
-                            Timestamp = DateTime.Now
-                        };
-
-                        await WriteToLogs(guild, embed);
-                    }
+                    await WriteToLogs(guild, embed);
                 }
                 catch (WebException)
                 {
-                    EmbedBuilder embed = new EmbedBuilder
+                    EmbedBuilder embed = new()
                     {
                         Color = Color.Blue,
                         Title = $"{messages.Count() - 1} Messages Purged",
@@ -294,12 +318,12 @@ namespace RRBot.Systems
             });
         }
 
-        public async Task Custom_TrackStarted(SocketGuildUser user, SocketVoiceChannel vc, Uri url)
+        public static async Task Custom_TrackStarted(SocketGuildUser user, Uri url)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
-                Title = $"Track started by {user.ToString()}",
+                Title = $"Track started by {user}",
                 Description = $"URL: {url}",
                 Timestamp = DateTime.Now
             };
@@ -307,25 +331,25 @@ namespace RRBot.Systems
             await WriteToLogs(user.Guild, embed);
         }
 
-        public async Task Custom_UserBullied(IGuildUser target, SocketUser actor, string nickname)
+        public static async Task Custom_UserBullied(IGuildUser target, SocketUser actor, string nickname)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = "User Bullied",
-                Description = $"{actor.ToString()} bullied {target.ToString()} to '{nickname}'",
+                Description = $"{actor} bullied {target} to '{nickname}'",
                 Timestamp = DateTime.Now
             };
 
             await WriteToLogs(target.Guild as SocketGuild, embed);
         }
 
-        public async Task Custom_UserMuted(IGuildUser target, SocketUser actor, string duration, string reason)
+        public static async Task Custom_UserMuted(IGuildUser target, SocketUser actor, string duration, string reason)
         {
-            string description = $"{actor.ToString()} muted {target.ToString()} for {duration}";
+            string description = $"{actor} muted {target} for {duration}";
             if (!string.IsNullOrEmpty(reason)) description += $" for '{reason}'";
 
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = "User Muted",
@@ -336,13 +360,13 @@ namespace RRBot.Systems
             await WriteToLogs(target.Guild as SocketGuild, embed);
         }
 
-        public async Task Custom_UserUnmuted(IGuildUser target, SocketUser actor)
+        public static async Task Custom_UserUnmuted(IGuildUser target, SocketUser actor)
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = "User Unmuted",
-                Description = $"{actor.ToString()} unmuted {target.ToString()}",
+                Description = $"{actor} unmuted {target}",
                 Timestamp = DateTime.Now
             };
 

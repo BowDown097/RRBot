@@ -24,8 +24,8 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> Invest(string crypto, double amount)
         {
             if (amount < 0) return CommandResult.FromError($"{Context.User.Mention}, you can't invest nothing!");
-            
-            string abbreviation = "";
+
+            string abbreviation;
             switch (crypto.ToLower())
             {
                 case "bitcoin":
@@ -58,7 +58,7 @@ namespace RRBot.Modules
             if (cryptoAmount < 0.01)
             {
                 return CommandResult.FromError($"{Context.User.Mention}, the amount you specified converts to less than a hundredth of {abbreviation}'s value, which is not permitted.\n"
-                    + $"You'll need to invest at least **{(await CashSystem.QueryCryptoValue(abbreviation) * 0.01).ToString("C2")}**.");
+                    + $"You'll need to invest at least **{await CashSystem.QueryCryptoValue(abbreviation) * 0.01:C2}**.");
             }
 
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - amount);
@@ -69,7 +69,7 @@ namespace RRBot.Modules
                 { $"{abbreviation} Purchased", cryptoAmount.ToString() }
             });
 
-            await Context.User.NotifyAsync(Context.Channel, $"You have invested in **{cryptoAmount}** {abbreviation}, currently valued at **{amount.ToString("C2")}**.");
+            await Context.User.NotifyAsync(Context.Channel, $"You have invested in **{cryptoAmount}** {abbreviation}, currently valued at **{amount:C2}**.");
             return CommandResult.FromSuccess();
         }
 
@@ -78,30 +78,30 @@ namespace RRBot.Modules
         [Remarks("$investments <user>")]
         public async Task<RuntimeResult> InvestmentsView(IGuildUser user = null)
         {
-            if (user != null && user.IsBot) return CommandResult.FromError("Nope.");
+            if (user?.IsBot == true) return CommandResult.FromError("Nope.");
 
             ulong userId = user == null ? Context.User.Id : user.Id;
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(userId.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            StringBuilder investmentsBuilder = new StringBuilder();
+            StringBuilder investmentsBuilder = new();
             if (snap.TryGetValue("btc", out double btc) && btc >= 0.01)
-                investmentsBuilder.AppendLine($"**Bitcoin (BTC)**: {btc} ({(await CashSystem.QueryCryptoValue("BTC") * btc).ToString("C2")})");
+                investmentsBuilder.AppendLine($"**Bitcoin (BTC)**: {btc} ({await CashSystem.QueryCryptoValue("BTC") * btc:C2})");
             if (snap.TryGetValue("doge", out double doge) && doge >= 0.01)
-                investmentsBuilder.AppendLine($"**Dogecoin (DOGE)**: {doge} ({(await CashSystem.QueryCryptoValue("DOGE") * doge).ToString("C2")})");
+                investmentsBuilder.AppendLine($"**Dogecoin (DOGE)**: {doge} ({await CashSystem.QueryCryptoValue("DOGE") * doge:C2})");
             if (snap.TryGetValue("eth", out double eth) && eth >= 0.01)
-                investmentsBuilder.AppendLine($"**Ethereum (ETH)**: {eth} ({(await CashSystem.QueryCryptoValue("ETH") * eth).ToString("C2")})");
+                investmentsBuilder.AppendLine($"**Ethereum (ETH)**: {eth} ({await CashSystem.QueryCryptoValue("ETH") * eth:C2})");
             if (snap.TryGetValue("ltc", out double ltc) && ltc >= 0.01)
-                investmentsBuilder.AppendLine($"**Litecoin (LTC)**: {ltc} ({(await CashSystem.QueryCryptoValue("LTC") * ltc).ToString("C2")})");
+                investmentsBuilder.AppendLine($"**Litecoin (LTC)**: {ltc} ({await CashSystem.QueryCryptoValue("LTC") * ltc:C2})");
             if (snap.TryGetValue("xrp", out double xrp) && xrp >= 0.01)
-                investmentsBuilder.AppendLine($"**XRP**: {xrp} ({(await CashSystem.QueryCryptoValue("XRP") * xrp).ToString("C2")})");
+                investmentsBuilder.AppendLine($"**XRP**: {xrp} ({await CashSystem.QueryCryptoValue("XRP") * xrp:C2})");
 
             string investments = investmentsBuilder.ToString();
 
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Red,
-                Title = user == null ? "Your Investments" : $"{user.ToString()}'s Investments",
+                Title = user == null ? "Your Investments" : $"{user}'s Investments",
                 Description = string.IsNullOrWhiteSpace(investments) ? "None" : investments
             };
 
@@ -121,12 +121,11 @@ namespace RRBot.Modules
             double ltc = await CashSystem.QueryCryptoValue("LTC");
             double xrp = await CashSystem.QueryCryptoValue("XRP");
 
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Red,
                 Title = "Cryptocurrency Values",
-                Description = $"**Bitcoin (BTC)**: {btc.ToString("C2")}\n**Dogecoin (DOGE)**: {doge.ToString("C2")}\n**Ethereum (ETH)**: {eth.ToString("C2")}\n" +
-                    $"**Litecoin (LTC)**: {ltc.ToString("C2")}\n**XRP**: {xrp.ToString("C2")}"
+                Description = $"**Bitcoin (BTC)**: {btc:C2}\n**Dogecoin (DOGE)**: {doge:C2}\n**Ethereum (ETH)**: {eth:C2}\n**Litecoin (LTC)**: {ltc:C2}\n**XRP**: {xrp:C2}"
             };
 
             await ReplyAsync(embed: embed.Build());
@@ -139,7 +138,7 @@ namespace RRBot.Modules
         {
             if (amount < 0.01) return CommandResult.FromError($"{Context.User.Mention}, you must withdraw a hundredth or more of the crypto!");
 
-            string abbreviation = "";
+            string abbreviation;
             switch (crypto.ToLower())
             {
                 case "bitcoin":
@@ -162,9 +161,9 @@ namespace RRBot.Modules
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (!snap.TryGetValue(abbreviation.ToLower(), out double cryptoBal) || cryptoBal <= 0) 
+            if (!snap.TryGetValue(abbreviation.ToLower(), out double cryptoBal) || cryptoBal <= 0)
                 return CommandResult.FromError($"{Context.User.Mention}, you have no {abbreviation}!");
-            if (cryptoBal < amount) 
+            if (cryptoBal < amount)
                 return CommandResult.FromError($"{Context.User.Mention}, you don't have {amount} {abbreviation}! You've only got **{cryptoBal}** of it.");
 
             double cash = snap.GetValue<double>("cash");
@@ -178,8 +177,8 @@ namespace RRBot.Modules
                 { $"Money Gained From {abbreviation}", finalValue.ToString("C2", CurrencyCulture) }
             });
 
-            await Context.User.NotifyAsync(Context.Channel, $"You have withdrew **{amount}** {abbreviation}, currently valued at **{cryptoValue.ToString("C2")}**.\n" +
-                $"A 1.5% withdrawal fee was taken from this amount, leaving you **{finalValue.ToString("C2")}** richer.");
+            await Context.User.NotifyAsync(Context.Channel, $"You have withdrew **{amount}** {abbreviation}, currently valued at **{cryptoValue:C2}**.\n" +
+                $"A 1.5% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
             return CommandResult.FromSuccess();
         }
     }

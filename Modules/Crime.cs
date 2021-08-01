@@ -17,8 +17,7 @@ namespace RRBot.Modules
     public class Crime : ModuleBase<SocketCommandContext>
     {
         public CultureInfo CurrencyCulture { get; set; }
-        public Logger Logger { get; set; }
-        public static readonly Random random = new Random();
+        public static readonly Random random = new();
 
         private async Task<RuntimeResult> GenericCrime(string outcome1, string outcome2, string outcome3, string outcome4, string outcome5, object cooldown, bool funny = false)
         {
@@ -124,11 +123,11 @@ namespace RRBot.Modules
         {
             if (Filters.FUNNY_REGEX.Matches(new string(nickname.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
                 return CommandResult.FromError($"{Context.User.Mention}, you cannot bully someone to the funny word.");
-            if (nickname.Length > 32) 
+            if (nickname.Length > 32)
                 return CommandResult.FromError($"{Context.User.Mention}, the bully nickname is longer than the maximum accepted length.");
-            if (user.Id == Context.User.Id) 
+            if (user.Id == Context.User.Id)
                 return CommandResult.FromError($"{Context.User.Mention}, no masochism here!");
-            if (user.IsBot) 
+            if (user.IsBot)
                 return CommandResult.FromError("Nope.");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
@@ -137,9 +136,9 @@ namespace RRBot.Modules
             {
                 if (user.RoleIds.Contains(staffId)) return CommandResult.FromError($"{Context.User.Mention}, you cannot bully someone who is a staff member.");
 
-                await user.ModifyAsync(props => { props.Nickname = nickname; });
+                await user.ModifyAsync(props => props.Nickname = nickname);
                 await Logger.Custom_UserBullied(user, Context.User, nickname);
-                await ReplyAsync($"**{Context.User.ToString()}** has **BULLIED** **{user.ToString()}** to ``{nickname}``!");
+                await ReplyAsync($"**{Context.User}** has **BULLIED** **{user}** to ``{nickname}``!");
 
                 DocumentReference userDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
                 await doc.SetAsync(new { bullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(300) }, SetOptions.MergeAll);
@@ -207,21 +206,21 @@ namespace RRBot.Modules
                     double repairs = tCash / 100.0 * rapePercent;
                     await StatUpdate(user as SocketUser, false, repairs);
                     await CashSystem.SetCash(user, Context.Channel, tCash - repairs);
-                    await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user.ToString()}**'s asshole! They just paid **{repairs.ToString("C2")}** in asshole repairs.");
+                    await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user}**'s asshole! They just paid **{repairs:C2}** in asshole repairs.");
                 }
                 else
                 {
                     double repairs = aCash / 100.0 * rapePercent;
                     await StatUpdate(Context.User, false, repairs);
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - repairs);
-                    await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user.ToString()}**! You just paid **{repairs.ToString("C2")}** in asshole repairs.");
+                    await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user}**! You just paid **{repairs:C2}** in asshole repairs.");
                 }
 
                 await aDoc.SetAsync(new { rapeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError($"{Context.User.Mention} Jesus man, talk about kicking them while they're down! **{user.ToString()}** is broke! Have some decency.");
+            return CommandResult.FromError($"{Context.User.Mention} Jesus man, talk about kicking them while they're down! **{user}** is broke! Have some decency.");
         }
 
         [Alias("slavelabor", "labor")]

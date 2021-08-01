@@ -17,8 +17,8 @@ namespace RRBot.Modules
         [Remarks("$nhentai")]
         public async Task<RuntimeResult> NHentai([Remainder] string keyword = "")
         {
-            GalleryElement funny = new GalleryElement();
-            Random random = new Random();
+            GalleryElement funny;
+            Random random = new();
             if (string.IsNullOrWhiteSpace(keyword))
             {
                 NHentaiSharp.Search.SearchResult result = await NHentaiSharp.Core.SearchClient.SearchAsync();
@@ -43,11 +43,11 @@ namespace RRBot.Modules
             }
 
             string englishTitle = string.IsNullOrEmpty(funny.englishTitle) ? "no English title" : funny.englishTitle;
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Red,
                 Title = "One hentai coming right up!",
-                Description = $"Well, buddy, I've found you **{funny.japaneseTitle}** ({englishTitle}).\nIt's at: {funny.url.ToString()}",
+                Description = $"Well, buddy, I've found you **{funny.japaneseTitle}** ({englishTitle}).\nIt's at: {funny.url}",
                 ImageUrl = funny.cover.imageUrl.ToString()
             };
 

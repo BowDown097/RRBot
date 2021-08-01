@@ -14,7 +14,7 @@ namespace RRBot.Modules
     [RequireStaff]
     public class Polls : ModuleBase<SocketCommandContext>
     {
-        public static readonly Dictionary<int, string> numberEmotes = new Dictionary<int, string>
+        public static readonly Dictionary<int, string> numberEmotes = new()
         {
             { 1, "1️⃣" },
             { 2, "2️⃣" },
@@ -41,10 +41,10 @@ namespace RRBot.Modules
                 string[] pollChoices = choices.Split('|');
                 if (pollChoices.Length > 9) return CommandResult.FromError($"{Context.User.Mention}, a maximum of 9 choices are allowed.");
 
-                StringBuilder choicesStr = new StringBuilder();
+                StringBuilder choicesStr = new();
                 for (int i = 1; i <= pollChoices.Length; i++) choicesStr.AppendLine($"**[{i}]** {pollChoices[i - 1]}");
 
-                EmbedBuilder pollEmbed = new EmbedBuilder
+                EmbedBuilder pollEmbed = new()
                 {
                     Color = Color.Red,
                     Title = title,

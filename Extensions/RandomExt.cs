@@ -7,7 +7,7 @@ namespace RRBot.Extensions
         public static double NextDouble(this Random random, double minValue, double maxValue)
         {
             maxValue--;
-            return random.NextDouble() * (maxValue - minValue) + minValue;
-        } 
+            return (random.NextDouble() * (maxValue - minValue)) + minValue;
+        }
     }
 }

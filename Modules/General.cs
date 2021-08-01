@@ -22,9 +22,9 @@ namespace RRBot.Modules
     public class General : ModuleBase<SocketCommandContext>
     {
         public CommandService Commands { get; set; }
-        public static readonly Random random = new Random();
+        public static readonly Random random = new();
 
-        public static readonly Dictionary<string, string> waifus = new Dictionary<string, string>
+        public static readonly Dictionary<string, string> waifus = new()
         {
             { "Adolf Dripler", "https://i.redd.it/cd9v84v46ma21.jpg" },
             { "Arctic Hawk's mom", "https://s.abcnews.com/images/Technology/whale-gty-jt-191219_hpMain_16x9_1600.jpg" },
@@ -74,12 +74,12 @@ namespace RRBot.Modules
         [Remarks("$help <command>")]
         public async Task Help([Remainder] string command = "")
         {
-            string strippedCommand = string.Join("", command.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
+            string strippedCommand = string.Concat(command.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
             var modules = Commands.Modules;
-            
+
             if (string.IsNullOrWhiteSpace(command))
             {
-                EmbedBuilder infoEmbed = new EmbedBuilder
+                EmbedBuilder infoEmbed = new()
                 {
                     Color = Color.Red,
                     Title = "Rush Reborn Bot",
@@ -112,16 +112,16 @@ namespace RRBot.Modules
                             }
                         }
 
-                        StringBuilder description = new StringBuilder($"**Description**: {commandInfo.Summary}\n**Usage**: ``{commandInfo.Remarks}``");
+                        StringBuilder description = new($"**Description**: {commandInfo.Summary}\n**Usage**: ``{commandInfo.Remarks}``");
                         if (actualAliases.Any()) description.Append($"\n**Alias(es)**: {string.Join(", ", actualAliases)}");
 
-                        if (commandInfo.TryGetPrecondition<RequireDJAttribute>() || moduleInfo.TryGetPrecondition<RequireDJAttribute>()) 
+                        if (commandInfo.TryGetPrecondition<RequireDJAttribute>() || moduleInfo.TryGetPrecondition<RequireDJAttribute>())
                             description.Append("\nRequires DJ");
-                        if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>() || moduleInfo.TryGetPrecondition<RequireNsfwAttribute>()) 
+                        if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>() || moduleInfo.TryGetPrecondition<RequireNsfwAttribute>())
                             description.Append("\nMust be in NSFW channel");
-                        if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>() || moduleInfo.TryGetPrecondition<RequireOwnerAttribute>()) 
+                        if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>() || moduleInfo.TryGetPrecondition<RequireOwnerAttribute>())
                             description.Append("\nRequires Bot Owner");
-                        if (commandInfo.TryGetPrecondition<RequireStaffAttribute>() || moduleInfo.TryGetPrecondition<RequireOwnerAttribute>()) 
+                        if (commandInfo.TryGetPrecondition<RequireStaffAttribute>() || moduleInfo.TryGetPrecondition<RequireOwnerAttribute>())
                             description.Append("\nRequires Staff");
                         if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC) || moduleInfo.TryGetPrecondition(out rBIC))
                             description.Append($"\nMust be in #{rBIC.Name}");
@@ -164,10 +164,10 @@ namespace RRBot.Modules
                             if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
                                 break;
                             else
-                                description.Append($"\nExclusive to Rush Reborn");
+                                description.Append("\nExclusive to Rush Reborn");
                         }
 
-                        EmbedBuilder commandEmbed = new EmbedBuilder
+                        EmbedBuilder commandEmbed = new()
                         {
                             Color = Color.Red,
                             Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(strippedCommand),
@@ -188,7 +188,7 @@ namespace RRBot.Modules
         [Remarks("$module [module]")]
         public async Task Module([Remainder] string module)
         {
-            string strippedModule = string.Join("", module.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
+            string strippedModule = string.Concat(module.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
 
             foreach (ModuleInfo moduleInfo in Commands.Modules)
             {
@@ -198,7 +198,7 @@ namespace RRBot.Modules
                     {
                         DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
                         DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
-                        if (modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw || !modSnap.TryGetValue<bool>("nsfw", out _))
+                        if ((modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw) || !modSnap.TryGetValue<bool>("nsfw", out _))
                         {
                             await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
                             return;
@@ -211,7 +211,7 @@ namespace RRBot.Modules
                         break;
                     }
 
-                    EmbedBuilder moduleEmbed = new EmbedBuilder
+                    EmbedBuilder moduleEmbed = new()
                     {
                         Color = Color.Red,
                         Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(strippedModule),
@@ -234,7 +234,7 @@ namespace RRBot.Modules
             List<string> modulesList = Commands.Modules.Select(x => x.Name).ToList();
             if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST) modulesList.Remove("Support");
 
-            EmbedBuilder modulesEmbed = new EmbedBuilder
+            EmbedBuilder modulesEmbed = new()
             {
                 Color = Color.Red,
                 Title = "Currently available modules",
@@ -250,12 +250,12 @@ namespace RRBot.Modules
         [Remarks("$stats <user>")]
         public async Task<RuntimeResult> Stats(IGuildUser user = null)
         {
-            if (user != null && user.IsBot) return CommandResult.FromError("Nope.");
+            if (user?.IsBot == true) return CommandResult.FromError("Nope.");
 
             ulong userId = user == null ? Context.User.Id : user.Id;
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(userId.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            StringBuilder description = new StringBuilder();
+            StringBuilder description = new();
 
             if (snap.TryGetValue("stats", out Dictionary<string, string> stats) && stats.Count > 0)
             {
@@ -266,9 +266,9 @@ namespace RRBot.Modules
                     description.AppendLine($"**{key}**: {stats[key]}");
                 }
 
-                EmbedBuilder embed = new EmbedBuilder
+                EmbedBuilder embed = new()
                 {
-                    Title = (user == null ? "Your " : $"{user.ToString()}'s ") + "Stats",
+                    Title = (user == null ? "Your " : $"{user}'s ") + "Stats",
                     Color = Color.Red,
                     Description = description.ToString()
                 };
@@ -277,7 +277,7 @@ namespace RRBot.Modules
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError(user == null ? $"{Context.User.Mention}, you have no available stats!" : $"**{user.ToString()}** has no available stats!");
+            return CommandResult.FromError(user == null ? $"{Context.User.Mention}, you have no available stats!" : $"**{user}** has no available stats!");
         }
 
         [Command("waifu")]
@@ -285,17 +285,17 @@ namespace RRBot.Modules
         [Remarks("$waifu")]
         public async Task Waifu()
         {
-            List<string> keys = Enumerable.ToList(waifus.Keys);
+            List<string> keys = waifus.Keys.ToList();
             string waifu = keys[random.Next(waifus.Count)];
 
-            EmbedBuilder waifuEmbed = new EmbedBuilder
+            EmbedBuilder waifuEmbed = new()
             {
                 Color = Color.Red,
                 Title = "Say hello to your new waifu!",
                 Description = $"Your waifu is **{waifu}**.",
                 ImageUrl = waifus[waifu]
             };
-            
+
             await ReplyAsync(embed: waifuEmbed.Build());
         }
     }

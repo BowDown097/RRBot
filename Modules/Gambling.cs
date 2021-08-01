@@ -18,22 +18,22 @@ namespace RRBot.Modules
     {
         public CultureInfo CurrencyCulture { get; set; }
 
-        private bool ThreeInARow(int[] results, int emoji)
+        private static bool ThreeInARow(int[] results, int emoji)
         {
             return (results[0] == emoji && results[1] == emoji && results[2] == emoji) || (results[1] == emoji && results[2] == emoji && results[3] == emoji);
         }
 
-        private bool TwoInARow(int[] results, int emoji)
+        private static bool TwoInARow(int[] results, int emoji)
         {
             return (results[0] == emoji && results[1] == emoji) || (results[1] == emoji && results[2] == emoji) || (results[2] == emoji && results[3] == emoji);
         }
 
-        public static readonly Random random = new Random();
-        public static readonly Emoji SEVEN = new Emoji("7️⃣");
-        public static readonly Emoji APPLE = new Emoji("\uD83C\uDF4E");
-        public static readonly Emoji GRAPES = new Emoji("\uD83C\uDF47");
-        public static readonly Emoji CHERRIES = new Emoji("\uD83C\uDF52");
-        public static readonly Dictionary<int, Emoji> emojis = new Dictionary<int, Emoji>
+        public static readonly Random random = new();
+        public static readonly Emoji SEVEN = new("7️⃣");
+        public static readonly Emoji APPLE = new("\uD83C\uDF4E");
+        public static readonly Emoji GRAPES = new("\uD83C\uDF47");
+        public static readonly Emoji CHERRIES = new("\uD83C\uDF52");
+        public static readonly Dictionary<int, Emoji> emojis = new()
         {
             { 1, SEVEN },
             { 2, APPLE },
@@ -81,16 +81,16 @@ namespace RRBot.Modules
                 double totalCash = cash + payout;
                 await StatUpdate(Context.User, true, payout);
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
-                await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout.ToString("C2")}**!" +
-                    $"\nBalance: {totalCash.ToString("C2")}");
+                await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout:C2}**!" +
+                    $"\nBalance: {totalCash:C2}");
             }
             else
             {
                 double totalCash = (cash - bet) > 0 ? cash - bet : 0;
                 await StatUpdate(Context.User, false, bet);
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
-                await Context.User.NotifyAsync(Context.Channel, $"Well damn, you rolled a {roll}, which wasn't enough. You lost **{bet.ToString("C2")}**." +
-                    $"\nBalance: {totalCash.ToString("C2")}");
+                await Context.User.NotifyAsync(Context.Channel, $"Well damn, you rolled a {roll}, which wasn't enough. You lost **{bet:C2}**." +
+                    $"\nBalance: {totalCash:C2}");
             }
 
             return CommandResult.FromSuccess();
@@ -161,7 +161,7 @@ namespace RRBot.Modules
 
             if (cash < bet) return CommandResult.FromError($"{Context.User.Mention}, you can't bet more than what you have!");
 
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots) 
+            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you are already using the slot machine!");
 
             await doc.SetAsync(new { usingSlots = true }, SetOptions.MergeAll);
@@ -171,7 +171,7 @@ namespace RRBot.Modules
                 int[] results = new int[4];
                 double payoutMult = 1;
 
-                EmbedBuilder embed = new EmbedBuilder
+                EmbedBuilder embed = new()
                 {
                     Color = Color.Red,
                     Title = "Slots"
@@ -195,10 +195,22 @@ namespace RRBot.Modules
                 int apples = results.Count(num => num == 2);
                 int grapes = results.Count(num => num == 3);
                 int cherries = results.Count(num => num == 4);
-                if (sevens == 4) payoutMult = 25;
-                else if (apples == 4 || grapes == 4 || cherries == 4) payoutMult = 5;
-                else if (ThreeInARow(results, 1)) payoutMult = 3;
-                else if (ThreeInARow(results, 2) || ThreeInARow(results, 3) || ThreeInARow(results, 4)) payoutMult = 2;
+                if (sevens == 4)
+                {
+                    payoutMult = 25;
+                }
+                else if (apples == 4 || grapes == 4 || cherries == 4)
+                {
+                    payoutMult = 5;
+                }
+                else if (ThreeInARow(results, 1))
+                {
+                    payoutMult = 3;
+                }
+                else if (ThreeInARow(results, 2) || ThreeInARow(results, 3) || ThreeInARow(results, 4))
+                {
+                    payoutMult = 2;
+                }
                 else
                 {
                     if (TwoInARow(results, 1)) payoutMult += 0.5;
@@ -216,12 +228,12 @@ namespace RRBot.Modules
 
                     if (payoutMult == 25)
                     {
-                        await Context.User.NotifyAsync(Context.Channel, $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout.ToString("C2")}**!" +
-                            $"\nBalance: {totalCash.ToString("C2")}");
+                        await Context.User.NotifyAsync(Context.Channel, $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
+                            $"\nBalance: {totalCash:C2}");
                     }
                     else
                     {
-                        await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout.ToString("C2")}**.\nBalance: {totalCash.ToString("C2")}");
+                        await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout:C2}**.\nBalance: {totalCash:C2}");
                     }
                 }
                 else
@@ -229,8 +241,8 @@ namespace RRBot.Modules
                     double totalCash = (cash - bet) > 0 ? cash - bet : 0;
                     await StatUpdate(Context.User, false, bet);
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
-                    await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet.ToString("C2")}**." +
-                        $"\nBalance: {totalCash.ToString("C2")}");
+                    await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet:C2}**." +
+                        $"\nBalance: {totalCash:C2}");
                 }
 
                 await doc.SetAsync(new { usingSlots = false }, SetOptions.MergeAll);

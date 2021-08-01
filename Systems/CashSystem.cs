@@ -17,14 +17,14 @@ namespace RRBot.Systems
 {
     public static class CashSystem
     {
-        public static readonly WebClient client = new WebClient();
+        public static readonly WebClient client = new();
 
         public static async Task AddCrypto(IGuildUser user, string crypto, double amount)
         {
             amount = Math.Round(amount, 4);
-            double currentAmount = 0;
             DocumentReference doc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            double currentAmount;
             snap.TryGetValue(crypto, out currentAmount);
             await doc.SetAsync(new Dictionary<string, double> { { crypto, currentAmount + amount } }, SetOptions.MergeAll);
         }
@@ -76,8 +76,10 @@ namespace RRBot.Systems
                         IRole role = user.Guild.GetRole(roleId);
                         bool rankupNotify = await UserSettingsGetters.GetRankupNotifications(user);
                         if (rankupNotify)
-                            await (user as SocketUser).NotifyAsync(channel, $"**{user.ToString()}** has ranked up to {role.Name}!",
+                        {
+                            await (user as SocketUser).NotifyAsync(channel, $"**{user}** has ranked up to {role.Name}!",
                                  $"{user.Mention}, you have ranked up to {role.Name}!", true);
+                        }
 
                         await user.AddRoleAsync(roleId);
                     }
@@ -86,7 +88,7 @@ namespace RRBot.Systems
                         IRole role = user.Guild.GetRole(roleId);
                         bool rankupNotify = await UserSettingsGetters.GetRankupNotifications(user);
                         if (rankupNotify)
-                            await (user as SocketUser).NotifyAsync(channel, $"**{user.ToString()}** has lost {role.Name}!", $"{user.Mention}, you lost {role.Name}!", true);
+                            await (user as SocketUser).NotifyAsync(channel, $"**{user}** has lost {role.Name}!", $"{user.Mention}, you lost {role.Name}!", true);
 
                         await user.RemoveRoleAsync(roleId);
                     }
@@ -99,7 +101,7 @@ namespace RRBot.Systems
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            if (snap.TryGetValue("timeTillCash", out long time) && time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds()) 
+            if (snap.TryGetValue("timeTillCash", out long time) && time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                 await SetCash(context.User as IGuildUser, context.Channel, snap.GetValue<double>("cash") + 10);
 
             await doc.SetAsync(new { timeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(TimeSpan.FromMinutes(1).TotalSeconds) }, SetOptions.MergeAll);

@@ -40,12 +40,12 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            StringBuilder description = new StringBuilder();
+            StringBuilder description = new();
             description.AppendLine($"**DM Notifications**: {snap.TryGetValue("dmNotifs", out bool dmNotifs) && dmNotifs}");
             description.AppendLine($"**Rankup Notifications**: {snap.TryGetValue("rankupNotifs", out bool rankupNotifs) && rankupNotifs}");
             description.AppendLine($"**Reply Pings**: {!snap.TryGetValue("replyPings", out bool replyPings) || replyPings}");
 
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Title = "Your Settings",
                 Color = Color.Red,
@@ -59,7 +59,7 @@ namespace RRBot.Modules
         [Command("setdmnotifications")]
         [Summary("Set whether or not you will be DM'd by commands/general notifications that support it. *(default: false)*")]
         [Remarks("$setdmnotifications [true/false]")]
-        public async Task SetDMNotifications(bool status) 
+        public async Task SetDMNotifications(bool status)
         {
             await GenericSet(new { dmNotifs = status });
             await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "now see" : "no longer see")} DM notifications.");
@@ -78,7 +78,7 @@ namespace RRBot.Modules
         [Command("setreplypings")]
         [Summary("Set whether or not you will be pinged in command responses (that are not errors). *(default: true)*")]
         [Remarks("$setreplypings [true/false]")]
-        public async Task SetReplyPings(bool status) 
+        public async Task SetReplyPings(bool status)
         {
             await GenericSet(new { replyPings = status });
             await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "now be" : "no longer be")} pinged in command responses (that are not errors).");

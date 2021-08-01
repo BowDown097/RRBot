@@ -16,7 +16,7 @@ namespace RRBot.Modules
     [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
     public class Economy : ModuleBase<SocketCommandContext>
     {
-        private async Task AddBackUserSettings(DocumentReference doc, double btc, double doge, double eth, double xrp, bool dmNotifsV, bool rankupNotifsV, bool replyPingsV, 
+        private async Task AddBackUserSettings(DocumentReference doc, double btc, double doge, double eth, double xrp, bool dmNotifsV, bool rankupNotifsV, bool replyPingsV,
             Dictionary<string, string> userStats)
         {
             if (btc > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "btc", btc);
@@ -35,7 +35,7 @@ namespace RRBot.Modules
         [Remarks("$balance <user>")]
         public async Task<RuntimeResult> Balance(IGuildUser user = null)
         {
-            if (user != null && user.IsBot) return CommandResult.FromError("Nope.");
+            if (user?.IsBot == true) return CommandResult.FromError("Nope.");
 
             ulong userId = user == null ? Context.User.Id : user.Id;
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(userId.ToString());
@@ -44,12 +44,12 @@ namespace RRBot.Modules
 
             if (cash > 0)
             {
-                if (user == null) await Context.User.NotifyAsync(Context.Channel, $"You have **{cash.ToString("C2")}**.");
-                else await ReplyAsync($"**{user.ToString()}** has **{cash.ToString("C2")}**.");
+                if (user == null) await Context.User.NotifyAsync(Context.Channel, $"You have **{cash:C2}**.");
+                else await ReplyAsync($"**{user}** has **{cash:C2}**.");
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError(user == null ? $"{Context.User.Mention}, you're broke!" : $"**{user.ToString()}** is broke!");
+            return CommandResult.FromError(user == null ? $"{Context.User.Mention}, you're broke!" : $"**{user}** is broke!");
         }
 
         [Alias("purchase")]
@@ -74,7 +74,7 @@ namespace RRBot.Modules
                 {
                     usrItems.Add(item);
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - price);
-                    await Context.User.NotifyAsync(Context.Channel, $"You got yourself a fresh {item} for **{price.ToString("C2")}**!");
+                    await Context.User.NotifyAsync(Context.Channel, $"You got yourself a fresh {item} for **{price:C2}**!");
                     await doc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
                     return CommandResult.FromSuccess();
                 }
@@ -94,7 +94,7 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            StringBuilder description = new StringBuilder();
+            StringBuilder description = new();
             if (snap.TryGetValue("dealCooldown", out long dealCd) && dealCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
                 description.AppendLine($"**Deal**: {TimeSpan.FromSeconds(dealCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
             if (snap.TryGetValue("lootCooldown", out long lootCd) && lootCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
@@ -116,7 +116,7 @@ namespace RRBot.Modules
             if (snap.TryGetValue("mineCooldown", out long mineCd) && mineCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
                 description.AppendLine($"**Mining**: {TimeSpan.FromSeconds(mineCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
 
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Title = "Crime Cooldowns",
                 Color = Color.Red,
@@ -143,7 +143,7 @@ namespace RRBot.Modules
             {
                 double price = Items.ComputeItemPrice(item) / 1.5;
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + price);
-                await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{price.ToString("C2")}**.");
+                await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{price:C2}**.");
                 await doc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
                 return CommandResult.FromSuccess();
             }
@@ -161,7 +161,7 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             List<string> items = snap.GetValue<List<string>>("items");
 
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Title = "Items",
                 Color = Color.Red,
@@ -181,17 +181,17 @@ namespace RRBot.Modules
             Query ordered = users.OrderByDescending("cash").Limit(10);
             QuerySnapshot snap = await ordered.GetSnapshotAsync();
 
-            StringBuilder builder = new StringBuilder();
+            StringBuilder builder = new();
             for (int i = 0; i < snap.Documents.Count; i++)
             {
                 DocumentSnapshot doc = snap.Documents[i];
                 SocketGuildUser user = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
                 if (user == null) continue;
                 double cash = doc.GetValue<double>("cash");
-                builder.AppendLine($"{i + 1}: **{user.ToString()}**: {cash.ToString("C2")}");
+                builder.AppendLine($"{i + 1}: **{user}**: {cash:C2}");
             }
 
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Red,
                 Title = "Leaderboard",
@@ -207,7 +207,7 @@ namespace RRBot.Modules
         [Remarks("$ranks")]
         public async Task Ranks()
         {
-            StringBuilder ranks = new StringBuilder();
+            StringBuilder ranks = new();
 
             DocumentReference ranksDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("ranks");
             DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
@@ -217,10 +217,10 @@ namespace RRBot.Modules
             {
                 double neededCash = snap.GetValue<double>(kvp.Key.Replace("Id", "Cost"));
                 SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
-                ranks.AppendLine($"**{role.Name}**: {neededCash.ToString("C2")}");
+                ranks.AppendLine($"**{role.Name}**: {neededCash:C2}");
             }
 
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Color.Red,
                 Title = "Available Ranks",
@@ -254,7 +254,7 @@ namespace RRBot.Modules
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - amount);
             await CashSystem.SetCash(user, Context.Channel, tCash + amount);
 
-            await Context.User.NotifyAsync(Context.Channel, $"You have sauced **{user.ToString()}** {amount.ToString("C2")}.");
+            await Context.User.NotifyAsync(Context.Channel, $"You have sauced **{user}** {amount:C2}.");
             return CommandResult.FromSuccess();
         }
 
@@ -263,26 +263,26 @@ namespace RRBot.Modules
         [Remarks("$shop")]
         public async Task Shop()
         {
-            StringBuilder items = new StringBuilder();
-            StringBuilder perks = new StringBuilder();
+            StringBuilder items = new();
+            StringBuilder perks = new();
 
             foreach (string item in Items.items)
             {
                 double price = Items.ComputeItemPrice(item);
-                items.AppendLine($"**{item}**: {price.ToString("C2")}");
+                items.AppendLine($"**{item}**: {price:C2}");
             }
 
             foreach (Tuple<string, string, double> perk in Items.perks)
-                perks.AppendLine($"**{perk.Item1}**: {perk.Item2}. Price: {perk.Item3.ToString("C2")}");
+                perks.AppendLine($"**{perk.Item1}**: {perk.Item2}. Price: {perk.Item3:C2}");
 
-            EmbedBuilder itemsEmbed = new EmbedBuilder
+            EmbedBuilder itemsEmbed = new()
             {
                 Color = Color.Red,
                 Title = "⛏️Items⛏️️",
                 Description = items.ToString()
             };
 
-            EmbedBuilder perksEmbed = new EmbedBuilder
+            EmbedBuilder perksEmbed = new()
             {
                 Color = Color.Red,
                 Title = "️️🧪Perks🧪",
@@ -299,7 +299,7 @@ namespace RRBot.Modules
         [Remarks("$suicide")]
         public async Task<RuntimeResult> Suicide()
         {
-            Random random = new Random();
+            Random random = new();
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)

@@ -19,8 +19,6 @@ namespace RRBot.Modules
     [RequireStaff]
     public class Moderation : ModuleBase<SocketCommandContext>
     {
-        public Logger Logger { get; set; }
-
         [Alias("seethe")]
         [Command("ban")]
         [Summary("Ban any member.")]
@@ -31,34 +29,34 @@ namespace RRBot.Modules
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if ((snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId)) || 
+            if ((snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId)) ||
             (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId)))
             {
-                return CommandResult.FromError($"{Context.User.Mention}, you cannot ban **{user.ToString()}** because they are a staff member.");
+                return CommandResult.FromError($"{Context.User.Mention}, you cannot ban **{user}** because they are a staff member.");
             }
 
             if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
             {
-                char suffix = char.ToLowerInvariant(duration[duration.Length - 1]);
+                char suffix = char.ToLowerInvariant(duration[^1]);
                 string response;
                 TimeSpan timeSpan;
                 switch (suffix)
                 {
                     case 's':
                         timeSpan = TimeSpan.FromSeconds(time);
-                        response = $"**{Context.User.ToString()}** has banned **{user.ToString()}** for {time} second(s)";
+                        response = $"**{Context.User}** has banned **{user}** for {time} second(s)";
                         break;
                     case 'm':
                         timeSpan = TimeSpan.FromMinutes(time);
-                        response = $"**{Context.User.ToString()}** has banned **{user.ToString()}** for {time} minute(s)";
+                        response = $"**{Context.User}** has banned **{user}** for {time} minute(s)";
                         break;
                     case 'h':
                         timeSpan = TimeSpan.FromHours(time);
-                        response = $"**{Context.User.ToString()}** has banned **{user.ToString()}** for {time} hour(s)";
+                        response = $"**{Context.User}** has banned **{user}** for {time} hour(s)";
                         break;
                     case 'd':
                         timeSpan = TimeSpan.FromDays(time);
-                        response = $"**{Context.User.ToString()}** has banned **{user.ToString()}** for {time} day(s)";
+                        response = $"**{Context.User}** has banned **{user}** for {time} day(s)";
                         break;
                     default:
                         return CommandResult.FromError($"{Context.User.Mention}, you specified an invalid amount of time!");
@@ -123,7 +121,7 @@ namespace RRBot.Modules
             if (perms.SendMessages == PermValue.Deny) return CommandResult.FromError($"{Context.User.Mention}, this chat is already chilled.");
 
             await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
-            await ReplyAsync($"**{Context.User.ToString()}** would like y'all to sit down and stfu for {duration} seconds!");
+            await ReplyAsync($"**{Context.User}** would like y'all to sit down and stfu for {duration} seconds!");
 
             await Task.Factory.StartNew(async () =>
             {
@@ -144,15 +142,15 @@ namespace RRBot.Modules
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId) ||
+            if ((snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId)) ||
             (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId)))
             {
-                return CommandResult.FromError($"{Context.User.Mention}, you cannot kick **{user.ToString()}** because they are a staff member.");
+                return CommandResult.FromError($"{Context.User.Mention}, you cannot kick **{user}** because they are a staff member.");
             }
 
             await user.KickAsync(reason);
 
-            string response = $"**{Context.User.ToString()}** has kicked **{user.ToString()}**";
+            string response = $"**{Context.User}** has kicked **{user}**";
             response += string.IsNullOrWhiteSpace(reason) ? "." : $"for '{reason}'";
             await ReplyAsync(response);
 
@@ -176,10 +174,10 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("mutedRole", out ulong mutedId) && snap.TryGetValue("houseRole", out ulong staffId) && snap.TryGetValue("senateRole", out ulong senateId))
             {
-                if (user.RoleIds.Contains(mutedId) || user.RoleIds.Contains(staffId) || user.RoleIds.Contains(senateId)) 
-                    return CommandResult.FromError($"{Context.User.Mention}, you cannot mute **{user.ToString()}** because they are either already muted or a staff member.");
-                    
-                char suffix = char.ToLowerInvariant(duration[duration.Length - 1]);
+                if (user.RoleIds.Contains(mutedId) || user.RoleIds.Contains(staffId) || user.RoleIds.Contains(senateId))
+                    return CommandResult.FromError($"{Context.User.Mention}, you cannot mute **{user}** because they are either already muted or a staff member.");
+
+                char suffix = char.ToLowerInvariant(duration[^1]);
                 if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
                 {
                     string response;
@@ -188,19 +186,19 @@ namespace RRBot.Modules
                     {
                         case 's':
                             timeSpan = TimeSpan.FromSeconds(time);
-                            response = $"**{Context.User.ToString()}** has handed an L of the mute variety to **{user.ToString()}** for {time} second(s)";
+                            response = $"**{Context.User}** has handed an L of the mute variety to **{user}** for {time} second(s)";
                             break;
                         case 'm':
                             timeSpan = TimeSpan.FromMinutes(time);
-                            response = $"**{Context.User.ToString()}** has handed an L of the mute variety to **{user.ToString()}** for {time} minute(s)";
+                            response = $"**{Context.User}** has handed an L of the mute variety to **{user}** for {time} minute(s)";
                             break;
                         case 'h':
                             timeSpan = TimeSpan.FromHours(time);
-                            response = $"**{Context.User.ToString()}** has handed an L of the mute variety to **{user.ToString()}** for {time} hour(s)";
+                            response = $"**{Context.User}** has handed an L of the mute variety to **{user}** for {time} hour(s)";
                             break;
                         case 'd':
                             timeSpan = TimeSpan.FromDays(time);
-                            response = $"**{Context.User.ToString()}** has handed an L of the mute variety to **{user.ToString()}** for {time} day(s)";
+                            response = $"**{Context.User}** has handed an L of the mute variety to **{user}** for {time} day(s)";
                             break;
                         default:
                             return CommandResult.FromError($"{Context.User.Mention}, you specified an invalid amount of time!");
@@ -238,12 +236,12 @@ namespace RRBot.Modules
             messages = messages.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
             if (user != null) messages = messages.Where(msg => msg.Author.Id == user.Id);
 
-            if (!messages.Any()) 
+            if (!messages.Any())
                 return CommandResult.FromError("No messages were deleted.");
-            if (messages.Any(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays > 14)) 
+            if (messages.Any(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays > 14))
                 await ReplyAsync($"{Context.User.Mention}, some messages were found to be older than 2 weeks and cannot be deleted.");
 
-            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+            await (Context.Channel as SocketTextChannel)?.DeleteMessagesAsync(messages);
 
             await Logger.Custom_MessagesPurged(messages, Context.Guild);
 
@@ -259,7 +257,7 @@ namespace RRBot.Modules
             if (!bans.Any(ban => ban.User.Id == user.Id)) return CommandResult.FromError($"{Context.User.Mention}, that user is not currently banned.");
 
             string userString = bans.FirstOrDefault(ban => ban.User.Id == user.Id).User.ToString();
-            await ReplyAsync($"**{Context.User.ToString()}** has unbanned **{userString}**.");
+            await ReplyAsync($"**{Context.User}** has unbanned **{userString}**.");
             await Context.Guild.RemoveBanAsync(user.Id);
             return CommandResult.FromSuccess();
         }
@@ -275,7 +273,7 @@ namespace RRBot.Modules
             if (perms.SendMessages == PermValue.Allow) return CommandResult.FromError($"{Context.User.Mention}, this chat is not chilled.");
 
             await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Allow));
-            await ReplyAsync($"**{Context.User.ToString()}** took one for the team and unchilled early.");
+            await ReplyAsync($"**{Context.User}** took one for the team and unchilled early.");
 
             return CommandResult.FromSuccess();
         }
@@ -294,12 +292,12 @@ namespace RRBot.Modules
                 if (user.RoleIds.Contains(mutedId))
                 {
                     await Logger.Custom_UserUnmuted(user, Context.User);
-                    await ReplyAsync($"**{Context.User.ToString()}** has unmuted **{user.ToString()}**.");
+                    await ReplyAsync($"**{Context.User}** has unmuted **{user}**.");
                     await user.RemoveRoleAsync(mutedId);
                     return CommandResult.FromSuccess();
                 }
 
-                return CommandResult.FromError($"**{Context.User.ToString()}** tried to unmute someone that wasn't muted in the first place. Everyone point and laugh!");
+                return CommandResult.FromError($"**{Context.User}** tried to unmute someone that wasn't muted in the first place. Everyone point and laugh!");
             }
 
             return CommandResult.FromError("This server's muted role has yet to be set.");

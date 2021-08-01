@@ -24,11 +24,11 @@ namespace RRBot.Modules
             if (user.IsBot) return CommandResult.FromError("Nope.");
 
             string cUp = crypto.ToUpper();
-            if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "LTC" && cUp != "XRP") 
+            if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "LTC" && cUp != "XRP")
                 return CommandResult.FromError($"{Context.User.Mention}, **{crypto}** is not a currently accepted currency!");
 
             await CashSystem.AddCrypto(Context.User as IGuildUser, crypto.ToLower(), amount);
-            await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user.ToString()}**'s {cUp} balance.");
+            await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user}**'s {cUp} balance.");
             return CommandResult.FromSuccess();
         }
 
@@ -43,7 +43,7 @@ namespace RRBot.Modules
 
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.SetAsync(new { banned = true }, SetOptions.MergeAll);
-            await ReplyAsync($"Blacklisted **{user.ToString()}**.");
+            await ReplyAsync($"Blacklisted **{user}**.");
             Program.bannedUsers.Add(user.Id);
 
             return CommandResult.FromSuccess();
@@ -61,7 +61,7 @@ namespace RRBot.Modules
                 code = code.Replace("```cs", "").Trim('`');
                 string[] imports = { "System", "System.Collections.Generic", "System.Text" };
                 string evaluation = (await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context))).ToString();
-                EmbedBuilder embed = new EmbedBuilder
+                EmbedBuilder embed = new()
                 {
                     Color = Color.Red,
                     Title = "Code evaluation",
@@ -89,7 +89,7 @@ namespace RRBot.Modules
             if (user.IsBot) return CommandResult.FromError("Nope.");
             if (!Items.items.Contains(item)) return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item!");
             await Items.RewardItem(user, item);
-            await ReplyAsync($"Gave **{user.ToString()}** a(n) **{item}**.");
+            await ReplyAsync($"Gave **{user}** a(n) **{item}**.");
             return CommandResult.FromSuccess();
         }
 
@@ -100,7 +100,7 @@ namespace RRBot.Modules
         public async Task ResetCooldowns()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            await doc.SetAsync(new { rapeCooldown = 0L, whoreCooldown = 0L, lootCooldown = 0L, slaveryCooldown = 0L, mineCooldown = 0L, digCooldown = 0L, chopCooldown = 0L, 
+            await doc.SetAsync(new { rapeCooldown = 0L, whoreCooldown = 0L, lootCooldown = 0L, slaveryCooldown = 0L, mineCooldown = 0L, digCooldown = 0L, chopCooldown = 0L,
                 farmCooldown = 0L, huntCooldown = 0L }, SetOptions.MergeAll);
             await Context.User.NotifyAsync(Context.Channel, "Your cooldowns have been reset.");
         }
@@ -113,7 +113,7 @@ namespace RRBot.Modules
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");
             await CashSystem.SetCash(user, Context.Channel, amount);
-            await ReplyAsync($"Set **{user.ToString()}**'s cash to **{amount.ToString("C2")}**.");
+            await ReplyAsync($"Set **{user}**'s cash to **{amount:C2}**.");
 
             return CommandResult.FromSuccess();
         }
@@ -129,7 +129,7 @@ namespace RRBot.Modules
 
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.DeleteAsync();
-            await ReplyAsync($"Unblacklisted **{user.ToString()}**.");
+            await ReplyAsync($"Unblacklisted **{user}**.");
             Program.bannedUsers.Remove(user.Id);
 
             return CommandResult.FromSuccess();

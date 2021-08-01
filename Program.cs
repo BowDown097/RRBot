@@ -22,14 +22,13 @@ namespace RRBot
         private static void Main() => new Program().RunBotAsync().GetAwaiter().GetResult();
 
         public static FirestoreDb database = FirestoreDb.Create("rushrebornbot", new FirestoreClientBuilder { CredentialsPath = Credentials.CREDENTIALS_PATH }.Build());
-        public static List<ulong> bannedUsers = new List<ulong>();
+        public static List<ulong> bannedUsers = new();
         private AudioSystem audioSystem;
         private CommandService commands;
         private DiscordSocketClient client;
         private IServiceProvider serviceProvider;
         private LavaRestClient lavaRestClient;
         private LavaSocketClient lavaSocketClient;
-        private Logger logger;
 
         public async Task StartBanCheckAsync()
         {
@@ -97,8 +96,7 @@ namespace RRBot
             lavaRestClient = new LavaRestClient("127.0.0.1", 2333, "youshallnotpass");
             lavaSocketClient = new LavaSocketClient();
             commands = new CommandService();
-            logger = new Logger(client);
-            audioSystem = new AudioSystem(lavaRestClient, lavaSocketClient, logger);
+            audioSystem = new AudioSystem(lavaRestClient, lavaSocketClient);
             CultureInfo currencyCulture = CultureInfo.CreateSpecificCulture("en-US");
             currencyCulture.NumberFormat.CurrencyNegativePattern = 2;
 
@@ -109,7 +107,6 @@ namespace RRBot
                 .AddSingleton(currencyCulture)
                 .AddSingleton(lavaRestClient)
                 .AddSingleton(lavaSocketClient)
-                .AddSingleton(logger)
                 .BuildServiceProvider();
 
             // general events
@@ -123,19 +120,19 @@ namespace RRBot
             commands.CommandExecuted += Commands_CommandExecuted;
 
             // logger events
-            client.ChannelCreated += logger.Client_ChannelCreated;
-            client.ChannelDestroyed += logger.Client_ChannelDestroyed;
-            client.ChannelUpdated += logger.Client_ChannelUpdated;
-            client.InviteCreated += logger.Client_InviteCreated;
-            client.MessageDeleted += logger.Client_MessageDeleted;
-            client.MessageUpdated += logger.Client_MessageUpdated;
-            client.RoleCreated += logger.Client_RoleCreated;
-            client.RoleDeleted += logger.Client_RoleDeleted;
-            client.UserBanned += logger.Client_UserBanned;
-            client.UserJoined += logger.Client_UserJoined;
-            client.UserLeft += logger.Client_UserLeft;
-            client.UserUnbanned += logger.Client_UserUnbanned;
-            client.UserVoiceStateUpdated += logger.Client_UserVoiceStateUpdated;
+            client.ChannelCreated += Logger.Client_ChannelCreated;
+            client.ChannelDestroyed += Logger.Client_ChannelDestroyed;
+            client.ChannelUpdated += Logger.Client_ChannelUpdated;
+            client.InviteCreated += Logger.Client_InviteCreated;
+            client.MessageDeleted += Logger.Client_MessageDeleted;
+            client.MessageUpdated += Logger.Client_MessageUpdated;
+            client.RoleCreated += Logger.Client_RoleCreated;
+            client.RoleDeleted += Logger.Client_RoleDeleted;
+            client.UserBanned += Logger.Client_UserBanned;
+            client.UserJoined += Logger.Client_UserJoined;
+            client.UserLeft += Logger.Client_UserLeft;
+            client.UserUnbanned += Logger.Client_UserUnbanned;
+            client.UserVoiceStateUpdated += Logger.Client_UserVoiceStateUpdated;
 
             // client setup
             commands.AddTypeReader(typeof(double), new DoubleTypeReader());
@@ -178,7 +175,7 @@ namespace RRBot
             SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
             if (user.IsBot) return;
 
-            IGuild guild = (channel as ITextChannel).Guild;
+            IGuild guild = (channel as ITextChannel)?.Guild;
             DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
@@ -193,7 +190,7 @@ namespace RRBot
             SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
             if (user.IsBot) return;
 
-            IGuild guild = (channel as ITextChannel).Guild;
+            IGuild guild = (channel as ITextChannel)?.Guild;
             DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
@@ -217,15 +214,21 @@ namespace RRBot
                 case CommandResult rwm:
                     if (rwm.Error == CommandError.Unsuccessful) await context.Channel.SendMessageAsync(rwm.Reason);
                     if (rwm.Error == CommandError.BadArgCount)
-                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, 
+                    {
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
                             $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``");
+                    }
+
                     break;
                 default:
                     if (!result.IsSuccess) Console.WriteLine(result.ErrorReason);
                     if (result.Error == CommandError.UnmetPrecondition) await context.Channel.SendMessageAsync(result.ErrorReason);
                     if (result.Error == CommandError.BadArgCount)
+                    {
                         await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
                             $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``");
+                    }
+
                     break;
             }
         }
@@ -233,7 +236,7 @@ namespace RRBot
         private async Task HandleCommandAsync(SocketMessage msg)
         {
             SocketUserMessage userMsg = msg as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(client, userMsg);
+            SocketCommandContext context = new(client, userMsg);
             if (context.User.IsBot) return;
 
             int argPos = 0;
