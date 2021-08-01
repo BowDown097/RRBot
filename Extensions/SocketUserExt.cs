@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using Discord;
@@ -22,14 +23,14 @@ namespace RRBot.Extensions
                 {
                     if (kvp.Value[0] == '$')
                     {
-                        float oldValue = float.Parse(userStats[kvp.Key].Substring(1));
-                        float toAdd = float.Parse(kvp.Value.Substring(1));
+                        double oldValue = double.Parse(userStats[kvp.Key].Substring(1));
+                        double toAdd = double.Parse(kvp.Value.Substring(1));
                         userStats[kvp.Key] = (oldValue + toAdd).ToString("C2", culture);
                     }
                     else
                     {
-                        int oldValue = int.Parse(userStats[kvp.Key]);
-                        int toAdd = int.Parse(kvp.Value);
+                        double oldValue = double.Parse(userStats[kvp.Key]);
+                        double toAdd = double.Parse(kvp.Value);
                         userStats[kvp.Key] = (oldValue + toAdd).ToString();
                     }
                 }
