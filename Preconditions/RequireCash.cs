@@ -1,7 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord.Commands;
+﻿using Discord.Commands;
 using Google.Cloud.Firestore;
+using System;
+using System.Threading.Tasks;
 
 namespace RRBot.Preconditions
 {

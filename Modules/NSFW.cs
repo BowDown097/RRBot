@@ -1,9 +1,9 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using NHentaiSharp.Search;
 using RRBot.Preconditions;
+using System;
+using System.Threading.Tasks;
 
 namespace RRBot.Modules
 {

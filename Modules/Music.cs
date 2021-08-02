@@ -1,7 +1,7 @@
-﻿using System.Threading.Tasks;
-using Discord.Commands;
+﻿using Discord.Commands;
 using RRBot.Preconditions;
 using RRBot.Systems;
+using System.Threading.Tasks;
 
 namespace RRBot.Modules
 {

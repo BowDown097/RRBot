@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Discord;
+using Discord.Commands;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord;
-using Discord.Commands;
 
 namespace RRBot.TypeReaders
 {
@@ -10,11 +10,11 @@ namespace RRBot.TypeReaders
     {
         public override Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
         {
-            if (context.Guild.Emotes.Any(e => e.ToString() == input) && Emote.TryParse(input, out Emote result)) return Task.FromResult(TypeReaderResult.FromSuccess(result as IEmote));
+            if (context.Guild.Emotes.Any(e => e.ToString() == input) && Emote.TryParse(input, out Emote result)) return Task.FromResult(TypeReaderResult.FromSuccess(result));
 
             try
             {
-                return Task.FromResult(TypeReaderResult.FromSuccess(new Emoji(input) as IEmote));
+                return Task.FromResult(TypeReaderResult.FromSuccess(new Emoji(input)));
             }
             catch (Exception)
             {
