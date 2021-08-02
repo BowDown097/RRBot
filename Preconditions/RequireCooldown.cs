@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Google.Cloud.Firestore;
@@ -24,17 +25,22 @@ namespace RRBot.Preconditions
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            if (snap.TryGetValue(CooldownNode, out long cooldown) && cooldown != 0L)
+            if (snap.TryGetValue(CooldownNode, out long cooldown))
             {
-                if (cooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                long cooldownOffset = cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon"))
+                    cooldownOffset = (long)(cooldownOffset * 0.85);
+
+                long newCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(cooldownOffset);
+                if (newCooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                 {
                     return PreconditionResult.FromError(string.Format($"{context.User.Mention}, {Message}",
-                            TimeSpan.FromSeconds(cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()));
+                            TimeSpan.FromSeconds(cooldownOffset).FormatCompound()));
                 }
 
                 await doc.SetAsync(new Dictionary<string, object>
                 {
-                    { CooldownNode, 0L }
+                    { CooldownNode, FieldValue.Delete }
                 }, SetOptions.MergeAll);
             }
 

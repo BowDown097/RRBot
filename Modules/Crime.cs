@@ -14,6 +14,7 @@ using RRBot.Systems;
 namespace RRBot.Modules
 {
     [Summary("Hell yeah! Crime! Reject the ways of being a law-abiding citizen for some cold hard cash and maybe even an item. Or, maybe not. Depends how good you are at being a criminal.")]
+    [CheckPacifist]
     public class Crime : ModuleBase<SocketCommandContext>
     {
         public CultureInfo CurrencyCulture { get; set; }
@@ -27,7 +28,8 @@ namespace RRBot.Modules
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
             double cash = snap.GetValue<double>("cash");
 
-            if (random.Next(10) < 8)
+            double winOdds = snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon") ? 7.6 : 8;
+            if (random.NextDouble(10) < winOdds)
             {
                 double moneyEarned = random.NextDouble(69, 691);
                 double totalCash = cash + moneyEarned;
@@ -130,11 +132,16 @@ namespace RRBot.Modules
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
 
+            DocumentReference tDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(user.Id.ToString());
+            DocumentSnapshot tSnap = await tDoc.GetSnapshotAsync();
+            if (tSnap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Pacifist"))
+                return CommandResult.FromError($"{Context.User.Mention}, you cannot bully **{user}** as they have the Pacifist perk equipped.");
+
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("houseRole", out ulong staffId))
             {
-                if (user.RoleIds.Contains(staffId)) return CommandResult.FromError($"{Context.User.Mention}, you cannot bully someone who is a staff member.");
+                if (user.RoleIds.Contains(staffId)) return CommandResult.FromError($"{Context.User.Mention}, you cannot bully **{user}** as they are a staff member.");
 
                 await user.ModifyAsync(props => props.Nickname = nickname);
                 await Logger.Custom_UserBullied(user, Context.User, nickname);
@@ -189,19 +196,23 @@ namespace RRBot.Modules
             if (user.IsBot) return CommandResult.FromError("Nope.");
 
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
+
             DocumentReference aDoc = users.Document(Context.User.Id.ToString());
             DocumentSnapshot aSnap = await aDoc.GetSnapshotAsync();
             if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-
             double aCash = aSnap.GetValue<double>("cash");
+
             DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
+            if (tSnap.TryGetValue("perks", out Dictionary<string, long> tPerks) && tPerks.Keys.Contains("Pacifist"))
+                return CommandResult.FromError($"{Context.User.Mention}, you cannot bully **{user}** as they have the Pacifist perk equipped.");
             double tCash = tSnap.GetValue<double>("cash");
 
             if (tCash > 0)
             {
                 double rapePercent = random.NextDouble(5, 9);
-                if (random.Next(10) > 4)
+                double winOdds = aSnap.TryGetValue("perks", out Dictionary<string, long> aPerks) && aPerks.Keys.Contains("Speed Demon") ? 4.2 : 4;
+                if (random.Next(10) > winOdds)
                 {
                     double repairs = tCash / 100.0 * rapePercent;
                     await StatUpdate(user as SocketUser, false, repairs);

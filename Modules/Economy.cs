@@ -16,6 +16,19 @@ namespace RRBot.Modules
     [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
     public class Economy : ModuleBase<SocketCommandContext>
     {
+        private static string AppendIfExists(DocumentSnapshot snap, string ogString, string funny, string cd, double mult)
+        {
+            string str = ogString;
+
+            if (snap.TryGetValue(cd, out long cooldown))
+            {
+                long fullCd = (long)((cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) * mult);
+                if (fullCd > 0L) str += $"**{funny}**: {TimeSpan.FromSeconds(fullCd).FormatCompound()}\n";
+            }
+
+            return str;
+        }
+
         private async Task AddBackUserSettings(DocumentReference doc, double btc, double doge, double eth, double xrp, bool dmNotifsV, bool rankupNotifsV, bool replyPingsV,
             Dictionary<string, string> userStats)
         {
@@ -58,31 +71,12 @@ namespace RRBot.Modules
         [Remarks("$buy [item]")]
         public async Task<RuntimeResult> Buy([Remainder] string item)
         {
-            if (!Items.items.Contains(item)) return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item!");
-
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
-            List<string> usrItems = snap.TryGetValue("items", out List<string> tmpItems) ? tmpItems : new List<string>();
-            double cash = snap.GetValue<double>("cash");
-
-            if (!usrItems.Contains(item))
-            {
-                double price = Items.ComputeItemPrice(item);
-                if (price < cash)
-                {
-                    usrItems.Add(item);
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - price);
-                    await Context.User.NotifyAsync(Context.Channel, $"You got yourself a fresh {item} for **{price:C2}**!");
-                    await doc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
-                    return CommandResult.FromSuccess();
-                }
-
-                return CommandResult.FromError($"{Context.User.Mention}, you do not have enough to buy a {item}!");
-            }
-
-            return CommandResult.FromError($"{Context.User.Mention}, you already have a {item}!");
+            if (Items.items.Any(i => i == item))
+                return await Items.BuyItem(item, Context.User, Context.Guild, Context.Channel);
+            else if (Items.perks.Any(perk => perk.Item1 == item))
+                return await Items.BuyPerk(item, Context.User, Context.Guild, Context.Channel);
+            else
+                return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item or perk!\n*Tip: This command is case sensitive.*");
         }
 
         [Alias("cd")]
@@ -94,40 +88,32 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            StringBuilder description = new();
-            if (snap.TryGetValue("dealCooldown", out long dealCd) && dealCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Deal**: {TimeSpan.FromSeconds(dealCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
-            if (snap.TryGetValue("lootCooldown", out long lootCd) && lootCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Loot**: {TimeSpan.FromSeconds(lootCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
-            if (snap.TryGetValue("rapeCooldown", out long rapeCd) && rapeCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Rape**: {TimeSpan.FromSeconds(rapeCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
-            if (snap.TryGetValue("slaveryCooldown", out long slaveryCd) && slaveryCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Slavery**: {TimeSpan.FromSeconds(slaveryCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
-            if (snap.TryGetValue("whoreCooldown", out long whoreCd) && whoreCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Whore**: {TimeSpan.FromSeconds(whoreCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
-            if (snap.TryGetValue("chopCooldown", out long chopCd) && chopCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Chopping Wood**: {TimeSpan.FromSeconds(chopCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
-            if (snap.TryGetValue("digCooldown", out long digCd) && digCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Digging**: {TimeSpan.FromSeconds(digCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
-            if (snap.TryGetValue("farmCooldown", out long farmCd) && farmCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Farming**: {TimeSpan.FromSeconds(farmCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
-            if (snap.TryGetValue("huntCooldown", out long huntCd) && huntCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Hunting**: {TimeSpan.FromSeconds(huntCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
-            if (snap.TryGetValue("mineCooldown", out long mineCd) && mineCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds() > 0L)
-                description.AppendLine($"**Mining**: {TimeSpan.FromSeconds(mineCd - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}");
+            string description = "";
+            double mult = snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon") ? 0.85 : 1;
+
+            description = AppendIfExists(snap, description, "Deal", "dealCooldown", mult);
+            description = AppendIfExists(snap, description, "Loot", "lootCooldown", mult);
+            description = AppendIfExists(snap, description, "Rape", "rapeCooldown", mult);
+            description = AppendIfExists(snap, description, "Slavery", "slaveryCooldown", mult);
+            description = AppendIfExists(snap, description, "Whore", "whoreCooldown", mult);
+            description = AppendIfExists(snap, description, "Chop", "chopCooldown", mult);
+            description = AppendIfExists(snap, description, "Dig", "digCooldown", mult);
+            description = AppendIfExists(snap, description, "Farm", "farmCooldown", mult);
+            description = AppendIfExists(snap, description, "Hunt", "huntCooldown", mult);
+            description = AppendIfExists(snap, description, "Mine", "mineCooldown", mult);
 
             EmbedBuilder embed = new()
             {
-                Title = "Crime Cooldowns",
+                Title = "Cooldowns",
                 Color = Color.Red,
-                Description = description.Length > 0 ? description.ToString() : "None"
+                Description = !string.IsNullOrWhiteSpace(description) ? description : "None"
             };
 
             await ReplyAsync(embed: embed.Build());
         }
 
         [Command("discard")]
-        [Summary("Discard an item.")]
+        [Summary("Discard an item or the Pacifist perk.")]
         [Remarks("$discard [item]")]
         [RequireItem]
         public async Task<RuntimeResult> Discard([Remainder] string item)
@@ -136,6 +122,22 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+
+            if (item == "Pacifist")
+            {
+                if (snap.TryGetValue("perks", out Dictionary<string, long> usrPerks) && usrPerks.Keys.Contains("Pacifist"))
+                {
+                    usrPerks.Remove("Pacifist");
+                    Dictionary<string, object> newPerks = new() { { "perks", usrPerks } };
+                    await doc.SetAsync(new { pacifistCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(259200) }, SetOptions.MergeAll);
+                    await doc.UpdateAsync(newPerks);
+                    await Context.User.NotifyAsync(Context.Channel, "You discarded your Pacifist perk. If you wish to buy it again, you will have to wait 3 days.");
+                    return CommandResult.FromSuccess();
+                }
+
+                return CommandResult.FromError($"{Context.User.Mention}, you do not have the Pacifist perk!");
+            }
+
             List<string> usrItems = snap.GetValue<List<string>>("items");
             double cash = snap.GetValue<double>("cash");
 
@@ -148,7 +150,8 @@ namespace RRBot.Modules
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError($"{Context.User.Mention}, you do not have a {item}!");
+            return CommandResult.FromError($"{Context.User.Mention}, you do not have a {item}!" +
+                "\n*Tip: This command is case sensitive and does not accept perks other than Pacifist.*");
         }
 
         [Command("items")]
@@ -178,17 +181,20 @@ namespace RRBot.Modules
         public async Task Leaderboard()
         {
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
-            Query ordered = users.OrderByDescending("cash").Limit(10);
+            Query ordered = users.OrderByDescending("cash");
             QuerySnapshot snap = await ordered.GetSnapshotAsync();
 
             StringBuilder builder = new();
+            int processedUsers = 0;
             for (int i = 0; i < snap.Documents.Count; i++)
             {
+                if (processedUsers == 10) break;
                 DocumentSnapshot doc = snap.Documents[i];
                 SocketGuildUser user = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
-                if (user == null) continue;
+                if (user == null || (doc.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Pacifist"))) continue;
                 double cash = doc.GetValue<double>("cash");
-                builder.AppendLine($"{i + 1}: **{user}**: {cash:C2}");
+                builder.AppendLine($"{processedUsers + 1}: **{user}**: {cash:C2}");
+                processedUsers++;
             }
 
             EmbedBuilder embed = new()
@@ -196,6 +202,41 @@ namespace RRBot.Modules
                 Color = Color.Red,
                 Title = "Leaderboard",
                 Description = builder.ToString()
+            };
+
+            await ReplyAsync(embed: embed.Build());
+        }
+
+        [Command("perks")]
+        [Summary("View info about your currently active perks.")]
+        [Remarks("$perks")]
+        [RequirePerk]
+        public async Task Perks()
+        {
+            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+
+            StringBuilder perksBuilder = new();
+            Dictionary<string, long> usrPerks = snap.GetValue<Dictionary<string, long>>("perks");
+            foreach (KeyValuePair<string, long> perk in usrPerks.OrderBy(p => p.Key))
+            {
+                if (perk.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && perk.Key != "Pacifist")
+                {
+                    usrPerks.Remove(perk.Key);
+                    Dictionary<string, object> newPerks = new() { { "perks", usrPerks } };
+                    await doc.UpdateAsync(newPerks);
+                }
+
+                Tuple<string, string, double, long> perkT = Array.Find(Items.perks, p => p.Item1.Equals(perk.Key, StringComparison.OrdinalIgnoreCase));
+                perksBuilder.AppendLine($"**{perkT.Item1}**: {perkT.Item2}" +
+                    $"\nTime Left: {(perk.Key != "Pacifist" ? TimeSpan.FromSeconds(perk.Value - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound() : "Infinity")}");
+            }
+
+            EmbedBuilder embed = new()
+            {
+                Title = "Perks",
+                Color = Color.Red,
+                Description = perksBuilder.ToString()
             };
 
             await ReplyAsync(embed: embed.Build());
@@ -260,8 +301,8 @@ namespace RRBot.Modules
 
         [Command("shop")]
         [Summary("Check out what's available for purchase in the shop.")]
-        [Remarks("$shop")]
-        public async Task Shop()
+        [Remarks("$shop <items|perks>")]
+        public async Task Shop(string category = "")
         {
             StringBuilder items = new();
             StringBuilder perks = new();
@@ -272,8 +313,8 @@ namespace RRBot.Modules
                 items.AppendLine($"**{item}**: {price:C2}");
             }
 
-            foreach (Tuple<string, string, double> perk in Items.perks)
-                perks.AppendLine($"**{perk.Item1}**: {perk.Item2}. Price: {perk.Item3:C2}");
+            foreach (Tuple<string, string, double, long> perk in Items.perks)
+                perks.AppendLine($"**{perk.Item1}**: {perk.Item2}\nDuration: {TimeSpan.FromSeconds(perk.Item4).FormatCompound()}\nPrice: {perk.Item3:C2}");
 
             EmbedBuilder itemsEmbed = new()
             {
@@ -289,8 +330,23 @@ namespace RRBot.Modules
                 Description = perks.ToString()
             };
 
-            await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: itemsEmbed.Build());
-            await ReplyAsync(embed: perksEmbed.Build());
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: itemsEmbed.Build());
+                await ReplyAsync(embed: perksEmbed.Build());
+            }
+            else if (category.Equals("items", StringComparison.OrdinalIgnoreCase))
+            {
+                await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: itemsEmbed.Build());
+            }
+            else if (category.Equals("perks", StringComparison.OrdinalIgnoreCase))
+            {
+                await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: perksEmbed.Build());
+            }
+            else
+            {
+                await ReplyAsync($"{Context.User.Mention}, **{category}** is not a valid category!");
+            }
         }
 
         [Alias("kms", "selfend")]

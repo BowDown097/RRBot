@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -24,10 +25,27 @@ namespace RRBot.Modules
             double cash = snap.GetValue<double>("cash");
 
             string item = Items.GetBestItem(items, itemType);
+
             int numMined = random.Next(32, 65); // default for wooden
             if (item.StartsWith("Stone", StringComparison.Ordinal)) numMined = random.Next(65, 113);
             else if (item.StartsWith("Iron", StringComparison.Ordinal)) numMined = random.Next(113, 161);
             else if (item.StartsWith("Diamond", StringComparison.Ordinal)) numMined = random.Next(161, 209);
+
+            if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Enchanter"))
+            {
+                int randNum = random.Next(100);
+                if (randNum == 1 || randNum == 2)
+                {
+                    perks.Remove(item);
+                    Dictionary<string, object> newPerks = new() { { "perks", perks } };
+                    await doc.UpdateAsync(newPerks);
+                    await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
+                    return;
+                }
+
+                numMined = (int)(numMined * 1.1);
+            }
+
             double cashGained = numMined * 2.5;
             double totalCash = cash + cashGained;
             await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained:C2}**." +
@@ -84,7 +102,23 @@ namespace RRBot.Modules
             double cash = snap.GetValue<double>("cash");
 
             string item = Items.GetBestItem(items, "Pickaxe");
+
             int numMined = random.Next(32, 65);
+            if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Enchanter"))
+            {
+                int randNum = random.Next(100);
+                if (randNum == 1 || randNum == 2)
+                {
+                    perks.Remove(item);
+                    Dictionary<string, object> newPerks = new() { { "perks", perks } };
+                    await doc.UpdateAsync(newPerks);
+                    await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
+                    return;
+                }
+
+                numMined = (int)(numMined * 1.1);
+            }
+
             double cashGained = numMined * 4;
             double totalCash = cash + cashGained;
 

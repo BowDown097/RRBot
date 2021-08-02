@@ -74,6 +74,7 @@ namespace RRBot.Modules
             if (cash < bet) return CommandResult.FromError($"{Context.User.Mention}, you can't bet more than what you have!");
 
             double roll = Math.Round(random.NextDouble(1, 101), 2);
+            if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon")) roll *= 0.95;
             bool success = !exactRoll ? roll >= odds : roll.CompareTo(odds) == 0;
             if (success)
             {
@@ -245,7 +246,7 @@ namespace RRBot.Modules
                         $"\nBalance: {totalCash:C2}");
                 }
 
-                await doc.SetAsync(new { usingSlots = false }, SetOptions.MergeAll);
+                await doc.SetAsync(new { usingSlots = FieldValue.Delete }, SetOptions.MergeAll);
             });
 
             return CommandResult.FromSuccess();

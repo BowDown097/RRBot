@@ -1,0 +1,22 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Discord.Commands;
+using Google.Cloud.Firestore;
+
+namespace RRBot.Preconditions
+{
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
+    public class RequirePerkAttribute : PreconditionAttribute
+    {
+        public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+        {
+            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+
+            return snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Count > 0
+                ? PreconditionResult.FromSuccess()
+                : PreconditionResult.FromError($"{context.User.Mention}, you have no perks!");
+        }
+    }
+}

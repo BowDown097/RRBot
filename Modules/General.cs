@@ -115,12 +115,16 @@ namespace RRBot.Modules
                         StringBuilder description = new($"**Description**: {commandInfo.Summary}\n**Usage**: ``{commandInfo.Remarks}``");
                         if (actualAliases.Any()) description.Append($"\n**Alias(es)**: {string.Join(", ", actualAliases)}");
 
+                        if (commandInfo.TryGetPrecondition<CheckPacifistAttribute>() || moduleInfo.TryGetPrecondition<CheckPacifistAttribute>())
+                            description.Append("\nRequires not having the Pacifist perk equipped");
                         if (commandInfo.TryGetPrecondition<RequireDJAttribute>() || moduleInfo.TryGetPrecondition<RequireDJAttribute>())
                             description.Append("\nRequires DJ");
                         if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>() || moduleInfo.TryGetPrecondition<RequireNsfwAttribute>())
                             description.Append("\nMust be in NSFW channel");
                         if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>() || moduleInfo.TryGetPrecondition<RequireOwnerAttribute>())
                             description.Append("\nRequires Bot Owner");
+                        if (commandInfo.TryGetPrecondition<RequirePerkAttribute>() || moduleInfo.TryGetPrecondition<RequirePerkAttribute>())
+                            description.Append("\nRequires a perk");
                         if (commandInfo.TryGetPrecondition<RequireStaffAttribute>() || moduleInfo.TryGetPrecondition<RequireOwnerAttribute>())
                             description.Append("\nRequires Staff");
                         if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC) || moduleInfo.TryGetPrecondition(out rBIC))
