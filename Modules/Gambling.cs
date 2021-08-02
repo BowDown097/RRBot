@@ -65,7 +65,7 @@ namespace RRBot.Modules
 
         private async Task<RuntimeResult> GenericGamble(double bet, double odds, double mult, bool exactRoll = false)
         {
-            if (bet < 0) return CommandResult.FromError($"{Context.User.Mention}, you can't bet nothing!");
+            if (bet < 0 || double.IsNaN(bet)) return CommandResult.FromError($"{Context.User.Mention}, you can't bet nothing!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
@@ -154,7 +154,7 @@ namespace RRBot.Modules
         [RequireCash]
         public async Task<RuntimeResult> Slots(double bet)
         {
-            if (bet < 0) return CommandResult.FromError($"{Context.User.Mention}, you can't bet nothing!");
+            if (bet < 0 || double.IsNaN(bet)) return CommandResult.FromError($"{Context.User.Mention}, you can't bet nothing!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();

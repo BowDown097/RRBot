@@ -277,7 +277,7 @@ namespace RRBot.Modules
         [Remarks("$sauce [user] [amount]")]
         public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
         {
-            if (amount <= 0) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce negative or no money!");
+            if (amount <= 0 || double.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce negative or no money!");
             if (Context.User == user) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce yourself money. Don't even know how you would.");
             if (user.IsBot) return CommandResult.FromError("Nope.");
 

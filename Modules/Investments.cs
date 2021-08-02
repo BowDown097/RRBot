@@ -23,7 +23,7 @@ namespace RRBot.Modules
         [RequireCash]
         public async Task<RuntimeResult> Invest(string crypto, double amount)
         {
-            if (amount < 0) return CommandResult.FromError($"{Context.User.Mention}, you can't invest nothing!");
+            if (amount < 0 || double.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you can't invest nothing!");
 
             string abbreviation;
             switch (crypto.ToLower())
@@ -136,7 +136,7 @@ namespace RRBot.Modules
         [Remarks("$withdraw [crypto] [amount]")]
         public async Task<RuntimeResult> Withdraw(string crypto, double amount)
         {
-            if (amount < 0.01) return CommandResult.FromError($"{Context.User.Mention}, you must withdraw a hundredth or more of the crypto!");
+            if (amount < 0.01 || double.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you must withdraw a hundredth or more of the crypto!");
 
             string abbreviation;
             switch (crypto.ToLower())
