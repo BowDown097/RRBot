@@ -133,7 +133,7 @@ namespace RRBot.Modules
                 return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
             double cash = snap.GetValue<double>("cash");
 
-            if (random.Next(0, 2) != 0)
+            if (random.Next(1, 101) >= 55)
             {
                 await StatUpdate(Context.User, true, cash);
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash * 2);

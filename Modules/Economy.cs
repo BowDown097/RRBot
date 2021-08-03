@@ -30,7 +30,8 @@ namespace RRBot.Modules
         }
 
         private async Task AddBackUserSettings(DocumentReference doc, double btc, double doge, double eth, double xrp, bool dmNotifsV, bool rankupNotifsV, bool replyPingsV,
-            Dictionary<string, string> userStats)
+            Dictionary<string, string> userStats, long whoreCd, long slaveryCd, long rapeCd, long lootCd, long dealCd, long bullyCd, long mineCd, long huntCd, long farmCd,
+            long digCd, long chopCd)
         {
             if (btc > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "btc", btc);
             if (doge > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "doge", doge);
@@ -40,6 +41,17 @@ namespace RRBot.Modules
             if (rankupNotifsV) await doc.SetAsync(new { rankupNotifs = rankupNotifsV }, SetOptions.MergeAll);
             if (!replyPingsV) await doc.SetAsync(new { replyPings = replyPingsV }, SetOptions.MergeAll);
             if (userStats.Count > 0) await doc.SetAsync(new { stats = userStats }, SetOptions.MergeAll);
+            await doc.SetAsync(new { whoreCooldown = whoreCd }, SetOptions.MergeAll);
+            await doc.SetAsync(new { slaveryCooldown = slaveryCd }, SetOptions.MergeAll);
+            await doc.SetAsync(new { rapeCooldown = rapeCd }, SetOptions.MergeAll);
+            await doc.SetAsync(new { lootCooldown = lootCd }, SetOptions.MergeAll);
+            await doc.SetAsync(new { dealCooldown = dealCd }, SetOptions.MergeAll);
+            await doc.SetAsync(new { bullyCooldown = bullyCd }, SetOptions.MergeAll);
+            await doc.SetAsync(new { mineCooldown = mineCd }, SetOptions.MergeAll);
+            await doc.SetAsync(new { huntCooldown = huntCd }, SetOptions.MergeAll);
+            await doc.SetAsync(new { farmCooldown = farmCd }, SetOptions.MergeAll);
+            await doc.SetAsync(new { digCooldown = digCd }, SetOptions.MergeAll);
+            await doc.SetAsync(new { chopCooldown = chopCd }, SetOptions.MergeAll);
         }
 
         [Alias("bal", "cash")]
@@ -369,6 +381,17 @@ namespace RRBot.Modules
             snap.TryGetValue("rankupNotifs", out bool rankupNotifsV);
             snap.TryGetValue("replyPings", out bool replyPingsV);
             snap.TryGetValue("stats", out Dictionary<string, string> userStats);
+            snap.TryGetValue("whoreCooldown", out long whoreCd);
+            snap.TryGetValue("slaveryCooldown", out long slaveryCd);
+            snap.TryGetValue("rapeCooldown", out long rapeCd);
+            snap.TryGetValue("lootCooldown", out long lootCd);
+            snap.TryGetValue("dealCooldown", out long dealCd);
+            snap.TryGetValue("bullyCooldown", out long bullyCd);
+            snap.TryGetValue("mineCooldown", out long mineCd);
+            snap.TryGetValue("huntCooldown", out long huntCd);
+            snap.TryGetValue("farmCooldown", out long farmCd);
+            snap.TryGetValue("digCooldown", out long digCd);
+            snap.TryGetValue("chopCooldown", out long chopCd);
             switch (random.Next(4))
             {
                 case 0:
@@ -381,13 +404,15 @@ namespace RRBot.Modules
                     await Context.User.NotifyAsync(Context.Channel, "DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await doc.DeleteAsync();
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 0);
-                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, rankupNotifsV, replyPingsV, userStats);
+                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, rankupNotifsV, replyPingsV, userStats, whoreCd, slaveryCd, rapeCd,
+                        lootCd, dealCd, bullyCd, mineCd, huntCd, farmCd, digCd, chopCd);
                     break;
                 case 3:
                     await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await doc.DeleteAsync();
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 0);
-                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, rankupNotifsV, replyPingsV, userStats);
+                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, rankupNotifsV, replyPingsV, userStats, whoreCd, slaveryCd, rapeCd,
+                        lootCd, dealCd, bullyCd, mineCd, huntCd, farmCd, digCd, chopCd);
                     break;
             }
 
