@@ -1,5 +1,5 @@
-﻿using System.Linq;
-using Discord.Commands;
+﻿using Discord.Commands;
+using System.Linq;
 
 namespace RRBot.Extensions
 {

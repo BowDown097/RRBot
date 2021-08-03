@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Discord.Commands;
+using Google.Cloud.Firestore;
+using RRBot.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord.Commands;
-using Google.Cloud.Firestore;
-using RRBot.Extensions;
 
 namespace RRBot.Preconditions
 {

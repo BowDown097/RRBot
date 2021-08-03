@@ -1,9 +1,9 @@
-﻿using System.Text;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Google.Cloud.Firestore;
 using RRBot.Extensions;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace RRBot.Modules
 {

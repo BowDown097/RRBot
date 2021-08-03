@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
@@ -11,6 +6,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RRBot.Extensions;
 using RRBot.Modules;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 #pragma warning disable IDE0018 // Inline variable declaration
 
 namespace RRBot.Systems

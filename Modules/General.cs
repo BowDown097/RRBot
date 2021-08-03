@@ -1,14 +1,14 @@
-﻿using System;
+﻿using Discord;
+using Discord.Commands;
+using Google.Cloud.Firestore;
+using RRBot.Extensions;
+using RRBot.Preconditions;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Discord;
-using Discord.Commands;
-using Google.Cloud.Firestore;
-using RRBot.Extensions;
-using RRBot.Preconditions;
 
 namespace RRBot.Modules
 {
@@ -75,7 +75,7 @@ namespace RRBot.Modules
         public async Task Help([Remainder] string command = "")
         {
             string strippedCommand = string.Concat(command.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
-            var modules = Commands.Modules;
+            IEnumerable<ModuleInfo> modules = Commands.Modules;
 
             if (string.IsNullOrWhiteSpace(command))
             {
@@ -84,9 +84,9 @@ namespace RRBot.Modules
                     Color = Color.Red,
                     Title = "Rush Reborn Bot",
                     Description = "Say hello to the most amazing bot you will ever bare witness to, made by the greatest programmer who has ever lived! ~~definitely not capping~~\n\n" +
-                    	"This is what I like to call a \"module-based\" bot, where all of the commands are split up into modules.\n\n" +
+                        "This is what I like to call a \"module-based\" bot, where all of the commands are split up into modules.\n\n" +
                         "If you want to learn about a particular module, use ``$modules`` to view the bot's modules and ``$modules [module]`` to view the information of whatever module you want to look up.\n\n" +
-                    	"If you want to learn about a particular command in a module, use ``$help [command]``. In command usage examples, [] indicate required arguments and <> indicate optional arguments.\n\n" +
+                        "If you want to learn about a particular command in a module, use ``$help [command]``. In command usage examples, [] indicate required arguments and <> indicate optional arguments.\n\n" +
                         "If you have **ANY** questions, just ask!"
                 };
 

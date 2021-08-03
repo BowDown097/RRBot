@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Google.Cloud.Firestore;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
@@ -9,6 +6,9 @@ using Microsoft.CodeAnalysis.Scripting;
 using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RRBot.Modules
 {
@@ -100,9 +100,19 @@ namespace RRBot.Modules
         public async Task ResetCooldowns()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            await doc.SetAsync(new { rapeCooldown = FieldValue.Delete, whoreCooldown = FieldValue.Delete, lootCooldown = FieldValue.Delete,
-                slaveryCooldown = FieldValue.Delete, mineCooldown = FieldValue.Delete, digCooldown = FieldValue.Delete, chopCooldown = FieldValue.Delete,
-                farmCooldown = FieldValue.Delete, huntCooldown = FieldValue.Delete, dealCooldown = FieldValue.Delete }, SetOptions.MergeAll);
+            await doc.SetAsync(new
+            {
+                rapeCooldown = FieldValue.Delete,
+                whoreCooldown = FieldValue.Delete,
+                lootCooldown = FieldValue.Delete,
+                slaveryCooldown = FieldValue.Delete,
+                mineCooldown = FieldValue.Delete,
+                digCooldown = FieldValue.Delete,
+                chopCooldown = FieldValue.Delete,
+                farmCooldown = FieldValue.Delete,
+                huntCooldown = FieldValue.Delete,
+                dealCooldown = FieldValue.Delete
+            }, SetOptions.MergeAll);
             await Context.User.NotifyAsync(Context.Channel, "Your cooldowns have been reset.");
         }
 
