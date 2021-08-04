@@ -16,8 +16,9 @@ namespace RRBot.Systems
             foreach (Embed epicEmbed in context.Message.Embeds)
             {
                 if ((context.Message.Content.Contains("skins") && context.Message.Content.Contains("imgur"))
-                    || (epicEmbed.Title.StartsWith("Trade offer", StringComparison.Ordinal) && !epicEmbed.Url.Contains("steamcommunity"))
-                    || (epicEmbed.Title.StartsWith("Steam Community", StringComparison.Ordinal) && epicEmbed.Url.Contains("y.ru")))
+                    || (epicEmbed.Title.StartsWith("Trade offer", StringComparison.Ordinal) && !epicEmbed.Url.Contains("steamcommunity.com"))
+                    || (epicEmbed.Title.StartsWith("Steam Community", StringComparison.Ordinal) && !epicEmbed.Url.Contains("steamcommunity.com"))
+                    || epicEmbed.Title.StartsWith("Free Discord Nitro"))
                 {
                     await context.Message.DeleteAsync();
                     break;
