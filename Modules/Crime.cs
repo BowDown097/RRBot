@@ -25,7 +25,7 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double cash = snap.GetValue<double>("cash");
 
             double winOdds = snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon") ? 7.6 : 8;
@@ -124,24 +124,24 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
         {
             if (Filters.FUNNY_REGEX.Matches(new string(nickname.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
-                return CommandResult.FromError($"{Context.User.Mention}, you cannot bully someone to the funny word.");
+                return CommandResult.FromError("You cannot bully someone to the funny word.");
             if (nickname.Length > 32)
-                return CommandResult.FromError($"{Context.User.Mention}, the bully nickname is longer than the maximum accepted length.");
+                return CommandResult.FromError("The nickname you put is longer than the maximum accepted length (32).");
             if (user.Id == Context.User.Id)
-                return CommandResult.FromError($"{Context.User.Mention}, no masochism here!");
+                return CommandResult.FromError("No masochism here!");
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
 
             DocumentReference tDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot tSnap = await tDoc.GetSnapshotAsync();
             if (tSnap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Pacifist"))
-                return CommandResult.FromError($"{Context.User.Mention}, you cannot bully **{user}** as they have the Pacifist perk equipped.");
+                return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("houseRole", out ulong staffId))
             {
-                if (user.RoleIds.Contains(staffId)) return CommandResult.FromError($"{Context.User.Mention}, you cannot bully **{user}** as they are a staff member.");
+                if (user.RoleIds.Contains(staffId)) return CommandResult.FromError($"You cannot bully **{user}** as they are a staff member.");
 
                 await user.ModifyAsync(props => props.Nickname = nickname);
                 await Logger.Custom_UserBullied(user, Context.User, nickname);
@@ -192,7 +192,7 @@ namespace RRBot.Modules
         [RequireCooldown("rapeCooldown", "you cannot rape for {0}.")]
         public async Task<RuntimeResult> Rape(IGuildUser user)
         {
-            if (user.Id == Context.User.Id) return CommandResult.FromError($"{Context.User.Mention}, how are you supposed to rape yourself?");
+            if (user.Id == Context.User.Id) return CommandResult.FromError("How are you supposed to rape yourself?");
             if (user.IsBot) return CommandResult.FromError("Nope.");
 
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
@@ -200,12 +200,12 @@ namespace RRBot.Modules
             DocumentReference aDoc = users.Document(Context.User.Id.ToString());
             DocumentSnapshot aSnap = await aDoc.GetSnapshotAsync();
             if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double aCash = aSnap.GetValue<double>("cash");
 
             DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
             if (tSnap.TryGetValue("perks", out Dictionary<string, long> tPerks) && tPerks.Keys.Contains("Pacifist"))
-                return CommandResult.FromError($"{Context.User.Mention}, you cannot bully **{user}** as they have the Pacifist perk equipped.");
+                return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
             double tCash = tSnap.GetValue<double>("cash");
 
             if (tCash > 0)
@@ -231,7 +231,7 @@ namespace RRBot.Modules
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError($"{Context.User.Mention} Jesus man, talk about kicking them while they're down! **{user}** is broke! Have some decency.");
+            return CommandResult.FromError($"Dear Lord, talk about kicking them while they're down! **{user}** is broke! Have some decency.");
         }
 
         [Alias("slavelabor", "labor")]

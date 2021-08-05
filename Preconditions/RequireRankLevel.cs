@@ -28,7 +28,7 @@ namespace RRBot.Preconditions
                 IRole role = context.Guild.GetRole(roleId);
                 return (context.User as IGuildUser).RoleIds.Contains(roleId)
                     ? PreconditionResult.FromSuccess()
-                    : PreconditionResult.FromError($"{context.User.Mention}, you must have the {role.Name} role.");
+                    : PreconditionResult.FromError($"You must have the {role.Name} role.");
             }
             catch (Exception)
             {

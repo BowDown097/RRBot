@@ -32,7 +32,7 @@ namespace RRBot.Modules
             if ((snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId)) ||
             (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId)))
             {
-                return CommandResult.FromError($"{Context.User.Mention}, you cannot ban **{user}** because they are a staff member.");
+                return CommandResult.FromError($"You cannot ban **{user}** because they are a staff member.");
             }
 
             if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
@@ -59,7 +59,7 @@ namespace RRBot.Modules
                         response = $"**{Context.User}** has banned **{user}** for {time} day(s)";
                         break;
                     default:
-                        return CommandResult.FromError($"{Context.User.Mention}, you specified an invalid amount of time!");
+                        return CommandResult.FromError("You specified an invalid amount of time!");
                 }
 
                 DocumentReference banDoc = Program.database.Collection($"servers/{Context.Guild.Id}/bans").Document(user.Id.ToString());
@@ -87,7 +87,7 @@ namespace RRBot.Modules
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError($"{Context.User.Mention}, you specified an invalid amount of time!");
+            return CommandResult.FromError("You specified an invalid amount of time!");
         }
 
         [Command("cancelticket")]
@@ -99,7 +99,7 @@ namespace RRBot.Modules
         {
             CollectionReference ticketsCollection = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");
             IAsyncEnumerable<DocumentReference> tickets = ticketsCollection.ListDocumentsAsync();
-            if (index > await tickets.CountAsync() || index <= 0) return CommandResult.FromError($"{Context.User.Mention}, there is not a support ticket at that index!");
+            if (index > await tickets.CountAsync() || index <= 0) return CommandResult.FromError("There is not a support ticket at that index!");
 
             DocumentReference doc = await tickets.ElementAtAsync(index - 1);
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
@@ -113,12 +113,12 @@ namespace RRBot.Modules
         [Remarks("$chill [duration]")]
         public async Task<RuntimeResult> Chill(int duration)
         {
-            if (duration < 30) return CommandResult.FromError($"{Context.User.Mention}, you cannot chill for less than 30 seconds.");
-            if (duration > 3600) return CommandResult.FromError($"{Context.User.Mention}, you cannot chill for more than an hour.");
+            if (duration < 10) return CommandResult.FromError("You cannot chill the chat for less than 10 seconds.");
+            if (duration > 21600) return CommandResult.FromError("You cannot chill the chat for more than 6 hours.");
 
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
             OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole).Value;
-            if (perms.SendMessages == PermValue.Deny) return CommandResult.FromError($"{Context.User.Mention}, this chat is already chilled.");
+            if (perms.SendMessages == PermValue.Deny) return CommandResult.FromError("This chat is already chilled.");
 
             await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
             await ReplyAsync($"**{Context.User}** would like y'all to sit down and stfu for {duration} seconds!");
@@ -145,7 +145,7 @@ namespace RRBot.Modules
             if ((snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId)) ||
             (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId)))
             {
-                return CommandResult.FromError($"{Context.User.Mention}, you cannot kick **{user}** because they are a staff member.");
+                return CommandResult.FromError($"You cannot kick **{user}** because they are a staff member.");
             }
 
             await user.KickAsync(reason);
@@ -175,7 +175,7 @@ namespace RRBot.Modules
             if (snap.TryGetValue("mutedRole", out ulong mutedId) && snap.TryGetValue("houseRole", out ulong staffId) && snap.TryGetValue("senateRole", out ulong senateId))
             {
                 if (user.RoleIds.Contains(mutedId) || user.RoleIds.Contains(staffId) || user.RoleIds.Contains(senateId))
-                    return CommandResult.FromError($"{Context.User.Mention}, you cannot mute **{user}** because they are either already muted or a staff member.");
+                    return CommandResult.FromError($"You cannot mute **{user}** because they are either already muted or a staff member.");
 
                 char suffix = char.ToLowerInvariant(duration[^1]);
                 if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
@@ -201,7 +201,7 @@ namespace RRBot.Modules
                             response = $"**{Context.User}** has handed an L of the mute variety to **{user}** for {time} day(s)";
                             break;
                         default:
-                            return CommandResult.FromError($"{Context.User.Mention}, you specified an invalid amount of time!");
+                            return CommandResult.FromError("You specified an invalid amount of time!");
                     }
 
                     DocumentReference muteDoc = Program.database.Collection($"servers/{Context.Guild.Id}/mutes").Document(user.Id.ToString());
@@ -218,7 +218,7 @@ namespace RRBot.Modules
                     return CommandResult.FromSuccess();
                 }
 
-                return CommandResult.FromError($"{Context.User.Mention}, you specified an invalid amount of time!");
+                return CommandResult.FromError("You specified an invalid amount of time!");
             }
 
             return CommandResult.FromError("This server's staff and/or muted role(s) have yet to be set.");
@@ -230,7 +230,7 @@ namespace RRBot.Modules
         [Remarks("$purge [count] <user>")]
         public async Task<RuntimeResult> Purge(int count, IGuildUser user = null)
         {
-            if (count == 0) return CommandResult.FromError($"{Context.User.Mention}, count must be more than zero.");
+            if (count <= 0) return CommandResult.FromError("Count must be more than zero.");
 
             IEnumerable<IMessage> messages = await Context.Channel.GetMessagesAsync(count + 1).FlattenAsync();
             messages = messages.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
@@ -254,7 +254,7 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> Unban(IUser user)
         {
             IReadOnlyCollection<RestBan> bans = await Context.Guild.GetBansAsync();
-            if (!bans.Any(ban => ban.User.Id == user.Id)) return CommandResult.FromError($"{Context.User.Mention}, that user is not currently banned.");
+            if (!bans.Any(ban => ban.User.Id == user.Id)) return CommandResult.FromError("That user is not currently banned.");
 
             string userString = bans.FirstOrDefault(ban => ban.User.Id == user.Id).User.ToString();
             await ReplyAsync($"**{Context.User}** has unbanned **{userString}**.");
@@ -270,7 +270,7 @@ namespace RRBot.Modules
         {
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
             OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole).Value;
-            if (perms.SendMessages == PermValue.Allow) return CommandResult.FromError($"{Context.User.Mention}, this chat is not chilled.");
+            if (perms.SendMessages == PermValue.Allow) return CommandResult.FromError("This chat is not chilled.");
 
             await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Allow));
             await ReplyAsync($"**{Context.User}** took one for the team and unchilled early.");
@@ -297,7 +297,7 @@ namespace RRBot.Modules
                     return CommandResult.FromSuccess();
                 }
 
-                return CommandResult.FromError($"**{Context.User}** tried to unmute someone that wasn't muted in the first place. Everyone point and laugh!");
+                return CommandResult.FromError("That user is not muted.");
             }
 
             return CommandResult.FromError("This server's muted role has yet to be set.");

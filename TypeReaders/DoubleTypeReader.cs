@@ -9,9 +9,9 @@ namespace RRBot.TypeReaders
     {
         public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
         {
-            if (context.Message.Content.StartsWith("$invest", StringComparison.Ordinal) || context.Message.Content.StartsWith("$withdraw", StringComparison.Ordinal))
+            if (context.Message.Content.StartsWith("$withdraw", StringComparison.Ordinal))
             {
-                if (!double.TryParse(input, out double @double)) return TypeReaderResult.FromError(CommandError.ParseFailed, "Input could not be parsed as a double.");
+                if (!double.TryParse(input, out double @double)) return TypeReaderResult.FromError(CommandError.ParseFailed, $"\"{input}\" is not a double value.");
                 return TypeReaderResult.FromSuccess(@double);
             }
 
@@ -24,7 +24,7 @@ namespace RRBot.TypeReaders
             }
             else if (!double.TryParse(input, out cash))
             {
-                return TypeReaderResult.FromError(CommandError.ParseFailed, "Input could not be parsed as a double or did not specify to select all cash.");
+                return TypeReaderResult.FromError(CommandError.ParseFailed, $"\"{input}\" is not a double value.");
             }
 
             return TypeReaderResult.FromSuccess(cash);

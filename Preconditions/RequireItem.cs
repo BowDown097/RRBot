@@ -25,10 +25,10 @@ namespace RRBot.Preconditions
 
                 return items.Any(item => item.EndsWith(ItemType, StringComparison.Ordinal))
                     ? PreconditionResult.FromSuccess()
-                    : PreconditionResult.FromError($"{context.User.Mention}, you need to have a {ItemType}.");
+                    : PreconditionResult.FromError($"You need to have a {ItemType}.");
             }
 
-            return PreconditionResult.FromError($"{context.User.Mention}, you have no items!");
+            return PreconditionResult.FromError("You have no items!");
         }
     }
 }

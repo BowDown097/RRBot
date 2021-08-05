@@ -212,7 +212,8 @@ namespace RRBot
             switch (result)
             {
                 case CommandResult rwm:
-                    if (rwm.Error == CommandError.Unsuccessful) await context.Channel.SendMessageAsync(rwm.Reason);
+                    if (rwm.Error == CommandError.Unsuccessful && !string.IsNullOrWhiteSpace(rwm.Reason))
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, rwm.Reason);
                     if (rwm.Error == CommandError.BadArgCount)
                     {
                         await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
@@ -222,6 +223,12 @@ namespace RRBot
                     break;
                 default:
                     if (!result.IsSuccess) Console.WriteLine(result.ErrorReason);
+                    if (result.Error == CommandError.ParseFailed)
+                    {
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                            $"Couldn't understand something you passed into the command.\nThis error info might help: ``{result.ErrorReason}``" +
+                            $"\nOr maybe the command usage will: ``{command.Value.Remarks}``");
+                    }
                     if (result.Error == CommandError.UnmetPrecondition) await context.Channel.SendMessageAsync(result.ErrorReason);
                     if (result.Error == CommandError.BadArgCount)
                     {

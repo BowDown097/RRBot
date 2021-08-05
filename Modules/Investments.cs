@@ -23,7 +23,7 @@ namespace RRBot.Modules
         [RequireCash]
         public async Task<RuntimeResult> Invest(string crypto, double amount)
         {
-            if (amount < 0 || double.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you can't invest nothing!");
+            if (amount < 0 || double.IsNaN(amount)) return CommandResult.FromError("You can't invest nothing!");
 
             string abbreviation;
             switch (crypto.ToLower())
@@ -43,7 +43,7 @@ namespace RRBot.Modules
                 case "xrp":
                     abbreviation = "XRP"; break;
                 default:
-                    return CommandResult.FromError($"{Context.User.Mention}, **{crypto}** is not a currently accepted currency!");
+                    return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
             }
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
@@ -53,11 +53,11 @@ namespace RRBot.Modules
 
             if (cash < amount)
             {
-                return CommandResult.FromError($"{Context.User.Mention}, you can't invest more than what you have!");
+                return CommandResult.FromError("You can't invest more than what you have!");
             }
             if (cryptoAmount < 0.01)
             {
-                return CommandResult.FromError($"{Context.User.Mention}, the amount you specified converts to less than a hundredth of {abbreviation}'s value, which is not permitted.\n"
+                return CommandResult.FromError($"The amount you specified converts to less than a hundredth of {abbreviation}'s value, which is not permitted.\n"
                     + $"You'll need to invest at least **{await CashSystem.QueryCryptoValue(abbreviation) * 0.01:C2}**.");
             }
 
@@ -136,7 +136,7 @@ namespace RRBot.Modules
         [Remarks("$withdraw [crypto] [amount]")]
         public async Task<RuntimeResult> Withdraw(string crypto, double amount)
         {
-            if (amount < 0.01 || double.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you must withdraw a hundredth or more of the crypto!");
+            if (amount < 0.01 || double.IsNaN(amount)) return CommandResult.FromError("You must withdraw a hundredth or more of the crypto!");
 
             string abbreviation;
             switch (crypto.ToLower())
@@ -156,15 +156,15 @@ namespace RRBot.Modules
                 case "xrp":
                     abbreviation = "XRP"; break;
                 default:
-                    return CommandResult.FromError($"{Context.User.Mention}, **{crypto}** is not a currently accepted currency!");
+                    return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
             }
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.TryGetValue(abbreviation.ToLower(), out double cryptoBal) || cryptoBal <= 0)
-                return CommandResult.FromError($"{Context.User.Mention}, you have no {abbreviation}!");
+                return CommandResult.FromError($"You have no {abbreviation}!");
             if (cryptoBal < amount)
-                return CommandResult.FromError($"{Context.User.Mention}, you don't have {amount} {abbreviation}! You've only got **{cryptoBal}** of it.");
+                return CommandResult.FromError($"You don't have {amount} {abbreviation}! You've only got **{cryptoBal}** of it.");
 
             double cash = snap.GetValue<double>("cash");
             double cryptoValue = await CashSystem.QueryCryptoValue(abbreviation) * amount;

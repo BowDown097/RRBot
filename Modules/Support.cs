@@ -40,8 +40,8 @@ namespace RRBot.Modules
             if (!snap.Exists)
             {
                 return CommandResult.FromError(user == null
-                    ? $"{Context.User.Mention}, you have yet to open a support ticket. If you wish to open one, you can use ``$support``."
-                    : $"{Context.User.Mention}, that user does not have a currently active support ticket.");
+                    ? "You have yet to open a support ticket. If you wish to open one, you can use ``$support``."
+                    : "That user does not have a currently active support ticket.");
             }
 
             IGuildUser helper = Context.Guild.GetUser(snap.GetValue<ulong>("helper"));
@@ -67,7 +67,7 @@ namespace RRBot.Modules
             if (snap.Exists)
             {
                 IGuildUser dbHelper = Context.Guild.GetUser(snap.GetValue<ulong>("helper"));
-                return CommandResult.FromError($"{Context.User.Mention}, you already have a support ticket open with **{dbHelper}**.\n" +
+                return CommandResult.FromError($"You already have a support ticket open with **{dbHelper}**.\n" +
                     "If they have taken an extraordinarily long time to respond, or if the issue has been solved by yourself or someone else, you can use ``$end``.");
             }
 
@@ -105,7 +105,7 @@ namespace RRBot.Modules
         {
             CollectionReference ticketsCollection = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");
             IAsyncEnumerable<DocumentReference> tickets = ticketsCollection.ListDocumentsAsync();
-            if (index > await tickets.CountAsync() || index <= 0) return CommandResult.FromError($"{Context.User.Mention}, there is no support ticket at that index!");
+            if (index > await tickets.CountAsync() || index <= 0) return CommandResult.FromError("There is no support ticket at that index!");
 
             DocumentReference ticketDoc = await tickets.ElementAtAsync(index - 1);
             DocumentSnapshot ticket = await ticketDoc.GetSnapshotAsync();

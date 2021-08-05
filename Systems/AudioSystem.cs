@@ -48,13 +48,13 @@ namespace RRBot.Systems
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError($"{context.User.Mention}, there is no currently playing track.");
+            return CommandResult.FromError("There is no currently playing track.");
         }
 
         public async Task<RuntimeResult> PlayAsync(SocketCommandContext context, string query)
         {
             SocketGuildUser user = context.User as SocketGuildUser;
-            if (user.VoiceChannel is null) return CommandResult.FromError($"{context.User.Mention}, you must be in a voice channel.");
+            if (user.VoiceChannel is null) return CommandResult.FromError("You must be in a voice channel.");
 
             await lavaSocketClient.ConnectAsync(user.VoiceChannel);
             LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
@@ -67,11 +67,11 @@ namespace RRBot.Systems
 
             Victoria.Entities.SearchResult search = await lavaRestClient.SearchYouTubeAsync(query);
             if (search.LoadType == LoadType.NoMatches || search.LoadType == LoadType.LoadFailed)
-                return CommandResult.FromError($"{context.User.Mention}, I could not find anything given your query.");
+                return CommandResult.FromError("No results were found for your query.");
             LavaTrack track = search.Tracks.FirstOrDefault();
 
             if (!track.IsStream && track.Length.TotalSeconds > 7200)
-                return CommandResult.FromError($"{context.User.Mention}, this is too long for me to play! It must be 2 hours or shorter in length.");
+                return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
 
             if (player.CurrentTrack != null && player.IsPlaying)
             {
@@ -124,7 +124,7 @@ namespace RRBot.Systems
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError($"{context.User.Mention}, there are no tracks to list.");
+            return CommandResult.FromError("There are no tracks to list.");
         }
 
         public async Task<RuntimeResult> SkipTrackAsync(SocketCommandContext context)
@@ -152,13 +152,13 @@ namespace RRBot.Systems
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError($"{context.User.Mention}, there are no tracks to skip.");
+            return CommandResult.FromError("There are no tracks to skip.");
         }
 
         public async Task<RuntimeResult> StopAsync(SocketCommandContext context)
         {
             LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
-            if (player is null) return CommandResult.FromError($"{context.User.Mention}, the bot is not currently being used.");
+            if (player is null) return CommandResult.FromError("The bot is not currently being used.");
 
             if (player.IsPlaying) await player.StopAsync();
             player.Queue.Clear();
@@ -170,10 +170,10 @@ namespace RRBot.Systems
 
         public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, int volume)
         {
-            if (volume < 5 || volume > 200) return CommandResult.FromError($"{context.User.Mention}, volume must be between 5% and 200%.");
+            if (volume < 5 || volume > 200) return CommandResult.FromError("Volume must be between 5% and 200%.");
 
             LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
-            if (player is null) return CommandResult.FromError($"{context.User.Mention}, the bot is not currently being used.");
+            if (player is null) return CommandResult.FromError("The bot is not currently being used.");
 
             await player.SetVolumeAsync(volume);
             await context.Channel.SendMessageAsync($"Set volume to {volume}%.");

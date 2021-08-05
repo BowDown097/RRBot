@@ -1,4 +1,5 @@
 ﻿using Discord.Commands;
+using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
 
@@ -15,7 +16,7 @@ namespace RRBot.Preconditions
         {
             return context.Channel.Name == Name
                 ? Task.FromResult(PreconditionResult.FromSuccess())
-                : Task.FromResult(PreconditionResult.FromError($"{context.User.Mention}, you must be in the #{Name} channel."));
+                : Task.FromResult(PreconditionResult.FromError($"You must be in the {(context.Channel as SocketTextChannel)?.Mention} channel."));
         }
     }
 }

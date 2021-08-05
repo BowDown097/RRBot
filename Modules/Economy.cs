@@ -74,7 +74,7 @@ namespace RRBot.Modules
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError(user == null ? $"{Context.User.Mention}, you're broke!" : $"**{user}** is broke!");
+            return CommandResult.FromError(user == null ? "You're broke!" : $"**{user}** is broke!");
         }
 
         [Alias("purchase")]
@@ -88,7 +88,7 @@ namespace RRBot.Modules
             else if (Items.perks.Any(perk => perk.Item1 == item))
                 return await Items.BuyPerk(item, Context.User, Context.Guild, Context.Channel);
             else
-                return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item or perk!\n*Tip: This command is case sensitive.*");
+                return CommandResult.FromError($"**{item}** is not a valid item or perk!\n*Tip: This command is case sensitive.*");
         }
 
         [Alias("cd")]
@@ -133,7 +133,7 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
             if (item == "Pacifist")
             {
@@ -147,7 +147,7 @@ namespace RRBot.Modules
                     return CommandResult.FromSuccess();
                 }
 
-                return CommandResult.FromError($"{Context.User.Mention}, you do not have the Pacifist perk!");
+                return CommandResult.FromError("You do not have the Pacifist perk!");
             }
 
             List<string> usrItems = snap.GetValue<List<string>>("items");
@@ -162,7 +162,7 @@ namespace RRBot.Modules
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError($"{Context.User.Mention}, you do not have a {item}!" +
+            return CommandResult.FromError($"You do not have a(n) {item}!" +
                 "\n*Tip: This command is case sensitive and does not accept perks other than Pacifist.*");
         }
 
@@ -289,20 +289,20 @@ namespace RRBot.Modules
         [Remarks("$sauce [user] [amount]")]
         public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
         {
-            if (amount <= 0 || double.IsNaN(amount)) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce negative or no money!");
-            if (Context.User == user) return CommandResult.FromError($"{Context.User.Mention}, you can't sauce yourself money. Don't even know how you would.");
+            if (amount <= 0 || double.IsNaN(amount)) return CommandResult.FromError("You can't sauce negative or no money!");
+            if (Context.User == user) return CommandResult.FromError("You can't sauce yourself money. Don't even know how you would.");
             if (user.IsBot) return CommandResult.FromError("Nope.");
 
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
             DocumentSnapshot aSnap = await users.Document(Context.User.Id.ToString()).GetSnapshotAsync();
             if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double aCash = aSnap.GetValue<double>("cash");
 
             DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
             double tCash = tSnap.GetValue<double>("cash");
 
-            if (amount > aCash) return CommandResult.FromError($"{Context.User.Mention}, you do not have that much money!");
+            if (amount > aCash) return CommandResult.FromError("You do not have that much money!");
 
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - amount);
             await CashSystem.SetCash(user, Context.Channel, tCash + amount);
@@ -371,7 +371,7 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
             snap.TryGetValue("btc", out double btc);
             snap.TryGetValue("doge", out double doge);

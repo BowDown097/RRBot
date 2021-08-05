@@ -16,7 +16,7 @@ namespace RRBot.Preconditions
 
             return snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Count > 0
                 ? PreconditionResult.FromSuccess()
-                : PreconditionResult.FromError($"{context.User.Mention}, you have no perks!");
+                : PreconditionResult.FromError("You have no perks!");
         }
     }
 }

@@ -51,7 +51,7 @@ namespace RRBot.Systems
             if (!usrItems.Contains(item))
             {
                 double price = ComputeItemPrice(item);
-                if (price < cash)
+                if (price <= cash)
                 {
                     usrItems.Add(item);
                     await CashSystem.SetCash(user as IGuildUser, channel, cash - price);
@@ -112,7 +112,7 @@ namespace RRBot.Systems
                 Tuple<string, string, double, long> perkTuple = Array.Find(perks, p => p.Item1 == perk);
                 double price = perkTuple.Item3;
                 long duration = perkTuple.Item4;
-                if (price < cash)
+                if (price <= cash)
                 {
                     usrPerks.Add(perk, DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration));
                     await CashSystem.SetCash(user as IGuildUser, channel, cash - price);

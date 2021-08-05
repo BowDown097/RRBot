@@ -38,7 +38,7 @@ namespace RRBot.Modules
                 }
                 catch (Exception)
                 {
-                    return CommandResult.FromError($"{Context.User.Mention}, I could not find a doujinshi/manga given the provided tag(s).");
+                    return CommandResult.FromError("No results were found with the provided tag(s).");
                 }
             }
 

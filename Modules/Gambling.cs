@@ -65,13 +65,13 @@ namespace RRBot.Modules
 
         private async Task<RuntimeResult> GenericGamble(double bet, double odds, double mult, bool exactRoll = false)
         {
-            if (bet < 0 || double.IsNaN(bet)) return CommandResult.FromError($"{Context.User.Mention}, you can't bet nothing!");
+            if (bet < 0 || double.IsNaN(bet)) return CommandResult.FromError("You can't bet nothing!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             double cash = snap.GetValue<double>("cash");
 
-            if (cash < bet) return CommandResult.FromError($"{Context.User.Mention}, you can't bet more than what you have!");
+            if (cash < bet) return CommandResult.FromError("You can't bet more than what you have!");
 
             double roll = Math.Round(random.NextDouble(1, 101), 2);
             if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon")) roll *= 0.95;
@@ -130,7 +130,7 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double cash = snap.GetValue<double>("cash");
 
             if (random.Next(1, 101) >= 55)
@@ -154,16 +154,16 @@ namespace RRBot.Modules
         [RequireCash]
         public async Task<RuntimeResult> Slots(double bet)
         {
-            if (bet < 0 || double.IsNaN(bet)) return CommandResult.FromError($"{Context.User.Mention}, you can't bet nothing!");
+            if (bet < 0 || double.IsNaN(bet)) return CommandResult.FromError("You can't bet nothing!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             double cash = snap.GetValue<double>("cash");
 
-            if (cash < bet) return CommandResult.FromError($"{Context.User.Mention}, you can't bet more than what you have!");
+            if (cash < bet) return CommandResult.FromError("You can't bet more than what you have!");
 
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{Context.User.Mention}, you are already using the slot machine!");
+                return CommandResult.FromError("You are already using the slot machine!");
 
             await doc.SetAsync(new { usingSlots = true }, SetOptions.MergeAll);
 

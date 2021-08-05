@@ -20,7 +20,7 @@ namespace RRBot.Preconditions
             return (snap.TryGetValue("houseRole", out ulong staff1Id) && (context.User as IGuildUser).RoleIds.Contains(staff1Id))
             || (snap.TryGetValue("senateRole", out ulong staff2Id) && (context.User as IGuildUser).RoleIds.Contains(staff2Id))
                 ? PreconditionResult.FromSuccess()
-                : PreconditionResult.FromError($"{context.User.Mention}, you must be Staff!");
+                : PreconditionResult.FromError("You must be Staff!");
         }
     }
 }

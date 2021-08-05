@@ -25,7 +25,7 @@ namespace RRBot.Modules
 
             string cUp = crypto.ToUpper();
             if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "LTC" && cUp != "XRP")
-                return CommandResult.FromError($"{Context.User.Mention}, **{crypto}** is not a currently accepted currency!");
+                return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
             await CashSystem.AddCrypto(Context.User as IGuildUser, crypto.ToLower(), amount);
             await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user}**'s {cUp} balance.");
@@ -87,7 +87,7 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> GiveItem(IGuildUser user, [Remainder] string item)
         {
             if (user.IsBot) return CommandResult.FromError("Nope.");
-            if (!Items.items.Contains(item)) return CommandResult.FromError($"{Context.User.Mention}, **{item}** is not a valid item!");
+            if (!Items.items.Contains(item)) return CommandResult.FromError($"**{item}** is not a valid item!");
             await Items.RewardItem(user, item);
             await ReplyAsync($"Gave **{user}** a(n) **{item}**.");
             return CommandResult.FromSuccess();

@@ -16,7 +16,7 @@ namespace RRBot.Preconditions
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             return snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Pacifist")
-                ? PreconditionResult.FromError($"{context.User.Mention}, you cannot use this command as you have the Pacifist perk.")
+                ? PreconditionResult.FromError("You cannot use this command as you have the Pacifist perk.")
                 : PreconditionResult.FromSuccess();
         }
     }

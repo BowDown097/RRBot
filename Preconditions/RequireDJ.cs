@@ -17,7 +17,7 @@ namespace RRBot.Preconditions
 
             return snap.TryGetValue("djRole", out ulong djId) && (context.User as IGuildUser).RoleIds.Contains(djId)
                 ? PreconditionResult.FromSuccess()
-                : PreconditionResult.FromError($"{context.User.Mention}, you must be DJ!");
+                : PreconditionResult.FromError("You must be a DJ!");
         }
     }
 }

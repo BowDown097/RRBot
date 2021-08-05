@@ -22,10 +22,10 @@ namespace RRBot.Preconditions
             {
                 return cash >= Amount
                     ? PreconditionResult.FromSuccess()
-                    : PreconditionResult.FromError($"{context.User.Mention}, you must have at least **${Amount}**.");
+                    : PreconditionResult.FromError($"You must have at least **{Amount:C2}**.");
             }
 
-            return PreconditionResult.FromError($"{context.User.Mention}, you're broke!");
+            return PreconditionResult.FromError("You're broke!");
         }
     }
 }

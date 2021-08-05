@@ -76,12 +76,12 @@ namespace RRBot.Modules
         }
 
         [Command("setreplypings")]
-        [Summary("Set whether or not you will be pinged in command responses (that are not errors). *(default: true)*")]
+        [Summary("Set whether or not you will be pinged in command responses. *(default: true)*")]
         [Remarks("$setreplypings [true/false]")]
         public async Task SetReplyPings(bool status)
         {
             await GenericSet(new { replyPings = status });
-            await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "now be" : "no longer be")} pinged in command responses (that are not errors).");
+            await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "now be" : "no longer be")} pinged in command responses.");
         }
     }
 }

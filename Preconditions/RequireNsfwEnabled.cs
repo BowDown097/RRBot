@@ -15,7 +15,7 @@ namespace RRBot.Preconditions
 
             return snap.TryGetValue("nsfw", out bool nsfwEnabled) && nsfwEnabled
                 ? PreconditionResult.FromSuccess()
-                : PreconditionResult.FromError($"{context.User.Mention}, NSFW commands are disabled!");
+                : PreconditionResult.FromError("NSFW commands are disabled!");
         }
     }
 }

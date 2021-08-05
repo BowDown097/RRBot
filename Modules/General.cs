@@ -72,7 +72,7 @@ namespace RRBot.Modules
         [Command("help")]
         [Summary("View info about the bot or view info about a command, depending on if you specify a command or not.")]
         [Remarks("$help <command>")]
-        public async Task Help([Remainder] string command = "")
+        public async Task<RuntimeResult> Help([Remainder] string command = "")
         {
             string strippedCommand = string.Concat(command.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
             IEnumerable<ModuleInfo> modules = Commands.Modules;
@@ -91,7 +91,7 @@ namespace RRBot.Modules
                 };
 
                 await ReplyAsync(embed: infoEmbed.Build());
-                return;
+                return CommandResult.FromSuccess();
             }
 
             foreach (ModuleInfo moduleInfo in modules)
@@ -105,11 +105,7 @@ namespace RRBot.Modules
                         if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
                         {
                             DocumentSnapshot modSnap = await config.Document("modules").GetSnapshotAsync();
-                            if (!modSnap.TryGetValue("nsfw", out bool nsfw) || !nsfw)
-                            {
-                                await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
-                                return;
-                            }
+                            if (!modSnap.TryGetValue("nsfw", out bool nsfw) || !nsfw) return CommandResult.FromError("NSFW commands are disabled!");
                         }
 
                         StringBuilder description = new($"**Description**: {commandInfo.Summary}\n**Usage**: ``{commandInfo.Remarks}``");
@@ -179,18 +175,18 @@ namespace RRBot.Modules
                         };
 
                         await ReplyAsync(embed: commandEmbed.Build());
-                        return;
+                        return CommandResult.FromSuccess();
                     }
                 }
             }
 
-            await ReplyAsync($"{Context.User.Mention}, you have specified a nonexistent command!");
+            return CommandResult.FromError("You have specified a nonexistent command!");
         }
 
         [Command("module")]
         [Summary("View info about a module.")]
         [Remarks("$module [module]")]
-        public async Task Module([Remainder] string module)
+        public async Task<RuntimeResult> Module([Remainder] string module)
         {
             string strippedModule = string.Concat(module.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
 
@@ -202,11 +198,7 @@ namespace RRBot.Modules
                     {
                         DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
                         DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
-                        if ((modSnap.TryGetValue("nsfw", out bool nsfw) && !nsfw) || !modSnap.TryGetValue<bool>("nsfw", out _))
-                        {
-                            await ReplyAsync($"{Context.User.Mention}, NSFW commands are disabled!");
-                            return;
-                        }
+                        if (!modSnap.TryGetValue("nsfw", out bool nsfw) || !nsfw) return CommandResult.FromError("NSFW commands are disabled!");
                     }
 
                     if (moduleInfo.TryGetPrecondition<RequireRushRebornAttribute>() &&
@@ -223,11 +215,11 @@ namespace RRBot.Modules
                     };
 
                     await ReplyAsync(embed: moduleEmbed.Build());
-                    return;
+                    return CommandResult.FromSuccess();
                 }
             }
 
-            await ReplyAsync($"{Context.User.Mention}, you have specified a nonexistent module!");
+            return CommandResult.FromError("You have specified a nonexistent module!");
         }
 
         [Command("modules")]
@@ -281,7 +273,7 @@ namespace RRBot.Modules
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError(user == null ? $"{Context.User.Mention}, you have no available stats!" : $"**{user}** has no available stats!");
+            return CommandResult.FromError(user == null ? "You have no available stats!" : $"**{user}** has no available stats!");
         }
 
         [Command("waifu")]

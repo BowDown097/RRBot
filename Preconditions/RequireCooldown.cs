@@ -34,7 +34,7 @@ namespace RRBot.Preconditions
                 long newCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(cooldownOffset);
                 if (newCooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                 {
-                    return PreconditionResult.FromError(string.Format($"{context.User.Mention}, {Message}",
+                    return PreconditionResult.FromError(string.Format($"{Message}",
                             TimeSpan.FromSeconds(cooldownOffset).FormatCompound()));
                 }
 

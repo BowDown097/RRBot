@@ -39,7 +39,7 @@ namespace RRBot.Modules
                 SocketTextChannel pollsChannel = Context.Guild.GetChannel(id) as SocketTextChannel;
 
                 string[] pollChoices = choices.Split('|');
-                if (pollChoices.Length > 9) return CommandResult.FromError($"{Context.User.Mention}, a maximum of 9 choices are allowed.");
+                if (pollChoices.Length > 9) return CommandResult.FromError("A maximum of 9 choices are allowed.");
 
                 StringBuilder choicesStr = new();
                 for (int i = 1; i <= pollChoices.Length; i++) choicesStr.AppendLine($"**[{i}]** {pollChoices[i - 1]}");
