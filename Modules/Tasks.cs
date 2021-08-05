@@ -129,16 +129,19 @@ namespace RRBot.Modules
             else if (item.StartsWith("Stone", StringComparison.Ordinal))
             {
                 cashGained *= 1.33;
+                totalCash = cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} iron with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
             else if (item.StartsWith("Iron", StringComparison.Ordinal))
             {
                 cashGained *= 1.66;
+                totalCash = cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} diamonds with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
             else if (item.StartsWith("Diamond", StringComparison.Ordinal))
             {
                 cashGained *= 2;
+                totalCash = cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
 
