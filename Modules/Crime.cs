@@ -120,7 +120,7 @@ namespace RRBot.Modules
         [Command("bully")]
         [Summary("Change the nickname of any victim you wish!")]
         [Remarks("$bully [user] [nickname]")]
-        [RequireCooldown("bullyCooldown", "you cannot bully anyone for {0}.")]
+        [RequireCooldown("bullyCooldown", "You cannot bully anyone for {0}.")]
         public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
         {
             if (Filters.FUNNY_REGEX.Matches(new string(nickname.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
@@ -159,7 +159,7 @@ namespace RRBot.Modules
         [Command("deal")]
         [Summary("Deal some drugs.")]
         [Remarks("$deal")]
-        [RequireCooldown("dealCooldown", "you don't have any more drugs to deal! Your next shipment comes in {0}.")]
+        [RequireCooldown("dealCooldown", "You don't have any more drugs to deal! Your next shipment comes in {0}.")]
         public async Task<RuntimeResult> Deal()
         {
             return await GenericCrime("Border patrol let your cocaine-stuffed dog through! You earned **{0}** from the cartel.",
@@ -173,7 +173,7 @@ namespace RRBot.Modules
         [Command("loot")]
         [Summary("Loot some locations.")]
         [Remarks("$loot")]
-        [RequireCooldown("lootCooldown", "you cannot loot for {0}.")]
+        [RequireCooldown("lootCooldown", "You cannot loot for {0}.")]
         public async Task<RuntimeResult> Loot()
         {
             return await GenericCrime("You joined your local BLM protest, looted a Footlocker, and sold what you got. You earned **{0}**.",
@@ -189,7 +189,7 @@ namespace RRBot.Modules
         [Summary("Go out on the prowl for some ass!")]
         [Remarks("$rape [user]")]
         [RequireCash]
-        [RequireCooldown("rapeCooldown", "you cannot rape for {0}.")]
+        [RequireCooldown("rapeCooldown", "You cannot rape for {0}.")]
         public async Task<RuntimeResult> Rape(IGuildUser user)
         {
             if (user.Id == Context.User.Id) return CommandResult.FromError("How are you supposed to rape yourself?");
@@ -238,7 +238,7 @@ namespace RRBot.Modules
         [Command("slavery")]
         [Summary("Get some slave labor goin'.")]
         [Remarks("$slavery")]
-        [RequireCooldown("slaveryCooldown", "the slaves will die if you keep going like this! You should wait {0}.")]
+        [RequireCooldown("slaveryCooldown", "The slaves will die if you keep going like this! You should wait {0}.")]
         [RequireRankLevel(2)]
         public async Task<RuntimeResult> Slavery()
         {
@@ -253,7 +253,7 @@ namespace RRBot.Modules
         [Command("whore")]
         [Summary("Sell your body for quick cash.")]
         [Remarks("$whore")]
-        [RequireCooldown("whoreCooldown", "you cannot whore yourself out for {0}.")]
+        [RequireCooldown("whoreCooldown", "You cannot whore yourself out for {0}.")]
         [RequireRankLevel(1)]
         public async Task<RuntimeResult> Whore()
         {

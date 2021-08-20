@@ -188,12 +188,19 @@ namespace RRBot.Modules
 
         [Alias("lb")]
         [Command("leaderboard")]
-        [Summary("Check the leaderboard.")]
-        [Remarks("$leaderboard")]
-        public async Task Leaderboard()
+        [Summary("Check the leaderboard for cash or for a specific currency.")]
+        [Remarks("$leaderboard <currency>")]
+        public async Task<RuntimeResult> Leaderboard(string crypto = "cash")
         {
+            string cryptoLower = crypto.ToLower();
+            if (cryptoLower != "cash" && cryptoLower != "btc" && cryptoLower != "doge"
+                && cryptoLower != "eth" && cryptoLower != "ltc" && cryptoLower != "xrp")
+            {
+                return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
+            }
+
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
-            Query ordered = users.OrderByDescending("cash");
+            Query ordered = users.OrderByDescending(crypto);
             QuerySnapshot snap = await ordered.GetSnapshotAsync();
 
             StringBuilder builder = new();
@@ -217,6 +224,7 @@ namespace RRBot.Modules
             };
 
             await ReplyAsync(embed: embed.Build());
+            return CommandResult.FromSuccess();
         }
 
         [Command("perks")]
@@ -235,6 +243,18 @@ namespace RRBot.Modules
                 if (perk.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && perk.Key != "Pacifist")
                 {
                     usrPerks.Remove(perk.Key);
+                    if (perk.Key == "Multiperk" && usrPerks.Count >= 2)
+                    {
+                        string lastPerk = usrPerks.Last().Key;
+                        Tuple<string, string, double, long> lastPerkTuple = Array.Find(Items.perks, p => p.Item1 == lastPerk);
+                        double cash = snap.GetValue<double>("cash");
+                        cash += lastPerkTuple.Item3;
+                        usrPerks.Remove(lastPerk);
+                        await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash);
+                        await Context.User.NotifyAsync(Context.Channel,
+                            $"You lost Multiperk and also lost {lastPerk} as a result. You've been refunded {lastPerkTuple.Item3:C2}, which was {lastPerk}'s price.");
+                    }
+
                     Dictionary<string, object> newPerks = new() { { "perks", usrPerks } };
                     await doc.UpdateAsync(newPerks);
                 }
