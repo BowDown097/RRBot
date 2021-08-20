@@ -86,15 +86,15 @@ namespace RRBot.Modules
 
             StringBuilder investmentsBuilder = new();
             if (snap.TryGetValue("btc", out double btc) && btc >= 0.01)
-                investmentsBuilder.AppendLine($"**Bitcoin (BTC)**: {btc} ({await CashSystem.QueryCryptoValue("BTC") * btc:C2})");
+                investmentsBuilder.AppendLine($"**Bitcoin (BTC)**: {btc:F4} ({await CashSystem.QueryCryptoValue("BTC") * btc:C2})");
             if (snap.TryGetValue("doge", out double doge) && doge >= 0.01)
-                investmentsBuilder.AppendLine($"**Dogecoin (DOGE)**: {doge} ({await CashSystem.QueryCryptoValue("DOGE") * doge:C2})");
+                investmentsBuilder.AppendLine($"**Dogecoin (DOGE)**: {doge:F4} ({await CashSystem.QueryCryptoValue("DOGE") * doge:C2})");
             if (snap.TryGetValue("eth", out double eth) && eth >= 0.01)
-                investmentsBuilder.AppendLine($"**Ethereum (ETH)**: {eth} ({await CashSystem.QueryCryptoValue("ETH") * eth:C2})");
+                investmentsBuilder.AppendLine($"**Ethereum (ETH)**: {eth:F4} ({await CashSystem.QueryCryptoValue("ETH") * eth:C2})");
             if (snap.TryGetValue("ltc", out double ltc) && ltc >= 0.01)
-                investmentsBuilder.AppendLine($"**Litecoin (LTC)**: {ltc} ({await CashSystem.QueryCryptoValue("LTC") * ltc:C2})");
+                investmentsBuilder.AppendLine($"**Litecoin (LTC)**: {ltc:F4} ({await CashSystem.QueryCryptoValue("LTC") * ltc:C2})");
             if (snap.TryGetValue("xrp", out double xrp) && xrp >= 0.01)
-                investmentsBuilder.AppendLine($"**XRP**: {xrp} ({await CashSystem.QueryCryptoValue("XRP") * xrp:C2})");
+                investmentsBuilder.AppendLine($"**XRP**: {xrp:F4} ({await CashSystem.QueryCryptoValue("XRP") * xrp:C2})");
 
             string investments = investmentsBuilder.ToString();
 

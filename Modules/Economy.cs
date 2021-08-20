@@ -211,16 +211,18 @@ namespace RRBot.Modules
                 DocumentSnapshot doc = snap.Documents[i];
                 SocketGuildUser user = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
                 if (user == null || (doc.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Pacifist"))) continue;
-                double cash = doc.GetValue<double>("cash");
-                builder.AppendLine($"{processedUsers + 1}: **{user}**: {cash:C2}");
+                double val = doc.GetValue<double>(crypto);
+                if (val < 0.01) break;
+                builder.AppendLine($"{processedUsers + 1}: **{user}**: {(cryptoLower == "cash" ? val.ToString("C2") : val.ToString("F4"))}");
                 processedUsers++;
             }
 
+            string lb = builder.ToString();
             EmbedBuilder embed = new()
             {
                 Color = Color.Red,
                 Title = "Leaderboard",
-                Description = builder.ToString()
+                Description = !string.IsNullOrWhiteSpace(lb) ? lb : "Nothing to see here!"
             };
 
             await ReplyAsync(embed: embed.Build());
