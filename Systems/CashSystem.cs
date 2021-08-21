@@ -29,19 +29,6 @@ namespace RRBot.Systems
             await doc.SetAsync(new Dictionary<string, double> { { crypto, currentAmount + amount } }, SetOptions.MergeAll);
         }
 
-        public static async Task<double> CashFromString(IGuildUser user, string cashStr)
-        {
-            double.TryParse(cashStr, out double cash);
-            if (cashStr.Equals("all", StringComparison.OrdinalIgnoreCase))
-            {
-                DocumentReference doc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
-                DocumentSnapshot snap = await doc.GetSnapshotAsync();
-                cash = snap.GetValue<double>("cash");
-            }
-
-            return cash;
-        }
-
         public static async Task<double> QueryCryptoValue(string crypto)
         {
             string current = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");

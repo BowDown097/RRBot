@@ -222,7 +222,16 @@ namespace RRBot
 
                     break;
                 default:
-                    if (!result.IsSuccess) Console.WriteLine(result.ErrorReason);
+                    if (!result.IsSuccess)
+                    {
+                        if (result.ErrorReason == "User not found.")
+                        {
+                            await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                                "Couldn't resolve a user from your input!");
+                        }
+
+                        Console.WriteLine(result.ErrorReason);
+                    }
                     if (result.Error == CommandError.ParseFailed)
                     {
                         await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,

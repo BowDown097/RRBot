@@ -213,7 +213,7 @@ namespace RRBot.Modules
                 if (user == null || (doc.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Pacifist"))) continue;
                 double val = doc.GetValue<double>(crypto);
                 if (val < 0.01) break;
-                builder.AppendLine($"{processedUsers + 1}: **{user}**: {(cryptoLower == "cash" ? val.ToString("C2") : val.ToString("F4"))}");
+                builder.AppendLine($"{processedUsers + 1}: **{user}**: {(cryptoLower == "cash" ? val.ToString("C2") : val.ToString("0.####"))}");
                 processedUsers++;
             }
 
