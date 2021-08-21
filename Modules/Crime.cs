@@ -18,7 +18,7 @@ namespace RRBot.Modules
     public class Crime : ModuleBase<SocketCommandContext>
     {
         public CultureInfo CurrencyCulture { get; set; }
-        public static readonly Random random = new();
+        private static readonly Random random = new();
 
         private async Task<RuntimeResult> GenericCrime(string outcome1, string outcome2, string outcome3, string outcome4, string outcome5, object cooldown, bool funny = false)
         {
@@ -38,10 +38,10 @@ namespace RRBot.Modules
                 switch (random.Next(3))
                 {
                     case 0:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome1 + "\nBalance: {1}", moneyEarned.ToString("C2"), totalCash.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome1 + $"\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
                         break;
                     case 1:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome2 + "\nBalance: {1}", moneyEarned.ToString("C2"), totalCash.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome2 + $"\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
                         break;
                     case 2:
                         if (funny)
@@ -50,7 +50,7 @@ namespace RRBot.Modules
                             totalCash = cash + moneyEarned;
                         }
 
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome3 + "\nBalance: {1}", moneyEarned.ToString("C2"), totalCash.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome3 + $"\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
                         break;
                 }
 
@@ -66,10 +66,10 @@ namespace RRBot.Modules
                 switch (random.Next(2))
                 {
                     case 0:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome4 + "\nBalance: {1}", lostCash.ToString("C2"), totalCash.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome4 + $"\nBalance: {totalCash:C2}", lostCash.ToString("C2")));
                         break;
                     case 1:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome5 + "\nBalance: {1}", lostCash.ToString("C2"), totalCash.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome5 + $"\nBalance: {totalCash:C2}", lostCash.ToString("C2")));
                         break;
                 }
 

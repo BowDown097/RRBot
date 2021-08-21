@@ -17,6 +17,18 @@ namespace RRBot.Modules
     public class Gambling : ModuleBase<SocketCommandContext>
     {
         public CultureInfo CurrencyCulture { get; set; }
+        private static readonly Random random = new();
+        private static readonly Emoji SEVEN = new("7️⃣");
+        private static readonly Emoji APPLE = new("\uD83C\uDF4E");
+        private static readonly Emoji GRAPES = new("\uD83C\uDF47");
+        private static readonly Emoji CHERRIES = new("\uD83C\uDF52");
+        private static readonly Dictionary<int, Emoji> emojis = new()
+        {
+            { 1, SEVEN },
+            { 2, APPLE },
+            { 3, GRAPES },
+            { 4, CHERRIES }
+        };
 
         private static bool ThreeInARow(int[] results, int emoji)
         {
@@ -27,19 +39,6 @@ namespace RRBot.Modules
         {
             return (results[0] == emoji && results[1] == emoji) || (results[1] == emoji && results[2] == emoji) || (results[2] == emoji && results[3] == emoji);
         }
-
-        public static readonly Random random = new();
-        public static readonly Emoji SEVEN = new("7️⃣");
-        public static readonly Emoji APPLE = new("\uD83C\uDF4E");
-        public static readonly Emoji GRAPES = new("\uD83C\uDF47");
-        public static readonly Emoji CHERRIES = new("\uD83C\uDF52");
-        public static readonly Dictionary<int, Emoji> emojis = new()
-        {
-            { 1, SEVEN },
-            { 2, APPLE },
-            { 3, GRAPES },
-            { 4, CHERRIES }
-        };
 
         private async Task StatUpdate(SocketUser user, bool success, double gain)
         {

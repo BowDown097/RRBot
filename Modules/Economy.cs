@@ -287,8 +287,7 @@ namespace RRBot.Modules
             DocumentReference ranksDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("ranks");
             DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
 
-            IEnumerable<KeyValuePair<string, object>> kvps = snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id", StringComparison.Ordinal)).OrderBy(kvp => kvp.Key);
-            foreach (KeyValuePair<string, object> kvp in kvps)
+            foreach (KeyValuePair<string, object> kvp in snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id", StringComparison.Ordinal)).OrderBy(kvp => kvp.Key))
             {
                 double neededCash = snap.GetValue<double>(kvp.Key.Replace("Id", "Cost"));
                 SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));

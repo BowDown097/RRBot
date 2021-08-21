@@ -14,7 +14,7 @@ namespace RRBot.Modules
     [RequireStaff]
     public class Polls : ModuleBase<SocketCommandContext>
     {
-        public static readonly Dictionary<int, string> numberEmotes = new()
+        private static readonly Dictionary<int, string> numberEmotes = new()
         {
             { 1, "1️⃣" },
             { 2, "2️⃣" },

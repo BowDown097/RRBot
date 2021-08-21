@@ -17,7 +17,7 @@ namespace RRBot.Systems
 {
     public static class CashSystem
     {
-        public static readonly WebClient client = new();
+        private static readonly WebClient client = new();
 
         public static async Task AddCrypto(IGuildUser user, string crypto, double amount)
         {
