@@ -113,8 +113,10 @@ namespace RRBot.Modules
         [Remarks("$chill [duration]")]
         public async Task<RuntimeResult> Chill(int duration)
         {
-            if (duration < 10) return CommandResult.FromError("You cannot chill the chat for less than 10 seconds.");
-            if (duration > 21600) return CommandResult.FromError("You cannot chill the chat for more than 6 hours.");
+            if (duration < Constants.CHILL_MIN_SECONDS)
+                return CommandResult.FromError($"You cannot chill the chat for less than {Constants.CHILL_MIN_SECONDS} seconds.");
+            if (duration > Constants.CHILL_MAX_SECONDS)
+                return CommandResult.FromError($"You cannot chill the chat for more than {Constants.CHILL_MAX_SECONDS} seconds.");
 
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
             OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole).Value;

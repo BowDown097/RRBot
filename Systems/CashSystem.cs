@@ -45,7 +45,7 @@ namespace RRBot.Systems
             if (user.IsBot) return;
             if (amount < 0) amount = 0;
 
-            amount = Math.Round(amount, 2);
+            amount = Math.Round(amount, 2) * Constants.CASH_MULTIPLIER;
             DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
             await userDoc.SetAsync(new { cash = amount }, SetOptions.MergeAll);
 
@@ -89,9 +89,10 @@ namespace RRBot.Systems
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             if (snap.TryGetValue("timeTillCash", out long time) && time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                await SetCash(context.User as IGuildUser, context.Channel, snap.GetValue<double>("cash") + 10);
+                await SetCash(context.User as IGuildUser, context.Channel, snap.GetValue<double>("cash") + Constants.MESSAGE_CASH);
 
-            await doc.SetAsync(new { timeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(TimeSpan.FromMinutes(1).TotalSeconds) }, SetOptions.MergeAll);
+            await doc.SetAsync(new { timeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN) },
+                SetOptions.MergeAll);
         }
     }
 }

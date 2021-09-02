@@ -212,7 +212,7 @@ namespace RRBot.Modules
                 SocketGuildUser user = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
                 if (user == null || (doc.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Pacifist"))) continue;
                 double val = doc.GetValue<double>(crypto);
-                if (val < 0.01) break;
+                if (val < Constants.INVESTMENT_MIN_AMOUNT && cryptoLower != "cash") break;
                 builder.AppendLine($"{processedUsers + 1}: **{user}**: {(cryptoLower == "cash" ? val.ToString("C2") : val.ToString("0.####"))}");
                 processedUsers++;
             }

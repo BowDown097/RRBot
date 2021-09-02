@@ -55,10 +55,10 @@ namespace RRBot.Modules
             {
                 return CommandResult.FromError("You can't invest more than what you have!");
             }
-            if (cryptoAmount < 0.01)
+            if (cryptoAmount < Constants.INVESTMENT_MIN_AMOUNT)
             {
-                return CommandResult.FromError($"The amount you specified converts to less than a hundredth of {abbreviation}'s value, which is not permitted.\n"
-                    + $"You'll need to invest at least **{await CashSystem.QueryCryptoValue(abbreviation) * 0.01:C2}**.");
+                return CommandResult.FromError($"The amount you specified converts to less than {Constants.INVESTMENT_MIN_AMOUNT} of {abbreviation}, which is not permitted.\n"
+                    + $"You'll need to invest at least **{await CashSystem.QueryCryptoValue(abbreviation) * Constants.INVESTMENT_MIN_AMOUNT:C2}**.");
             }
 
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash - amount);
@@ -85,15 +85,15 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             StringBuilder investmentsBuilder = new();
-            if (snap.TryGetValue("btc", out double btc) && btc >= 0.01)
+            if (snap.TryGetValue("btc", out double btc) && btc >= Constants.INVESTMENT_MIN_AMOUNT)
                 investmentsBuilder.AppendLine($"**Bitcoin (BTC)**: {btc:0.####} ({await CashSystem.QueryCryptoValue("BTC") * btc:C2})");
-            if (snap.TryGetValue("doge", out double doge) && doge >= 0.01)
+            if (snap.TryGetValue("doge", out double doge) && doge >= Constants.INVESTMENT_MIN_AMOUNT)
                 investmentsBuilder.AppendLine($"**Dogecoin (DOGE)**: {doge:0.####} ({await CashSystem.QueryCryptoValue("DOGE") * doge:C2})");
-            if (snap.TryGetValue("eth", out double eth) && eth >= 0.01)
+            if (snap.TryGetValue("eth", out double eth) && eth >= Constants.INVESTMENT_MIN_AMOUNT)
                 investmentsBuilder.AppendLine($"**Ethereum (ETH)**: {eth:0.####} ({await CashSystem.QueryCryptoValue("ETH") * eth:C2})");
-            if (snap.TryGetValue("ltc", out double ltc) && ltc >= 0.01)
+            if (snap.TryGetValue("ltc", out double ltc) && ltc >= Constants.INVESTMENT_MIN_AMOUNT)
                 investmentsBuilder.AppendLine($"**Litecoin (LTC)**: {ltc:0.####} ({await CashSystem.QueryCryptoValue("LTC") * ltc:C2})");
-            if (snap.TryGetValue("xrp", out double xrp) && xrp >= 0.01)
+            if (snap.TryGetValue("xrp", out double xrp) && xrp >= Constants.INVESTMENT_MIN_AMOUNT)
                 investmentsBuilder.AppendLine($"**XRP**: {xrp:0.####} ({await CashSystem.QueryCryptoValue("XRP") * xrp:C2})");
 
             string investments = investmentsBuilder.ToString();
@@ -136,7 +136,8 @@ namespace RRBot.Modules
         [Remarks("$withdraw [crypto] [amount]")]
         public async Task<RuntimeResult> Withdraw(string crypto, double amount)
         {
-            if (amount < 0.01 || double.IsNaN(amount)) return CommandResult.FromError("You must withdraw a hundredth or more of the crypto!");
+            if (amount < Constants.INVESTMENT_MIN_AMOUNT || double.IsNaN(amount))
+                return CommandResult.FromError($"You must withdraw {Constants.INVESTMENT_MIN_AMOUNT} or more of the crypto!");
 
             string abbreviation;
             switch (crypto.ToLower())
@@ -168,7 +169,7 @@ namespace RRBot.Modules
 
             double cash = snap.GetValue<double>("cash");
             double cryptoValue = await CashSystem.QueryCryptoValue(abbreviation) * amount;
-            double finalValue = cryptoValue * 0.985;
+            double finalValue = cryptoValue / 100.0 * (100 - Constants.INVESTMENT_FEE_PERCENT);
 
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + finalValue);
             await CashSystem.AddCrypto(Context.User as IGuildUser, abbreviation.ToLower(), -amount);
@@ -178,7 +179,7 @@ namespace RRBot.Modules
             });
 
             await Context.User.NotifyAsync(Context.Channel, $"You have withdrew **{amount}** {abbreviation}, currently valued at **{cryptoValue:C2}**.\n" +
-                $"A 1.5% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
+                $"A {Constants.INVESTMENT_FEE_PERCENT}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
             return CommandResult.FromSuccess();
         }
     }

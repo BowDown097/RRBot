@@ -73,7 +73,7 @@ namespace RRBot.Modules
             if (cash < bet) return CommandResult.FromError("You can't bet more than what you have!");
 
             double roll = Math.Round(random.NextDouble(1, 101), 2);
-            if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon")) roll *= 0.95;
+            if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon")) odds *= 0.95;
             bool success = !exactRoll ? roll >= odds : roll.CompareTo(odds) == 0;
             if (success)
             {
@@ -132,7 +132,7 @@ namespace RRBot.Modules
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double cash = snap.GetValue<double>("cash");
 
-            if (random.Next(1, 101) >= 55)
+            if (random.Next(1, 101) < Constants.DOUBLE_ODDS)
             {
                 await StatUpdate(Context.User, true, cash);
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash * 2);
@@ -197,26 +197,26 @@ namespace RRBot.Modules
                 int cherries = results.Count(num => num == 4);
                 if (sevens == 4)
                 {
-                    payoutMult = 25;
+                    payoutMult = Constants.SLOTS_MULT_FOURSEVENS;
                 }
                 else if (apples == 4 || grapes == 4 || cherries == 4)
                 {
-                    payoutMult = 5;
+                    payoutMult = Constants.SLOTS_MULT_FOURINAROW;
                 }
                 else if (ThreeInARow(results, 1))
                 {
-                    payoutMult = 3;
+                    payoutMult = Constants.SLOTS_MULT_THREESEVENS;
                 }
                 else if (ThreeInARow(results, 2) || ThreeInARow(results, 3) || ThreeInARow(results, 4))
                 {
-                    payoutMult = 2;
+                    payoutMult = Constants.SLOTS_MULT_THREEINAROW;
                 }
                 else
                 {
-                    if (TwoInARow(results, 1)) payoutMult += 0.5;
-                    if (TwoInARow(results, 2)) payoutMult += 0.25;
-                    if (TwoInARow(results, 3)) payoutMult += 0.25;
-                    if (TwoInARow(results, 4)) payoutMult += 0.25;
+                    if (TwoInARow(results, 1)) payoutMult += Constants.SLOTS_MULT_ADD_TWOSEVENS;
+                    if (TwoInARow(results, 2)) payoutMult += Constants.SLOTS_MULT_ADD_TWOINAROW;
+                    if (TwoInARow(results, 3)) payoutMult += Constants.SLOTS_MULT_ADD_TWOINAROW;
+                    if (TwoInARow(results, 4)) payoutMult += Constants.SLOTS_MULT_ADD_TWOINAROW;
                 }
 
                 if (payoutMult > 1)
@@ -226,7 +226,7 @@ namespace RRBot.Modules
                     await StatUpdate(Context.User, true, payout);
                     await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
 
-                    if (payoutMult == 25)
+                    if (payoutMult == Constants.SLOTS_MULT_FOURSEVENS)
                     {
                         await Context.User.NotifyAsync(Context.Channel, $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
                             $"\nBalance: {totalCash:C2}");

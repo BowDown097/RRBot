@@ -170,7 +170,8 @@ namespace RRBot.Systems
 
         public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, int volume)
         {
-            if (volume < 5 || volume > 200) return CommandResult.FromError("Volume must be between 5% and 200%.");
+            if (volume < Constants.MIN_VOLUME || volume > Constants.MAX_VOLUME)
+                return CommandResult.FromError($"Volume must be between {Constants.MIN_VOLUME}% and {Constants.MAX_VOLUME}%.");
 
             LavaPlayer player = lavaSocketClient.GetPlayer(context.Guild.Id);
             if (player is null) return CommandResult.FromError("The bot is not currently being used.");

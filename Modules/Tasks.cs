@@ -26,10 +26,13 @@ namespace RRBot.Modules
 
             string item = Items.GetBestItem(items, itemType);
 
-            int numMined = random.Next(32, 65); // default for wooden
-            if (item.StartsWith("Stone", StringComparison.Ordinal)) numMined = random.Next(65, 113);
-            else if (item.StartsWith("Iron", StringComparison.Ordinal)) numMined = random.Next(113, 161);
-            else if (item.StartsWith("Diamond", StringComparison.Ordinal)) numMined = random.Next(161, 209);
+            int numMined = random.Next(Constants.GENERIC_TASK_WOOD_MIN, Constants.GENERIC_TASK_WOOD_MAX); // default for wooden
+            if (item.StartsWith("Stone", StringComparison.Ordinal))
+                numMined = random.Next(Constants.GENERIC_TASK_STONE_MIN, Constants.GENERIC_TASK_STONE_MAX);
+            else if (item.StartsWith("Iron", StringComparison.Ordinal))
+                numMined = random.Next(Constants.GENERIC_TASK_IRON_MIN, Constants.GENERIC_TASK_IRON_MAX);
+            else if (item.StartsWith("Diamond", StringComparison.Ordinal))
+                numMined = random.Next(Constants.GENERIC_TASK_DIAMOND_MIN, Constants.GENERIC_TASK_DIAMOND_MAX);
 
             if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Enchanter"))
             {
@@ -66,28 +69,44 @@ namespace RRBot.Modules
         [Remarks("$chop")]
         [RequireCooldown("chopCooldown", "You cannot chop wood for {0}.")]
         [RequireItem("Axe")]
-        public async Task Chop() => await GenericTask("Axe", "chopped down", "trees", new { chopCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
+        public async Task Chop()
+        {
+            await GenericTask("Axe", "chopped down", "trees",
+                new { chopCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.CHOP_COOLDOWN) });
+        }
 
         [Command("dig")]
         [Summary("Go digging.")]
         [Remarks("$dig")]
         [RequireCooldown("digCooldown", "You cannot go digging for {0}.")]
         [RequireItem("Shovel")]
-        public async Task Dig() => await GenericTask("Shovel", "mined", "dirt", new { digCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
+        public async Task Dig()
+        {
+            await GenericTask("Shovel", "mined", "dirt",
+                new { digCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.DIG_COOLDOWN) });
+        }
 
         [Command("farm")]
         [Summary("Go farming.")]
         [Remarks("$farm")]
         [RequireCooldown("farmCooldown", "You cannot farm for {0}.")]
         [RequireItem("Hoe")]
-        public async Task Farm() => await GenericTask("Hoe", "farmed", "crops", new { farmCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
+        public async Task Farm()
+        {
+            await GenericTask("Hoe", "farmed", "crops",
+                new { farmCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FARM_COOLDOWN) });
+        }
 
         [Command("hunt")]
         [Summary("Go hunting.")]
         [Remarks("$hunt")]
         [RequireCooldown("huntCooldown", "You cannot go hunting for {0}.")]
         [RequireItem("Sword")]
-        public async Task Hunt() => await GenericTask("Sword", "hunted", "mobs", new { huntCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
+        public async Task Hunt()
+        {
+            await GenericTask("Sword", "hunted", "mobs",
+                new { huntCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.HUNT_COOLDOWN) });
+        }
 
         [Command("mine")]
         [Summary("Go mining.")]
@@ -128,19 +147,19 @@ namespace RRBot.Modules
             }
             else if (item.StartsWith("Stone", StringComparison.Ordinal))
             {
-                cashGained *= 1.33;
+                cashGained *= Constants.MINE_STONE_MULTIPLIER;
                 totalCash = cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} iron with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
             else if (item.StartsWith("Iron", StringComparison.Ordinal))
             {
-                cashGained *= 1.66;
+                cashGained *= Constants.MINE_IRON_MULTIPLIER;
                 totalCash = cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} diamonds with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
             else if (item.StartsWith("Diamond", StringComparison.Ordinal))
             {
-                cashGained *= 2;
+                cashGained *= Constants.MINE_DIAMOND_MULTIPLIER;
                 totalCash = cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
@@ -152,7 +171,8 @@ namespace RRBot.Modules
             });
 
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
-            await doc.SetAsync(new { mineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
+            await doc.SetAsync(new { mineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN) },
+                SetOptions.MergeAll);
         }
     }
 }

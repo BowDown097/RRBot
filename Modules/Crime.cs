@@ -28,10 +28,11 @@ namespace RRBot.Modules
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double cash = snap.GetValue<double>("cash");
 
-            double winOdds = snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon") ? 7.6 : 8;
-            if (random.NextDouble(10) < winOdds)
+            double winOdds = snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon")
+                ? Constants.GENERIC_CRIME_WIN_ODDS * 0.95 : Constants.GENERIC_CRIME_WIN_ODDS;
+            if (random.NextDouble(1, 101) < winOdds)
             {
-                double moneyEarned = random.NextDouble(69, 691);
+                double moneyEarned = random.NextDouble(Constants.GENERIC_CRIME_WIN_MIN, Constants.GENERIC_CRIME_WIN_MAX);
                 double totalCash = cash + moneyEarned;
                 await StatUpdate(Context.User, true, moneyEarned);
 
@@ -58,7 +59,7 @@ namespace RRBot.Modules
             }
             else
             {
-                double lostCash = random.NextDouble(69, 461);
+                double lostCash = random.NextDouble(Constants.GENERIC_CRIME_LOSS_MIN, Constants.GENERIC_CRIME_LOSS_MAX);
                 lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
                 double totalCash = (cash - lostCash) > 0 ? cash - lostCash : 0;
                 await StatUpdate(Context.User, false, lostCash);
@@ -84,7 +85,7 @@ namespace RRBot.Modules
 
         private async Task RollRandomItem()
         {
-            if (random.Next(20) == 1)
+            if (random.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
             {
                 string item = await Items.RandomItem(Context.User as IGuildUser, random);
                 if (!string.IsNullOrEmpty(item))
@@ -148,7 +149,8 @@ namespace RRBot.Modules
                 await ReplyAsync($"**{Context.User}** has **BULLIED** **{user}** to ``{nickname}``!");
 
                 DocumentReference userDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-                await doc.SetAsync(new { bullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(300) }, SetOptions.MergeAll);
+                await doc.SetAsync(new { bullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN) },
+                    SetOptions.MergeAll);
 
                 return CommandResult.FromSuccess();
             }
@@ -167,7 +169,7 @@ namespace RRBot.Modules
                 "You sold grass to some elementary schoolers and passed it off as weed. They didn't have a lot of course, only **{0}**, but money's money.",
                 "You tripped balls on acid with the boys at a party. After waking up, you realize not only did someone take money from your piggy bank, but you also gave out too much free acid, leaving you a whopping **{0}** poorer.",
                 "The Democrats have launched yet another crime bill, leading to your hood being under heavy investigation. You could not escape the feds and paid **{0}** in fines.",
-                new { dealCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, true);
+                new { dealCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.DEAL_COOLDOWN) }, true);
         }
 
         [Command("loot")]
@@ -181,7 +183,7 @@ namespace RRBot.Modules
                 "You stole from a gas station because you're a fucking idiot. You earned **{0}**, basically nothing.",
                 "There happened to be a cop coming out of the donut shop next door. You had to pay **{0}** in fines.",
                 "The manager gave no fucks and beat the SHIT out of you. You lost **{0}** paying for face stitches.",
-                new { lootCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, true);
+                new { lootCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.LOOT_COOLDOWN) }, true);
         }
 
         [Alias("strugglesnuggle")]
@@ -210,9 +212,10 @@ namespace RRBot.Modules
 
             if (tCash > 0)
             {
-                double rapePercent = random.NextDouble(5, 9);
-                double winOdds = aSnap.TryGetValue("perks", out Dictionary<string, long> aPerks) && aPerks.Keys.Contains("Speed Demon") ? 4.2 : 4;
-                if (random.Next(10) > winOdds)
+                double rapePercent = random.NextDouble(Constants.RAPE_MIN_PERCENT, Constants.RAPE_MAX_PERCENT);
+                double winOdds = aSnap.TryGetValue("perks", out Dictionary<string, long> aPerks) && aPerks.Keys.Contains("Speed Demon")
+                    ? Constants.RAPE_ODDS * 0.95 : Constants.RAPE_ODDS;
+                if (random.NextDouble(1, 101) < winOdds)
                 {
                     double repairs = tCash / 100.0 * rapePercent;
                     await StatUpdate(user as SocketUser, false, repairs);
@@ -227,11 +230,79 @@ namespace RRBot.Modules
                     await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user}**! You just paid **{repairs:C2}** in asshole repairs.");
                 }
 
-                await aDoc.SetAsync(new { rapeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) }, SetOptions.MergeAll);
+                await aDoc.SetAsync(new { rapeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.RAPE_COOLDOWN) },
+                    SetOptions.MergeAll);
                 return CommandResult.FromSuccess();
             }
 
             return CommandResult.FromError($"Dear Lord, talk about kicking them while they're down! **{user}** is broke! Have some decency.");
+        }
+
+        [Command("rob")]
+        [Summary("Yoink money from a user.")]
+        [Remarks("$rob [user] [amount]")]
+        [RequireCooldown("robCooldown", "It's best to avoid getting caught if you don't go out for {0}.")]
+        public async Task<RuntimeResult> Rob(IGuildUser user, double amount)
+        {
+            if (amount < Constants.ROB_MIN_CASH)
+                return CommandResult.FromError($"There's no point in robbing for less than {Constants.ROB_MIN_CASH:C2}!");
+            if (user.Id == Context.User.Id) return CommandResult.FromError("How are you supposed to rob yourself?");
+            if (user.IsBot) return CommandResult.FromError("Nope.");
+
+            CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
+
+            DocumentReference aDoc = users.Document(Context.User.Id.ToString());
+            DocumentSnapshot aSnap = await aDoc.GetSnapshotAsync();
+            if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+            double aCash = aSnap.GetValue<double>("cash");
+
+            DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
+            if (tSnap.TryGetValue("perks", out Dictionary<string, long> tPerks) && tPerks.Keys.Contains("Pacifist"))
+                return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
+            double tCash = tSnap.GetValue<double>("cash");
+
+            double robMax = tCash / 100.0 * Constants.ROB_MAX_PERCENT;
+            if (aCash < amount) return CommandResult.FromError("You don't have that much money!");
+            if (amount > robMax)
+                return CommandResult.FromError($"You can only rob {Constants.ROB_MAX_PERCENT}% of **{user}**'s cash, that being **{robMax:C2}**.");
+
+            int roll = random.Next(1, 101);
+            if (roll < Constants.ROB_ODDS)
+            {
+                await CashSystem.SetCash(user, Context.Channel, tCash - amount);
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash + amount);
+                switch (random.Next(2))
+                {
+                    case 0:
+                        await Context.User.NotifyAsync(Context.Channel, $"You beat the shit out of **{user}** and took **{amount:C2}** from their ass!" +
+                            $"\nBalance: {aCash + amount:C2}");
+                        break;
+                    case 1:
+                        await Context.User.NotifyAsync(Context.Channel, $"You walked up to **{user}** and yoinked **{amount:C2}** straight from their pocket, without a trace." +
+                            $"\nBalance: {aCash + amount:C2}");
+                        break;
+                }
+            }
+            else
+            {
+                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - amount);
+                switch (random.Next(2))
+                {
+                    case 0:
+                        await Context.User.NotifyAsync(Context.Channel, $"You yoinked the money from **{user}**, but they noticed and shanked you when you were on your way out." +
+                            $" You lost all the resources in the process.\nBalance: {aCash - amount:C2}");
+                        break;
+                    case 1:
+                        await Context.User.NotifyAsync(Context.Channel, "The dude happened to be a fed and threw your ass straight into jail. You lost all the resources in the process." +
+                            $"\nBalance: {aCash - amount:C2}");
+                        break;
+                }
+            }
+
+            await aDoc.SetAsync(new { robCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.ROB_COOLDOWN) },
+                SetOptions.MergeAll);
+            return CommandResult.FromSuccess();
         }
 
         [Alias("slavelabor", "labor")]
@@ -247,7 +318,7 @@ namespace RRBot.Modules
                 "This cotton is BUSSIN! The Confederacy is proud. You have been awarded **{0}**.",
                 "Some fucker ratted you out and the police showed up. Thankfully, they're corrupt and you were able to sauce them **{0}** to fuck off. Thank the lord.",
                 "A slave got away and yoinked **{0}** from you. Sad day.",
-                new { slaveryCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
+                new { slaveryCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.SLAVERY_COOLDOWN) });
         }
 
         [Command("whore")]
@@ -262,7 +333,7 @@ namespace RRBot.Modules
                 "You found the Chad Thundercock himself! **{0}** and some amazing sex. What a great night.",
                 "You were too ugly and nobody wanted you. You lost **{0}** buying clothes for the night.",
                 "You didn't give good enough head to the cop! You had to pay **{0}** in fines.",
-                new { whoreCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600) });
+                new { whoreCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.WHORE_COOLDOWN) });
         }
     }
 }

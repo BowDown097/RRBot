@@ -74,7 +74,7 @@ namespace RRBot.Modules
             {
                 return CommandResult.FromError($"Compilation error: ``{cee.Message}``");
             }
-            catch (Exception e) when (!(e is NullReferenceException))
+            catch (Exception e) when (e is not NullReferenceException)
             {
                 return CommandResult.FromError($"Other error: ``{e.Message}``");
             }
@@ -103,6 +103,7 @@ namespace RRBot.Modules
             await doc.SetAsync(new
             {
                 rapeCooldown = FieldValue.Delete,
+                robCooldown = FieldValue.Delete,
                 whoreCooldown = FieldValue.Delete,
                 lootCooldown = FieldValue.Delete,
                 slaveryCooldown = FieldValue.Delete,
