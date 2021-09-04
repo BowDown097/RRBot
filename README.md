@@ -1,5 +1,5 @@
 # RR Bot
-The bot for the Rush Reborn Discord server.
+The bot for the Rush Reborn Discord server, heavily inspired by the [DEA Discord bot](https://github.com/Asshley/DEA).
 
 [//]: # (make sure that the shield is updated upon release, can't use rn since repo is private)
 <p align="center">
