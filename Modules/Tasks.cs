@@ -51,16 +51,16 @@ namespace RRBot.Modules
 
             double cashGained = numMined * 2.5;
             double totalCash = cash + cashGained;
+
             await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained:C2}**." +
                 $"\nBalance: {totalCash:C2}");
-            await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
 
+            await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
             await Context.User.AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
             {
                 { "Tasks Done", "1" },
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
-
             await doc.SetAsync(cooldown, SetOptions.MergeAll);
         }
 
@@ -97,6 +97,50 @@ namespace RRBot.Modules
                 new { farmCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FARM_COOLDOWN) });
         }
 
+        [Command("fish")]
+        [Summary("Go fishing.")]
+        [Remarks("$fish")]
+        [RequireCooldown("fishCooldown", "You cannot fish for {0}.")]
+        [RequireItem("Fishing Rod")]
+        public async Task Fish()
+        {
+            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            double cash = snap.GetValue<double>("cash");
+            KeyValuePair<string, double> fish = Constants.FISH.ElementAt(random.Next(Constants.FISH.Count));
+            int numCaught = random.Next(7, 15);
+
+            if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Enchanter"))
+            {
+                int randNum = random.Next(100);
+                if (randNum == 1 || randNum == 2)
+                {
+                    List<string> items = snap.GetValue<List<string>>("items");
+                    items.Remove("Fishing Rod");
+                    Dictionary<string, object> newItems = new() { { "items", items } };
+                    await doc.UpdateAsync(newItems);
+                    await Context.User.NotifyAsync(Context.Channel, "Your Fishing Rod broke into pieces as soon as you tried to use it. You made no money.");
+                    return;
+                }
+
+                numCaught = (int)(numCaught * 1.1);
+            }
+
+            double cashGained = numCaught * fish.Value;
+            double totalCash = cash + cashGained;
+
+            await Context.User.NotifyAsync(Context.Channel, $"You caught {numCaught} {fish.Key} with your rod and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
+
+            await Context.User.AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
+            {
+                { "Tasks Done", "1" },
+                { "Money Gained From Tasks", cashGained.ToString("C2") }
+            });
+            await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
+            await doc.SetAsync(new { fishCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FISH_COOLDOWN) },
+                SetOptions.MergeAll);
+        }
+
         [Command("hunt")]
         [Summary("Go hunting.")]
         [Remarks("$hunt")]
@@ -128,9 +172,9 @@ namespace RRBot.Modules
                 int randNum = random.Next(100);
                 if (randNum == 1 || randNum == 2)
                 {
-                    perks.Remove(item);
-                    Dictionary<string, object> newPerks = new() { { "perks", perks } };
-                    await doc.UpdateAsync(newPerks);
+                    items.Remove(item);
+                    Dictionary<string, object> newItems = new() { { "items", items } };
+                    await doc.UpdateAsync(newItems);
                     await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
                     return;
                 }
@@ -169,7 +213,6 @@ namespace RRBot.Modules
                 { "Tasks Done", "1" },
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
-
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
             await doc.SetAsync(new { mineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN) },
                 SetOptions.MergeAll);

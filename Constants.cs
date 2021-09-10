@@ -119,6 +119,13 @@ namespace RRBot
         public const double CHOP_COOLDOWN = 3600;
         public const double DIG_COOLDOWN = 3600;
         public const double FARM_COOLDOWN = 3600;
+        public static readonly Dictionary<string, double> FISH = new()
+        {
+            { "carp", 24 },
+            { "trout", 27 },
+            { "goldfish", 30 }
+        };
+        public const double FISH_COOLDOWN = 3600;
         public const int GENERIC_TASK_WOOD_MAX = 65;
         public const int GENERIC_TASK_WOOD_MIN = 32;
         public const int GENERIC_TASK_STONE_MAX = 113;

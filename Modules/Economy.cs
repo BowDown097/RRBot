@@ -112,6 +112,7 @@ namespace RRBot.Modules
             description = AppendIfExists(snap, description, "Chop", "chopCooldown", mult);
             description = AppendIfExists(snap, description, "Dig", "digCooldown", mult);
             description = AppendIfExists(snap, description, "Farm", "farmCooldown", mult);
+            description = AppendIfExists(snap, description, "Fish", "fishCooldown", mult);
             description = AppendIfExists(snap, description, "Hunt", "huntCooldown", mult);
             description = AppendIfExists(snap, description, "Mine", "mineCooldown", mult);
 

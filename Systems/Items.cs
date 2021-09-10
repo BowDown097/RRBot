@@ -27,7 +27,8 @@ namespace RRBot.Systems
             "Wooden Sword", "Stone Sword", "Iron Sword", "Diamond Sword",
             "Wooden Shovel", "Stone Shovel", "Iron Shovel", "Diamond Shovel",
             "Wooden Axe", "Stone Axe", "Iron Axe", "Diamond Axe",
-            "Wooden Hoe", "Stone Hoe", "Iron Hoe", "Diamond Hoe"
+            "Wooden Hoe", "Stone Hoe", "Iron Hoe", "Diamond Hoe",
+            "Fishing Rod"
         };
 
         // name, description, price, duration (secs)
@@ -44,7 +45,7 @@ namespace RRBot.Systems
             DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{user.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             List<string> usrItems = snap.TryGetValue("items", out List<string> tmpItems) ? tmpItems : new List<string>();
             double cash = snap.GetValue<double>("cash");
 
@@ -60,10 +61,10 @@ namespace RRBot.Systems
                     return CommandResult.FromSuccess();
                 }
 
-                return CommandResult.FromError($"{user.Mention}, you do not have enough to buy a {item}!");
+                return CommandResult.FromError($"You do not have enough to buy a {item}!");
             }
 
-            return CommandResult.FromError($"{user.Mention}, you already have a {item}!");
+            return CommandResult.FromError($"You already have a {item}!");
         }
 
         public static async Task<RuntimeResult> BuyPerk(string perk, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
@@ -71,15 +72,15 @@ namespace RRBot.Systems
             DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
-                return CommandResult.FromError($"{user.Mention}, you appear to be currently gambling. I cannot do any transactions at the moment.");
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
             Dictionary<string, long> usrPerks = snap.TryGetValue("perks", out Dictionary<string, long> tmpPerks) ? tmpPerks : new();
             if (usrPerks.Keys.Contains("Pacifist"))
-                return CommandResult.FromError($"{user.Mention}, you have the Pacifist perk and cannot buy another.");
+                return CommandResult.FromError("You have the Pacifist perk and cannot buy another.");
             if (!usrPerks.Keys.Contains("Multiperk") && usrPerks.Count == 1 && perk != "Pacifist" && perk != "Multiperk")
-                return CommandResult.FromError($"{user.Mention}, you already have a perk!");
+                return CommandResult.FromError("You already have a perk.");
             if (usrPerks.Keys.Contains("Multiperk") && usrPerks.Count == 3 && perk != "Pacifist")
-                return CommandResult.FromError($"{user.Mention}, you already have 2 perks!");
+                return CommandResult.FromError("You already have 2 perks.");
 
             double cash = snap.GetValue<double>("cash");
 
@@ -91,7 +92,7 @@ namespace RRBot.Systems
                     {
                         if (pacifistCooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                         {
-                            return CommandResult.FromError($"{user.Mention}, you bought the Pacifist perk later than 3 days ago." +
+                            return CommandResult.FromError("You bought the Pacifist perk later than 3 days ago." +
                                 $" You still have to wait {TimeSpan.FromSeconds(pacifistCooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}.");
                         }
 
@@ -125,19 +126,20 @@ namespace RRBot.Systems
                     return CommandResult.FromSuccess();
                 }
 
-                return CommandResult.FromError($"{user.Mention}, you do not have enough to buy {perk}!");
+                return CommandResult.FromError($"You do not have enough to buy {perk}!");
             }
 
-            return CommandResult.FromError($"{user.Mention}, you already have {perk}!");
+            return CommandResult.FromError($"You already have {perk}!");
         }
 
         public static double ComputeItemPrice(string item)
         {
-            if (item.StartsWith("Stone", StringComparison.Ordinal)) return 6000;
+            if (item.StartsWith("Wooden", StringComparison.Ordinal)) return 4500;
+            else if (item.StartsWith("Stone", StringComparison.Ordinal)) return 6000;
             else if (item.StartsWith("Iron", StringComparison.Ordinal)) return 7500;
             else if (item.StartsWith("Diamond", StringComparison.Ordinal)) return 9000;
 
-            return 4500; // wood price
+            return 7500; // misc item price
         }
 
         public static string GetBestItem(List<string> itemsList, string type)

@@ -111,6 +111,7 @@ namespace RRBot.Modules
                 digCooldown = FieldValue.Delete,
                 chopCooldown = FieldValue.Delete,
                 farmCooldown = FieldValue.Delete,
+                fishCooldown = FieldValue.Delete,
                 huntCooldown = FieldValue.Delete,
                 dealCooldown = FieldValue.Delete
             }, SetOptions.MergeAll);
