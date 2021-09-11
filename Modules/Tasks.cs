@@ -134,7 +134,7 @@ namespace RRBot.Modules
             await Context.User.AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
             {
                 { "Tasks Done", "1" },
-                { "Money Gained From Tasks", cashGained.ToString("C2") }
+                { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
             await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
             await doc.SetAsync(new { fishCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FISH_COOLDOWN) },

@@ -66,7 +66,7 @@ namespace RRBot.Modules
             await Context.User.AddToStatsAsync(CurrencyCulture, Context.Guild, new Dictionary<string, string>
             {
                 { $"Money Put Into {abbreviation}", amount.ToString("C2", CurrencyCulture) },
-                { $"{abbreviation} Purchased", cryptoAmount.ToString() }
+                { $"{abbreviation} Purchased", cryptoAmount.ToString("0.####") }
             });
 
             await Context.User.NotifyAsync(Context.Channel, $"You have invested in **{cryptoAmount}** {abbreviation}, currently valued at **{amount:C2}**.");
