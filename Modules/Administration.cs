@@ -7,6 +7,7 @@ using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,6 +16,8 @@ namespace RRBot.Modules
     [Summary("Commands for admin stuff. Whether you wanna screw with the economy or completely blacklist people from using the bot, I'm sure you'll have fun. However, you'll need to be a Bot Owner or have a very high role to have all this fun. Sorry!")]
     public class Administration : ModuleBase<SocketCommandContext>
     {
+        public List<ulong> BannedUsers { get; set; }
+
         [Command("addcrypto")]
         [Summary("Add to a user's cryptocurrency amount. See $invest's help info for currently accepted currencies.")]
         [Remarks("$addcrypto [user] [crypto] [amount]")]
@@ -44,7 +47,7 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.SetAsync(new { banned = true }, SetOptions.MergeAll);
             await ReplyAsync($"Blacklisted **{user}**.");
-            Program.bannedUsers.Add(user.Id);
+            BannedUsers.Add(user.Id);
 
             return CommandResult.FromSuccess();
         }
@@ -143,7 +146,7 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.DeleteAsync();
             await ReplyAsync($"Unblacklisted **{user}**.");
-            Program.bannedUsers.Remove(user.Id);
+            BannedUsers.Remove(user.Id);
 
             return CommandResult.FromSuccess();
         }

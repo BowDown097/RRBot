@@ -22,45 +22,64 @@ namespace RRBot
         private static void Main() => new Program().RunBotAsync().GetAwaiter().GetResult();
 
         public static FirestoreDb database = FirestoreDb.Create("rushrebornbot", new FirestoreClientBuilder { CredentialsPath = Credentials.CREDENTIALS_PATH }.Build());
-        public static List<ulong> bannedUsers = new();
         private AudioSystem audioSystem;
         private CommandService commands;
+        private CultureInfo currencyCulture;
         private DiscordSocketClient client;
         private IServiceProvider serviceProvider;
         private LavaRestClient lavaRestClient;
         private LavaSocketClient lavaSocketClient;
+        private List<ulong> bannedUsers;
 
-        public async Task StartBanCheckAsync()
+        private static async Task HandleReactionAsync(ISocketMessageChannel channel, SocketReaction reaction, bool addedReaction)
+        {
+            SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
+            if (user.IsBot) return;
+
+            IGuild guild = (channel as ITextChannel)?.Guild;
+            DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
+            {
+                if (reaction.MessageId != msgId) return;
+
+                if (addedReaction)
+                    await user.AddRoleAsync(roleId);
+                else
+                    await user.RemoveRoleAsync(roleId);
+            }
+        }
+
+        private async Task StartBanCheckAsync()
         {
             while (true)
             {
                 await Task.Delay(TimeSpan.FromSeconds(30));
                 foreach (SocketGuild guild in client.Guilds)
                 {
-                    CollectionReference bans = database.Collection($"servers/{guild.Id}/bans");
-                    foreach (DocumentReference banDoc in bans.ListDocumentsAsync().ToEnumerable())
+                    QuerySnapshot bans = await database.Collection($"servers/{guild.Id}/bans").GetSnapshotAsync();
+                    foreach (DocumentSnapshot ban in bans.Documents)
                     {
-                        DocumentSnapshot snapshot = await banDoc.GetSnapshotAsync();
-                        long timestamp = snapshot.GetValue<long>("Time");
-                        ulong userId = Convert.ToUInt64(banDoc.Id);
+                        long timestamp = ban.GetValue<long>("Time");
+                        ulong userId = Convert.ToUInt64(ban.Id);
 
                         if (!(await guild.GetBansAsync()).Any(ban => ban.User.Id == userId))
                         {
-                            await banDoc.DeleteAsync();
+                            await ban.Reference.DeleteAsync();
                             continue;
                         }
 
                         if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                         {
                             await guild.RemoveBanAsync(userId);
-                            await banDoc.DeleteAsync();
+                            await ban.Reference.DeleteAsync();
                         }
                     }
                 }
             }
         }
 
-        public async Task StartMuteCheckAsync()
+        private async Task StartMuteCheckAsync()
         {
             while (true)
             {
@@ -71,17 +90,16 @@ namespace RRBot
                     DocumentSnapshot snap = await doc.GetSnapshotAsync();
                     if (snap.TryGetValue("mutedRole", out ulong mutedId))
                     {
-                        CollectionReference mutes = database.Collection($"servers/{guild.Id}/mutes");
-                        foreach (DocumentReference muteDoc in mutes.ListDocumentsAsync().ToEnumerable())
+                        QuerySnapshot mutes = await database.Collection($"servers/{guild.Id}/mutes").GetSnapshotAsync();
+                        foreach (DocumentSnapshot mute in mutes.Documents)
                         {
-                            DocumentSnapshot snapshot = await muteDoc.GetSnapshotAsync();
-                            long timestamp = snapshot.GetValue<long>("Time");
-                            SocketGuildUser user = guild.GetUser(Convert.ToUInt64(muteDoc.Id));
+                            long timestamp = mute.GetValue<long>("Time");
+                            SocketGuildUser user = guild.GetUser(Convert.ToUInt64(mute.Id));
 
                             if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                             {
                                 if (user != null) await user.RemoveRoleAsync(mutedId);
-                                await muteDoc.DeleteAsync();
+                                await mute.Reference.DeleteAsync();
                             }
                         }
                     }
@@ -92,16 +110,18 @@ namespace RRBot
         public async Task RunBotAsync()
         {
             // services setup
+            audioSystem = new AudioSystem(lavaRestClient, lavaSocketClient);
+            bannedUsers = new List<ulong>();
             client = new DiscordSocketClient(new DiscordSocketConfig { AlwaysDownloadUsers = true, ExclusiveBulkDelete = true, MessageCacheSize = 100 });
+            commands = new CommandService();
+            currencyCulture = CultureInfo.CreateSpecificCulture("en-US");
+            currencyCulture.NumberFormat.CurrencyNegativePattern = 2;
             lavaRestClient = new LavaRestClient("127.0.0.1", 2333, "youshallnotpass");
             lavaSocketClient = new LavaSocketClient();
-            commands = new CommandService();
-            audioSystem = new AudioSystem(lavaRestClient, lavaSocketClient);
-            CultureInfo currencyCulture = CultureInfo.CreateSpecificCulture("en-US");
-            currencyCulture.NumberFormat.CurrencyNegativePattern = 2;
 
             serviceProvider = new ServiceCollection()
                 .AddSingleton(audioSystem)
+                .AddSingleton(bannedUsers)
                 .AddSingleton(client)
                 .AddSingleton(commands)
                 .AddSingleton(currencyCulture)
@@ -110,9 +130,8 @@ namespace RRBot
                 .BuildServiceProvider();
 
             // general events
-            client.JoinedGuild += Client_JoinedGuild;
-            client.MessageReceived += HandleCommandAsync;
             client.Log += Client_Log;
+            client.MessageReceived += Client_MessageReceived;
             client.ReactionAdded += Client_ReactionAdded;
             client.ReactionRemoved += Client_ReactionRemoved;
             client.Ready += Client_Ready;
@@ -144,112 +163,13 @@ namespace RRBot
             await Task.Delay(-1);
         }
 
-        private async Task Client_Ready()
-        {
-            foreach (DocumentReference blacklistDoc in database.Collection("globalConfig").ListDocumentsAsync().ToEnumerable())
-            {
-                DocumentSnapshot blacklistSnap = await blacklistDoc.GetSnapshotAsync();
-                if (blacklistSnap.ContainsField("banned")) bannedUsers.Add(ulong.Parse(blacklistDoc.Id));
-            }
-
-            await Task.Factory.StartNew(async () => await StartBanCheckAsync());
-            await Task.Factory.StartNew(async () => await StartMuteCheckAsync());
-            await lavaSocketClient.StartAsync(client);
-            lavaSocketClient.OnPlayerUpdated += audioSystem.OnPlayerUpdated;
-            lavaSocketClient.OnTrackFinished += audioSystem.OnTrackFinished;
-        }
-
         private Task Client_Log(LogMessage arg)
         {
             Console.WriteLine(arg);
             return Task.CompletedTask;
         }
 
-        private async Task Client_JoinedGuild(SocketGuild guild)
-        {
-            await guild.DefaultChannel.SendMessageAsync("Thank you for inviting me to your server! Make sure you take a look at ``$help`` and ``$modules Config`` to get started.");
-        }
-
-        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msgCached, ISocketMessageChannel channel, SocketReaction reaction)
-        {
-            SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
-            if (user.IsBot) return;
-
-            IGuild guild = (channel as ITextChannel)?.Guild;
-            DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
-            {
-                if (reaction.MessageId != msgId) return;
-                await user.AddRoleAsync(roleId);
-            }
-        }
-
-        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msgCached, ISocketMessageChannel channel, SocketReaction reaction)
-        {
-            SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
-            if (user.IsBot) return;
-
-            IGuild guild = (channel as ITextChannel)?.Guild;
-            DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
-            {
-                if (reaction.MessageId != msgId) return;
-                await user.RemoveRoleAsync(roleId);
-            }
-        }
-
-        private async Task Client_UserJoined(SocketGuildUser user)
-        {
-            DocumentReference userDoc = database.Collection($"servers/{user.Guild.Id}/users").Document(user.Id.ToString());
-            DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
-            if (!snap.TryGetValue<double>("cash", out _)) await CashSystem.SetCash(user, null, 100);
-        }
-
-        private async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
-        {
-            switch (result)
-            {
-                case CommandResult rwm:
-                    if (rwm.Error == CommandError.Unsuccessful && !string.IsNullOrWhiteSpace(rwm.Reason))
-                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, rwm.Reason);
-                    if (rwm.Error == CommandError.BadArgCount)
-                    {
-                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                            $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``");
-                    }
-
-                    break;
-                default:
-                    if (!result.IsSuccess)
-                    {
-                        if (result.ErrorReason == "User not found.")
-                        {
-                            await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                                "Couldn't resolve a user from your input!");
-                        }
-
-                        Console.WriteLine(result.ErrorReason);
-                    }
-                    if (result.Error == CommandError.ParseFailed)
-                    {
-                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                            $"Couldn't understand something you passed into the command.\nThis error info might help: ``{result.ErrorReason}``" +
-                            $"\nOr maybe the command usage will: ``{command.Value.Remarks}``");
-                    }
-                    if (result.Error == CommandError.UnmetPrecondition) await context.Channel.SendMessageAsync(result.ErrorReason);
-                    if (result.Error == CommandError.BadArgCount)
-                    {
-                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                            $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``");
-                    }
-
-                    break;
-            }
-        }
-
-        private async Task HandleCommandAsync(SocketMessage msg)
+        private async Task Client_MessageReceived(SocketMessage msg)
         {
             SocketUserMessage userMsg = msg as SocketUserMessage;
             SocketCommandContext context = new(client, userMsg);
@@ -273,6 +193,81 @@ namespace RRBot
 
             await Filters.DoScamCheckAsync(context);
             await Filters.DoNWordCheckAsync(context);
+        }
+
+        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel, SocketReaction reaction)
+        {
+            await HandleReactionAsync(channel, reaction, true);
+        }
+
+        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel, SocketReaction reaction)
+        {
+            await HandleReactionAsync(channel, reaction, false);
+        }
+
+        private async Task Client_Ready()
+        {
+            QuerySnapshot globalConfig = await database.Collection("globalConfig").GetSnapshotAsync();
+            foreach (DocumentSnapshot blacklist in globalConfig.Where(doc => doc.ContainsField("banned")))
+            {
+                bannedUsers.Add(ulong.Parse(blacklist.Id));
+            }
+
+            await Task.Factory.StartNew(async () => await StartBanCheckAsync());
+            await Task.Factory.StartNew(async () => await StartMuteCheckAsync());
+            await lavaSocketClient.StartAsync(client);
+            lavaSocketClient.OnPlayerUpdated += audioSystem.OnPlayerUpdated;
+            lavaSocketClient.OnTrackFinished += audioSystem.OnTrackFinished;
+        }
+
+        private async Task Client_UserJoined(SocketGuildUser user)
+        {
+            // add 100 cash to user if they haven't joined already
+            DocumentReference userDoc = database.Collection($"servers/{user.Guild.Id}/users").Document(user.Id.ToString());
+            DocumentSnapshot userSnap = await userDoc.GetSnapshotAsync();
+            if (!userSnap.TryGetValue<double>("cash", out _)) await CashSystem.SetCash(user, null, 100);
+
+            // circumvent mute bypasses
+            DocumentReference rolesDoc = database.Collection($"servers/{user.Guild.Id}/config").Document("roles");
+            DocumentSnapshot rolesSnap = await rolesDoc.GetSnapshotAsync();
+            if (rolesSnap.TryGetValue("mutedRole", out ulong mutedId))
+            {
+                QuerySnapshot mutes = await database.Collection($"servers/{user.Guild.Id}/mutes").GetSnapshotAsync();
+                foreach (DocumentSnapshot mute in mutes.Documents.Where(doc => doc.Id == user.Id.ToString()))
+                {
+                    long timestamp = mute.GetValue<long>("Time");
+                    if (timestamp >= DateTimeOffset.UtcNow.ToUnixTimeSeconds()) await user.AddRoleAsync(mutedId);
+                }
+            }
+        }
+
+        private async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
+        {
+            switch (result.Error)
+            {
+                case CommandError.BadArgCount:
+                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                        $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``");
+                    break;
+                case CommandError.ParseFailed:
+                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                        $"Couldn't understand something you passed into the command.\nThis error info might help: ``{result.ErrorReason}``" +
+                        $"\nOr maybe the command usage will: ``{command.Value.Remarks}``");
+                    break;
+                default:
+                    if (!result.IsSuccess)
+                    {
+                        if (result.ErrorReason == "User not found.")
+                        {
+                            await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                                "Couldn't resolve a user from your input!");
+                        }
+
+                        Console.WriteLine(result.ErrorReason);
+                    }
+
+                    break;
+            }
         }
     }
 }
