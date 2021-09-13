@@ -390,7 +390,6 @@ namespace RRBot.Modules
         [Remarks("$suicide")]
         public async Task<RuntimeResult> Suicide()
         {
-            Random random = new();
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
@@ -415,7 +414,7 @@ namespace RRBot.Modules
             snap.TryGetValue("farmCooldown", out long farmCd);
             snap.TryGetValue("digCooldown", out long digCd);
             snap.TryGetValue("chopCooldown", out long chopCd);
-            switch (random.Next(4))
+            switch (RandomUtil.Next(4))
             {
                 case 0:
                     await Context.User.NotifyAsync(Context.Channel, "You attempted to hang yourself, but the rope snapped. You did not die.");

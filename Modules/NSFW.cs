@@ -18,11 +18,10 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> NHentai([Remainder] string keyword = "")
         {
             GalleryElement funny;
-            Random random = new();
             if (string.IsNullOrWhiteSpace(keyword))
             {
                 NHentaiSharp.Search.SearchResult result = await NHentaiSharp.Core.SearchClient.SearchAsync();
-                funny = result.elements[random.Next(0, result.elements.Length)];
+                funny = result.elements[RandomUtil.Next(0, result.elements.Length)];
             }
             else
             {
@@ -32,9 +31,9 @@ namespace RRBot.Modules
                 {
                     // the search code kinda garbage but according to the README.md of the NHentaiSharp project you have to do this i guess
                     NHentaiSharp.Search.SearchResult result = await NHentaiSharp.Core.SearchClient.SearchWithTagsAsync(keywords);
-                    int page = random.Next(0, result.numPages) + 1;
+                    int page = RandomUtil.Next(0, result.numPages) + 1;
                     result = await NHentaiSharp.Core.SearchClient.SearchWithTagsAsync(keywords, page);
-                    funny = result.elements[random.Next(0, result.elements.Length)];
+                    funny = result.elements[RandomUtil.Next(0, result.elements.Length)];
                 }
                 catch (Exception)
                 {

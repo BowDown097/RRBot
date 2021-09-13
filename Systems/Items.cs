@@ -148,14 +148,14 @@ namespace RRBot.Systems
             return itemsOfType.Count > 0 ? itemsOfType.OrderByDescending(item => rankings[item.Replace(type, "").Trim()]).First() : "";
         }
 
-        public static async Task<string> RandomItem(IGuildUser user, Random random)
+        public static async Task<string> RandomItem(IGuildUser user)
         {
             string[] newItems = items;
             DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
             if (snap.TryGetValue("items", out List<string> itemsList)) newItems = newItems.Where(item => !itemsList.Contains(item)).ToArray();
 
-            return items.Length <= newItems.Length ? newItems[random.Next(newItems.Length)] : "";
+            return items.Length <= newItems.Length ? newItems[RandomUtil.Next(newItems.Length)] : "";
         }
 
         public static async Task RewardItem(IGuildUser user, string item)

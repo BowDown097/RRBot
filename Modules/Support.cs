@@ -4,7 +4,6 @@ using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using RRBot.Extensions;
 using RRBot.Preconditions;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,8 +15,6 @@ namespace RRBot.Modules
     [RequireRushReborn]
     public class Support : ModuleBase<SocketCommandContext>
     {
-        public static readonly Random random = new();
-
         public static async Task CloseTicket(ISocketMessageChannel helpRequests, SocketUser user, DocumentReference doc, DocumentSnapshot snap, string response)
         {
             IUserMessage message = await helpRequests.GetMessageAsync(snap.GetValue<ulong>("message")) as IUserMessage;
@@ -72,7 +69,7 @@ namespace RRBot.Modules
             }
 
             IEnumerable<SocketGuildUser> helpers = Context.Guild.Roles.FirstOrDefault(role => role.Name == "Helper").Members.Where(user => user.Id != Context.User.Id);
-            SocketGuildUser helperUser = helpers.ElementAt(random.Next(0, helpers.Count()));
+            SocketGuildUser helperUser = helpers.ElementAt(RandomUtil.Next(0, helpers.Count()));
 
             EmbedBuilder embed = new()
             {

@@ -17,7 +17,6 @@ namespace RRBot.Modules
     public class Gambling : ModuleBase<SocketCommandContext>
     {
         public CultureInfo CurrencyCulture { get; set; }
-        private static readonly Random random = new();
         private static readonly Emoji SEVEN = new("7️⃣");
         private static readonly Emoji APPLE = new("\uD83C\uDF4E");
         private static readonly Emoji GRAPES = new("\uD83C\uDF47");
@@ -72,7 +71,7 @@ namespace RRBot.Modules
 
             if (cash < bet) return CommandResult.FromError("You can't bet more than what you have!");
 
-            double roll = Math.Round(random.NextDouble(1, 101), 2);
+            double roll = Math.Round(RandomUtil.NextDouble(1, 101), 2);
             if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon")) odds *= 0.95;
             bool success = !exactRoll ? roll >= odds : roll.CompareTo(odds) == 0;
             if (success)
@@ -132,7 +131,7 @@ namespace RRBot.Modules
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double cash = snap.GetValue<double>("cash");
 
-            if (random.Next(1, 101) < Constants.DOUBLE_ODDS)
+            if (RandomUtil.Next(1, 101) < Constants.DOUBLE_ODDS)
             {
                 await StatUpdate(Context.User, true, cash);
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash * 2);
@@ -180,10 +179,10 @@ namespace RRBot.Modules
                 IUserMessage slotMsg = await ReplyAsync(embed: embed.Build());
                 for (int i = 0; i < 5; i++)
                 {
-                    results[0] = random.Next(1, 5);
-                    results[1] = random.Next(1, 5);
-                    results[2] = random.Next(1, 5);
-                    results[3] = random.Next(1, 5);
+                    results[0] = RandomUtil.Next(1, 5);
+                    results[1] = RandomUtil.Next(1, 5);
+                    results[2] = RandomUtil.Next(1, 5);
+                    results[3] = RandomUtil.Next(1, 5);
 
                     embed.WithDescription($"{emojis[results[0]]} {emojis[results[1]]} {emojis[results[2]]} {emojis[results[3]]}");
                     await slotMsg.ModifyAsync(msg => msg.Embed = embed.Build());

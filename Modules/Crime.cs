@@ -18,7 +18,6 @@ namespace RRBot.Modules
     public class Crime : ModuleBase<SocketCommandContext>
     {
         public CultureInfo CurrencyCulture { get; set; }
-        private static readonly Random random = new();
 
         private async Task<RuntimeResult> GenericCrime(string outcome1, string outcome2, string outcome3, string outcome4, string outcome5, object cooldown, bool funny = false)
         {
@@ -30,13 +29,13 @@ namespace RRBot.Modules
 
             double winOdds = snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon")
                 ? Constants.GENERIC_CRIME_WIN_ODDS * 0.95 : Constants.GENERIC_CRIME_WIN_ODDS;
-            if (random.NextDouble(1, 101) < winOdds)
+            if (RandomUtil.NextDouble(1, 101) < winOdds)
             {
-                double moneyEarned = random.NextDouble(Constants.GENERIC_CRIME_WIN_MIN, Constants.GENERIC_CRIME_WIN_MAX);
+                double moneyEarned = RandomUtil.NextDouble(Constants.GENERIC_CRIME_WIN_MIN, Constants.GENERIC_CRIME_WIN_MAX);
                 double totalCash = cash + moneyEarned;
                 await StatUpdate(Context.User, true, moneyEarned);
 
-                switch (random.Next(3))
+                switch (RandomUtil.Next(3))
                 {
                     case 0:
                         await Context.User.NotifyAsync(Context.Channel, string.Format(outcome1 + $"\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
@@ -59,12 +58,12 @@ namespace RRBot.Modules
             }
             else
             {
-                double lostCash = random.NextDouble(Constants.GENERIC_CRIME_LOSS_MIN, Constants.GENERIC_CRIME_LOSS_MAX);
+                double lostCash = RandomUtil.NextDouble(Constants.GENERIC_CRIME_LOSS_MIN, Constants.GENERIC_CRIME_LOSS_MAX);
                 lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
                 double totalCash = (cash - lostCash) > 0 ? cash - lostCash : 0;
                 await StatUpdate(Context.User, false, lostCash);
 
-                switch (random.Next(2))
+                switch (RandomUtil.Next(2))
                 {
                     case 0:
                         await Context.User.NotifyAsync(Context.Channel, string.Format(outcome4 + $"\nBalance: {totalCash:C2}", lostCash.ToString("C2")));
@@ -85,9 +84,9 @@ namespace RRBot.Modules
 
         private async Task RollRandomItem()
         {
-            if (random.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
+            if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
             {
-                string item = await Items.RandomItem(Context.User as IGuildUser, random);
+                string item = await Items.RandomItem(Context.User as IGuildUser);
                 if (!string.IsNullOrEmpty(item))
                 {
                     await Items.RewardItem(Context.User as IGuildUser, item);
@@ -212,10 +211,10 @@ namespace RRBot.Modules
 
             if (tCash > 0)
             {
-                double rapePercent = random.NextDouble(Constants.RAPE_MIN_PERCENT, Constants.RAPE_MAX_PERCENT);
+                double rapePercent = RandomUtil.NextDouble(Constants.RAPE_MIN_PERCENT, Constants.RAPE_MAX_PERCENT);
                 double winOdds = aSnap.TryGetValue("perks", out Dictionary<string, long> aPerks) && aPerks.Keys.Contains("Speed Demon")
                     ? Constants.RAPE_ODDS * 0.95 : Constants.RAPE_ODDS;
-                if (random.NextDouble(1, 101) < winOdds)
+                if (RandomUtil.NextDouble(1, 101) < winOdds)
                 {
                     double repairs = tCash / 100.0 * rapePercent;
                     await StatUpdate(user as SocketUser, false, repairs);
@@ -267,12 +266,12 @@ namespace RRBot.Modules
             if (amount > robMax)
                 return CommandResult.FromError($"You can only rob {Constants.ROB_MAX_PERCENT}% of **{user}**'s cash, that being **{robMax:C2}**.");
 
-            int roll = random.Next(1, 101);
+            int roll = RandomUtil.Next(1, 101);
             if (roll < Constants.ROB_ODDS)
             {
                 await CashSystem.SetCash(user, Context.Channel, tCash - amount);
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash + amount);
-                switch (random.Next(2))
+                switch (RandomUtil.Next(2))
                 {
                     case 0:
                         await Context.User.NotifyAsync(Context.Channel, $"You beat the shit out of **{user}** and took **{amount:C2}** from their ass!" +
@@ -287,7 +286,7 @@ namespace RRBot.Modules
             else
             {
                 await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - amount);
-                switch (random.Next(2))
+                switch (RandomUtil.Next(2))
                 {
                     case 0:
                         await Context.User.NotifyAsync(Context.Channel, $"You yoinked the money from **{user}**, but they noticed and shanked you when you were on your way out." +

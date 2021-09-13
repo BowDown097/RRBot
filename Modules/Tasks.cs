@@ -15,8 +15,6 @@ namespace RRBot.Modules
     [Summary("The best way to earn money by far, at least for those lucky or rich enough to get themselves an item.")]
     public class Tasks : ModuleBase<SocketCommandContext>
     {
-        private static readonly Random random = new();
-
         private async Task GenericTask(string itemType, string activity, string thing, object cooldown)
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
@@ -26,17 +24,17 @@ namespace RRBot.Modules
 
             string item = Items.GetBestItem(items, itemType);
 
-            int numMined = random.Next(Constants.GENERIC_TASK_WOOD_MIN, Constants.GENERIC_TASK_WOOD_MAX); // default for wooden
+            int numMined = RandomUtil.Next(Constants.GENERIC_TASK_WOOD_MIN, Constants.GENERIC_TASK_WOOD_MAX); // default for wooden
             if (item.StartsWith("Stone", StringComparison.Ordinal))
-                numMined = random.Next(Constants.GENERIC_TASK_STONE_MIN, Constants.GENERIC_TASK_STONE_MAX);
+                numMined = RandomUtil.Next(Constants.GENERIC_TASK_STONE_MIN, Constants.GENERIC_TASK_STONE_MAX);
             else if (item.StartsWith("Iron", StringComparison.Ordinal))
-                numMined = random.Next(Constants.GENERIC_TASK_IRON_MIN, Constants.GENERIC_TASK_IRON_MAX);
+                numMined = RandomUtil.Next(Constants.GENERIC_TASK_IRON_MIN, Constants.GENERIC_TASK_IRON_MAX);
             else if (item.StartsWith("Diamond", StringComparison.Ordinal))
-                numMined = random.Next(Constants.GENERIC_TASK_DIAMOND_MIN, Constants.GENERIC_TASK_DIAMOND_MAX);
+                numMined = RandomUtil.Next(Constants.GENERIC_TASK_DIAMOND_MIN, Constants.GENERIC_TASK_DIAMOND_MAX);
 
             if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Enchanter"))
             {
-                int randNum = random.Next(100);
+                int randNum = RandomUtil.Next(100);
                 if (randNum == 1 || randNum == 2)
                 {
                     perks.Remove(item);
@@ -107,12 +105,12 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             double cash = snap.GetValue<double>("cash");
-            KeyValuePair<string, double> fish = Constants.FISH.ElementAt(random.Next(Constants.FISH.Count));
-            int numCaught = random.Next(7, 15);
+            KeyValuePair<string, double> fish = Constants.FISH.ElementAt(RandomUtil.Next(Constants.FISH.Count));
+            int numCaught = RandomUtil.Next(7, 15);
 
             if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Enchanter"))
             {
-                int randNum = random.Next(100);
+                int randNum = RandomUtil.Next(100);
                 if (randNum == 1 || randNum == 2)
                 {
                     List<string> items = snap.GetValue<List<string>>("items");
@@ -166,10 +164,10 @@ namespace RRBot.Modules
 
             string item = Items.GetBestItem(items, "Pickaxe");
 
-            int numMined = random.Next(32, 65);
+            int numMined = RandomUtil.Next(32, 65);
             if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Enchanter"))
             {
-                int randNum = random.Next(100);
+                int randNum = RandomUtil.Next(100);
                 if (randNum == 1 || randNum == 2)
                 {
                     items.Remove(item);

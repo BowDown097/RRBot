@@ -254,6 +254,10 @@ namespace RRBot
                         $"Couldn't understand something you passed into the command.\nThis error info might help: ``{result.ErrorReason}``" +
                         $"\nOr maybe the command usage will: ``{command.Value.Remarks}``");
                     break;
+                case CommandError.Unsuccessful:
+                    if (result is CommandResult rwm && !string.IsNullOrWhiteSpace(rwm.Reason))
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, rwm.Reason);
+                    break;
                 default:
                     if (!result.IsSuccess)
                     {
