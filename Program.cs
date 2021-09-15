@@ -31,82 +31,6 @@ namespace RRBot
         private LavaSocketClient lavaSocketClient;
         private List<ulong> bannedUsers;
 
-        private static async Task HandleReactionAsync(ISocketMessageChannel channel, SocketReaction reaction, bool addedReaction)
-        {
-            SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
-            if (user.IsBot) return;
-
-            IGuild guild = (channel as ITextChannel)?.Guild;
-            DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
-            {
-                if (reaction.MessageId != msgId) return;
-
-                if (addedReaction)
-                    await user.AddRoleAsync(roleId);
-                else
-                    await user.RemoveRoleAsync(roleId);
-            }
-        }
-
-        private async Task StartBanCheckAsync()
-        {
-            while (true)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(30));
-                foreach (SocketGuild guild in client.Guilds)
-                {
-                    QuerySnapshot bans = await database.Collection($"servers/{guild.Id}/bans").GetSnapshotAsync();
-                    foreach (DocumentSnapshot ban in bans.Documents)
-                    {
-                        long timestamp = ban.GetValue<long>("Time");
-                        ulong userId = Convert.ToUInt64(ban.Id);
-
-                        if (!(await guild.GetBansAsync()).Any(ban => ban.User.Id == userId))
-                        {
-                            await ban.Reference.DeleteAsync();
-                            continue;
-                        }
-
-                        if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                        {
-                            await guild.RemoveBanAsync(userId);
-                            await ban.Reference.DeleteAsync();
-                        }
-                    }
-                }
-            }
-        }
-
-        private async Task StartMuteCheckAsync()
-        {
-            while (true)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(30));
-                foreach (SocketGuild guild in client.Guilds)
-                {
-                    DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("roles");
-                    DocumentSnapshot snap = await doc.GetSnapshotAsync();
-                    if (snap.TryGetValue("mutedRole", out ulong mutedId))
-                    {
-                        QuerySnapshot mutes = await database.Collection($"servers/{guild.Id}/mutes").GetSnapshotAsync();
-                        foreach (DocumentSnapshot mute in mutes.Documents)
-                        {
-                            long timestamp = mute.GetValue<long>("Time");
-                            SocketGuildUser user = guild.GetUser(Convert.ToUInt64(mute.Id));
-
-                            if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                            {
-                                if (user != null) await user.RemoveRoleAsync(mutedId);
-                                await mute.Reference.DeleteAsync();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         public async Task RunBotAsync()
         {
             // services setup
@@ -163,6 +87,25 @@ namespace RRBot
             await Task.Delay(-1);
         }
 
+        private static async Task HandleReactionAsync(ISocketMessageChannel channel, SocketReaction reaction, bool addedReaction)
+        {
+            SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
+            if (user.IsBot) return;
+
+            IGuild guild = (channel as ITextChannel)?.Guild;
+            DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
+            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
+            {
+                if (reaction.MessageId != msgId) return;
+
+                if (addedReaction)
+                    await user.AddRoleAsync(roleId);
+                else
+                    await user.RemoveRoleAsync(roleId);
+            }
+        }
+
         private Task Client_Log(LogMessage arg)
         {
             Console.WriteLine(arg);
@@ -199,15 +142,11 @@ namespace RRBot
             }
         }
 
-        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel, SocketReaction reaction)
-        {
-            await HandleReactionAsync(channel, reaction, true);
-        }
+        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel,
+            SocketReaction reaction) => await HandleReactionAsync(channel, reaction, true);
 
-        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel, SocketReaction reaction)
-        {
-            await HandleReactionAsync(channel, reaction, false);
-        }
+        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel,
+            SocketReaction reaction) => await HandleReactionAsync(channel, reaction, false);
 
         private async Task Client_Ready()
         {
@@ -217,8 +156,7 @@ namespace RRBot
                 bannedUsers.Add(ulong.Parse(blacklist.Id));
             }
 
-            await Task.Factory.StartNew(async () => await StartBanCheckAsync());
-            await Task.Factory.StartNew(async () => await StartMuteCheckAsync());
+            await new Monitors(client, database).Initialise();
             await lavaSocketClient.StartAsync(client);
             lavaSocketClient.OnPlayerUpdated += audioSystem.OnPlayerUpdated;
             lavaSocketClient.OnTrackFinished += audioSystem.OnTrackFinished;

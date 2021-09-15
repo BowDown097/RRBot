@@ -1,7 +1,6 @@
 using Discord;
 using Discord.Commands;
 using Discord.Rest;
-using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -25,27 +24,29 @@ namespace RRBot.Systems
 
         public static async Task DoNWordCheckAsync(SocketCommandContext context)
         {
-            if (context.Channel.Name != "extremely-funny" && NWORD_REGEX.Matches(new string(context.Message.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
+            if (context.Channel.Name != "extremely-funny" &&
+                NWORD_REGEX.Matches(new string(context.Message.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
             {
-                await Task.Factory.StartNew(async () =>
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(10));
-                    await context.Message.DeleteAsync();
-                });
+                await context.Message.DeleteAsync();
             }
         }
 
         public static async Task DoScamCheckAsync(SocketCommandContext context)
         {
+            string content = context.Message.Content.ToLower();
+            if ((content.Contains("skins") && content.Contains("imgur"))
+                || (content.Contains("nitro") && content.Contains("free") && content.Contains("http")))
+            {
+                await context.Message.DeleteAsync();
+                return;
+            }
+
             foreach (Embed epicEmbed in context.Message.Embeds)
             {
-                if ((context.Message.Content.Contains("skins") && context.Message.Content.Contains("imgur"))
-                    || (epicEmbed.Title.StartsWith("Trade offer", StringComparison.Ordinal) && !epicEmbed.Url.Contains("steamcommunity.com"))
-                    || (epicEmbed.Title.StartsWith("Steam Community", StringComparison.Ordinal) && !epicEmbed.Url.Contains("steamcommunity.com"))
-                    || epicEmbed.Title.StartsWith("Free Discord Nitro"))
+                if ((epicEmbed.Title.StartsWith("Trade offer") && !epicEmbed.Url.Contains("steamcommunity.com"))
+                    || (epicEmbed.Title.StartsWith("Steam Community") && !epicEmbed.Url.Contains("steamcommunity.com")))
                 {
                     await context.Message.DeleteAsync();
-                    break;
                 }
             }
         }

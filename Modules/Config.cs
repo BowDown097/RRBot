@@ -91,7 +91,6 @@ namespace RRBot.Modules
 
                 foreach (string key in keys)
                 {
-                    Console.WriteLine(key);
                     switch (entry.Id)
                     {
                         case "channels":
