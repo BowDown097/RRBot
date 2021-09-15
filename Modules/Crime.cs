@@ -148,7 +148,7 @@ namespace RRBot.Modules
                 await ReplyAsync($"**{Context.User}** has **BULLIED** **{user}** to ``{nickname}``!");
 
                 DocumentReference userDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-                await doc.SetAsync(new { bullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN) },
+                await userDoc.SetAsync(new { bullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN) },
                     SetOptions.MergeAll);
 
                 return CommandResult.FromSuccess();

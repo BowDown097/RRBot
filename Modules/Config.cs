@@ -79,41 +79,60 @@ namespace RRBot.Modules
         [Remarks("$currentconfig")]
         public async Task GetCurrentConfig()
         {
-            CollectionReference config = Program.database.Collection($"servers/{Context.Guild.Id}/config");
+            QuerySnapshot config = await Program.database.Collection($"servers/{Context.Guild.Id}/config").GetSnapshotAsync();
             StringBuilder description = new();
-            foreach (DocumentReference doc in config.ListDocumentsAsync().ToEnumerable())
+            foreach (DocumentSnapshot entry in config.Documents)
             {
-                description.AppendLine($"***{doc.Id}***");
-                DocumentSnapshot snap = await doc.GetSnapshotAsync();
-                if (snap.Exists)
+                description.AppendLine($"***{entry.Id}***");
+
+                Dictionary<string, object> dict = entry.ToDictionary();
+                List<string> keys = dict.Keys.ToList();
+                keys.Sort();
+
+                foreach (string key in keys)
                 {
-                    foreach (KeyValuePair<string, object> kvp in snap.ToDictionary())
+                    Console.WriteLine(key);
+                    switch (entry.Id)
                     {
-                        switch (doc.Id)
-                        {
-                            case "roles":
-                                SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
-                                description.AppendLine($"**{kvp.Key}**: {role.Name}");
-                                break;
-                            case "channels":
-                                SocketGuildChannel channel = Context.Guild.GetChannel(Convert.ToUInt64(kvp.Value));
-                                description.AppendLine($"**{kvp.Key}**: {channel}");
-                                break;
-                            case "ranks":
-                                if (kvp.Key.EndsWith("Id", StringComparison.Ordinal))
-                                {
-                                    SocketRole rank = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
-                                    description.AppendLine($"**{kvp.Key.Replace("Id", "Role")}**: {rank.Name}");
-                                }
+                        case "channels":
+                            SocketGuildChannel channel = Context.Guild.GetChannel(Convert.ToUInt64(dict[key]));
+                            if (channel != null)
+                                description.AppendLine($"**{key}**: #{channel}");
+                            else
+                                description.AppendLine($"**{key}**: #deleted-channel");
+                            break;
+                        case "ranks":
+                            if (key.EndsWith("Id", StringComparison.Ordinal))
+                            {
+                                SocketRole rank = Context.Guild.GetRole(Convert.ToUInt64(dict[key]));
+                                if (rank != null)
+                                    description.AppendLine($"**{key.Replace("Id", "Role")}**: {rank}");
                                 else
-                                {
-                                    description.AppendLine($"**{kvp.Key}**: ${Convert.ToSingle(kvp.Value)}");
-                                }
-                                break;
-                            default:
-                                description.AppendLine($"**{kvp.Key}**: {kvp.Value}");
-                                break;
-                        }
+                                    description.AppendLine($"**{key.Replace("Id", "Role")}**: (deleted role)");
+                            }
+                            else
+                            {
+                                description.AppendLine($"**{key}**: ${Convert.ToSingle(dict[key])}");
+                            }
+                            break;
+                        case "roles":
+                        case "selfroles":
+                            if (key != "message" && key != "channel")
+                            {
+                                SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(dict[key]));
+                                if (role != null)
+                                    description.AppendLine($"**{key}**: {role}");
+                                else
+                                    description.AppendLine($"**{key}**: (deleted role)");
+                            }
+                            else
+                            {
+                                description.AppendLine($"**{key}**: {dict[key]}");
+                            }
+                            break;
+                        default:
+                            description.AppendLine($"**{key}**: {dict[key]}");
+                            break;
                     }
                 }
             }
