@@ -191,8 +191,12 @@ namespace RRBot
                 await CashSystem.TryMessageReward(context);
             }
 
-            await Filters.DoScamCheckAsync(context);
-            await Filters.DoNWordCheckAsync(context);
+            if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false)
+            {
+                await Filters.DoInviteCheckAsync(context);
+                await Filters.DoNWordCheckAsync(context);
+                await Filters.DoScamCheckAsync(context);
+            }
         }
 
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel, SocketReaction reaction)

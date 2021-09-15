@@ -117,7 +117,7 @@ namespace RRBot.Systems
                 Timestamp = DateTime.Now
             };
 
-            if (Filters.FUNNY_REGEX.Matches(new string(msgAfter.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
+            if (Filters.NWORD_REGEX.Matches(new string(msgAfter.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
             {
                 await Task.Factory.StartNew(async () =>
                 {

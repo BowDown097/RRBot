@@ -123,7 +123,7 @@ namespace RRBot.Modules
         [RequireCooldown("bullyCooldown", "You cannot bully anyone for {0}.")]
         public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
         {
-            if (Filters.FUNNY_REGEX.Matches(new string(nickname.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
+            if (Filters.NWORD_REGEX.Matches(new string(nickname.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
                 return CommandResult.FromError("You cannot bully someone to the funny word.");
             if (nickname.Length > 32)
                 return CommandResult.FromError("The nickname you put is longer than the maximum accepted length (32).");
