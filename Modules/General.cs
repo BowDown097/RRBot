@@ -140,7 +140,7 @@ namespace RRBot.Modules
 
             foreach (ModuleInfo moduleInfo in Commands.Modules)
             {
-                if (moduleInfo.Name == moduleLower)
+                if (moduleInfo.Name.ToLower() == moduleLower)
                 {
                     if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
                     {

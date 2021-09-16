@@ -16,7 +16,7 @@ namespace RRBot.Preconditions
         {
             return context.Channel.Name == Name
                 ? Task.FromResult(PreconditionResult.FromSuccess())
-                : Task.FromResult(PreconditionResult.FromError($"You must be in the {(context.Channel as SocketTextChannel)?.Mention} channel."));
+                : Task.FromResult(PreconditionResult.FromError($"You must be in the #{Name} channel."));
         }
     }
 }
