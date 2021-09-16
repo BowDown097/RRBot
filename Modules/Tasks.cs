@@ -53,7 +53,7 @@ namespace RRBot.Modules
             await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained:C2}**." +
                 $"\nBalance: {totalCash:C2}");
 
-            await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
+            await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
             await Context.User.AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
             {
                 { "Tasks Done", "1" },
@@ -134,7 +134,7 @@ namespace RRBot.Modules
                 { "Tasks Done", "1" },
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
-            await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
+            await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
             await doc.SetAsync(new { fishCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FISH_COOLDOWN) },
                 SetOptions.MergeAll);
         }
@@ -211,7 +211,7 @@ namespace RRBot.Modules
                 { "Tasks Done", "1" },
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
-            await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
+            await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
             await doc.SetAsync(new { mineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN) },
                 SetOptions.MergeAll);
         }

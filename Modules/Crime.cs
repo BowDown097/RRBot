@@ -6,6 +6,7 @@ using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -23,7 +24,7 @@ namespace RRBot.Modules
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+            if (snap.ContainsField("usingSlots"))
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double cash = snap.GetValue<double>("cash");
 
@@ -33,15 +34,16 @@ namespace RRBot.Modules
             {
                 double moneyEarned = RandomUtil.NextDouble(Constants.GENERIC_CRIME_WIN_MIN, Constants.GENERIC_CRIME_WIN_MAX);
                 double totalCash = cash + moneyEarned;
-                await StatUpdate(Context.User, true, moneyEarned);
 
                 switch (RandomUtil.Next(3))
                 {
                     case 0:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome1 + $"\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel,
+                            string.Format($"{outcome1}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
                         break;
                     case 1:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome2 + $"\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel,
+                            string.Format($"{outcome2}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
                         break;
                     case 2:
                         if (funny)
@@ -50,18 +52,19 @@ namespace RRBot.Modules
                             totalCash = cash + moneyEarned;
                         }
 
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome3 + $"\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
+                        await Context.User.NotifyAsync(Context.Channel,
+                            string.Format($"{outcome3}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
                         break;
                 }
 
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
+                await StatUpdate(Context.User, true, moneyEarned);
+                await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
             }
             else
             {
                 double lostCash = RandomUtil.NextDouble(Constants.GENERIC_CRIME_LOSS_MIN, Constants.GENERIC_CRIME_LOSS_MAX);
                 lostCash = (cash - lostCash) < 0 ? lostCash - Math.Abs(cash - lostCash) : lostCash;
                 double totalCash = (cash - lostCash) > 0 ? cash - lostCash : 0;
-                await StatUpdate(Context.User, false, lostCash);
 
                 switch (RandomUtil.Next(2))
                 {
@@ -73,11 +76,11 @@ namespace RRBot.Modules
                         break;
                 }
 
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, totalCash);
+                await StatUpdate(Context.User, false, lostCash);
+                await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
             }
 
             await RollRandomItem();
-
             await doc.SetAsync(cooldown, SetOptions.MergeAll);
             return CommandResult.FromSuccess();
         }
@@ -86,7 +89,7 @@ namespace RRBot.Modules
         {
             if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
             {
-                string item = await Items.RandomItem(Context.User as IGuildUser);
+                string item = await Items.RandomItem(Context.User);
                 if (!string.IsNullOrEmpty(item))
                 {
                     await Items.RewardItem(Context.User as IGuildUser, item);
@@ -148,8 +151,7 @@ namespace RRBot.Modules
                 await ReplyAsync($"**{Context.User}** has **BULLIED** **{user}** to ``{nickname}``!");
 
                 DocumentReference userDoc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-                await userDoc.SetAsync(new { bullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN) },
-                    SetOptions.MergeAll);
+                await userDoc.SetAsync(new { bullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN) }, SetOptions.MergeAll);
 
                 return CommandResult.FromSuccess();
             }
@@ -193,14 +195,16 @@ namespace RRBot.Modules
         [RequireCooldown("rapeCooldown", "You cannot rape for {0}.")]
         public async Task<RuntimeResult> Rape(IGuildUser user)
         {
-            if (user.Id == Context.User.Id) return CommandResult.FromError("How are you supposed to rape yourself?");
-            if (user.IsBot) return CommandResult.FromError("Nope.");
+            if (user.Id == Context.User.Id)
+                return CommandResult.FromError("How are you supposed to rape yourself?");
+            if (user.IsBot)
+                return CommandResult.FromError("Nope.");
 
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
 
             DocumentReference aDoc = users.Document(Context.User.Id.ToString());
             DocumentSnapshot aSnap = await aDoc.GetSnapshotAsync();
-            if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+            if (aSnap.ContainsField("usingSlots"))
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double aCash = aSnap.GetValue<double>("cash");
 
@@ -218,14 +222,14 @@ namespace RRBot.Modules
                 {
                     double repairs = tCash / 100.0 * rapePercent;
                     await StatUpdate(user as SocketUser, false, repairs);
-                    await CashSystem.SetCash(user, Context.Channel, tCash - repairs);
+                    await CashSystem.SetCash(user as SocketUser, Context.Channel, tCash - repairs);
                     await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user}**'s asshole! They just paid **{repairs:C2}** in asshole repairs.");
                 }
                 else
                 {
                     double repairs = aCash / 100.0 * rapePercent;
                     await StatUpdate(Context.User, false, repairs);
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - repairs);
+                    await CashSystem.SetCash(Context.User, Context.Channel, aCash - repairs);
                     await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user}**! You just paid **{repairs:C2}** in asshole repairs.");
                 }
 
@@ -245,14 +249,16 @@ namespace RRBot.Modules
         {
             if (amount < Constants.ROB_MIN_CASH)
                 return CommandResult.FromError($"There's no point in robbing for less than {Constants.ROB_MIN_CASH:C2}!");
-            if (user.Id == Context.User.Id) return CommandResult.FromError("How are you supposed to rob yourself?");
-            if (user.IsBot) return CommandResult.FromError("Nope.");
+            if (user.Id == Context.User.Id)
+                return CommandResult.FromError("How are you supposed to rob yourself?");
+            if (user.IsBot)
+                return CommandResult.FromError("Nope.");
 
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
 
             DocumentReference aDoc = users.Document(Context.User.Id.ToString());
             DocumentSnapshot aSnap = await aDoc.GetSnapshotAsync();
-            if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+            if (aSnap.ContainsField("usingSlots"))
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double aCash = aSnap.GetValue<double>("cash");
 
@@ -262,15 +268,16 @@ namespace RRBot.Modules
             double tCash = tSnap.GetValue<double>("cash");
 
             double robMax = tCash / 100.0 * Constants.ROB_MAX_PERCENT;
-            if (aCash < amount) return CommandResult.FromError("You don't have that much money!");
+            if (aCash < amount)
+                return CommandResult.FromError("You don't have that much money!");
             if (amount > robMax)
                 return CommandResult.FromError($"You can only rob {Constants.ROB_MAX_PERCENT}% of **{user}**'s cash, that being **{robMax:C2}**.");
 
             int roll = RandomUtil.Next(1, 101);
             if (roll < Constants.ROB_ODDS)
             {
-                await CashSystem.SetCash(user, Context.Channel, tCash - amount);
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash + amount);
+                await CashSystem.SetCash(user as SocketUser, Context.Channel, tCash - amount);
+                await CashSystem.SetCash(Context.User, Context.Channel, aCash + amount);
                 switch (RandomUtil.Next(2))
                 {
                     case 0:
@@ -285,7 +292,7 @@ namespace RRBot.Modules
             }
             else
             {
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - amount);
+                await CashSystem.SetCash(Context.User, Context.Channel, aCash - amount);
                 switch (RandomUtil.Next(2))
                 {
                     case 0:

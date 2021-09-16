@@ -10,7 +10,7 @@ namespace RRBot.Preconditions
     {
         public double Amount { get; }
 
-        public RequireCashAttribute(double amount = 1) => Amount = amount;
+        public RequireCashAttribute(double amount = 0.01) => Amount = amount;
 
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
@@ -18,14 +18,9 @@ namespace RRBot.Preconditions
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             double cash = snap.GetValue<double>("cash");
-            if (cash > 0)
-            {
-                return cash >= Amount
-                    ? PreconditionResult.FromSuccess()
-                    : PreconditionResult.FromError($"You must have at least **{Amount:C2}**.");
-            }
-
-            return PreconditionResult.FromError("You're broke!");
+            return cash >= Amount
+                ? PreconditionResult.FromSuccess()
+                : PreconditionResult.FromError("You're broke!");
         }
     }
 }

@@ -19,13 +19,13 @@ namespace RRBot.Systems
     {
         private static readonly WebClient client = new();
 
-        public static async Task AddCrypto(IGuildUser user, string crypto, double amount)
+        public static async Task AddCrypto(SocketUser user, string crypto, double amount)
         {
             amount = Math.Round(amount, 4);
-            DocumentReference doc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
+            IGuildUser guildUser = user as IGuildUser;
+            DocumentReference doc = Program.database.Collection($"servers/{guildUser.GuildId}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            double currentAmount;
-            snap.TryGetValue(crypto, out currentAmount);
+            snap.TryGetValue(crypto, out double currentAmount);
             await doc.SetAsync(new Dictionary<string, double> { { crypto, currentAmount + amount } }, SetOptions.MergeAll);
         }
 
@@ -34,22 +34,24 @@ namespace RRBot.Systems
             string current = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
             string today = DateTime.Now.ToString("yyyy-MM-dd") + "T00:00";
             string data = await client.DownloadStringTaskAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
-
             dynamic obj = JsonConvert.DeserializeObject(data);
             JToken latestEntry = JArray.FromObject(obj.data.entries).Last;
             return Math.Round(latestEntry[1].Value<double>(), 2);
         }
 
-        public static async Task SetCash(IGuildUser user, ISocketMessageChannel channel, double amount)
+        public static async Task SetCash(SocketUser user, ISocketMessageChannel channel, double amount)
         {
-            if (user.IsBot) return;
-            if (amount < 0) amount = 0;
+            if (user.IsBot)
+                return;
+            if (amount < 0)
+                amount = 0;
 
+            IGuildUser guildUser = user as IGuildUser;
             amount = Math.Round(amount, 2) * Constants.CASH_MULTIPLIER;
-            DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
+            DocumentReference userDoc = Program.database.Collection($"servers/{guildUser.GuildId}/users").Document(user.Id.ToString());
             await userDoc.SetAsync(new { cash = amount }, SetOptions.MergeAll);
 
-            DocumentReference ranksDoc = Program.database.Collection($"servers/{user.GuildId}/config").Document("ranks");
+            DocumentReference ranksDoc = Program.database.Collection($"servers/{guildUser.GuildId}/config").Document("ranks");
             DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
             if (snap.Exists)
             {
@@ -57,27 +59,20 @@ namespace RRBot.Systems
                 {
                     double neededCash = snap.GetValue<double>(kvp.Key.Replace("Id", "Cost"));
                     ulong roleId = Convert.ToUInt64(kvp.Value);
+                    IRole role = guildUser.Guild.GetRole(roleId);
+                    bool rankupNotify = await UserSettingsGetters.GetRankupNotifications(guildUser);
 
-                    if (amount >= neededCash && !user.RoleIds.Contains(roleId))
+                    if (amount >= neededCash && !guildUser.RoleIds.Contains(roleId))
                     {
-                        IRole role = user.Guild.GetRole(roleId);
-                        bool rankupNotify = await UserSettingsGetters.GetRankupNotifications(user);
                         if (rankupNotify)
-                        {
-                            await (user as SocketUser).NotifyAsync(channel, $"**{user}** has ranked up to {role.Name}!",
-                                 $"{user.Mention}, you have ranked up to {role.Name}!", true);
-                        }
-
-                        await user.AddRoleAsync(roleId);
+                            await user.NotifyAsync(channel, $"**{user}** ranked up to {role.Name}!", $"You have ranked up to {role.Name}!", true);
+                        await guildUser.AddRoleAsync(roleId);
                     }
-                    else if (amount <= neededCash && user.RoleIds.Contains(roleId))
+                    else if (amount <= neededCash && guildUser.RoleIds.Contains(roleId))
                     {
-                        IRole role = user.Guild.GetRole(roleId);
-                        bool rankupNotify = await UserSettingsGetters.GetRankupNotifications(user);
                         if (rankupNotify)
-                            await (user as SocketUser).NotifyAsync(channel, $"**{user}** has lost {role.Name}!", $"{user.Mention}, you lost {role.Name}!", true);
-
-                        await user.RemoveRoleAsync(roleId);
+                            await user.NotifyAsync(channel, $"**{user}** has lost {role.Name}!", $"You lost {role.Name}!", true);
+                        await guildUser.RemoveRoleAsync(roleId);
                     }
                 }
             }
@@ -89,7 +84,7 @@ namespace RRBot.Systems
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
             if (snap.TryGetValue("timeTillCash", out long time) && time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                await SetCash(context.User as IGuildUser, context.Channel, snap.GetValue<double>("cash") + Constants.MESSAGE_CASH);
+                await SetCash(context.User, context.Channel, snap.GetValue<double>("cash") + Constants.MESSAGE_CASH);
 
             await doc.SetAsync(new { timeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN) },
                 SetOptions.MergeAll);

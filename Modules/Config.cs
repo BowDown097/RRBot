@@ -18,7 +18,8 @@ namespace RRBot.Modules
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document(document);
             await doc.SetAsync(data, SetOptions.MergeAll);
-            if (!string.IsNullOrWhiteSpace(message)) await ReplyAsync(message);
+            if (!string.IsNullOrWhiteSpace(message))
+                await ReplyAsync(message);
         }
 
         [Command("addrank")]
@@ -60,7 +61,8 @@ namespace RRBot.Modules
         public async Task ClearConfig()
         {
             CollectionReference collection = Program.database.Collection($"servers/{Context.Guild.Id}/config");
-            foreach (DocumentReference doc in collection.ListDocumentsAsync().ToEnumerable()) await doc.DeleteAsync();
+            foreach (DocumentReference doc in collection.ListDocumentsAsync().ToEnumerable())
+                await doc.DeleteAsync();
             await ReplyAsync("All configuration cleared!");
         }
 
@@ -189,7 +191,8 @@ namespace RRBot.Modules
             bool status = false;
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("nsfw", out bool nsfwEnabled)) status = nsfwEnabled;
+            if (snap.TryGetValue("nsfw", out bool nsfwEnabled))
+                status = nsfwEnabled;
             await CreateEntry("modules", new { nsfw = !status }, $"Toggled NSFW enabled to {!status}");
         }
     }

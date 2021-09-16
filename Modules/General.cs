@@ -26,9 +26,9 @@ namespace RRBot.Modules
         [Command("help")]
         [Summary("View info about the bot or view info about a command, depending on if you specify a command or not.")]
         [Remarks("$help <command>")]
-        public async Task<RuntimeResult> Help([Remainder] string command = "")
+        public async Task<RuntimeResult> Help(string command = "")
         {
-            string strippedCommand = string.Concat(command.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
+            string cmdLower = command.ToLower();
             IEnumerable<ModuleInfo> modules = Commands.Modules;
 
             if (string.IsNullOrWhiteSpace(command))
@@ -53,17 +53,19 @@ namespace RRBot.Modules
                 foreach (CommandInfo commandInfo in moduleInfo.Commands)
                 {
                     IEnumerable<string> actualAliases = commandInfo.Aliases.Except(new string[] { commandInfo.Name }); // Aliases includes the actual command for some reason
-                    if (commandInfo.Name.Equals(strippedCommand, StringComparison.OrdinalIgnoreCase) || actualAliases.Contains(strippedCommand.ToLower()))
+                    if (commandInfo.Name == cmdLower || actualAliases.Contains(cmdLower))
                     {
                         CollectionReference config = Program.database.Collection($"servers/{Context.Guild.Id}/config");
                         if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
                         {
                             DocumentSnapshot modSnap = await config.Document("modules").GetSnapshotAsync();
-                            if (!modSnap.TryGetValue("nsfw", out bool nsfw) || !nsfw) return CommandResult.FromError("NSFW commands are disabled!");
+                            if (!modSnap.TryGetValue("nsfw", out bool nsfw) || !nsfw)
+                                return CommandResult.FromError("NSFW commands are disabled!");
                         }
 
                         StringBuilder description = new($"**Description**: {commandInfo.Summary}\n**Usage**: ``{commandInfo.Remarks}``");
-                        if (actualAliases.Any()) description.Append($"\n**Alias(es)**: {string.Join(", ", actualAliases)}");
+                        if (actualAliases.Any())
+                            description.Append($"\n**Alias(es)**: {string.Join(", ", actualAliases)}");
 
                         if (commandInfo.TryGetPrecondition<CheckPacifistAttribute>() || moduleInfo.TryGetPrecondition<CheckPacifistAttribute>())
                             description.Append("\nRequires not having the Pacifist perk equipped");
@@ -91,7 +93,7 @@ namespace RRBot.Modules
                             {
                                 DocumentSnapshot snap = await config.Document("ranks").GetSnapshotAsync();
                                 KeyValuePair<string, object> level = snap.ToDictionary().First(kvp => kvp.Key.StartsWith($"level{rRL.RankLevel}", StringComparison.Ordinal) &&
-                                kvp.Key.EndsWith("Id", StringComparison.Ordinal));
+                                    kvp.Key.EndsWith("Id", StringComparison.Ordinal));
                                 IRole rank = Context.Guild.GetRole(Convert.ToUInt64(level.Value));
                                 description.AppendLine($"\nRequires {rank.Name}");
                             }
@@ -100,31 +102,23 @@ namespace RRBot.Modules
                                 description.Append($"\nRequires rank level {rRL.RankLevel} (rank has not been set)");
                             }
                         }
-                        if (commandInfo.TryGetPrecondition(out RequireRoleAttribute rR) || moduleInfo.TryGetPrecondition(out rR))
-                        {
-                            DocumentSnapshot snap = await config.Document("roles").GetSnapshotAsync();
-                            if (snap.TryGetValue(rR.DatabaseReference, out ulong roleId))
-                            {
-                                IRole role = Context.Guild.GetRole(roleId);
-                                description.Append($"\nRequires {role.Name}");
-                            }
-                            else
-                            {
-                                description.Append($"\nRequires {rR.DatabaseReference} (role has not been set)");
-                            }
-                        }
                         if (commandInfo.TryGetPrecondition<RequireRushRebornAttribute>() || moduleInfo.TryGetPrecondition<RequireRushRebornAttribute>())
                         {
-                            if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+                            if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN &&
+                                Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+                            {
                                 break;
+                            }
                             else
+                            {
                                 description.Append("\nExclusive to Rush Reborn");
+                            }
                         }
 
                         EmbedBuilder commandEmbed = new()
                         {
                             Color = Color.Red,
-                            Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(strippedCommand),
+                            Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cmdLower),
                             Description = description.ToString()
                         };
 
@@ -140,23 +134,25 @@ namespace RRBot.Modules
         [Command("module")]
         [Summary("View info about a module.")]
         [Remarks("$module [module]")]
-        public async Task<RuntimeResult> Module([Remainder] string module)
+        public async Task<RuntimeResult> Module(string module)
         {
-            string strippedModule = string.Concat(module.ToLower().Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
+            string moduleLower = module.ToLower();
 
             foreach (ModuleInfo moduleInfo in Commands.Modules)
             {
-                if (moduleInfo.Name.Equals(strippedModule, StringComparison.OrdinalIgnoreCase))
+                if (moduleInfo.Name == moduleLower)
                 {
                     if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
                     {
                         DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
                         DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
-                        if (!modSnap.TryGetValue("nsfw", out bool nsfw) || !nsfw) return CommandResult.FromError("NSFW commands are disabled!");
+                        if (!modSnap.TryGetValue("nsfw", out bool nsfw) || !nsfw)
+                            return CommandResult.FromError("NSFW commands are disabled!");
                     }
 
                     if (moduleInfo.TryGetPrecondition<RequireRushRebornAttribute>() &&
-                        Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+                        Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN &&
+                        Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
                     {
                         break;
                     }
@@ -164,7 +160,7 @@ namespace RRBot.Modules
                     EmbedBuilder moduleEmbed = new()
                     {
                         Color = Color.Red,
-                        Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(strippedModule),
+                        Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(moduleLower),
                         Description = $"**Available commands**: {string.Join(", ", moduleInfo.Commands.Select(x => x.Name).ToArray())}\n**Description**: {moduleInfo.Summary}"
                     };
 
@@ -182,7 +178,8 @@ namespace RRBot.Modules
         public async Task Modules()
         {
             List<string> modulesList = Commands.Modules.Select(x => x.Name).ToList();
-            if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST) modulesList.Remove("Support");
+            if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+                modulesList.Remove("Support");
 
             EmbedBuilder modulesEmbed = new()
             {
@@ -200,7 +197,8 @@ namespace RRBot.Modules
         [Remarks("$stats <user>")]
         public async Task<RuntimeResult> Stats(IGuildUser user = null)
         {
-            if (user?.IsBot == true) return CommandResult.FromError("Nope.");
+            if (user?.IsBot == true)
+                return CommandResult.FromError("Nope.");
 
             ulong userId = user == null ? Context.User.Id : user.Id;
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(userId.ToString());
@@ -212,9 +210,7 @@ namespace RRBot.Modules
                 List<string> keys = stats.Keys.ToList();
                 keys.Sort();
                 foreach (string key in keys)
-                {
                     description.AppendLine($"**{key}**: {stats[key]}");
-                }
 
                 EmbedBuilder embed = new()
                 {

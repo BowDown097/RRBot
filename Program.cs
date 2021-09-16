@@ -82,7 +82,7 @@ namespace RRBot
             commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
             await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
-            await client.SetGameAsync("with your father");
+            await client.SetGameAsync("Pokimane fart compilations", type: ActivityType.Watching);
             await client.StartAsync();
             await Task.Delay(-1);
         }
@@ -90,14 +90,16 @@ namespace RRBot
         private static async Task HandleReactionAsync(ISocketMessageChannel channel, SocketReaction reaction, bool addedReaction)
         {
             SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
-            if (user.IsBot) return;
+            if (user.IsBot)
+                return;
 
             IGuild guild = (channel as ITextChannel)?.Guild;
             DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
             {
-                if (reaction.MessageId != msgId) return;
+                if (reaction.MessageId != msgId)
+                    return;
 
                 if (addedReaction)
                     await user.AddRoleAsync(roleId);
@@ -116,7 +118,8 @@ namespace RRBot
         {
             SocketUserMessage userMsg = msg as SocketUserMessage;
             SocketCommandContext context = new(client, userMsg);
-            if (context.User.IsBot) return;
+            if (context.User.IsBot)
+                return;
 
             int argPos = 0;
             if (userMsg.HasCharPrefix('$', ref argPos))
@@ -152,9 +155,7 @@ namespace RRBot
         {
             QuerySnapshot globalConfig = await database.Collection("globalConfig").GetSnapshotAsync();
             foreach (DocumentSnapshot blacklist in globalConfig.Where(doc => doc.ContainsField("banned")))
-            {
                 bannedUsers.Add(ulong.Parse(blacklist.Id));
-            }
 
             await new Monitors(client, database).Initialise();
             await lavaSocketClient.StartAsync(client);
@@ -167,7 +168,8 @@ namespace RRBot
             // add 100 cash to user if they haven't joined already
             DocumentReference userDoc = database.Collection($"servers/{user.Guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot userSnap = await userDoc.GetSnapshotAsync();
-            if (!userSnap.TryGetValue<double>("cash", out _)) await CashSystem.SetCash(user, null, 100);
+            if (!userSnap.TryGetValue<double>("cash", out _))
+                await CashSystem.SetCash(user, null, 100);
 
             // circumvent mute bypasses
             DocumentReference rolesDoc = database.Collection($"servers/{user.Guild.Id}/config").Document("roles");
@@ -178,7 +180,8 @@ namespace RRBot
                 foreach (DocumentSnapshot mute in mutes.Documents.Where(doc => doc.Id == user.Id.ToString()))
                 {
                     long timestamp = mute.GetValue<long>("Time");
-                    if (timestamp >= DateTimeOffset.UtcNow.ToUnixTimeSeconds()) await user.AddRoleAsync(mutedId);
+                    if (timestamp >= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                        await user.AddRoleAsync(mutedId);
                 }
             }
         }
@@ -203,19 +206,17 @@ namespace RRBot
                     if (result is CommandResult rwm && !string.IsNullOrWhiteSpace(rwm.Reason))
                         await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, rwm.Reason);
                     break;
-                default:
-                    if (!result.IsSuccess)
-                    {
-                        if (result.ErrorReason == "User not found.")
-                        {
-                            await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                                "Couldn't resolve a user from your input!");
-                        }
+            }
 
-                        Console.WriteLine(result.ErrorReason);
-                    }
+            if (!result.IsSuccess)
+            {
+                if (result.ErrorReason == "User not found.")
+                {
+                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                        "Couldn't resolve a user from your input!");
+                }
 
-                    break;
+                Console.WriteLine(result.ErrorReason);
             }
         }
     }

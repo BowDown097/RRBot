@@ -89,7 +89,8 @@ namespace RRBot.Systems
 
         public static async Task Client_MessageDeleted(Cacheable<IMessage, ulong> msgCached, ISocketMessageChannel channel)
         {
-            if (!msgCached.HasValue) return;
+            if (!msgCached.HasValue)
+                return;
 
             IMessage msg = msgCached.Value;
             EmbedBuilder embed = new()
@@ -105,7 +106,8 @@ namespace RRBot.Systems
 
         public static async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
         {
-            if (!msgBeforeCached.HasValue) return;
+            if (!msgBeforeCached.HasValue)
+                return;
 
             IMessage msgBefore = msgBeforeCached.Value;
             EmbedBuilder embed = new()
@@ -118,13 +120,7 @@ namespace RRBot.Systems
             };
 
             if (Filters.NWORD_REGEX.Matches(new string(msgAfter.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
-            {
-                await Task.Factory.StartNew(async () =>
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(10));
-                    await msgAfter.DeleteAsync();
-                });
-            }
+                await msgAfter.DeleteAsync();
 
             await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
         }
@@ -215,7 +211,9 @@ namespace RRBot.Systems
                 Timestamp = DateTime.Now
             };
 
-            embed.Description = voiceState.VoiceChannel == null ? $"{user}\nIn: {voiceStateOrig.VoiceChannel}" : $"{user}\nIn: {voiceState.VoiceChannel}";
+            embed.Description = voiceState.VoiceChannel == null
+                ? $"{user}\nIn: {voiceStateOrig.VoiceChannel}"
+                : $"{user}\nIn: {voiceState.VoiceChannel}";
 
             if (voiceStateOrig.VoiceChannel == null)
             {
@@ -347,7 +345,8 @@ namespace RRBot.Systems
         public static async Task Custom_UserMuted(IGuildUser target, SocketUser actor, string duration, string reason)
         {
             string description = $"{actor} muted {target} for {duration}";
-            if (!string.IsNullOrEmpty(reason)) description += $" for '{reason}'";
+            if (!string.IsNullOrEmpty(reason))
+                description += $" for '{reason}'";
 
             EmbedBuilder embed = new()
             {

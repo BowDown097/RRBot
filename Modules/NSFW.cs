@@ -17,23 +17,22 @@ namespace RRBot.Modules
         [Remarks("$nhentai")]
         public async Task<RuntimeResult> NHentai([Remainder] string keyword = "")
         {
-            GalleryElement funny;
+            GalleryElement gallery;
             if (string.IsNullOrWhiteSpace(keyword))
             {
                 NHentaiSharp.Search.SearchResult result = await NHentaiSharp.Core.SearchClient.SearchAsync();
-                funny = result.elements[RandomUtil.Next(0, result.elements.Length)];
+                gallery = result.elements[RandomUtil.Next(0, result.elements.Length)];
             }
             else
             {
                 string[] keywords = keyword.Contains(',') ? keyword.Split(',') : new string[] { keyword };
-
                 try
                 {
                     // the search code kinda garbage but according to the README.md of the NHentaiSharp project you have to do this i guess
                     NHentaiSharp.Search.SearchResult result = await NHentaiSharp.Core.SearchClient.SearchWithTagsAsync(keywords);
                     int page = RandomUtil.Next(0, result.numPages) + 1;
                     result = await NHentaiSharp.Core.SearchClient.SearchWithTagsAsync(keywords, page);
-                    funny = result.elements[RandomUtil.Next(0, result.elements.Length)];
+                    gallery = result.elements[RandomUtil.Next(0, result.elements.Length)];
                 }
                 catch (Exception)
                 {
@@ -41,17 +40,16 @@ namespace RRBot.Modules
                 }
             }
 
-            string englishTitle = string.IsNullOrEmpty(funny.englishTitle) ? "no English title" : funny.englishTitle;
+            string englishTitle = string.IsNullOrEmpty(gallery.englishTitle) ? "No English title" : gallery.englishTitle;
             EmbedBuilder embed = new()
             {
                 Color = Color.Red,
                 Title = "One hentai coming right up!",
-                Description = $"Well, buddy, I've found you **{funny.japaneseTitle}** ({englishTitle}).\nIt's at: {funny.url}",
-                ImageUrl = funny.cover.imageUrl.ToString()
+                Description = $"Well, buddy, I've found you **{gallery.japaneseTitle}** ({englishTitle}).\nIt's at: {gallery.url}",
+                ImageUrl = gallery.cover.imageUrl.ToString()
             };
 
             await ReplyAsync(embed: embed.Build());
-
             return CommandResult.FromSuccess();
         }
     }

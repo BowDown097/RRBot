@@ -88,11 +88,10 @@ namespace RRBot.Modules
         [Remarks("$tickets")]
         public async Task Tickets()
         {
-            CollectionReference tickets = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");
-            int ticketsCount = await tickets.ListDocumentsAsync().CountAsync();
-            await Context.User.NotifyAsync(Context.Channel, ticketsCount == 1
+            QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();
+            await Context.User.NotifyAsync(Context.Channel, tickets.Documents.Count == 1
                 ? "There is currently 1 open support ticket."
-                : $"There are currently {ticketsCount} open support tickets.");
+                : $"There are currently {tickets.Documents.Count} open support tickets.");
         }
 
         [Command("viewticket")]
@@ -100,13 +99,11 @@ namespace RRBot.Modules
         [Remarks("$viewticket [index]")]
         public async Task<RuntimeResult> ViewTicket(int index)
         {
-            CollectionReference ticketsCollection = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");
-            IAsyncEnumerable<DocumentReference> tickets = ticketsCollection.ListDocumentsAsync();
-            if (index > await tickets.CountAsync() || index <= 0) return CommandResult.FromError("There is no support ticket at that index!");
+            QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();
+            if (index > tickets.Documents.Count || index <= 0)
+                return CommandResult.FromError("There is no support ticket at that index!");
 
-            DocumentReference ticketDoc = await tickets.ElementAtAsync(index - 1);
-            DocumentSnapshot ticket = await ticketDoc.GetSnapshotAsync();
-
+            DocumentSnapshot ticket = tickets[index - 1];
             SocketGuildUser helper = Context.Guild.GetUser(ticket.GetValue<ulong>("helper"));
             SocketGuildUser issuer = Context.Guild.GetUser(ticket.GetValue<ulong>("issuer"));
             string request = ticket.GetValue<string>("req");

@@ -16,42 +16,41 @@ namespace RRBot.Modules
     [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
     public class Economy : ModuleBase<SocketCommandContext>
     {
-        private static string AppendIfExists(DocumentSnapshot snap, string ogString, string funny, string cd, double mult)
-        {
-            string str = ogString;
+        private static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Slavery", "Whore", "Chop",
+            "Dig", "Farm", "Fish", "Hunt", "Mine" };
 
-            if (snap.TryGetValue(cd, out long cooldown))
-            {
-                long fullCd = (long)((cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) * mult);
-                if (fullCd > 0L) str += $"**{funny}**: {TimeSpan.FromSeconds(fullCd).FormatCompound()}\n";
-            }
-
-            return str;
-        }
-
-        private async Task AddBackUserSettings(DocumentReference doc, double btc, double doge, double eth, double xrp, bool dmNotifsV, bool rankupNotifsV, bool replyPingsV,
-            Dictionary<string, string> userStats, long whoreCd, long slaveryCd, long rapeCd, long lootCd, long dealCd, long bullyCd, long mineCd, long huntCd, long farmCd,
+        private async Task AddBackUserSettings(DocumentReference doc, double btc, double doge, double eth, double xrp,
+            bool dmNotifsV, bool rankupNotifsV, bool replyPingsV, Dictionary<string, string> userStats, long whoreCd,
+            long slaveryCd, long rapeCd, long lootCd, long dealCd, long bullyCd, long mineCd, long huntCd, long farmCd,
             long digCd, long chopCd)
         {
-            if (btc > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "btc", btc);
-            if (doge > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "doge", doge);
-            if (eth > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "eth", eth);
-            if (xrp > 0) await CashSystem.AddCrypto(Context.User as IGuildUser, "xrp", xrp);
-            if (dmNotifsV) await doc.SetAsync(new { dmNotifs = dmNotifsV }, SetOptions.MergeAll);
-            if (rankupNotifsV) await doc.SetAsync(new { rankupNotifs = rankupNotifsV }, SetOptions.MergeAll);
-            if (!replyPingsV) await doc.SetAsync(new { replyPings = replyPingsV }, SetOptions.MergeAll);
-            if (userStats.Count > 0) await doc.SetAsync(new { stats = userStats }, SetOptions.MergeAll);
-            await doc.SetAsync(new { whoreCooldown = whoreCd }, SetOptions.MergeAll);
-            await doc.SetAsync(new { slaveryCooldown = slaveryCd }, SetOptions.MergeAll);
-            await doc.SetAsync(new { rapeCooldown = rapeCd }, SetOptions.MergeAll);
-            await doc.SetAsync(new { lootCooldown = lootCd }, SetOptions.MergeAll);
-            await doc.SetAsync(new { dealCooldown = dealCd }, SetOptions.MergeAll);
-            await doc.SetAsync(new { bullyCooldown = bullyCd }, SetOptions.MergeAll);
-            await doc.SetAsync(new { mineCooldown = mineCd }, SetOptions.MergeAll);
-            await doc.SetAsync(new { huntCooldown = huntCd }, SetOptions.MergeAll);
-            await doc.SetAsync(new { farmCooldown = farmCd }, SetOptions.MergeAll);
-            await doc.SetAsync(new { digCooldown = digCd }, SetOptions.MergeAll);
-            await doc.SetAsync(new { chopCooldown = chopCd }, SetOptions.MergeAll);
+            if (btc >= Constants.INVESTMENT_MIN_AMOUNT)
+                await CashSystem.AddCrypto(Context.User, "btc", btc);
+            if (doge >= Constants.INVESTMENT_MIN_AMOUNT)
+                await CashSystem.AddCrypto(Context.User, "doge", doge);
+            if (eth >= Constants.INVESTMENT_MIN_AMOUNT)
+                await CashSystem.AddCrypto(Context.User, "eth", eth);
+            if (xrp >= Constants.INVESTMENT_MIN_AMOUNT)
+                await CashSystem.AddCrypto(Context.User, "xrp", xrp);
+
+            await doc.SetAsync(new
+            {
+                dmNotifs = dmNotifsV,
+                rankupNotifs = rankupNotifsV,
+                replyPings = replyPingsV,
+                stats = userStats,
+                whoreCooldown = whoreCd,
+                slaveryCooldown = slaveryCd,
+                rapeCooldown = rapeCd,
+                lootCooldown = lootCd,
+                dealCooldown = dealCd,
+                bullyCooldown = bullyCd,
+                mineCooldown = mineCd,
+                huntCooldown = huntCd,
+                farmCooldown = farmCd,
+                digCooldown = digCd,
+                chopCooldown = chopCd
+            }, SetOptions.MergeAll);
         }
 
         [Alias("bal", "cash")]
@@ -69,8 +68,11 @@ namespace RRBot.Modules
 
             if (cash > 0)
             {
-                if (user == null) await Context.User.NotifyAsync(Context.Channel, $"You have **{cash:C2}**.");
-                else await ReplyAsync($"**{user}** has **{cash:C2}**.");
+                if (user == null)
+                    await Context.User.NotifyAsync(Context.Channel, $"You have **{cash:C2}**.");
+                else
+                    await ReplyAsync($"**{user}** has **{cash:C2}**.");
+
                 return CommandResult.FromSuccess();
             }
 
@@ -100,27 +102,25 @@ namespace RRBot.Modules
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            string description = "";
-            double mult = snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon") ? 0.85 : 1;
+            StringBuilder description = new();
+            double mult = snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon")
+                ? 0.85 : 1;
 
-            description = AppendIfExists(snap, description, "Deal", "dealCooldown", mult);
-            description = AppendIfExists(snap, description, "Loot", "lootCooldown", mult);
-            description = AppendIfExists(snap, description, "Rape", "rapeCooldown", mult);
-            description = AppendIfExists(snap, description, "Rob", "robCooldown", mult);
-            description = AppendIfExists(snap, description, "Slavery", "slaveryCooldown", mult);
-            description = AppendIfExists(snap, description, "Whore", "whoreCooldown", mult);
-            description = AppendIfExists(snap, description, "Chop", "chopCooldown", mult);
-            description = AppendIfExists(snap, description, "Dig", "digCooldown", mult);
-            description = AppendIfExists(snap, description, "Farm", "farmCooldown", mult);
-            description = AppendIfExists(snap, description, "Fish", "fishCooldown", mult);
-            description = AppendIfExists(snap, description, "Hunt", "huntCooldown", mult);
-            description = AppendIfExists(snap, description, "Mine", "mineCooldown", mult);
+            foreach (string cmd in CMDS_WITH_COOLDOWN)
+            {
+                if (snap.TryGetValue(cmd.ToLower() + "Cooldown", out long cooldown))
+                {
+                    long fullCd = (long)((cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) * mult);
+                    if (fullCd > 0L)
+                        description.AppendLine($"**{cmd}**: {TimeSpan.FromSeconds(fullCd).FormatCompound()}");
+                }
+            }
 
             EmbedBuilder embed = new()
             {
                 Title = "Cooldowns",
                 Color = Color.Red,
-                Description = !string.IsNullOrWhiteSpace(description) ? description : "None"
+                Description = description.Length > 0 ? description.ToString() : "None"
             };
 
             await ReplyAsync(embed: embed.Build());
@@ -134,7 +134,7 @@ namespace RRBot.Modules
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+            if (snap.ContainsField("usingSlots"))
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
             if (item == "Pacifist")
@@ -158,7 +158,7 @@ namespace RRBot.Modules
             if (usrItems.Remove(item))
             {
                 double price = Items.ComputeItemPrice(item) / 1.5;
-                await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash + price);
+                await CashSystem.SetCash(Context.User, Context.Channel, cash + price);
                 await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{price:C2}**.");
                 await doc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
                 return CommandResult.FromSuccess();
@@ -205,26 +205,30 @@ namespace RRBot.Modules
             Query ordered = users.OrderByDescending(crypto);
             QuerySnapshot snap = await ordered.GetSnapshotAsync();
 
-            StringBuilder builder = new();
+            StringBuilder lb = new();
             int processedUsers = 0;
-            for (int i = 0; i < snap.Documents.Count; i++)
+            foreach (DocumentSnapshot doc in snap.Documents)
             {
-                if (processedUsers == 10) break;
-                DocumentSnapshot doc = snap.Documents[i];
+                if (processedUsers == 10)
+                    break;
+
                 SocketGuildUser user = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
-                if (user == null || (doc.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Pacifist"))) continue;
+                if (user == null || (doc.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Pacifist")))
+                    continue;
+
                 double val = doc.GetValue<double>(crypto);
-                if (val < Constants.INVESTMENT_MIN_AMOUNT && cryptoLower != "cash") break;
-                builder.AppendLine($"{processedUsers + 1}: **{user}**: {(cryptoLower == "cash" ? val.ToString("C2") : val.ToString("0.####"))}");
+                if (val < Constants.INVESTMENT_MIN_AMOUNT && cryptoLower != "cash")
+                    break;
+
+                lb.AppendLine($"{processedUsers + 1}: **{user}**: {(cryptoLower == "cash" ? val.ToString("C2") : val.ToString("0.####"))}");
                 processedUsers++;
             }
 
-            string lb = builder.ToString();
             EmbedBuilder embed = new()
             {
                 Color = Color.Red,
                 Title = "Leaderboard",
-                Description = !string.IsNullOrWhiteSpace(lb) ? lb : "Nothing to see here!"
+                Description = lb.Length > 0 ? lb.ToString() : "Nothing to see here!"
             };
 
             await ReplyAsync(embed: embed.Build());
@@ -245,23 +249,7 @@ namespace RRBot.Modules
             foreach (KeyValuePair<string, long> perk in usrPerks.OrderBy(p => p.Key))
             {
                 if (perk.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && perk.Key != "Pacifist")
-                {
-                    usrPerks.Remove(perk.Key);
-                    if (perk.Key == "Multiperk" && usrPerks.Count >= 2)
-                    {
-                        string lastPerk = usrPerks.Last().Key;
-                        Tuple<string, string, double, long> lastPerkTuple = Array.Find(Items.perks, p => p.Item1 == lastPerk);
-                        double cash = snap.GetValue<double>("cash");
-                        cash += lastPerkTuple.Item3;
-                        usrPerks.Remove(lastPerk);
-                        await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, cash);
-                        await Context.User.NotifyAsync(Context.Channel,
-                            $"You lost Multiperk and also lost {lastPerk} as a result. You've been refunded {lastPerkTuple.Item3:C2}, which was {lastPerk}'s price.");
-                    }
-
-                    Dictionary<string, object> newPerks = new() { { "perks", usrPerks } };
-                    await doc.UpdateAsync(newPerks);
-                }
+                    return;
 
                 Tuple<string, string, double, long> perkT = Array.Find(Items.perks, p => p.Item1.Equals(perk.Key, StringComparison.OrdinalIgnoreCase));
                 perksBuilder.AppendLine($"**{perkT.Item1}**: {perkT.Item2}" +
@@ -272,7 +260,7 @@ namespace RRBot.Modules
             {
                 Title = "Perks",
                 Color = Color.Red,
-                Description = perksBuilder.ToString()
+                Description = perksBuilder.Length > 0 ? perksBuilder.ToString() : "None"
             };
 
             await ReplyAsync(embed: embed.Build());
@@ -284,11 +272,10 @@ namespace RRBot.Modules
         [Remarks("$ranks")]
         public async Task Ranks()
         {
-            StringBuilder ranks = new();
-
             DocumentReference ranksDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("ranks");
             DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
 
+            StringBuilder ranks = new();
             foreach (KeyValuePair<string, object> kvp in snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id", StringComparison.Ordinal)).OrderBy(kvp => kvp.Key))
             {
                 double neededCash = snap.GetValue<double>(kvp.Key.Replace("Id", "Cost"));
@@ -312,23 +299,27 @@ namespace RRBot.Modules
         [Remarks("$sauce [user] [amount]")]
         public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
         {
-            if (amount <= 0 || double.IsNaN(amount)) return CommandResult.FromError("You can't sauce negative or no money!");
-            if (Context.User == user) return CommandResult.FromError("You can't sauce yourself money. Don't even know how you would.");
-            if (user.IsBot) return CommandResult.FromError("Nope.");
+            if (amount <= 0 || double.IsNaN(amount))
+                return CommandResult.FromError("You can't sauce negative or no money!");
+            if (Context.User == user)
+                return CommandResult.FromError("You can't sauce yourself money. Don't even know how you would.");
+            if (user.IsBot)
+                return CommandResult.FromError("Nope.");
 
             CollectionReference users = Program.database.Collection($"servers/{Context.Guild.Id}/users");
             DocumentSnapshot aSnap = await users.Document(Context.User.Id.ToString()).GetSnapshotAsync();
-            if (aSnap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+            if (aSnap.ContainsField("usingSlots"))
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double aCash = aSnap.GetValue<double>("cash");
 
             DocumentSnapshot tSnap = await users.Document(user.Id.ToString()).GetSnapshotAsync();
             double tCash = tSnap.GetValue<double>("cash");
 
-            if (amount > aCash) return CommandResult.FromError("You do not have that much money!");
+            if (amount > aCash)
+                return CommandResult.FromError("You do not have that much money!");
 
-            await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, aCash - amount);
-            await CashSystem.SetCash(user, Context.Channel, tCash + amount);
+            await CashSystem.SetCash(Context.User, Context.Channel, aCash - amount);
+            await CashSystem.SetCash(user as SocketUser, Context.Channel, tCash + amount);
 
             await Context.User.NotifyAsync(Context.Channel, $"You have sauced **{user}** {amount:C2}.");
             return CommandResult.FromSuccess();
@@ -392,7 +383,7 @@ namespace RRBot.Modules
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+            if (snap.ContainsField("usingSlots"))
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
             snap.TryGetValue("btc", out double btc);
@@ -425,14 +416,14 @@ namespace RRBot.Modules
                 case 2:
                     await Context.User.NotifyAsync(Context.Channel, "DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await doc.DeleteAsync();
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 0);
+                    await CashSystem.SetCash(Context.User, Context.Channel, 0);
                     await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, rankupNotifsV, replyPingsV, userStats, whoreCd, slaveryCd, rapeCd,
                         lootCd, dealCd, bullyCd, mineCd, huntCd, farmCd, digCd, chopCd);
                     break;
                 case 3:
                     await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await doc.DeleteAsync();
-                    await CashSystem.SetCash(Context.User as IGuildUser, Context.Channel, 0);
+                    await CashSystem.SetCash(Context.User, Context.Channel, 0);
                     await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, rankupNotifsV, replyPingsV, userStats, whoreCd, slaveryCd, rapeCd,
                         lootCd, dealCd, bullyCd, mineCd, huntCd, farmCd, digCd, chopCd);
                     break;

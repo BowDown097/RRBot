@@ -44,9 +44,9 @@ namespace RRBot.Systems
         {
             DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+            if (snap.ContainsField("usingSlots"))
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-            List<string> usrItems = snap.TryGetValue("items", out List<string> tmpItems) ? tmpItems : new List<string>();
+            List<string> usrItems = snap.TryGetValue("items", out List<string> tmpItems) ? tmpItems : new();
             double cash = snap.GetValue<double>("cash");
 
             if (!usrItems.Contains(item))
@@ -55,7 +55,7 @@ namespace RRBot.Systems
                 if (price <= cash)
                 {
                     usrItems.Add(item);
-                    await CashSystem.SetCash(user as IGuildUser, channel, cash - price);
+                    await CashSystem.SetCash(user, channel, cash - price);
                     await user.NotifyAsync(channel, $"You got yourself a fresh {item} for **{price:C2}**!");
                     await doc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
                     return CommandResult.FromSuccess();
@@ -71,7 +71,7 @@ namespace RRBot.Systems
         {
             DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("usingSlots", out bool usingSlots) && usingSlots)
+            if (snap.ContainsField("usingSlots"))
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
             Dictionary<string, long> usrPerks = snap.TryGetValue("perks", out Dictionary<string, long> tmpPerks) ? tmpPerks : new();
@@ -116,10 +116,11 @@ namespace RRBot.Systems
                 if (price <= cash)
                 {
                     usrPerks.Add(perk, DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration));
-                    await CashSystem.SetCash(user as IGuildUser, channel, cash - price);
+                    await CashSystem.SetCash(user, channel, cash - price);
 
                     StringBuilder notification = new($"You got yourself the {perk} perk for **{price:C2}**!");
-                    if (perk == "Pacifist") notification.Append(" Additionally, as you bought the Pacifist perk, any perks you previously had have been refunded.");
+                    if (perk == "Pacifist")
+                        notification.Append(" Additionally, as you bought the Pacifist perk, any perks you previously had have been refunded.");
 
                     await user.NotifyAsync(channel, notification.ToString());
                     await doc.SetAsync(new { perks = usrPerks }, SetOptions.MergeAll);
@@ -145,28 +146,35 @@ namespace RRBot.Systems
         public static string GetBestItem(List<string> itemsList, string type)
         {
             List<string> itemsOfType = itemsList.Where(item => item.EndsWith(type, StringComparison.Ordinal)).ToList();
-            return itemsOfType.Count > 0 ? itemsOfType.OrderByDescending(item => rankings[item.Replace(type, "").Trim()]).First() : "";
+            return itemsOfType.Count > 0
+                ? itemsOfType.OrderByDescending(item => rankings[item.Replace(type, "").Trim()]).First()
+                : "";
         }
 
-        public static async Task<string> RandomItem(IGuildUser user)
+        public static async Task<string> RandomItem(SocketUser user)
         {
+            IGuildUser guildUser = user as IGuildUser;
             string[] newItems = items;
-            DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
+            DocumentReference userDoc = Program.database.Collection($"servers/{guildUser.GuildId}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
-            if (snap.TryGetValue("items", out List<string> itemsList)) newItems = newItems.Where(item => !itemsList.Contains(item)).ToArray();
+            if (snap.TryGetValue("items", out List<string> itemsList))
+                newItems = newItems.Where(item => !itemsList.Contains(item)).ToArray();
 
             return items.Length <= newItems.Length ? newItems[RandomUtil.Next(newItems.Length)] : "";
         }
 
         public static async Task RewardItem(IGuildUser user, string item)
         {
-            if (user.IsBot) return;
+            if (user.IsBot)
+                return;
 
             DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
 
-            if (!snap.TryGetValue("items", out List<string> usrItems)) usrItems = new List<string>();
-            if (!usrItems.Contains(item)) usrItems.Add(item);
+            if (!snap.TryGetValue("items", out List<string> usrItems))
+                usrItems = new List<string>();
+            if (!usrItems.Contains(item))
+                usrItems.Add(item);
             await userDoc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
         }
     }

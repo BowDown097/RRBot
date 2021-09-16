@@ -14,7 +14,8 @@ namespace RRBot.Extensions
         {
             DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (!snap.TryGetValue("stats", out Dictionary<string, string> userStats)) userStats = new Dictionary<string, string>();
+            if (!snap.TryGetValue("stats", out Dictionary<string, string> userStats))
+                userStats = new Dictionary<string, string>();
 
             foreach (KeyValuePair<string, string> kvp in statsToAddTo)
             {
@@ -50,6 +51,9 @@ namespace RRBot.Extensions
                 string reply = string.IsNullOrEmpty(altMsg) ? message : altMsg;
                 if (dmNotify) return await user.SendMessageAsync(reply);
             }
+
+            if (channel == null)
+                return null;
 
             bool replyPings = await UserSettingsGetters.GetReplyPings(user as IGuildUser);
             if (!string.IsNullOrEmpty(altMsg))

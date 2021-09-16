@@ -18,7 +18,8 @@ namespace RRBot.Systems
             {
                 string inviteCode = match.Groups[1].Value;
                 RestInviteMetadata invite = await context.Client.GetInviteAsync(inviteCode);
-                if (invite != null) await context.Message.DeleteAsync();
+                if (invite != null)
+                    await context.Message.DeleteAsync();
             }
         }
 

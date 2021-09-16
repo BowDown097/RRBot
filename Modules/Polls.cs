@@ -39,10 +39,12 @@ namespace RRBot.Modules
                 SocketTextChannel pollsChannel = Context.Guild.GetChannel(id) as SocketTextChannel;
 
                 string[] pollChoices = choices.Split('|');
-                if (pollChoices.Length > 9) return CommandResult.FromError("A maximum of 9 choices are allowed.");
+                if (pollChoices.Length > 9)
+                    return CommandResult.FromError("A maximum of 9 choices are allowed.");
 
                 StringBuilder choicesStr = new();
-                for (int i = 1; i <= pollChoices.Length; i++) choicesStr.AppendLine($"**[{i}]** {pollChoices[i - 1]}");
+                for (int i = 1; i <= pollChoices.Length; i++)
+                    choicesStr.AppendLine($"**[{i}]** {pollChoices[i - 1]}");
 
                 EmbedBuilder pollEmbed = new()
                 {
@@ -52,8 +54,8 @@ namespace RRBot.Modules
                 };
 
                 RestUserMessage pollMsg = await pollsChannel.SendMessageAsync(embed: pollEmbed.Build());
-
-                for (int i = 1; i <= pollChoices.Length; i++) await pollMsg.AddReactionAsync(new Emoji(numberEmotes[i]));
+                for (int i = 1; i <= pollChoices.Length; i++)
+                    await pollMsg.AddReactionAsync(new Emoji(numberEmotes[i]));
 
                 return CommandResult.FromSuccess();
             }

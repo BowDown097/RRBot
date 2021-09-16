@@ -1,10 +1,10 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using RRBot.Extensions;
-using RRBot.Preconditions;
 using RRBot.Systems;
 using System;
 using System.Collections.Generic;
@@ -21,16 +21,17 @@ namespace RRBot.Modules
         [Command("addcrypto")]
         [Summary("Add to a user's cryptocurrency amount. See $invest's help info for currently accepted currencies.")]
         [Remarks("$addcrypto [user] [crypto] [amount]")]
-        [RequireRole("senateRole")]
+        [RequireUserPermission(GuildPermission.Administrator)]
         public async Task<RuntimeResult> AddCrypto(IGuildUser user, string crypto, double amount)
         {
-            if (user.IsBot) return CommandResult.FromError("Nope.");
-
             string cUp = crypto.ToUpper();
+
+            if (user.IsBot)
+                return CommandResult.FromError("Nope.");
             if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "LTC" && cUp != "XRP")
                 return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
-            await CashSystem.AddCrypto(Context.User as IGuildUser, crypto.ToLower(), amount);
+            await CashSystem.AddCrypto(Context.User, crypto.ToLower(), amount);
             await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user}**'s {cUp} balance.");
             return CommandResult.FromSuccess();
         }
@@ -42,11 +43,12 @@ namespace RRBot.Modules
         [RequireOwner]
         public async Task<RuntimeResult> BotBan(IGuildUser user)
         {
-            if (user.IsBot) return CommandResult.FromError("Nope.");
+            if (user.IsBot)
+                return CommandResult.FromError("Nope.");
 
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.SetAsync(new { banned = true }, SetOptions.MergeAll);
-            await ReplyAsync($"Blacklisted **{user}**.");
+            await Context.User.NotifyAsync(Context.Channel, $"Blacklisted **{user}**.");
             BannedUsers.Add(user.Id);
 
             return CommandResult.FromSuccess();
@@ -63,7 +65,8 @@ namespace RRBot.Modules
             {
                 code = code.Replace("```cs", "").Trim('`');
                 string[] imports = { "System", "System.Collections.Generic", "System.Text" };
-                string evaluation = (await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context))).ToString();
+                string evaluation = (await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports),
+                    new FunnyContext(Context))).ToString();
                 EmbedBuilder embed = new()
                 {
                     Color = Color.Red,
@@ -86,20 +89,23 @@ namespace RRBot.Modules
         [Command("giveitem")]
         [Summary("Give a user an item.")]
         [Remarks("$giveitem [user] item]")]
-        [RequireRole("senateRole")]
+        [RequireUserPermission(GuildPermission.Administrator)]
         public async Task<RuntimeResult> GiveItem(IGuildUser user, [Remainder] string item)
         {
-            if (user.IsBot) return CommandResult.FromError("Nope.");
-            if (!Items.items.Contains(item)) return CommandResult.FromError($"**{item}** is not a valid item!");
+            if (user.IsBot)
+                return CommandResult.FromError("Nope.");
+            if (!Items.items.Contains(item))
+                return CommandResult.FromError($"**{item}** is not a valid item!");
+
             await Items.RewardItem(user, item);
-            await ReplyAsync($"Gave **{user}** a(n) **{item}**.");
+            await Context.User.NotifyAsync(Context.Channel, $"Gave **{user}** a(n) **{item}**.");
             return CommandResult.FromSuccess();
         }
 
         [Command("resetcd")]
         [Summary("Reset your crime cooldowns.")]
         [Remarks("$resetcd")]
-        [RequireRole("senateRole")]
+        [RequireUserPermission(GuildPermission.Administrator)]
         public async Task ResetCooldowns()
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
@@ -124,11 +130,12 @@ namespace RRBot.Modules
         [Command("setcash")]
         [Summary("Set a user's cash.")]
         [Remarks("$setcash [user] [amount]")]
-        [RequireRole("senateRole")]
+        [RequireUserPermission(GuildPermission.Administrator)]
         public async Task<RuntimeResult> SetCash(IGuildUser user, double amount)
         {
-            if (user.IsBot) return CommandResult.FromError("Nope.");
-            await CashSystem.SetCash(user, Context.Channel, amount);
+            if (user.IsBot)
+                return CommandResult.FromError("Nope.");
+            await CashSystem.SetCash(user as SocketUser, Context.Channel, amount);
             await ReplyAsync($"Set **{user}**'s cash to **{amount:C2}**.");
 
             return CommandResult.FromSuccess();
@@ -141,7 +148,8 @@ namespace RRBot.Modules
         [RequireOwner]
         public async Task<RuntimeResult> UnBotBan(IGuildUser user)
         {
-            if (user.IsBot) return CommandResult.FromError("Nope.");
+            if (user.IsBot)
+                return CommandResult.FromError("Nope.");
 
             DocumentReference doc = Program.database.Collection("globalConfig").Document(user.Id.ToString());
             await doc.DeleteAsync();
