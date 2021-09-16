@@ -20,15 +20,15 @@ namespace RRBot.Modules
     [RequireStaff]
     public class Moderation : ModuleBase<SocketCommandContext>
     {
-        private Tuple<TimeSpan, string> ResolveDuration(string duration, int time, string action, IGuildUser target)
+        private Tuple<TimeSpan, string> ResolveDuration(string duration, int time, string action)
         {
             char suffix = char.ToLowerInvariant(duration[^1]);
             return suffix switch
             {
-                's' => new(TimeSpan.FromSeconds(time), $"**{Context.User}** has {action} **{target}** for {time} second(s)"),
-                'm' => new(TimeSpan.FromMinutes(time), $"**{Context.User}** has {action} **{target}** for {time} minute(s)"),
-                'h' => new(TimeSpan.FromHours(time), $"**{Context.User}** has {action} **{target}** for {time} hour(s)"),
-                'd' => new(TimeSpan.FromDays(time), $"**{Context.User}** has {action} **{target}** for {time} day(s)"),
+                's' => new(TimeSpan.FromSeconds(time), $"**{Context.User}** has {action} for {time} second(s)"),
+                'm' => new(TimeSpan.FromMinutes(time), $"**{Context.User}** has {action} for {time} minute(s)"),
+                'h' => new(TimeSpan.FromHours(time), $"**{Context.User}** has {action} for {time} hour(s)"),
+                'd' => new(TimeSpan.FromDays(time), $"**{Context.User}** has {action} for {time} day(s)"),
                 _ => new(TimeSpan.Zero, null),
             };
         }
@@ -52,7 +52,7 @@ namespace RRBot.Modules
 
             if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
             {
-                Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, "banned", user);
+                Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"banned **{user}**");
                 string response = resolved.Item2;
                 if (resolved.Item1 == TimeSpan.Zero)
                     return CommandResult.FromError("You specified an invalid amount of time!");
@@ -61,7 +61,7 @@ namespace RRBot.Modules
 
                 DocumentReference banDoc = Program.database.Collection($"servers/{Context.Guild.Id}/bans").Document(user.Id.ToString());
                 await Logger.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
-                await banDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) });
+                await banDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) }, SetOptions.MergeAll);
                 await user.BanAsync(reason: reason);
                 await (user as SocketUser).AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
                 {
@@ -105,30 +105,34 @@ namespace RRBot.Modules
         }
 
         [Command("chill")]
-        [Summary("Shut chat the fuck up for a specific amount of time in seconds.")]
+        [Summary("Shut chat the fuck up for a specific amount of time.")]
         [Remarks("$chill [duration]")]
-        public async Task<RuntimeResult> Chill(int duration)
+        public async Task<RuntimeResult> Chill(string duration)
         {
-            if (duration < Constants.CHILL_MIN_SECONDS)
-                return CommandResult.FromError($"You cannot chill the chat for less than {Constants.CHILL_MIN_SECONDS} seconds.");
-            if (duration > Constants.CHILL_MAX_SECONDS)
-                return CommandResult.FromError($"You cannot chill the chat for more than {Constants.CHILL_MAX_SECONDS} seconds.");
-
-            SocketTextChannel channel = Context.Channel as SocketTextChannel;
-            OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole).Value;
-            if (perms.SendMessages == PermValue.Deny)
-                return CommandResult.FromError("This chat is already chilled.");
-
-            await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
-            await ReplyAsync($"**{Context.User}** would like y'all to sit down and stfu for {duration} seconds!");
-
-            await Task.Factory.StartNew(async () =>
+            if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
             {
-                await Task.Delay(TimeSpan.FromSeconds(duration));
-                await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms);
-            });
+                Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, "chilled the chat");
+                if (resolved.Item1 == TimeSpan.Zero)
+                    return CommandResult.FromError("You specified an invalid amount of time!");
+                if (resolved.Item1.TotalSeconds < Constants.CHILL_MIN_SECONDS)
+                    return CommandResult.FromError($"You cannot chill the chat for less than {Constants.CHILL_MIN_SECONDS} seconds.");
+                if (resolved.Item1.TotalSeconds > Constants.CHILL_MAX_SECONDS)
+                    return CommandResult.FromError($"You cannot chill the chat for more than {Constants.CHILL_MAX_SECONDS} seconds.");
+                await ReplyAsync(resolved.Item2 + ".");
 
-            return CommandResult.FromSuccess();
+                SocketTextChannel channel = Context.Channel as SocketTextChannel;
+                OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
+                if (perms.SendMessages == PermValue.Deny)
+                    return CommandResult.FromError("This chat is already chilled.");
+
+                await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
+                DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/chills").Document(Context.Channel.Id.ToString());
+                await doc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) }, SetOptions.MergeAll);
+
+                return CommandResult.FromSuccess();
+            }
+
+            return CommandResult.FromError("You specified an invalid amount of time!");
         }
 
         [Alias("cope")]
@@ -180,7 +184,7 @@ namespace RRBot.Modules
 
                 if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
                 {
-                    Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, "muted", user);
+                    Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"muted **{user}**");
                     string response = resolved.Item2;
                     if (resolved.Item1 == TimeSpan.Zero)
                         return CommandResult.FromError("You specified an invalid amount of time!");
@@ -189,7 +193,7 @@ namespace RRBot.Modules
 
                     DocumentReference muteDoc = Program.database.Collection($"servers/{Context.Guild.Id}/mutes").Document(user.Id.ToString());
                     await Logger.Custom_UserMuted(user, Context.User, duration, reason);
-                    await muteDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) });
+                    await muteDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) }, SetOptions.MergeAll);
                     await user.AddRoleAsync(mutedId);
                     await (user as SocketUser).AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
                     {
@@ -251,11 +255,11 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> Unchill()
         {
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
-            OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole).Value;
-            if (perms.SendMessages == PermValue.Allow)
+            OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
+            if (perms.SendMessages != PermValue.Deny)
                 return CommandResult.FromError("This chat is not chilled.");
 
-            await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Allow));
+            await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Inherit));
             await ReplyAsync($"**{Context.User}** took one for the team and unchilled early.");
             return CommandResult.FromSuccess();
         }

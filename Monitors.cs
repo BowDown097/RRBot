@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
-using RRBot.Extensions;
 using RRBot.Systems;
 
 namespace RRBot
@@ -23,6 +23,7 @@ namespace RRBot
         public async Task Initialise()
         {
             await Task.Factory.StartNew(async () => await StartBanMonitorAsync());
+            await Task.Factory.StartNew(async () => await StartChillMonitorAsync());
             await Task.Factory.StartNew(async () => await StartMuteMonitorAsync());
             await Task.Factory.StartNew(async () => await StartPerkMonitorAsync());
         }
@@ -50,6 +51,37 @@ namespace RRBot
                         {
                             await guild.RemoveBanAsync(userId);
                             await ban.Reference.DeleteAsync();
+                        }
+                    }
+                }
+            }
+        }
+
+        private async Task StartChillMonitorAsync()
+        {
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(30));
+                foreach (SocketGuild guild in client.Guilds)
+                {
+                    QuerySnapshot chills = await database.Collection($"servers/{guild.Id}/chills").GetSnapshotAsync();
+                    foreach (DocumentSnapshot chill in chills.Documents)
+                    {
+                        long timestamp = chill.GetValue<long>("Time");
+                        SocketTextChannel channel = guild.GetTextChannel(Convert.ToUInt64(chill.Id));
+                        OverwritePermissions perms = channel.GetPermissionOverwrite(guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
+
+                        if (perms.SendMessages != PermValue.Deny)
+                        {
+                            await chill.Reference.DeleteAsync();
+                            continue;
+                        }
+
+                        if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                        {
+                            await channel.AddPermissionOverwriteAsync(guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Inherit));
+                            await channel.SendMessageAsync("This channel has thawed out! Continue the chaos!");
+                            await chill.Reference.DeleteAsync();
                         }
                     }
                 }
