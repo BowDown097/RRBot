@@ -17,26 +17,16 @@ namespace RRBot.Modules
     public class Gambling : ModuleBase<SocketCommandContext>
     {
         public CultureInfo CurrencyCulture { get; set; }
-        private static readonly Emoji SEVEN = new("7️⃣");
-        private static readonly Emoji APPLE = new("\uD83C\uDF4E");
-        private static readonly Emoji GRAPES = new("\uD83C\uDF47");
-        private static readonly Emoji CHERRIES = new("\uD83C\uDF52");
-        private static readonly Dictionary<int, Emoji> emojis = new()
-        {
-            { 1, SEVEN },
-            { 2, APPLE },
-            { 3, GRAPES },
-            { 4, CHERRIES }
-        };
+        private static readonly Emoji[] emojis = { new("\uD83C\uDF4E"), new("\uD83C\uDF47"), new("7️⃣"),  new("\uD83C\uDF52"),
+            new("\uD83C\uDF4A"), new("\uD83C\uDF48"), new("\uD83C\uDF4B") }; // apple, grape, seven, cherry, orange, melon, lemon
 
-        private static bool ThreeInARow(int[] results, int emoji)
-        {
-            return (results[0] == emoji && results[1] == emoji && results[2] == emoji) || (results[1] == emoji && results[2] == emoji && results[3] == emoji);
-        }
+        private static bool TwoInARow(int[] results) => results[0] == results[1] || results[1] == results[2];
 
-        private static bool TwoInARow(int[] results, int emoji)
+        private static bool ThreeInARow(int[] results)
         {
-            return (results[0] == emoji && results[1] == emoji) || (results[1] == emoji && results[2] == emoji) || (results[2] == emoji && results[3] == emoji);
+            return (results[0] == results[1] && results[1] == results[2]) ||
+                (results[0] - 1 == results[1] && results[1] == results[2] + 1) ||
+                (results[0] + 1 == results[1] && results[1] == results[2] - 1);
         }
 
         private async Task StatUpdate(SocketUser user, bool success, double gain)
@@ -164,7 +154,6 @@ namespace RRBot.Modules
 
             if (cash < bet)
                 return CommandResult.FromError("You can't bet more than what you have!");
-
             if (snap.ContainsField("usingSlots"))
                 return CommandResult.FromError("You are already using the slot machine!");
 
@@ -172,56 +161,34 @@ namespace RRBot.Modules
 
             await Task.Factory.StartNew(async () =>
             {
-                int[] results = new int[4];
                 double payoutMult = 1;
-
-                EmbedBuilder embed = new()
-                {
-                    Color = Color.Red,
-                    Title = "Slots"
-                };
-
+                EmbedBuilder embed = new() { Color = Color.Red, Title = "Slots" };
                 IUserMessage slotMsg = await ReplyAsync(embed: embed.Build());
+                int[] results = new int[3];
+
                 for (int i = 0; i < 5; i++)
                 {
-                    results[0] = RandomUtil.Next(1, 5);
-                    results[1] = RandomUtil.Next(1, 5);
-                    results[2] = RandomUtil.Next(1, 5);
-                    results[3] = RandomUtil.Next(1, 5);
+                    results[0] = RandomUtil.Next(1, 6);
+                    results[1] = RandomUtil.Next(1, 6);
+                    results[2] = RandomUtil.Next(1, 6);
 
-                    embed.WithDescription($"{emojis[results[0]]} {emojis[results[1]]} {emojis[results[2]]} {emojis[results[3]]}");
+                    embed.WithDescription("------------\n" +
+                    $"{emojis[results[0] - 1]}  {emojis[results[1] - 1]}  {emojis[results[2] - 1]}\n" +
+                    $"{emojis[results[0]]}  {emojis[results[1]]}  {emojis[results[2]]}\n" +
+                    $"{emojis[results[0] + 1]}  {emojis[results[1] + 1]}  {emojis[results[2] + 1]}\n" +
+                    "------------");
                     await slotMsg.ModifyAsync(msg => msg.Embed = embed.Build());
 
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
 
-                int sevens = results.Count(num => num == 1);
-                int apples = results.Count(num => num == 2);
-                int grapes = results.Count(num => num == 3);
-                int cherries = results.Count(num => num == 4);
-                if (sevens == 4)
-                {
-                    payoutMult = Constants.SLOTS_MULT_FOURSEVENS;
-                }
-                else if (apples == 4 || grapes == 4 || cherries == 4)
-                {
-                    payoutMult = Constants.SLOTS_MULT_FOURINAROW;
-                }
-                else if (ThreeInARow(results, 1))
-                {
+                int sevens = results.Count(num => num == 2);
+                if (sevens == 3)
                     payoutMult = Constants.SLOTS_MULT_THREESEVENS;
-                }
-                else if (ThreeInARow(results, 2) || ThreeInARow(results, 3) || ThreeInARow(results, 4))
-                {
+                else if (ThreeInARow(results))
                     payoutMult = Constants.SLOTS_MULT_THREEINAROW;
-                }
-                else
-                {
-                    if (TwoInARow(results, 1)) payoutMult += Constants.SLOTS_MULT_ADD_TWOSEVENS;
-                    if (TwoInARow(results, 2)) payoutMult += Constants.SLOTS_MULT_ADD_TWOINAROW;
-                    if (TwoInARow(results, 3)) payoutMult += Constants.SLOTS_MULT_ADD_TWOINAROW;
-                    if (TwoInARow(results, 4)) payoutMult += Constants.SLOTS_MULT_ADD_TWOINAROW;
-                }
+                else if (TwoInARow(results))
+                    payoutMult = Constants.SLOTS_MULT_TWOINAROW;
 
                 if (payoutMult > 1)
                 {
@@ -230,7 +197,7 @@ namespace RRBot.Modules
                     await StatUpdate(Context.User, true, payout);
                     await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
 
-                    if (payoutMult == Constants.SLOTS_MULT_FOURSEVENS)
+                    if (payoutMult == Constants.SLOTS_MULT_THREESEVENS)
                     {
                         await Context.User.NotifyAsync(Context.Channel, $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
                             $"\nBalance: {totalCash:C2}");
