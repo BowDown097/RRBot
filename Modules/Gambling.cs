@@ -145,7 +145,7 @@ namespace RRBot.Modules
                 await CashSystem.SetCash(Context.User, Context.Channel, 0);
             }
 
-            await Context.User.NotifyAsync(Context.Channel, "I have doubled your cash.");
+            await Context.User.NotifyAsync(Context.Channel, "​I have doubled your cash.");
             return CommandResult.FromSuccess();
         }
 

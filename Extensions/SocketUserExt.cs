@@ -55,11 +55,11 @@ namespace RRBot.Extensions
             if (channel == null)
                 return null;
 
-            bool replyPings = await UserSettingsGetters.GetReplyPings(user as IGuildUser);
+            bool noReplyPings = await UserSettingsGetters.GetNoReplyPings(user as IGuildUser);
             if (!string.IsNullOrEmpty(altMsg))
-                message = replyPings ? altMsg : message;
+                message = noReplyPings ? message : altMsg;
             else
-                message = replyPings ? $"{user.Mention}, {char.ToLowerInvariant(message[0]) + message[1..]}" : message;
+                message = noReplyPings ? message : $"{user.Mention}, {char.ToLowerInvariant(message[0]) + message[1..]}";
 
             return await channel.SendMessageAsync(message);
         }

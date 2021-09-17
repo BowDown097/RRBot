@@ -20,7 +20,7 @@ namespace RRBot.Modules
             "Dig", "Farm", "Fish", "Hunt", "Mine" };
 
         private async Task AddBackUserSettings(DocumentReference doc, double btc, double doge, double eth, double xrp,
-            bool dmNotifsV, bool rankupNotifsV, bool replyPingsV, Dictionary<string, string> userStats, long whoreCd,
+            bool dmNotifsV, bool noReplyPingsV, bool rankupNotifsV, Dictionary<string, string> userStats, long whoreCd,
             long slaveryCd, long rapeCd, long lootCd, long dealCd, long bullyCd, long mineCd, long huntCd, long farmCd,
             long digCd, long chopCd)
         {
@@ -36,9 +36,9 @@ namespace RRBot.Modules
             await doc.SetAsync(new
             {
                 dmNotifs = dmNotifsV,
+                noReplyPings = noReplyPingsV,
                 rankupNotifs = rankupNotifsV,
-                replyPings = replyPingsV,
-                stats = userStats,
+                stats = userStats ?? new Dictionary<string, string>(),
                 whoreCooldown = whoreCd,
                 slaveryCooldown = slaveryCd,
                 rapeCooldown = rapeCd,
@@ -391,8 +391,8 @@ namespace RRBot.Modules
             snap.TryGetValue("eth", out double eth);
             snap.TryGetValue("xrp", out double xrp);
             snap.TryGetValue("dmNotifs", out bool dmNotifsV);
+            snap.TryGetValue("noReplyPings", out bool noReplyPingsV);
             snap.TryGetValue("rankupNotifs", out bool rankupNotifsV);
-            snap.TryGetValue("replyPings", out bool replyPingsV);
             snap.TryGetValue("stats", out Dictionary<string, string> userStats);
             snap.TryGetValue("whoreCooldown", out long whoreCd);
             snap.TryGetValue("slaveryCooldown", out long slaveryCd);
@@ -414,17 +414,17 @@ namespace RRBot.Modules
                     await Context.User.NotifyAsync(Context.Channel, "You shot yourself, but somehow the bullet didn't kill you. Lucky or unlucky?");
                     break;
                 case 2:
-                    await Context.User.NotifyAsync(Context.Channel, "DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
+                    await Context.User.NotifyAsync(Context.Channel, "​DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await doc.DeleteAsync();
                     await CashSystem.SetCash(Context.User, Context.Channel, 0);
-                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, rankupNotifsV, replyPingsV, userStats, whoreCd, slaveryCd, rapeCd,
+                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, noReplyPingsV, rankupNotifsV, userStats, whoreCd, slaveryCd, rapeCd,
                         lootCd, dealCd, bullyCd, mineCd, huntCd, farmCd, digCd, chopCd);
                     break;
                 case 3:
                     await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await doc.DeleteAsync();
                     await CashSystem.SetCash(Context.User, Context.Channel, 0);
-                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, rankupNotifsV, replyPingsV, userStats, whoreCd, slaveryCd, rapeCd,
+                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, noReplyPingsV, rankupNotifsV, userStats, whoreCd, slaveryCd, rapeCd,
                         lootCd, dealCd, bullyCd, mineCd, huntCd, farmCd, digCd, chopCd);
                     break;
             }

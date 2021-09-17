@@ -6,7 +6,6 @@ using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -82,6 +81,7 @@ namespace RRBot.Modules
 
             await RollRandomItem();
             await doc.SetAsync(cooldown, SetOptions.MergeAll);
+
             return CommandResult.FromSuccess();
         }
 
