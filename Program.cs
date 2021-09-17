@@ -10,6 +10,7 @@ using RRBot.TypeReaders;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -87,12 +88,43 @@ namespace RRBot
             await Task.Delay(-1);
         }
 
-        private static async Task HandleReactionAsync(ISocketMessageChannel channel, SocketReaction reaction, bool addedReaction)
+        private static async Task HandleReactionAsync(Cacheable<IUserMessage, ulong> msg,
+            ISocketMessageChannel channel, SocketReaction reaction, bool addedReaction)
         {
             SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
             if (user.IsBot)
                 return;
 
+            IUserMessage message = await msg.GetOrDownloadAsync();
+            // trivia check
+            if (message.Embeds.Count > 0 && addedReaction)
+            {
+                Embed embed = message.Embeds.ElementAt(0) as Embed;
+                if (embed.Title == "Trivia!")
+                {
+                    using StringReader reader = new(embed.Description);
+                    for (string line = reader.ReadLine(); line != null; line = reader.ReadLine())
+                    {
+                        // determine correct answer by using zero-width space lol
+                        if (line.Contains("​"))
+                        {
+                            Emoji numberEmoji = new(Constants.POLL_EMOTES[Convert.ToInt32(line[0].ToString())]);
+                            if (reaction.Emote.ToString() == numberEmoji.ToString())
+                            {
+                                EmbedBuilder embedBuilder = new()
+                                {
+                                    Color = Color.Red,
+                                    Title = "Trivia Over!",
+                                    Description = $"**{reaction.User}** was the first to get the correct answer!"
+                                };
+                                await message.ModifyAsync(msg => msg.Embed = embedBuilder.Build());
+                            }
+                        }
+                    }
+                }
+            }
+
+            // selfroles check
             IGuild guild = (channel as ITextChannel)?.Guild;
             DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("selfroles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
@@ -146,10 +178,10 @@ namespace RRBot
         }
 
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel,
-            SocketReaction reaction) => await HandleReactionAsync(channel, reaction, true);
+            SocketReaction reaction) => await HandleReactionAsync(msg, channel, reaction, true);
 
         private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel,
-            SocketReaction reaction) => await HandleReactionAsync(channel, reaction, false);
+            SocketReaction reaction) => await HandleReactionAsync(msg, channel, reaction, false);
 
         private async Task Client_Ready()
         {

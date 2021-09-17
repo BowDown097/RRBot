@@ -111,6 +111,22 @@ namespace RRBot
         public const int CHILL_MIN_SECONDS = 10;
 
         // ********************
+        //        POLLS
+        // ********************
+        public static readonly Dictionary<int, string> POLL_EMOTES = new()
+        {
+            { 1, "1️⃣" },
+            { 2, "2️⃣" },
+            { 3, "3️⃣" },
+            { 4, "4️⃣" },
+            { 5, "5️⃣" },
+            { 6, "6️⃣" },
+            { 7, "7️⃣" },
+            { 8, "8️⃣" },
+            { 9, "9️⃣" },
+        };
+
+        // ********************
         //        TASKS
         // ********************
         public const double CHOP_COOLDOWN = 3600;

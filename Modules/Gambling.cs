@@ -199,7 +199,7 @@ namespace RRBot.Modules
 
                     if (payoutMult == Constants.SLOTS_MULT_THREESEVENS)
                     {
-                        await Context.User.NotifyAsync(Context.Channel, $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
+                        await Context.User.NotifyAsync(Context.Channel, $"​SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
                             $"\nBalance: {totalCash:C2}");
                     }
                     else

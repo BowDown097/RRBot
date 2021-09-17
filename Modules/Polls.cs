@@ -4,7 +4,6 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using RRBot.Preconditions;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,19 +13,6 @@ namespace RRBot.Modules
     [RequireStaff]
     public class Polls : ModuleBase<SocketCommandContext>
     {
-        private static readonly Dictionary<int, string> numberEmotes = new()
-        {
-            { 1, "1️⃣" },
-            { 2, "2️⃣" },
-            { 3, "3️⃣" },
-            { 4, "4️⃣" },
-            { 5, "5️⃣" },
-            { 6, "6️⃣" },
-            { 7, "7️⃣" },
-            { 8, "8️⃣" },
-            { 9, "9️⃣" },
-        };
-
         [Command("createpoll")]
         [Summary("Create a poll.")]
         [Remarks("$createpoll [title] [choice1|choice2|choice3|...|choice9]")]
@@ -55,7 +41,7 @@ namespace RRBot.Modules
 
                 RestUserMessage pollMsg = await pollsChannel.SendMessageAsync(embed: pollEmbed.Build());
                 for (int i = 1; i <= pollChoices.Length; i++)
-                    await pollMsg.AddReactionAsync(new Emoji(numberEmotes[i]));
+                    await pollMsg.AddReactionAsync(new Emoji(Constants.POLL_EMOTES[i]));
 
                 return CommandResult.FromSuccess();
             }
