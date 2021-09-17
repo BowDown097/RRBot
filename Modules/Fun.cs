@@ -81,7 +81,7 @@ namespace RRBot.Modules
 
             if (description.Length == 0)
                 return CommandResult.FromError("Couldn't find anything for that term, chief.");
-            
+
             EmbedBuilder embed = new()
             {
                 Color = Color.Red,

@@ -53,7 +53,7 @@ namespace RRBot.Modules
 
         private async Task<RuntimeResult> GenericGamble(double bet, double odds, double mult, bool exactRoll = false)
         {
-            if (bet < 0 || double.IsNaN(bet))
+            if (bet <= 0.01 || double.IsNaN(bet))
                 return CommandResult.FromError("You can't bet nothing!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
@@ -145,7 +145,7 @@ namespace RRBot.Modules
         [RequireCash]
         public async Task<RuntimeResult> Slots(double bet)
         {
-            if (bet < 0 || double.IsNaN(bet))
+            if (bet <= 0.01 || double.IsNaN(bet))
                 return CommandResult.FromError("You can't bet nothing!");
 
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());

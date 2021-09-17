@@ -39,7 +39,7 @@ namespace RRBot.Modules
                     Title = "Rush Reborn Bot",
                     Description = "Say hello to the most amazing bot you will ever bare witness to, made by the greatest programmer who has ever lived! ~~definitely not capping~~\n\n" +
                         "This is what I like to call a \"module-based\" bot, where all of the commands are split up into modules.\n\n" +
-                        "If you want to learn about a particular module, use ``$modules`` to view the bot's modules and ``$modules [module]`` to view the information of whatever module you want to look up.\n\n" +
+                        "If you want to learn about a particular module, use ``$modules`` to view the bot's modules and ``$module [module]`` to view the information of whatever module you want to look up.\n\n" +
                         "If you want to learn about a particular command in a module, use ``$help [command]``. In command usage examples, [] indicate required arguments and <> indicate optional arguments.\n\n" +
                         "If you have **ANY** questions, just ask!"
                 };
@@ -82,7 +82,7 @@ namespace RRBot.Modules
                         if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC) || moduleInfo.TryGetPrecondition(out rBIC))
                             description.Append($"\nMust be in #{rBIC.Name}");
                         if (commandInfo.TryGetPrecondition(out RequireCashAttribute rc) || moduleInfo.TryGetPrecondition(out rc))
-                            description.Append((int)rc.Amount == 1 ? "\nRequires any amount of cash" : $"\nRequires ${(int)rc.Amount}");
+                            description.Append(rc.Amount == 0.01 ? "\nRequires any amount of cash" : $"\nRequires {rc.Amount:C2}");
                         if (commandInfo.TryGetPrecondition(out RequireItemAttribute ri) || moduleInfo.TryGetPrecondition(out ri))
                             description.Append(string.IsNullOrEmpty(ri.ItemType) ? "\nRequires an item" : $"\nRequires a {ri.ItemType}");
                         if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP) || moduleInfo.TryGetPrecondition(out rUP))

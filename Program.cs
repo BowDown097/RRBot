@@ -185,6 +185,15 @@ namespace RRBot
 
         private async Task Client_Ready()
         {
+            // reset usingSlots if someone happened to be using slots during bot restart
+            foreach (SocketGuild guild in client.Guilds)
+            {
+                QuerySnapshot usingQuery = await database.Collection($"servers/{guild.Id}/users")
+                    .WhereEqualTo("usingSlots", true).GetSnapshotAsync();
+                foreach (DocumentSnapshot user in usingQuery.Documents)
+                    await user.Reference.SetAsync(new { usingSlots = FieldValue.Delete }, SetOptions.MergeAll);
+            }
+
             QuerySnapshot globalConfig = await database.Collection("globalConfig").GetSnapshotAsync();
             foreach (DocumentSnapshot blacklist in globalConfig.Where(doc => doc.ContainsField("banned")))
                 bannedUsers.Add(ulong.Parse(blacklist.Id));
