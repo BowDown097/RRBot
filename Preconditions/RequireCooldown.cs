@@ -1,9 +1,7 @@
 ﻿using Discord.Commands;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using RRBot.Extensions;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace RRBot.Preconditions
@@ -22,28 +20,20 @@ namespace RRBot.Preconditions
 
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
+            long cooldown = (long)user[CooldownNode] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (user.Perks?.ContainsKey("Speed Demon") == true)
+                cooldown = (long)(cooldown * 0.85);
 
-            if (snap.TryGetValue(CooldownNode, out long cooldown))
+            long newCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(cooldown);
+            if (newCooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             {
-                long cooldownOffset = cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon"))
-                    cooldownOffset = (long)(cooldownOffset * 0.85);
-
-                long newCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(cooldownOffset);
-                if (newCooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                {
-                    return PreconditionResult.FromError(string.Format($"{Message}",
-                            TimeSpan.FromSeconds(cooldownOffset).FormatCompound()));
-                }
-
-                await doc.SetAsync(new Dictionary<string, object>
-                {
-                    { CooldownNode, FieldValue.Delete }
-                }, SetOptions.MergeAll);
+                return PreconditionResult.FromError(string.Format($"{Message}",
+                        TimeSpan.FromSeconds(cooldown).FormatCompound()));
             }
 
+            user[CooldownNode] = 0;
+            await user.Write();
             return PreconditionResult.FromSuccess();
         }
     }

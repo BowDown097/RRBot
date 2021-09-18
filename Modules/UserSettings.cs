@@ -1,35 +1,19 @@
 ﻿using Discord;
 using Discord.Commands;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using RRBot.Extensions;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RRBot.Modules
 {
-    public static class UserSettingsGetters
-    {
-        private static async Task<bool> GenericGet(IGuildUser user, string path)
-        {
-            DocumentReference doc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue(path, out bool status)) return status;
-
-            return false;
-        }
-
-        public static async Task<bool> GetDMNotifications(IGuildUser user) => await GenericGet(user, "dmNotifs");
-        public static async Task<bool> GetNoReplyPings(IGuildUser user) => await GenericGet(user, "noReplyPings");
-        public static async Task<bool> GetRankupNotifications(IGuildUser user) => await GenericGet(user, "rankupNotifs");
-    }
-
     [Summary("Choose how you want me to bug you. I can do it in DM, I can do it when you rank up, and I can even ping you, too.")]
     public class UserSettings : ModuleBase<SocketCommandContext>
     {
-        private async Task GenericSet(object documentData)
+        private async Task GenericSet(string property, bool status)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            await doc.SetAsync(documentData, SetOptions.MergeAll);
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            user[property] = status;
+            await user.Write();
         }
 
         [Command("mysettings")]
@@ -37,21 +21,14 @@ namespace RRBot.Modules
         [Remarks("$mysettings")]
         public async Task MySettings()
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-
-            StringBuilder description = new();
-            description.AppendLine($"**DM Notifications**: {snap.TryGetValue("dmNotifs", out bool dmNotifs) && dmNotifs}");
-            description.AppendLine($"**No Reply Pings**: {snap.TryGetValue("noReplyPings", out bool noReplyPings) && noReplyPings}");
-            description.AppendLine($"**Rankup Notifications**: {snap.TryGetValue("rankupNotifs", out bool rankupNotifs) && rankupNotifs}");
-
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             EmbedBuilder embed = new()
             {
-                Title = "Your Settings",
                 Color = Color.Red,
-                Description = description.ToString()
+                Title = "Your Settings",
+                Description = $"**DM Notifications**: {user.DMNotifs}\n**No Reply Pings**: {user.NoReplyPings}\n" +
+                    $"**Rankup Notifications**: {user.RankupNotifs}"
             };
-
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -61,7 +38,7 @@ namespace RRBot.Modules
         [Remarks("$setdmnotifications [true/false]")]
         public async Task SetDMNotifications(bool status)
         {
-            await GenericSet(new { dmNotifs = status });
+            await GenericSet("DMNotifs", status);
             await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "now see" : "no longer see")} DM notifications.");
         }
 
@@ -70,8 +47,8 @@ namespace RRBot.Modules
         [Remarks("$setnoreplypings [true/false]")]
         public async Task SetNoReplyPings(bool status)
         {
-            await GenericSet(new { noReplyPings = status });
-            await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "now be" : "no longer be")} pinged in command responses.");
+            await GenericSet("NoReplyPings", status);
+            await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "no longer be" : "now be")} pinged in command responses.");
         }
 
         [Alias("setrankupnotifs")]
@@ -80,7 +57,7 @@ namespace RRBot.Modules
         [Remarks("$setrankupnotifications [true/false]")]
         public async Task SetRankupNotifications(bool status)
         {
-            await GenericSet(new { rankupNotifs = status });
+            await GenericSet("RankupNotifs", status);
             await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "now see" : "no longer see")} rankup notifications.");
         }
     }

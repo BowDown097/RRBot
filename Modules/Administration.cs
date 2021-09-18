@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
+using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Systems;
 using System;
@@ -17,24 +18,6 @@ namespace RRBot.Modules
     public class Administration : ModuleBase<SocketCommandContext>
     {
         public List<ulong> BannedUsers { get; set; }
-
-        [Command("addcrypto")]
-        [Summary("Add to a user's cryptocurrency amount. See $invest's help info for currently accepted currencies.")]
-        [Remarks("$addcrypto [user] [crypto] [amount]")]
-        [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task<RuntimeResult> AddCrypto(IGuildUser user, string crypto, double amount)
-        {
-            string cUp = crypto.ToUpper();
-
-            if (user.IsBot)
-                return CommandResult.FromError("Nope.");
-            if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "LTC" && cUp != "XRP")
-                return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
-
-            await CashSystem.AddCrypto(Context.User, crypto.ToLower(), amount);
-            await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user}**'s {cUp} balance.");
-            return CommandResult.FromSuccess();
-        }
 
         [Alias("botban")]
         [Command("blacklist")]
@@ -108,22 +91,10 @@ namespace RRBot.Modules
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task ResetCooldowns()
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            await doc.SetAsync(new
-            {
-                rapeCooldown = FieldValue.Delete,
-                robCooldown = FieldValue.Delete,
-                whoreCooldown = FieldValue.Delete,
-                lootCooldown = FieldValue.Delete,
-                slaveryCooldown = FieldValue.Delete,
-                mineCooldown = FieldValue.Delete,
-                digCooldown = FieldValue.Delete,
-                chopCooldown = FieldValue.Delete,
-                farmCooldown = FieldValue.Delete,
-                fishCooldown = FieldValue.Delete,
-                huntCooldown = FieldValue.Delete,
-                dealCooldown = FieldValue.Delete
-            }, SetOptions.MergeAll);
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            foreach (string cmd in Economy.CMDS_WITH_COOLDOWN)
+                user[$"{cmd}Cooldown"] = 0L;
+            await user.Write();
             await Context.User.NotifyAsync(Context.Channel, "Your cooldowns have been reset.");
         }
 
@@ -133,11 +104,33 @@ namespace RRBot.Modules
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task<RuntimeResult> SetCash(IGuildUser user, double amount)
         {
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
-            await CashSystem.SetCash(user as SocketUser, Context.Channel, amount);
+            await dbUser.SetCash(user as SocketUser, Context.Channel, amount);
             await ReplyAsync($"Set **{user}**'s cash to **{amount:C2}**.");
 
+            await dbUser.Write();
+            return CommandResult.FromSuccess();
+        }
+
+        [Command("setcrypto")]
+        [Summary("Set a user's cryptocurrency amount. See $invest's help info for currently accepted currencies.")]
+        [Remarks("$setcrypto [user] [crypto] [amount]")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task<RuntimeResult> SetCrypto(IGuildUser user, string crypto, double amount)
+        {
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+            string cUp = crypto.ToUpper();
+
+            if (user.IsBot)
+                return CommandResult.FromError("Nope.");
+            if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "LTC" && cUp != "XRP")
+                return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
+
+            dbUser[cUp] = Math.Round(amount, 4);
+            await dbUser.Write();
+            await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user}**'s {cUp} balance.");
             return CommandResult.FromSuccess();
         }
 

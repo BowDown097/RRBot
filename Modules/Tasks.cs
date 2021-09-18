@@ -1,6 +1,5 @@
-﻿using Discord;
-using Discord.Commands;
-using Google.Cloud.Firestore;
+﻿using Discord.Commands;
+using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
@@ -15,14 +14,10 @@ namespace RRBot.Modules
     [Summary("The best way to earn money by far, at least for those lucky or rich enough to get themselves an item.")]
     public class Tasks : ModuleBase<SocketCommandContext>
     {
-        private async Task GenericTask(string itemType, string activity, string thing, object cooldown)
+        private async Task GenericTask(string itemType, string activity, string thing, string cooldown, double duration)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            List<string> items = snap.GetValue<List<string>>("items");
-            double cash = snap.GetValue<double>("cash");
-
-            string item = Items.GetBestItem(items, itemType);
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            string item = Items.GetBestItem(user.Items, itemType);
 
             int numMined = RandomUtil.Next(Constants.GENERIC_TASK_WOOD_MIN, Constants.GENERIC_TASK_WOOD_MAX); // default for wooden
             if (item.StartsWith("Stone", StringComparison.Ordinal))
@@ -32,15 +27,14 @@ namespace RRBot.Modules
             else if (item.StartsWith("Diamond", StringComparison.Ordinal))
                 numMined = RandomUtil.Next(Constants.GENERIC_TASK_DIAMOND_MIN, Constants.GENERIC_TASK_DIAMOND_MAX);
 
-            if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Enchanter"))
+            if (user.Perks?.ContainsKey("Enchanter") == true)
             {
                 int randNum = RandomUtil.Next(100);
                 if (randNum == 1 || randNum == 2)
                 {
-                    perks.Remove(item);
-                    Dictionary<string, object> newPerks = new() { { "perks", perks } };
-                    await doc.UpdateAsync(newPerks);
+                    user.Items.Remove(item);
                     await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
+                    await user.Write();
                     return;
                 }
 
@@ -48,76 +42,61 @@ namespace RRBot.Modules
             }
 
             double cashGained = numMined * 2.5;
-            double totalCash = cash + cashGained;
+            double totalCash = user.Cash + cashGained;
 
             await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained:C2}**." +
                 $"\nBalance: {totalCash:C2}");
 
-            await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
-            await Context.User.AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
+            await user.SetCash(Context.User, Context.Channel, totalCash);
+            user.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
             {
                 { "Tasks Done", "1" },
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
-            await doc.SetAsync(cooldown, SetOptions.MergeAll);
+            user[cooldown] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
+            await user.Write();
         }
 
         [Command("chop")]
         [Summary("Go chop some wood.")]
         [Remarks("$chop")]
-        [RequireCooldown("chopCooldown", "You cannot chop wood for {0}.")]
+        [RequireCooldown("ChopCooldown", "You cannot chop wood for {0}.")]
         [RequireItem("Axe")]
-        public async Task Chop()
-        {
-            await GenericTask("Axe", "chopped down", "trees",
-                new { chopCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.CHOP_COOLDOWN) });
-        }
+        public async Task Chop() => await GenericTask("Axe", "chopped down", "trees", "ChopCooldown", Constants.CHOP_COOLDOWN);
 
         [Command("dig")]
         [Summary("Go digging.")]
         [Remarks("$dig")]
-        [RequireCooldown("digCooldown", "You cannot go digging for {0}.")]
+        [RequireCooldown("DigCooldown", "You cannot go digging for {0}.")]
         [RequireItem("Shovel")]
-        public async Task Dig()
-        {
-            await GenericTask("Shovel", "mined", "dirt",
-                new { digCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.DIG_COOLDOWN) });
-        }
+        public async Task Dig() => await GenericTask("Shovel", "mined", "dirt", "DigCooldown", Constants.DIG_COOLDOWN);
 
         [Command("farm")]
         [Summary("Go farming.")]
         [Remarks("$farm")]
-        [RequireCooldown("farmCooldown", "You cannot farm for {0}.")]
+        [RequireCooldown("FarmCooldown", "You cannot farm for {0}.")]
         [RequireItem("Hoe")]
-        public async Task Farm()
-        {
-            await GenericTask("Hoe", "farmed", "crops",
-                new { farmCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FARM_COOLDOWN) });
-        }
+        public async Task Farm() => await GenericTask("Hoe", "farmed", "crops", "FarmCooldown", Constants.FARM_COOLDOWN);
 
         [Command("fish")]
         [Summary("Go fishing.")]
         [Remarks("$fish")]
-        [RequireCooldown("fishCooldown", "You cannot fish for {0}.")]
+        [RequireCooldown("FishCooldown", "You cannot fish for {0}.")]
         [RequireItem("Fishing Rod")]
         public async Task Fish()
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            double cash = snap.GetValue<double>("cash");
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             KeyValuePair<string, double> fish = Constants.FISH.ElementAt(RandomUtil.Next(Constants.FISH.Count));
             int numCaught = RandomUtil.Next(7, 15);
 
-            if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Enchanter"))
+            if (user.Perks?.ContainsKey("Enchanter") == true)
             {
                 int randNum = RandomUtil.Next(100);
                 if (randNum == 1 || randNum == 2)
                 {
-                    List<string> items = snap.GetValue<List<string>>("items");
-                    items.Remove("Fishing Rod");
-                    Dictionary<string, object> newItems = new() { { "items", items } };
-                    await doc.UpdateAsync(newItems);
+                    user.Items.Remove("Fishing Rod");
                     await Context.User.NotifyAsync(Context.Channel, "Your Fishing Rod broke into pieces as soon as you tried to use it. You made no money.");
+                    await user.Write();
                     return;
                 }
 
@@ -125,55 +104,46 @@ namespace RRBot.Modules
             }
 
             double cashGained = numCaught * fish.Value;
-            double totalCash = cash + cashGained;
+            double totalCash = user.Cash + cashGained;
 
             await Context.User.NotifyAsync(Context.Channel, $"You caught {numCaught} {fish.Key} with your rod and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
 
-            await Context.User.AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
+            user.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
             {
                 { "Tasks Done", "1" },
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
-            await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
-            await doc.SetAsync(new { fishCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FISH_COOLDOWN) },
-                SetOptions.MergeAll);
+            await user.SetCash(Context.User, Context.Channel, totalCash);
+            user.FishCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FISH_COOLDOWN);
+            await user.Write();
         }
 
         [Command("hunt")]
         [Summary("Go hunting.")]
         [Remarks("$hunt")]
-        [RequireCooldown("huntCooldown", "You cannot go hunting for {0}.")]
+        [RequireCooldown("HuntCooldown", "You cannot go hunting for {0}.")]
         [RequireItem("Sword")]
-        public async Task Hunt()
-        {
-            await GenericTask("Sword", "hunted", "mobs",
-                new { huntCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.HUNT_COOLDOWN) });
-        }
+        public async Task Hunt() => await GenericTask("Sword", "hunted", "mobs", "HuntCooldown", Constants.HUNT_COOLDOWN);
 
         [Command("mine")]
         [Summary("Go mining.")]
         [Remarks("$mine")]
-        [RequireCooldown("mineCooldown", "You cannot go mining for {0}.")]
+        [RequireCooldown("MineCooldown", "You cannot go mining for {0}.")]
         [RequireItem("Pickaxe")]
         public async Task Mine()
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            List<string> items = snap.GetValue<List<string>>("items");
-            double cash = snap.GetValue<double>("cash");
-
-            string item = Items.GetBestItem(items, "Pickaxe");
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            string item = Items.GetBestItem(user.Items, "Pickaxe");
 
             int numMined = RandomUtil.Next(32, 65);
-            if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Enchanter"))
+            if (user.Perks?.ContainsKey("Enchanter") == true)
             {
                 int randNum = RandomUtil.Next(100);
                 if (randNum == 1 || randNum == 2)
                 {
-                    items.Remove(item);
-                    Dictionary<string, object> newItems = new() { { "items", items } };
-                    await doc.UpdateAsync(newItems);
+                    user.Items.Remove(item);
                     await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
+                    await user.Write();
                     return;
                 }
 
@@ -181,7 +151,7 @@ namespace RRBot.Modules
             }
 
             double cashGained = numMined * 4;
-            double totalCash = cash + cashGained;
+            double totalCash = user.Cash + cashGained;
 
             if (item.StartsWith("Wooden", StringComparison.Ordinal))
             {
@@ -190,30 +160,30 @@ namespace RRBot.Modules
             else if (item.StartsWith("Stone", StringComparison.Ordinal))
             {
                 cashGained *= Constants.MINE_STONE_MULTIPLIER;
-                totalCash = cash + cashGained;
+                totalCash = user.Cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} iron with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
             else if (item.StartsWith("Iron", StringComparison.Ordinal))
             {
                 cashGained *= Constants.MINE_IRON_MULTIPLIER;
-                totalCash = cash + cashGained;
+                totalCash = user.Cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} diamonds with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
             else if (item.StartsWith("Diamond", StringComparison.Ordinal))
             {
                 cashGained *= Constants.MINE_DIAMOND_MULTIPLIER;
-                totalCash = cash + cashGained;
+                totalCash = user.Cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
 
-            await Context.User.AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
+            user.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
             {
                 { "Tasks Done", "1" },
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
-            await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
-            await doc.SetAsync(new { mineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN) },
-                SetOptions.MergeAll);
+            await user.SetCash(Context.User, Context.Channel, totalCash);
+            user.MineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN);
+            await user.Write();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Google.Cloud.Firestore;
+using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;
 using System;
@@ -69,6 +70,8 @@ namespace RRBot.Modules
 
                         if (commandInfo.TryGetPrecondition<CheckPacifistAttribute>() || moduleInfo.TryGetPrecondition<CheckPacifistAttribute>())
                             description.Append("\nRequires not having the Pacifist perk equipped");
+                        if (commandInfo.TryGetPrecondition<RequireCashAttribute>() || moduleInfo.TryGetPrecondition<RequireCashAttribute>())
+                            description.Append("\nRequires any amount of cash");
                         if (commandInfo.TryGetPrecondition<RequireDJAttribute>() || moduleInfo.TryGetPrecondition<RequireDJAttribute>())
                             description.Append("\nRequires DJ");
                         if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>() || moduleInfo.TryGetPrecondition<RequireNsfwAttribute>())
@@ -81,8 +84,6 @@ namespace RRBot.Modules
                             description.Append("\nRequires Staff");
                         if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC) || moduleInfo.TryGetPrecondition(out rBIC))
                             description.Append($"\nMust be in #{rBIC.Name}");
-                        if (commandInfo.TryGetPrecondition(out RequireCashAttribute rc) || moduleInfo.TryGetPrecondition(out rc))
-                            description.Append(rc.Amount == 0.01 ? "\nRequires any amount of cash" : $"\nRequires {rc.Amount:C2}");
                         if (commandInfo.TryGetPrecondition(out RequireItemAttribute ri) || moduleInfo.TryGetPrecondition(out ri))
                             description.Append(string.IsNullOrEmpty(ri.ItemType) ? "\nRequires an item" : $"\nRequires a {ri.ItemType}");
                         if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP) || moduleInfo.TryGetPrecondition(out rUP))
@@ -201,16 +202,15 @@ namespace RRBot.Modules
                 return CommandResult.FromError("Nope.");
 
             ulong userId = user == null ? Context.User.Id : user.Id;
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(userId.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
             StringBuilder description = new();
 
-            if (snap.TryGetValue("stats", out Dictionary<string, string> stats) && stats.Count > 0)
+            if (dbUser.Stats?.Count > 0)
             {
-                List<string> keys = stats.Keys.ToList();
+                List<string> keys = dbUser.Stats.Keys.ToList();
                 keys.Sort();
                 foreach (string key in keys)
-                    description.AppendLine($"**{key}**: {stats[key]}");
+                    description.AppendLine($"**{key}**: {dbUser.Stats[key]}");
 
                 EmbedBuilder embed = new()
                 {

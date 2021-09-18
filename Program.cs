@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using Google.Cloud.Firestore.V1;
 using Microsoft.Extensions.DependencyInjection;
+using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Systems;
 using RRBot.TypeReaders;
@@ -207,10 +208,12 @@ namespace RRBot
         private async Task Client_UserJoined(SocketGuildUser user)
         {
             // add 100 cash to user if they haven't joined already
-            DocumentReference userDoc = database.Collection($"servers/{user.Guild.Id}/users").Document(user.Id.ToString());
-            DocumentSnapshot userSnap = await userDoc.GetSnapshotAsync();
-            if (!userSnap.ContainsField("cash"))
-                await CashSystem.SetCash(user, null, 100);
+            DbUser dbUser = await DbUser.GetById(user.Guild.Id, user.Id);
+            if (dbUser.Cash == 0)
+            {
+                dbUser.Cash = 100;
+                await dbUser.Write();
+            }
 
             // circumvent mute bypasses
             DocumentReference rolesDoc = database.Collection($"servers/{user.Guild.Id}/config").Document("roles");

@@ -1,9 +1,10 @@
 ﻿using Discord;
 using Discord.Commands;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -16,7 +17,7 @@ namespace RRBot.Modules
     {
         public CultureInfo CurrencyCulture { get; set; }
 
-        private static string ResolveAbbreviation(string crypto)
+        public static string ResolveAbbreviation(string crypto)
         {
             return crypto.ToLower() switch
             {
@@ -42,12 +43,10 @@ namespace RRBot.Modules
             if (abbreviation is null)
                 return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            double cash = snap.GetValue<double>("cash");
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             double cryptoAmount = amount / await CashSystem.QueryCryptoValue(abbreviation);
 
-            if (cash < amount)
+            if (user.Cash < amount)
             {
                 return CommandResult.FromError("You can't invest more than what you have!");
             }
@@ -57,14 +56,15 @@ namespace RRBot.Modules
                     + $"You'll need to invest at least **{await CashSystem.QueryCryptoValue(abbreviation) * Constants.INVESTMENT_MIN_AMOUNT:C2}**.");
             }
 
-            await CashSystem.SetCash(Context.User, Context.Channel, cash - amount);
-            await CashSystem.AddCrypto(Context.User, abbreviation.ToLower(), cryptoAmount);
-            await Context.User.AddToStatsAsync(CurrencyCulture, Context.Guild, new Dictionary<string, string>
+            await user.SetCash(Context.User, Context.Channel, user.Cash - amount);
+            user[abbreviation] = Math.Round(amount, 4);
+            user.AddToStats(CurrencyCulture, new Dictionary<string, string>
             {
                 { $"Money Put Into {abbreviation}", amount.ToString("C2", CurrencyCulture) },
                 { $"{abbreviation} Purchased", cryptoAmount.ToString("0.####") }
             });
 
+            await user.Write();
             await Context.User.NotifyAsync(Context.Channel, $"You have invested in **{cryptoAmount:0.####}** {abbreviation}, currently valued at **{amount:C2}**.");
             return CommandResult.FromSuccess();
         }
@@ -78,20 +78,19 @@ namespace RRBot.Modules
                 return CommandResult.FromError("Nope.");
 
             ulong userId = user == null ? Context.User.Id : user.Id;
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(userId.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
 
             StringBuilder investments = new();
-            if (snap.TryGetValue("btc", out double btc) && btc >= Constants.INVESTMENT_MIN_AMOUNT)
-                investments.AppendLine($"**Bitcoin (BTC)**: {btc:0.####} ({await CashSystem.QueryCryptoValue("BTC") * btc:C2})");
-            if (snap.TryGetValue("doge", out double doge) && doge >= Constants.INVESTMENT_MIN_AMOUNT)
-                investments.AppendLine($"**Dogecoin (DOGE)**: {doge:0.####} ({await CashSystem.QueryCryptoValue("DOGE") * doge:C2})");
-            if (snap.TryGetValue("eth", out double eth) && eth >= Constants.INVESTMENT_MIN_AMOUNT)
-                investments.AppendLine($"**Ethereum (ETH)**: {eth:0.####} ({await CashSystem.QueryCryptoValue("ETH") * eth:C2})");
-            if (snap.TryGetValue("ltc", out double ltc) && ltc >= Constants.INVESTMENT_MIN_AMOUNT)
-                investments.AppendLine($"**Litecoin (LTC)**: {ltc:0.####} ({await CashSystem.QueryCryptoValue("LTC") * ltc:C2})");
-            if (snap.TryGetValue("xrp", out double xrp) && xrp >= Constants.INVESTMENT_MIN_AMOUNT)
-                investments.AppendLine($"**XRP**: {xrp:0.####} ({await CashSystem.QueryCryptoValue("XRP") * xrp:C2})");
+            if (dbUser.BTC >= Constants.INVESTMENT_MIN_AMOUNT)
+                investments.AppendLine($"**Bitcoin (BTC)**: {dbUser.BTC:0.####} ({await CashSystem.QueryCryptoValue("BTC") * dbUser.BTC:C2})");
+            if (dbUser.DOGE >= Constants.INVESTMENT_MIN_AMOUNT)
+                investments.AppendLine($"**Dogecoin (DOGE)**: {dbUser.DOGE:0.####} ({await CashSystem.QueryCryptoValue("DOGE") * dbUser.DOGE:C2})");
+            if (dbUser.ETH >= Constants.INVESTMENT_MIN_AMOUNT)
+                investments.AppendLine($"**Ethereum (ETH)**: {dbUser.ETH:0.####} ({await CashSystem.QueryCryptoValue("ETH") * dbUser.ETH:C2})");
+            if (dbUser.LTC >= Constants.INVESTMENT_MIN_AMOUNT)
+                investments.AppendLine($"**Litecoin (LTC)**: {dbUser.LTC:0.####} ({await CashSystem.QueryCryptoValue("LTC") * dbUser.LTC:C2})");
+            if (dbUser.XRP >= Constants.INVESTMENT_MIN_AMOUNT)
+                investments.AppendLine($"**XRP**: {dbUser.XRP:0.####} ({await CashSystem.QueryCryptoValue("XRP") * dbUser.XRP:C2})");
 
             EmbedBuilder embed = new()
             {
@@ -139,24 +138,24 @@ namespace RRBot.Modules
             if (abbreviation is null)
                 return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (!snap.TryGetValue(abbreviation.ToLower(), out double cryptoBal) || cryptoBal < Constants.INVESTMENT_MIN_AMOUNT)
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            double cryptoBal = (double)user[abbreviation];
+            if (cryptoBal < Constants.INVESTMENT_MIN_AMOUNT)
                 return CommandResult.FromError($"You have no {abbreviation}!");
             if (cryptoBal < amount)
                 return CommandResult.FromError($"You don't have {amount} {abbreviation}! You've only got **{cryptoBal}** of it.");
 
-            double cash = snap.GetValue<double>("cash");
             double cryptoValue = await CashSystem.QueryCryptoValue(abbreviation) * amount;
             double finalValue = cryptoValue / 100.0 * (100 - Constants.INVESTMENT_FEE_PERCENT);
 
-            await CashSystem.SetCash(Context.User, Context.Channel, cash + finalValue);
-            await CashSystem.AddCrypto(Context.User, abbreviation.ToLower(), -amount);
-            await Context.User.AddToStatsAsync(CurrencyCulture, Context.Guild, new Dictionary<string, string>
+            await user.SetCash(Context.User, Context.Channel, user.Cash + finalValue);
+            user[abbreviation] = Math.Round(-amount, 4);
+            user.AddToStats(CurrencyCulture, new Dictionary<string, string>
             {
                 { $"Money Gained From {abbreviation}", finalValue.ToString("C2", CurrencyCulture) }
             });
 
+            await user.Write();
             await Context.User.NotifyAsync(Context.Channel, $"You have withdrew **{amount}** {abbreviation}, currently valued at **{cryptoValue:C2}**.\n" +
                 $"A {Constants.INVESTMENT_FEE_PERCENT}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
             return CommandResult.FromSuccess();

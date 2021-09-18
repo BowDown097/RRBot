@@ -1,7 +1,6 @@
 ﻿using Discord.Commands;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,12 +15,10 @@ namespace RRBot.Preconditions
 
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-
-            if (snap.TryGetValue("items", out List<string> items) && items.Count > 0)
+            DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
+            if (user.Items?.Count > 0)
             {
-                return string.IsNullOrEmpty(ItemType) || items.Any(item => item.EndsWith(ItemType, StringComparison.Ordinal))
+                return string.IsNullOrEmpty(ItemType) || user.Items.Any(item => item.EndsWith(ItemType, StringComparison.Ordinal))
                     ? PreconditionResult.FromSuccess()
                     : PreconditionResult.FromError($"You need to have a {ItemType}.");
             }

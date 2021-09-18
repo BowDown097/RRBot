@@ -4,6 +4,7 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using Microsoft.CodeAnalysis;
+using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
@@ -50,6 +51,7 @@ namespace RRBot.Modules
                 return CommandResult.FromError($"You cannot ban **{user}** because they are a staff member.");
             }
 
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
             {
                 Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"banned **{user}**");
@@ -63,22 +65,24 @@ namespace RRBot.Modules
                 await Logger.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
                 await banDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) }, SetOptions.MergeAll);
                 await user.BanAsync(reason: reason);
-                await (user as SocketUser).AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
+                dbUser.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
                 {
                     { "Bans", "1" }
                 });
 
+                await dbUser.Write();
                 return CommandResult.FromSuccess();
             }
 
             if (string.IsNullOrWhiteSpace(reason))
             {
                 await user.BanAsync(reason: duration);
-                await (user as SocketUser).AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
+                dbUser.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
                 {
                     { "Bans", "1" }
                 });
 
+                await dbUser.Write();
                 return CommandResult.FromSuccess();
             }
 
@@ -92,15 +96,12 @@ namespace RRBot.Modules
         [RequireRushReborn]
         public async Task<RuntimeResult> CancelTicket(int index)
         {
-            CollectionReference ticketsCollection = Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets");
-            IAsyncEnumerable<DocumentReference> tickets = ticketsCollection.ListDocumentsAsync();
-            if (index > await tickets.CountAsync() || index <= 0)
+            QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();
+            if (index > tickets.Count || index <= 0)
                 return CommandResult.FromError("There is not a support ticket at that index!");
 
-            DocumentReference doc = await tickets.ElementAtAsync(index - 1);
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-
-            await Support.CloseTicket(Context.Channel, Context.User, doc, snap, $"Support ticket #{index} deleted successfully!");
+            DocumentSnapshot snap = tickets[index - 1];
+            await Support.CloseTicket(Context.Channel, Context.User, snap.Reference, snap, $"Support ticket #{index} deleted successfully!");
             return CommandResult.FromSuccess();
         }
 
@@ -158,10 +159,12 @@ namespace RRBot.Modules
             response += string.IsNullOrWhiteSpace(reason) ? "." : $"for '{reason}'";
             await ReplyAsync(response);
 
-            await (user as SocketUser).AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+            dbUser.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
             {
                 { "Kicks", "1" }
             });
+            await dbUser.Write();
 
             return CommandResult.FromSuccess();
         }
@@ -195,10 +198,13 @@ namespace RRBot.Modules
                     await Logger.Custom_UserMuted(user, Context.User, duration, reason);
                     await muteDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) }, SetOptions.MergeAll);
                     await user.AddRoleAsync(mutedId);
-                    await (user as SocketUser).AddToStatsAsync(CultureInfo.CurrentCulture, Context.Guild, new Dictionary<string, string>
+
+                    DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+                    dbUser.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
                     {
                         { "Mutes", "1" }
                     });
+                    await dbUser.Write();
 
                     return CommandResult.FromSuccess();
                 }

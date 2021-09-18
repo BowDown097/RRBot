@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;
 using RRBot.Systems;
@@ -29,11 +28,11 @@ namespace RRBot.Modules
                 (results[0] + 1 == results[1] && results[1] == results[2] - 1);
         }
 
-        private async Task StatUpdate(SocketUser user, bool success, double gain)
+        private void StatUpdate(DbUser user, bool success, double gain)
         {
             if (success)
             {
-                await user.AddToStatsAsync(CurrencyCulture, Context.Guild, new Dictionary<string, string>
+                user.AddToStats(CurrencyCulture, new Dictionary<string, string>
                 {
                     { "Gambles Won", "1" },
                     { "Money Gained from Gambling", gain.ToString("C2", CurrencyCulture) },
@@ -42,7 +41,7 @@ namespace RRBot.Modules
             }
             else
             {
-                await user.AddToStatsAsync(CurrencyCulture, Context.Guild, new Dictionary<string, string>
+                user.AddToStats(CurrencyCulture, new Dictionary<string, string>
                 {
                     { "Gambles Lost", "1" },
                     { "Money Lost to Gambling", gain.ToString("C2", CurrencyCulture) },
@@ -56,35 +55,33 @@ namespace RRBot.Modules
             if (bet < 0.01 || double.IsNaN(bet))
                 return CommandResult.FromError("You can't bet nothing!");
 
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            double cash = snap.GetValue<double>("cash");
-
-            if (cash < bet)
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            if (user.Cash < bet)
                 return CommandResult.FromError("You can't bet more than what you have!");
 
             double roll = Math.Round(RandomUtil.NextDouble(1, 101), 2);
-            if (snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Speed Demon"))
+            if (user.Perks?.ContainsKey("Speed Demon") == true)
                 odds *= 0.95;
             bool success = !exactRoll ? roll >= odds : roll.CompareTo(odds) == 0;
             if (success)
             {
                 double payout = bet * mult;
-                double totalCash = cash + payout;
-                await StatUpdate(Context.User, true, payout);
-                await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
+                double totalCash = user.Cash + payout;
+                StatUpdate(user, true, payout);
+                await user.SetCash(Context.User, Context.Channel, totalCash);
                 await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout:C2}**!" +
                     $"\nBalance: {totalCash:C2}");
             }
             else
             {
-                double totalCash = (cash - bet) > 0 ? cash - bet : 0;
-                await StatUpdate(Context.User, false, bet);
-                await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
+                double totalCash = (user.Cash - bet) > 0 ? user.Cash - bet : 0;
+                StatUpdate(user, false, bet);
+                await user.SetCash(Context.User, Context.Channel, totalCash);
                 await Context.User.NotifyAsync(Context.Channel, $"Well damn, you rolled a {roll}, which wasn't enough. You lost **{bet:C2}**." +
                     $"\nBalance: {totalCash:C2}");
             }
 
+            await user.Write();
             return CommandResult.FromSuccess();
         }
 
@@ -118,23 +115,22 @@ namespace RRBot.Modules
         [RequireCash]
         public async Task<RuntimeResult> Double()
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.ContainsField("usingSlots"))
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            if (user.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-            double cash = snap.GetValue<double>("cash");
 
             if (RandomUtil.Next(1, 101) < Constants.DOUBLE_ODDS)
             {
-                await StatUpdate(Context.User, true, cash);
-                await CashSystem.SetCash(Context.User, Context.Channel, cash * 2);
+                StatUpdate(user, true, user.Cash);
+                await user.SetCash(Context.User, Context.Channel, user.Cash * 2);
             }
             else
             {
-                await StatUpdate(Context.User, false, cash);
-                await CashSystem.SetCash(Context.User, Context.Channel, 0);
+                StatUpdate(user, false, user.Cash);
+                await user.SetCash(Context.User, Context.Channel, 0);
             }
 
+            await user.Write();
             await Context.User.NotifyAsync(Context.Channel, "​I have doubled your cash.");
             return CommandResult.FromSuccess();
         }
@@ -148,16 +144,15 @@ namespace RRBot.Modules
             if (bet < 0.01 || double.IsNaN(bet))
                 return CommandResult.FromError("You can't bet nothing!");
 
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/users").Document(Context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            double cash = snap.GetValue<double>("cash");
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
 
-            if (cash < bet)
+            if (user.Cash < bet)
                 return CommandResult.FromError("You can't bet more than what you have!");
-            if (snap.ContainsField("usingSlots"))
+            if (user.UsingSlots)
                 return CommandResult.FromError("You are already using the slot machine!");
 
-            await doc.SetAsync(new { usingSlots = true }, SetOptions.MergeAll);
+            user.UsingSlots = true;
+            await user.Write();
 
             await Task.Factory.StartNew(async () =>
             {
@@ -193,9 +188,9 @@ namespace RRBot.Modules
                 if (payoutMult > 1)
                 {
                     double payout = (bet * payoutMult) - bet;
-                    double totalCash = cash + payout;
-                    await StatUpdate(Context.User, true, payout);
-                    await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
+                    double totalCash = user.Cash + payout;
+                    StatUpdate(user, true, payout);
+                    await user.SetCash(Context.User, Context.Channel, totalCash);
 
                     if (payoutMult == Constants.SLOTS_MULT_THREESEVENS)
                     {
@@ -209,14 +204,15 @@ namespace RRBot.Modules
                 }
                 else
                 {
-                    double totalCash = (cash - bet) > 0 ? cash - bet : 0;
-                    await StatUpdate(Context.User, false, bet);
-                    await CashSystem.SetCash(Context.User, Context.Channel, totalCash);
+                    double totalCash = (user.Cash - bet) > 0 ? user.Cash - bet : 0;
+                    StatUpdate(user, false, bet);
+                    await user.SetCash(Context.User, Context.Channel, totalCash);
                     await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet:C2}**." +
                         $"\nBalance: {totalCash:C2}");
                 }
 
-                await doc.SetAsync(new { usingSlots = FieldValue.Delete }, SetOptions.MergeAll);
+                user.UsingSlots = false;
+                await user.Write();
             });
 
             return CommandResult.FromSuccess();

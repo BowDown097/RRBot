@@ -185,6 +185,23 @@ namespace RRBot.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
+        [Command("verse")]
+        [Summary("Random bible verse!")]
+        [Remarks("$verse")]
+        public async Task Verse()
+        {
+            using WebClient client = new();
+            string response = await client.DownloadStringTaskAsync("https://labs.bible.org/api/?passage=random&type=json");
+            dynamic verse = JArray.Parse(response)[0];
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Red,
+                Title = $"{verse.bookname} {verse.chapter}:{verse.verse}",
+                Description = verse.text
+            };
+            await ReplyAsync(embed: embed.Build());
+        }
+
         [Command("waifu")]
         [Summary("Get yourself a random waifu from our vast and sexy collection of scrumptious waifus.")]
         [Remarks("$waifu")]

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
+using RRBot.Entities;
 using RRBot.Systems;
 
 namespace RRBot
@@ -124,28 +125,25 @@ namespace RRBot
                 foreach (SocketGuild guild in client.Guilds)
                 {
                     QuerySnapshot usersWPerks = await database.Collection($"servers/{guild.Id}/users")
-                        .WhereNotEqualTo("perks", null).GetSnapshotAsync();
-                    foreach (DocumentSnapshot user in usersWPerks.Documents)
+                        .WhereNotEqualTo("perks", null).WhereNotEqualTo("perks", new Dictionary<string, long>()).GetSnapshotAsync();
+                    foreach (DocumentSnapshot snap in usersWPerks.Documents)
                     {
-                        Dictionary<string, long> usrPerks = user.GetValue<Dictionary<string, long>>("perks");
-                        foreach (KeyValuePair<string, long> perk in usrPerks)
+                        ulong userId = Convert.ToUInt64(snap.Id);
+                        DbUser user = await DbUser.GetById(guild.Id, userId);
+                        foreach (KeyValuePair<string, long> perk in user.Perks)
                         {
                             if (perk.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && perk.Key != "Pacifist")
                             {
-                                usrPerks.Remove(perk.Key);
-                                if (perk.Key == "Multiperk" && usrPerks.Count >= 2)
+                                user.Perks.Remove(perk.Key);
+                                if (perk.Key == "Multiperk" && user.Perks.Count >= 2)
                                 {
-                                    string lastPerk = usrPerks.Last().Key;
+                                    string lastPerk = user.Perks.Last().Key;
                                     Tuple<string, string, double, long> tuple = Array.Find(Items.perks, p => p.Item1 == lastPerk);
-                                    double cash = user.GetValue<double>("cash");
-                                    cash += tuple.Item3;
-                                    usrPerks.Remove(lastPerk);
-                                    SocketUser userObj = guild.GetUser(Convert.ToUInt64(user.Id));
-                                    await CashSystem.SetCash(userObj, null, cash);
+                                    SocketUser socketUser = guild.GetUser(userId);
+                                    await user.SetCash(socketUser, null, user.Cash + tuple.Item3);
+                                    user.Perks.Remove(lastPerk);
+                                    await user.Write();
                                 }
-
-                                Dictionary<string, object> newPerks = new() { { "perks", usrPerks } };
-                                await user.Reference.UpdateAsync(newPerks);
                             }
                         }
                     }

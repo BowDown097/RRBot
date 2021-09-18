@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using RRBot.Extensions;
 using System;
 using System.Collections.Generic;
@@ -42,22 +42,19 @@ namespace RRBot.Systems
 
         public static async Task<RuntimeResult> BuyItem(string item, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/users").Document(user.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.ContainsField("usingSlots"))
+            DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
+            if (dbUser.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-            List<string> usrItems = snap.TryGetValue("items", out List<string> tmpItems) ? tmpItems : new();
-            double cash = snap.GetValue<double>("cash");
 
-            if (!usrItems.Contains(item))
+            if (dbUser.Items?.Contains(item) == false)
             {
                 double price = ComputeItemPrice(item);
-                if (price <= cash)
+                if (price <= dbUser.Cash)
                 {
-                    usrItems.Add(item);
-                    await CashSystem.SetCash(user, channel, cash - price);
+                    dbUser.Items.Add(item);
+                    await dbUser.SetCash(user, channel, dbUser.Cash - price);
                     await user.NotifyAsync(channel, $"You got yourself a fresh {item} for **{price:C2}**!");
-                    await doc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
+                    await dbUser.Write();
                     return CommandResult.FromSuccess();
                 }
 
@@ -69,61 +66,53 @@ namespace RRBot.Systems
 
         public static async Task<RuntimeResult> BuyPerk(string perk, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/users").Document(user.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.ContainsField("usingSlots"))
+            DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
+            if (dbUser.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-            Dictionary<string, long> usrPerks = snap.TryGetValue("perks", out Dictionary<string, long> tmpPerks) ? tmpPerks : new();
-            if (usrPerks.Keys.Contains("Pacifist"))
+            if (dbUser.Perks?.ContainsKey("Pacifist") == true)
                 return CommandResult.FromError("You have the Pacifist perk and cannot buy another.");
-            if (!usrPerks.Keys.Contains("Multiperk") && usrPerks.Count == 1 && perk != "Pacifist" && perk != "Multiperk")
+            if (dbUser.Perks?.ContainsKey("Multiperk") == true && dbUser.Perks?.Count == 1 && perk != "Pacifist" && perk != "Multiperk")
                 return CommandResult.FromError("You already have a perk.");
-            if (usrPerks.Keys.Contains("Multiperk") && usrPerks.Count == 3 && perk != "Pacifist")
+            if (dbUser.Perks?.ContainsKey("Multiperk") == true && dbUser.Perks?.Count == 3 && perk != "Pacifist")
                 return CommandResult.FromError("You already have 2 perks.");
 
-            double cash = snap.GetValue<double>("cash");
-
-            if (!usrPerks.Keys.Contains(perk))
+            if (dbUser.Perks?.ContainsKey(perk) == true)
             {
                 if (perk == "Pacifist")
                 {
-                    if (snap.TryGetValue("pacifistCooldown", out long pacifistCooldown))
+                    if (dbUser.PacifistCooldown != 0)
                     {
-                        if (pacifistCooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                        if (dbUser.PacifistCooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                         {
                             return CommandResult.FromError("You bought the Pacifist perk later than 3 days ago." +
-                                $" You still have to wait {TimeSpan.FromSeconds(pacifistCooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}.");
+                                $" You still have to wait {TimeSpan.FromSeconds(dbUser.PacifistCooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}.");
                         }
-
-                        await doc.SetAsync(new { pacifistCooldown = FieldValue.Delete }, SetOptions.MergeAll);
+                        dbUser.PacifistCooldown = 0;
                     }
 
-                    foreach (string perkName in usrPerks.Keys)
+                    foreach (string perkName in dbUser.Perks.Keys)
                     {
                         Tuple<string, string, double, long> funnyTuple = Array.Find(perks, p => p.Item1 == perkName);
-                        cash += funnyTuple.Item3;
-                        usrPerks.Remove(perkName);
+                        dbUser.Cash += funnyTuple.Item3;
+                        dbUser.Perks.Remove(perkName);
                     }
-
-                    Dictionary<string, object> newPerks = new() { { "perks", usrPerks } };
-                    await doc.UpdateAsync(newPerks);
                 }
 
                 Tuple<string, string, double, long> perkTuple = Array.Find(perks, p => p.Item1 == perk);
                 double price = perkTuple.Item3;
                 long duration = perkTuple.Item4;
-                if (price <= cash)
+                if (price <= dbUser.Cash)
                 {
-                    usrPerks.Add(perk, DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration));
-                    await CashSystem.SetCash(user, channel, cash - price);
+                    dbUser.Perks.Add(perk, DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration));
+                    await dbUser.SetCash(user, channel, dbUser.Cash - price);
 
                     StringBuilder notification = new($"You got yourself the {perk} perk for **{price:C2}**!");
                     if (perk == "Pacifist")
                         notification.Append(" Additionally, as you bought the Pacifist perk, any perks you previously had have been refunded.");
 
                     await user.NotifyAsync(channel, notification.ToString());
-                    await doc.SetAsync(new { perks = usrPerks }, SetOptions.MergeAll);
+                    await dbUser.Write();
                     return CommandResult.FromSuccess();
                 }
 
@@ -155,11 +144,9 @@ namespace RRBot.Systems
         {
             IGuildUser guildUser = user as IGuildUser;
             string[] newItems = items;
-            DocumentReference userDoc = Program.database.Collection($"servers/{guildUser.GuildId}/users").Document(user.Id.ToString());
-            DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
-            if (snap.TryGetValue("items", out List<string> itemsList))
-                newItems = newItems.Where(item => !itemsList.Contains(item)).ToArray();
-
+            DbUser dbUser = await DbUser.GetById(guildUser.GuildId, user.Id);
+            if (dbUser.Items?.Count > 0)
+                newItems = newItems.Where(item => !dbUser.Items.Contains(item)).ToArray();
             return items.Length <= newItems.Length ? newItems[RandomUtil.Next(newItems.Length)] : "";
         }
 
@@ -168,14 +155,10 @@ namespace RRBot.Systems
             if (user.IsBot)
                 return;
 
-            DocumentReference userDoc = Program.database.Collection($"servers/{user.GuildId}/users").Document(user.Id.ToString());
-            DocumentSnapshot snap = await userDoc.GetSnapshotAsync();
-
-            if (!snap.TryGetValue("items", out List<string> usrItems))
-                usrItems = new List<string>();
-            if (!usrItems.Contains(item))
-                usrItems.Add(item);
-            await userDoc.SetAsync(new { items = usrItems }, SetOptions.MergeAll);
+            DbUser dbUser = await DbUser.GetById(user.GuildId, user.Id);
+            if (dbUser.Items?.Contains(item) == false)
+                dbUser.Items.Add(item);
+            await dbUser.Write();
         }
     }
 }

@@ -1,8 +1,6 @@
 using Discord.Commands;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace RRBot.Preconditions
@@ -12,10 +10,8 @@ namespace RRBot.Preconditions
     {
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-
-            return snap.TryGetValue("perks", out Dictionary<string, long> perks) && perks.Keys.Contains("Pacifist")
+            DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
+            return user.Perks?.ContainsKey("Pacifist") == true
                 ? PreconditionResult.FromError("You cannot use this command as you have the Pacifist perk.")
                 : PreconditionResult.FromSuccess();
         }
