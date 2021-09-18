@@ -16,7 +16,7 @@ namespace RRBot
         //     CASH SYSTEM
         // ********************
         public const double CASH_MULTIPLIER = 1.0;
-        public const int MESSAGE_CASH = 10;
+        public const int MESSAGE_CASH = 20;
         public const double MESSAGE_CASH_COOLDOWN = 60;
 
         // ********************

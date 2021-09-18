@@ -83,11 +83,17 @@ namespace RRBot.Systems
             DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/users").Document(context.User.Id.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
 
-            if (snap.TryGetValue("timeTillCash", out long time) && time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            if (!snap.TryGetValue("timeTillCash", out long time))
+            {
+                await doc.SetAsync(new { timeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN) },
+                    SetOptions.MergeAll);
+            }
+            else if (time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            {
                 await SetCash(context.User, context.Channel, snap.GetValue<double>("cash") + Constants.MESSAGE_CASH);
-
-            await doc.SetAsync(new { timeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN) },
-                SetOptions.MergeAll);
+                await doc.SetAsync(new { timeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN) },
+                    SetOptions.MergeAll);
+            }
         }
     }
 }

@@ -209,7 +209,7 @@ namespace RRBot
             // add 100 cash to user if they haven't joined already
             DocumentReference userDoc = database.Collection($"servers/{user.Guild.Id}/users").Document(user.Id.ToString());
             DocumentSnapshot userSnap = await userDoc.GetSnapshotAsync();
-            if (!userSnap.TryGetValue<double>("cash", out _))
+            if (!userSnap.ContainsField("cash"))
                 await CashSystem.SetCash(user, null, 100);
 
             // circumvent mute bypasses

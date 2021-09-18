@@ -19,7 +19,7 @@ namespace RRBot.Modules
         private static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Slavery", "Whore", "Chop",
             "Dig", "Farm", "Fish", "Hunt", "Mine" };
 
-        private async Task AddBackUserSettings(DocumentReference doc, double btc, double doge, double eth, double xrp,
+        private async Task AddBackUserSettings(DocumentReference doc, double btc, double doge, double eth, double ltc, double xrp,
             bool dmNotifsV, bool noReplyPingsV, bool rankupNotifsV, Dictionary<string, string> userStats, long whoreCd,
             long slaveryCd, long rapeCd, long lootCd, long dealCd, long bullyCd, long mineCd, long huntCd, long farmCd,
             long digCd, long chopCd)
@@ -30,6 +30,8 @@ namespace RRBot.Modules
                 await CashSystem.AddCrypto(Context.User, "doge", doge);
             if (eth >= Constants.INVESTMENT_MIN_AMOUNT)
                 await CashSystem.AddCrypto(Context.User, "eth", eth);
+            if (ltc >= Constants.INVESTMENT_MIN_AMOUNT)
+                await CashSystem.AddCrypto(Context.User, "ltc", ltc);
             if (xrp >= Constants.INVESTMENT_MIN_AMOUNT)
                 await CashSystem.AddCrypto(Context.User, "xrp", xrp);
 
@@ -299,7 +301,7 @@ namespace RRBot.Modules
         [Remarks("$sauce [user] [amount]")]
         public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
         {
-            if (amount <= 0.01 || double.IsNaN(amount))
+            if (amount < 0.01 || double.IsNaN(amount))
                 return CommandResult.FromError("You can't sauce negative or no money!");
             if (Context.User == user)
                 return CommandResult.FromError("You can't sauce yourself money. Don't even know how you would.");
@@ -389,6 +391,7 @@ namespace RRBot.Modules
             snap.TryGetValue("btc", out double btc);
             snap.TryGetValue("doge", out double doge);
             snap.TryGetValue("eth", out double eth);
+            snap.TryGetValue("ltc", out double ltc);
             snap.TryGetValue("xrp", out double xrp);
             snap.TryGetValue("dmNotifs", out bool dmNotifsV);
             snap.TryGetValue("noReplyPings", out bool noReplyPingsV);
@@ -417,15 +420,15 @@ namespace RRBot.Modules
                     await Context.User.NotifyAsync(Context.Channel, "​DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await doc.DeleteAsync();
                     await CashSystem.SetCash(Context.User, Context.Channel, 0);
-                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, noReplyPingsV, rankupNotifsV, userStats, whoreCd, slaveryCd, rapeCd,
-                        lootCd, dealCd, bullyCd, mineCd, huntCd, farmCd, digCd, chopCd);
+                    await AddBackUserSettings(doc, btc, doge, eth, ltc, xrp, dmNotifsV, noReplyPingsV, rankupNotifsV, userStats,
+                        whoreCd, slaveryCd, rapeCd, lootCd, dealCd, bullyCd, mineCd, huntCd, farmCd, digCd, chopCd);
                     break;
                 case 3:
                     await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await doc.DeleteAsync();
                     await CashSystem.SetCash(Context.User, Context.Channel, 0);
-                    await AddBackUserSettings(doc, btc, doge, eth, xrp, dmNotifsV, noReplyPingsV, rankupNotifsV, userStats, whoreCd, slaveryCd, rapeCd,
-                        lootCd, dealCd, bullyCd, mineCd, huntCd, farmCd, digCd, chopCd);
+                    await AddBackUserSettings(doc, btc, doge, eth, ltc, xrp, dmNotifsV, noReplyPingsV, rankupNotifsV, userStats,
+                        whoreCd, slaveryCd, rapeCd, lootCd, dealCd, bullyCd, mineCd, huntCd, farmCd, digCd, chopCd);
                     break;
             }
 

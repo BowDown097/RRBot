@@ -124,22 +124,46 @@ namespace RRBot.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
+        [Command("gay")]
+        [Summary("See how gay a user is.")]
+        [Remarks("$gay [user]")]
+        public async Task Gay(IGuildUser user)
+        {
+            int gay = !user.IsBot ? RandomUtil.Next(1, 101) : 0;
+
+            string title = "Not Gay";
+            if (gay > 10 && gay < 50)
+                title = "Kinda Gay";
+            else if (gay >= 50 && gay < 90)
+                title = "Gay";
+            else if (gay >= 90)
+                title = "Hella Gay!";
+
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Red,
+                Title = title,
+                Description = $"{user} is {gay}% gay."
+            };
+            await ReplyAsync(embed: embed.Build());
+        }
+
         [Command("trivia")]
         [Summary("Generate a random trivia question.")]
         [Remarks("$trivia")]
         public async Task Trivia()
         {
-            // get all the properties we need
+            // get all the stuff we need
             using WebClient client = new();
             string response = await client.DownloadStringTaskAsync("https://opentdb.com/api.php?amount=1");
             Trivia trivia = JsonConvert.DeserializeObject<Trivia>(response);
             string question = HttpUtility.HtmlDecode(trivia.results[0].question);
             string correctAnswer = "​" + HttpUtility.HtmlDecode(trivia.results[0].correct_answer);
+
+            // set up and randomize answers array
             List<string> answers = new() { correctAnswer };
             foreach (string incorrect in trivia.results[0].incorrect_answers)
                 answers.Add(HttpUtility.HtmlDecode(incorrect));
-
-            // randomize answers array
             for (int i = 0; i < answers.Count - 1; i++)
             {
                 int j = RandomUtil.Next(i, answers.Count);
