@@ -78,23 +78,20 @@ namespace RRBot.Modules
                 await user.SetCash(Context.User, Context.Channel, totalCash);
             }
 
-            await RollRandomItem();
-            user[cooldown] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
-            await user.Write();
-            return CommandResult.FromSuccess();
-        }
-
-        private async Task RollRandomItem()
-        {
             if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
             {
-                string item = await Items.RandomItem(Context.User);
-                if (!string.IsNullOrEmpty(item))
+                string[] availableItems = Items.items.Where(i => !user.Items.Contains(i)).ToArray();
+                if (availableItems.Length > 0)
                 {
-                    await Items.RewardItem(Context.User as IGuildUser, item);
+                    string item = availableItems[RandomUtil.Next(availableItems.Length)];
+                    user.Items.Add(item);
                     await ReplyAsync($"Well I'll be damned! You also got yourself a(n) {item}! Check out ``$module tasks`` to see how you can use it.");
                 }
             }
+
+            user[cooldown] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
+            await user.Write();
+            return CommandResult.FromSuccess();
         }
 
         private void StatUpdate(DbUser user, bool success, double gain)

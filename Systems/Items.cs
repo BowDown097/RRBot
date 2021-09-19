@@ -139,26 +139,5 @@ namespace RRBot.Systems
                 ? itemsOfType.OrderByDescending(item => rankings[item.Replace(type, "").Trim()]).First()
                 : "";
         }
-
-        public static async Task<string> RandomItem(SocketUser user)
-        {
-            IGuildUser guildUser = user as IGuildUser;
-            string[] newItems = items;
-            DbUser dbUser = await DbUser.GetById(guildUser.GuildId, user.Id);
-            if (dbUser.Items?.Count > 0)
-                newItems = newItems.Where(item => !dbUser.Items.Contains(item)).ToArray();
-            return items.Length <= newItems.Length ? newItems[RandomUtil.Next(newItems.Length)] : "";
-        }
-
-        public static async Task RewardItem(IGuildUser user, string item)
-        {
-            if (user.IsBot)
-                return;
-
-            DbUser dbUser = await DbUser.GetById(user.GuildId, user.Id);
-            if (dbUser.Items?.Contains(item) == false)
-                dbUser.Items.Add(item);
-            await dbUser.Write();
-        }
     }
 }

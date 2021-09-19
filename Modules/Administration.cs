@@ -71,7 +71,7 @@ namespace RRBot.Modules
 
         [Command("giveitem")]
         [Summary("Give a user an item.")]
-        [Remarks("$giveitem [user] item]")]
+        [Remarks("$giveitem [user] [item]")]
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task<RuntimeResult> GiveItem(IGuildUser user, [Remainder] string item)
         {
@@ -80,8 +80,13 @@ namespace RRBot.Modules
             if (!Items.items.Contains(item))
                 return CommandResult.FromError($"**{item}** is not a valid item!");
 
-            await Items.RewardItem(user, item);
-            await Context.User.NotifyAsync(Context.Channel, $"Gave **{user}** a(n) **{item}**.");
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+            if (dbUser.Items?.Contains(item) == true)
+                return CommandResult.FromError($"**{user}** already has a(n) {item}.");
+
+            dbUser.Items.Add(item);
+            await dbUser.Write();
+            await Context.User.NotifyAsync(Context.Channel, $"Gave **{user}** a(n) {item}.");
             return CommandResult.FromSuccess();
         }
 

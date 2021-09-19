@@ -140,10 +140,14 @@ namespace RRBot.Modules
                 await user.SetCash(Context.User, Context.Channel, user.Cash + price);
                 await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{price:C2}**.");
             }
+            else
+            {
+                return CommandResult.FromError($"You do not have a(n) {item}!" +
+                    "\n*Tip: This command is case sensitive and does not accept perks other than Pacifist.*");
+            }
 
             await user.Write();
-            return CommandResult.FromError($"You do not have a(n) {item}!" +
-                "\n*Tip: This command is case sensitive and does not accept perks other than Pacifist.*");
+            return CommandResult.FromSuccess();
         }
 
         [Command("items")]
