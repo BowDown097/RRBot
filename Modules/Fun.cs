@@ -148,6 +148,31 @@ namespace RRBot.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
+        [Command("penis")]
+        [Summary("See how big a user's penis is.")]
+        [Remarks("$penis [user]")]
+        public async Task Penis(IGuildUser user)
+        {
+            int equals = !user.IsBot ? RandomUtil.Next(1, 16) : 20;
+            string penis = "8" + new string('=', equals) + "D";
+
+            string title = "Micropenis LMFAO";
+            if (equals > 3 && equals < 7)
+                title = "Ehhh";
+            else if (equals >= 7 && equals < 12)
+                title = "Not bad at all!";
+            else if (equals >= 12)
+                title = "God damn, he's packin'!";
+
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Red,
+                Title = title,
+                Description = $"{user}'s penis: {penis}"
+            };
+            await ReplyAsync(embed: embed.Build());
+        }
+
         [Command("trivia")]
         [Summary("Generate a random trivia question.")]
         [Remarks("$trivia")]
