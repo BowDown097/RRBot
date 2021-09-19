@@ -1,6 +1,7 @@
 using Discord;
 using Discord.Commands;
 using Discord.Rest;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace RRBot.Systems
     public static class Filters
     {
         public static readonly Regex INVITE_REGEX = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
-        public static readonly Regex NWORD_REGEX = new("[nɴⁿₙñńņňÑŃŅŇ][i1!¡ɪᶦᵢ¹₁jįīïîíìl|;:¡][g9ɢᵍ𝓰𝓰qģğĢĞ][g9ɢᵍ𝓰𝓰qģğĢĞ][e3€ᴇᵉₑ³₃ĖĘĚĔėęěĕəèéêëē][rʀʳᵣŔŘŕř]");
+        public static readonly Regex NWORD_REGEX = new("[nɴⁿₙñńņňÑŃŅŇ][i1!¡ɪᶦᵢ¹₁jįīïîíìl|;:][g9ɢᵍ𝓰𝓰qģğĢĞ][g9ɢᵍ𝓰𝓰qģğĢĞ][e3€ᴇᵉₑ³₃ĖĘĚĔėęěĕəèéêëē][rʀʳᵣŔŘŕř]");
 
         public static async Task DoInviteCheckAsync(SocketCommandContext context)
         {
@@ -25,11 +26,9 @@ namespace RRBot.Systems
 
         public static async Task DoNWordCheckAsync(SocketCommandContext context)
         {
-            if (context.Channel.Name != "extremely-funny" &&
-                NWORD_REGEX.Matches(new string(context.Message.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
-            {
+            char[] cleaned = context.Message.Content.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
+            if (context.Channel.Name != "extremely-funny" && NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await context.Message.DeleteAsync();
-            }
         }
 
         public static async Task DoScamCheckAsync(SocketCommandContext context)

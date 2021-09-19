@@ -119,7 +119,8 @@ namespace RRBot.Systems
                 Timestamp = DateTime.Now
             };
 
-            if (Filters.NWORD_REGEX.Matches(new string(msgAfter.Content.Where(char.IsLetter).ToArray()).ToLower()).Count != 0)
+            char[] cleaned = msgAfter.Content.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
+            if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await msgAfter.DeleteAsync();
 
             await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);

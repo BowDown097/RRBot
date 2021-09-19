@@ -57,7 +57,7 @@ namespace RRBot.Modules
             }
 
             await user.SetCash(Context.User, Context.Channel, user.Cash - amount);
-            user[abbreviation] = Math.Round(amount, 4);
+            user[abbreviation] = Math.Round(cryptoAmount, 4);
             user.AddToStats(CurrencyCulture, new Dictionary<string, string>
             {
                 { $"Money Put Into {abbreviation}", amount.ToString("C2", CurrencyCulture) },
