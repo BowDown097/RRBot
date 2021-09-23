@@ -8,7 +8,6 @@ using RRBot.Preconditions;
 using RRBot.Systems;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,12 +18,12 @@ namespace RRBot.Modules
     public class Economy : ModuleBase<SocketCommandContext>
     {
         public static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Slavery", "Whore", "Bully",
-            "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine" };
+            "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support" };
 
         private static async Task AddBackUserSettings(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
             bool dmNotifs, bool noReplyPings, bool rankupNotifs, Dictionary<string, string> stats, long whoreCd,
             long slaveryCd, long rapeCd, long lootCd, long dealCd, long bullyCd, long mineCd, long huntCd, long farmCd,
-            long digCd, long chopCd)
+            long digCd, long chopCd, long supportCd)
         {
             user.BTC = btc;
             user.DOGE = doge;
@@ -46,6 +45,7 @@ namespace RRBot.Modules
             user.FarmCooldown = farmCd;
             user.DigCooldown = digCd;
             user.ChopCooldown = chopCd;
+            user.SupportCooldown = supportCd;
             await user.Write();
         }
 
@@ -375,7 +375,7 @@ namespace RRBot.Modules
                     await AddBackUserSettings(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
                         temp.NoReplyPings, temp.RankupNotifs, temp.Stats, temp.WhoreCooldown, temp.SlaveryCooldown,
                         temp.RapeCooldown, temp.LootCooldown, temp.DealCooldown, temp.BullyCooldown, temp.MineCooldown,
-                        temp.HuntCooldown, temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown);
+                        temp.HuntCooldown, temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown, temp.SupportCooldown);
                     break;
                 case 3:
                     await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
@@ -384,7 +384,7 @@ namespace RRBot.Modules
                     await AddBackUserSettings(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
                         temp.NoReplyPings, temp.RankupNotifs, temp.Stats, temp.WhoreCooldown, temp.SlaveryCooldown,
                         temp.RapeCooldown, temp.LootCooldown, temp.DealCooldown, temp.BullyCooldown, temp.MineCooldown,
-                        temp.HuntCooldown, temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown);
+                        temp.HuntCooldown, temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown, temp.SupportCooldown);
                     break;
             }
 

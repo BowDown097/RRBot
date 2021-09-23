@@ -64,6 +64,8 @@ namespace RRBot.Entities
         public Dictionary<string, string> Stats { get; set; } = new();
         [FirestoreProperty("slaveryCooldown")]
         public long SlaveryCooldown { get; set; }
+        [FirestoreProperty("supportCooldown")]
+        public long SupportCooldown { get; set; }
         [FirestoreProperty("timeTillCash")]
         public long TimeTillCash { get; set; }
         [FirestoreProperty("usingSlots")]
@@ -97,7 +99,10 @@ namespace RRBot.Entities
         {
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/users").Document(userId.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            return snap.ConvertTo<DbUser>();
+            if (snap.Exists)
+                return snap.ConvertTo<DbUser>();
+            await doc.CreateAsync(new { cash = 100.0 });
+            return await GetById(guildId, userId);
         }
 
         public void AddToStats(CultureInfo culture, Dictionary<string, string> statsToAddTo)

@@ -96,7 +96,7 @@ namespace RRBot
         public const double DOUBLE_ODDS = 45;
         public const double SLOTS_MULT_THREEINAROW = 4;
         public const double SLOTS_MULT_THREESEVENS = 21;
-        public const double SLOTS_MULT_TWOINAROW = 1.8;
+        public const double SLOTS_MULT_TWOINAROW = 1.75;
 
         // ********************
         //     INVESTMENTS

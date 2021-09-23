@@ -207,14 +207,6 @@ namespace RRBot
 
         private async Task Client_UserJoined(SocketGuildUser user)
         {
-            // add 100 cash to user if they haven't joined already
-            DbUser dbUser = await DbUser.GetById(user.Guild.Id, user.Id);
-            if (dbUser.Cash == 0)
-            {
-                dbUser.Cash = 100;
-                await dbUser.Write();
-            }
-
             // circumvent mute bypasses
             DocumentReference rolesDoc = database.Collection($"servers/{user.Guild.Id}/config").Document("roles");
             DocumentSnapshot rolesSnap = await rolesDoc.GetSnapshotAsync();

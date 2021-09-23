@@ -57,7 +57,7 @@ namespace RRBot.Modules
             }
 
             await user.SetCash(Context.User, Context.Channel, user.Cash - amount);
-            user[abbreviation] = Math.Round(cryptoAmount, 4);
+            user[abbreviation] = (double)user[abbreviation] + Math.Round(cryptoAmount, 4);
             user.AddToStats(CurrencyCulture, new Dictionary<string, string>
             {
                 { $"Money Put Into {abbreviation}", amount.ToString("C2", CurrencyCulture) },
@@ -149,7 +149,7 @@ namespace RRBot.Modules
             double finalValue = cryptoValue / 100.0 * (100 - Constants.INVESTMENT_FEE_PERCENT);
 
             await user.SetCash(Context.User, Context.Channel, user.Cash + finalValue);
-            user[abbreviation] = Math.Round(-amount, 4);
+            user[abbreviation] = (double)user[abbreviation] - Math.Round(amount, 4);
             user.AddToStats(CurrencyCulture, new Dictionary<string, string>
             {
                 { $"Money Gained From {abbreviation}", finalValue.ToString("C2", CurrencyCulture) }

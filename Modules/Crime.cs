@@ -263,30 +263,33 @@ namespace RRBot.Modules
             {
                 await target.SetCash(user as SocketUser, Context.Channel, target.Cash - amount);
                 await author.SetCash(Context.User, Context.Channel, author.Cash + amount);
+                StatUpdate(author, true, amount);
+                StatUpdate(target, false, amount);
                 switch (RandomUtil.Next(2))
                 {
                     case 0:
                         await Context.User.NotifyAsync(Context.Channel, $"You beat the shit out of **{user}** and took **{amount:C2}** from their ass!" +
-                            $"\nBalance: {author.Cash + amount:C2}");
+                            $"\nBalance: {author.Cash:C2}");
                         break;
                     case 1:
                         await Context.User.NotifyAsync(Context.Channel, $"You walked up to **{user}** and yoinked **{amount:C2}** straight from their pocket, without a trace." +
-                            $"\nBalance: {author.Cash + amount:C2}");
+                            $"\nBalance: {author.Cash:C2}");
                         break;
                 }
             }
             else
             {
                 await author.SetCash(Context.User, Context.Channel, author.Cash - amount);
+                StatUpdate(author, false, amount);
                 switch (RandomUtil.Next(2))
                 {
                     case 0:
                         await Context.User.NotifyAsync(Context.Channel, $"You yoinked the money from **{user}**, but they noticed and shanked you when you were on your way out." +
-                            $" You lost all the resources in the process.\nBalance: {author.Cash - amount:C2}");
+                            $" You lost all the resources in the process.\nBalance: {author.Cash:C2}");
                         break;
                     case 1:
                         await Context.User.NotifyAsync(Context.Channel, "The dude happened to be a fed and threw your ass straight into jail. You lost all the resources in the process." +
-                            $"\nBalance: {author.Cash - amount:C2}");
+                            $"\nBalance: {author.Cash:C2}");
                         break;
                 }
             }

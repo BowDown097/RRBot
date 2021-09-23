@@ -34,7 +34,7 @@ namespace RRBot
             // we do some bit manipulation here to get more value diversity ig, idk i saw it online
             ulong shiftedRand = BitConverter.ToUInt64(buf, 0) >> 11;
             double doubleRand = shiftedRand / (double)(1UL << 53);
-            return minValue + (doubleRand * (maxValue - minValue));
+            return minValue + (doubleRand * (maxValue - 1 - minValue));
         }
     }
 }

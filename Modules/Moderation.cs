@@ -90,19 +90,16 @@ namespace RRBot.Modules
         }
 
         [Command("cancelticket")]
-        [Summary("Pre-emptively cancel a support ticket.")]
-        [Remarks("$cancelticket [index]")]
+        [Summary("Pre-emptively cancel a user's support ticket, if they have one that is opened.")]
+        [Remarks("$cancelticket [user]")]
         [RequireBeInChannel("help-requests")]
         [RequireRushReborn]
-        public async Task<RuntimeResult> CancelTicket(int index)
+        public async Task<RuntimeResult> CancelTicket(IGuildUser user)
         {
-            QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();
-            if (index > tickets.Count || index <= 0)
-                return CommandResult.FromError("There is not a support ticket at that index!");
-
-            DocumentSnapshot snap = tickets[index - 1];
-            await Support.CloseTicket(Context.Channel, Context.User, snap.Reference, snap, $"Support ticket #{index} deleted successfully!");
-            return CommandResult.FromSuccess();
+            DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, user.Id);
+            if (string.IsNullOrWhiteSpace(ticket.Request))
+                return CommandResult.FromError("That user does not have an open support ticket!");
+            return await Support.CloseTicket(Context, Context.User, ticket, $"Support ticket by {user} deleted successfully!");
         }
 
         [Command("chill")]
