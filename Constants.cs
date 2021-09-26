@@ -139,6 +139,7 @@ namespace RRBot
             { "goldfish", 30 }
         };
         public const double FISH_COOLDOWN = 3600;
+        public const double FISH_COCONUT_ODDS = 20;
         public const int GENERIC_TASK_WOOD_MAX = 65;
         public const int GENERIC_TASK_WOOD_MIN = 32;
         public const int GENERIC_TASK_STONE_MAX = 113;

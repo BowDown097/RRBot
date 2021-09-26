@@ -108,6 +108,13 @@ namespace RRBot.Modules
 
             await Context.User.NotifyAsync(Context.Channel, $"You caught {numCaught} {fish.Key} with your rod and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
 
+            if (RandomUtil.NextDouble(1, 101) < Constants.FISH_COCONUT_ODDS)
+            {
+                cashGained += 3;
+                totalCash += 3;
+                await ReplyAsync("What's this? The fish came with a coconut! You sold it to some dude for **$3.00**.");
+            }
+
             user.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
             {
                 { "Tasks Done", "1" },
