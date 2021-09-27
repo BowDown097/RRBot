@@ -1,10 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Google.Cloud.Firestore;
 using Newtonsoft.Json.Linq;
+using RRBot.Entities;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -16,10 +15,9 @@ namespace RRBot.Systems
     {
         private static async Task WriteToLogs(SocketGuild guild, EmbedBuilder embed)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/config").Document("channels");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("logsChannel", out ulong id))
-                await guild.GetTextChannel(id).SendMessageAsync(embed: embed.Build());
+            DbConfigChannels channels = await DbConfigChannels.GetById(guild.Id);
+            if (guild.TextChannels.Any(channel => channel.Id == channels.LogsChannel))
+                await guild.GetTextChannel(channels.LogsChannel).SendMessageAsync(embed: embed.Build());
         }
 
         public static async Task Client_ChannelCreated(SocketChannel channel)
@@ -275,46 +273,19 @@ namespace RRBot.Systems
             foreach (IMessage message in messages)
                 msgLogs.AppendLine($"{message.Author} @ {message.Timestamp}: {message.Content}");
 
-            await Task.Factory.StartNew(async () =>
+            using WebClient webClient = new();
+            string hbPOST = await webClient.UploadStringTaskAsync("https://hastebin.com/documents", msgLogs.ToString());
+            string hbKey = JObject.Parse(hbPOST)["key"].ToString();
+
+            EmbedBuilder embed = new()
             {
-                try
-                {
-                    using WebClient webClient = new();
-                    string hbPOST = webClient.UploadString("https://hastebin.com/documents", msgLogs.ToString());
-                    string hbKey = JObject.Parse(hbPOST)["key"].ToString();
-                    string hbUrl = $"https://hastebin.com/{hbKey}";
+                Color = Color.Blue,
+                Title = $"{messages.Count() - 1} Messages Purged",
+                Description = $"See them at: https://hastebin.com/{hbKey}",
+                Timestamp = DateTime.Now
+            };
 
-                    EmbedBuilder embed = new()
-                    {
-                        Color = Color.Blue,
-                        Title = $"{messages.Count() - 1} Messages Purged",
-                        Description = $"See them at: {hbUrl}",
-                        Timestamp = DateTime.Now
-                    };
-
-                    await WriteToLogs(guild, embed);
-                }
-                catch (WebException)
-                {
-                    EmbedBuilder embed = new()
-                    {
-                        Color = Color.Blue,
-                        Title = $"{messages.Count() - 1} Messages Purged",
-                        Description = "I couldn't upload the messages to HasteBin for some reason, attaching them instead.",
-                        Timestamp = DateTime.Now
-                    };
-
-                    File.WriteAllText("messages.txt", msgLogs.ToString());
-                    await WriteToLogs(guild, embed);
-
-                    DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/config").Document("channels");
-                    DocumentSnapshot snap = await doc.GetSnapshotAsync();
-                    if (snap.TryGetValue("logsChannel", out ulong id))
-                        await guild.GetTextChannel(id).SendFileAsync("messages.txt", "");
-
-                    File.Delete("messages.txt");
-                }
-            });
+            await WriteToLogs(guild, embed);
         }
 
         public static async Task Custom_TrackStarted(SocketGuildUser user, Uri url)

@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,11 +14,9 @@ namespace RRBot.Preconditions
 
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/config").Document("roles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-
-            return (snap.TryGetValue("houseRole", out ulong staff1Id) && (context.User as IGuildUser).RoleIds.Contains(staff1Id))
-            || (snap.TryGetValue("senateRole", out ulong staff2Id) && (context.User as IGuildUser).RoleIds.Contains(staff2Id))
+            DbConfigRoles roles = await DbConfigRoles.GetById(context.Guild.Id);
+            return (context.User as IGuildUser)?.RoleIds.Contains(roles.StaffLvl1Role) == true
+            || (context.User as IGuildUser)?.RoleIds.Contains(roles.StaffLvl2Role) == true
                 ? PreconditionResult.FromSuccess()
                 : PreconditionResult.FromError("You must be Staff!");
         }

@@ -56,6 +56,8 @@ namespace RRBot.Modules
                 return CommandResult.FromError("You can't bet nothing!");
 
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            if (user.UsingSlots)
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             if (user.Cash < bet)
                 return CommandResult.FromError("You can't bet more than what you have!");
 

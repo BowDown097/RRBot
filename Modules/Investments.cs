@@ -1,12 +1,14 @@
 ﻿using Discord;
 using Discord.Commands;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;
-using RRBot.Systems;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,6 +18,17 @@ namespace RRBot.Modules
     public class Investments : ModuleBase<SocketCommandContext>
     {
         public CultureInfo CurrencyCulture { get; set; }
+
+        private static async Task<double> QueryCryptoValue(string crypto)
+        {
+            using WebClient client = new();
+            string current = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
+            string today = DateTime.Now.ToString("yyyy-MM-dd") + "T00:00";
+            string data = await client.DownloadStringTaskAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
+            dynamic obj = JsonConvert.DeserializeObject(data);
+            JToken latestEntry = JArray.FromObject(obj.data.entries).Last;
+            return Math.Round(latestEntry[1].Value<double>(), 2);
+        }
 
         public static string ResolveAbbreviation(string crypto)
         {
@@ -44,7 +57,9 @@ namespace RRBot.Modules
                 return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-            double cryptoAmount = amount / await CashSystem.QueryCryptoValue(abbreviation);
+            if (user.UsingSlots)
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+            double cryptoAmount = amount / await QueryCryptoValue(abbreviation);
 
             if (user.Cash < amount)
             {
@@ -53,7 +68,7 @@ namespace RRBot.Modules
             if (cryptoAmount < Constants.INVESTMENT_MIN_AMOUNT)
             {
                 return CommandResult.FromError($"The amount you specified converts to less than {Constants.INVESTMENT_MIN_AMOUNT} of {abbreviation}, which is not permitted.\n"
-                    + $"You'll need to invest at least **{await CashSystem.QueryCryptoValue(abbreviation) * Constants.INVESTMENT_MIN_AMOUNT:C2}**.");
+                    + $"You'll need to invest at least **{await QueryCryptoValue(abbreviation) * Constants.INVESTMENT_MIN_AMOUNT:C2}**.");
             }
 
             await user.SetCash(Context.User, Context.Channel, user.Cash - amount);
@@ -82,15 +97,15 @@ namespace RRBot.Modules
 
             StringBuilder investments = new();
             if (dbUser.BTC >= Constants.INVESTMENT_MIN_AMOUNT)
-                investments.AppendLine($"**Bitcoin (BTC)**: {dbUser.BTC:0.####} ({await CashSystem.QueryCryptoValue("BTC") * dbUser.BTC:C2})");
+                investments.AppendLine($"**Bitcoin (BTC)**: {dbUser.BTC:0.####} ({await QueryCryptoValue("BTC") * dbUser.BTC:C2})");
             if (dbUser.DOGE >= Constants.INVESTMENT_MIN_AMOUNT)
-                investments.AppendLine($"**Dogecoin (DOGE)**: {dbUser.DOGE:0.####} ({await CashSystem.QueryCryptoValue("DOGE") * dbUser.DOGE:C2})");
+                investments.AppendLine($"**Dogecoin (DOGE)**: {dbUser.DOGE:0.####} ({await QueryCryptoValue("DOGE") * dbUser.DOGE:C2})");
             if (dbUser.ETH >= Constants.INVESTMENT_MIN_AMOUNT)
-                investments.AppendLine($"**Ethereum (ETH)**: {dbUser.ETH:0.####} ({await CashSystem.QueryCryptoValue("ETH") * dbUser.ETH:C2})");
+                investments.AppendLine($"**Ethereum (ETH)**: {dbUser.ETH:0.####} ({await QueryCryptoValue("ETH") * dbUser.ETH:C2})");
             if (dbUser.LTC >= Constants.INVESTMENT_MIN_AMOUNT)
-                investments.AppendLine($"**Litecoin (LTC)**: {dbUser.LTC:0.####} ({await CashSystem.QueryCryptoValue("LTC") * dbUser.LTC:C2})");
+                investments.AppendLine($"**Litecoin (LTC)**: {dbUser.LTC:0.####} ({await QueryCryptoValue("LTC") * dbUser.LTC:C2})");
             if (dbUser.XRP >= Constants.INVESTMENT_MIN_AMOUNT)
-                investments.AppendLine($"**XRP**: {dbUser.XRP:0.####} ({await CashSystem.QueryCryptoValue("XRP") * dbUser.XRP:C2})");
+                investments.AppendLine($"**XRP**: {dbUser.XRP:0.####} ({await QueryCryptoValue("XRP") * dbUser.XRP:C2})");
 
             EmbedBuilder embed = new()
             {
@@ -109,11 +124,11 @@ namespace RRBot.Modules
         [Remarks("$prices")]
         public async Task Prices()
         {
-            double btc = await CashSystem.QueryCryptoValue("BTC");
-            double doge = await CashSystem.QueryCryptoValue("DOGE");
-            double eth = await CashSystem.QueryCryptoValue("ETH");
-            double ltc = await CashSystem.QueryCryptoValue("LTC");
-            double xrp = await CashSystem.QueryCryptoValue("XRP");
+            double btc = await QueryCryptoValue("BTC");
+            double doge = await QueryCryptoValue("DOGE");
+            double eth = await QueryCryptoValue("ETH");
+            double ltc = await QueryCryptoValue("LTC");
+            double xrp = await QueryCryptoValue("XRP");
 
             EmbedBuilder embed = new()
             {
@@ -139,13 +154,15 @@ namespace RRBot.Modules
                 return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            if (user.UsingSlots)
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             double cryptoBal = (double)user[abbreviation];
             if (cryptoBal < Constants.INVESTMENT_MIN_AMOUNT)
                 return CommandResult.FromError($"You have no {abbreviation}!");
             if (cryptoBal < amount)
                 return CommandResult.FromError($"You don't have {amount} {abbreviation}! You've only got **{cryptoBal}** of it.");
 
-            double cryptoValue = await CashSystem.QueryCryptoValue(abbreviation) * amount;
+            double cryptoValue = await QueryCryptoValue(abbreviation) * amount;
             double finalValue = cryptoValue / 100.0 * (100 - Constants.INVESTMENT_FEE_PERCENT);
 
             await user.SetCash(Context.User, Context.Channel, user.Cash + finalValue);

@@ -96,11 +96,10 @@ namespace RRBot
                 await Task.Delay(TimeSpan.FromSeconds(30));
                 foreach (SocketGuild guild in client.Guilds)
                 {
-                    DocumentReference doc = database.Collection($"servers/{guild.Id}/config").Document("roles");
-                    DocumentSnapshot snap = await doc.GetSnapshotAsync();
-                    if (snap.TryGetValue("mutedRole", out ulong mutedId))
+                    QuerySnapshot mutes = await database.Collection($"servers/{guild.Id}/mutes").GetSnapshotAsync();
+                    if (mutes.Count > 0)
                     {
-                        QuerySnapshot mutes = await database.Collection($"servers/{guild.Id}/mutes").GetSnapshotAsync();
+                        DbConfigRoles roles = await DbConfigRoles.GetById(guild.Id);
                         foreach (DocumentSnapshot mute in mutes.Documents)
                         {
                             long timestamp = mute.GetValue<long>("Time");
@@ -108,7 +107,7 @@ namespace RRBot
 
                             if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                             {
-                                if (user != null) await user.RemoveRoleAsync(mutedId);
+                                if (user != null) await user.RemoveRoleAsync(roles.MutedRole);
                                 await mute.Reference.DeleteAsync();
                             }
                         }

@@ -1,5 +1,5 @@
 ﻿using Discord.Commands;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using System;
 using System.Threading.Tasks;
 
@@ -10,10 +10,8 @@ namespace RRBot.Preconditions
     {
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/config").Document("modules");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-
-            return snap.TryGetValue("nsfw", out bool nsfwEnabled) && nsfwEnabled
+            DbConfigModules modules = await DbConfigModules.GetById(context.Guild.Id);
+            return modules.NSFWEnabled
                 ? PreconditionResult.FromSuccess()
                 : PreconditionResult.FromError("NSFW commands are disabled!");
         }

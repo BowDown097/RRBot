@@ -167,7 +167,19 @@ namespace RRBot
             }
             else
             {
-                await CashSystem.TryMessageReward(context);
+                DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
+
+                if (user.TimeTillCash == 0)
+                {
+                    user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN);
+                }
+                else if (user.TimeTillCash <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                {
+                    await user.SetCash(context.User, context.Channel, user.Cash + Constants.MESSAGE_CASH);
+                    user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN);
+                }
+
+                await user.Write();
             }
 
             if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false)
@@ -208,16 +220,15 @@ namespace RRBot
         private async Task Client_UserJoined(SocketGuildUser user)
         {
             // circumvent mute bypasses
-            DocumentReference rolesDoc = database.Collection($"servers/{user.Guild.Id}/config").Document("roles");
-            DocumentSnapshot rolesSnap = await rolesDoc.GetSnapshotAsync();
-            if (rolesSnap.TryGetValue("mutedRole", out ulong mutedId))
+            DbConfigRoles roles = await DbConfigRoles.GetById(user.Guild.Id);
+            if (user.Guild.Roles.Any(role => role.Id == roles.MutedRole))
             {
                 QuerySnapshot mutes = await database.Collection($"servers/{user.Guild.Id}/mutes").GetSnapshotAsync();
                 foreach (DocumentSnapshot mute in mutes.Documents.Where(doc => doc.Id == user.Id.ToString()))
                 {
                     long timestamp = mute.GetValue<long>("Time");
                     if (timestamp >= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                        await user.AddRoleAsync(mutedId);
+                        await user.AddRoleAsync(roles.MutedRole);
                 }
             }
         }

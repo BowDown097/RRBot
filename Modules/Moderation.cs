@@ -43,13 +43,9 @@ namespace RRBot.Modules
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
 
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if ((snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId)) ||
-            (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId)))
-            {
+            DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+            if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
                 return CommandResult.FromError($"You cannot ban **{user}** because they are a staff member.");
-            }
 
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
@@ -142,13 +138,9 @@ namespace RRBot.Modules
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
 
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if ((snap.TryGetValue("houseRole", out ulong staffId) && user.RoleIds.Contains(staffId)) ||
-            (snap.TryGetValue("senateRole", out ulong senateId) && user.RoleIds.Contains(senateId)))
-            {
+            DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+            if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
                 return CommandResult.FromError($"You cannot kick **{user}** because they are a staff member.");
-            }
 
             await user.KickAsync(reason);
 
@@ -175,11 +167,10 @@ namespace RRBot.Modules
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
 
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("mutedRole", out ulong mutedId) && snap.TryGetValue("houseRole", out ulong staffId) && snap.TryGetValue("senateRole", out ulong senateId))
+            DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+            if (roles.MutedRole != 0 && roles.StaffLvl1Role != 0 && roles.StaffLvl2Role != 0)
             {
-                if (user.RoleIds.Contains(mutedId) || user.RoleIds.Contains(staffId) || user.RoleIds.Contains(senateId))
+                if (user.RoleIds.Contains(roles.MutedRole) || user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
                     return CommandResult.FromError($"You cannot mute **{user}** because they are either already muted or a staff member.");
 
                 if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
@@ -194,7 +185,7 @@ namespace RRBot.Modules
                     DocumentReference muteDoc = Program.database.Collection($"servers/{Context.Guild.Id}/mutes").Document(user.Id.ToString());
                     await Logger.Custom_UserMuted(user, Context.User, duration, reason);
                     await muteDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) }, SetOptions.MergeAll);
-                    await user.AddRoleAsync(mutedId);
+                    await user.AddRoleAsync(roles.MutedRole);
 
                     DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
                     dbUser.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
@@ -275,22 +266,16 @@ namespace RRBot.Modules
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
 
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("mutedRole", out ulong mutedId))
+            DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+            if (user.RoleIds.Contains(roles.MutedRole))
             {
-                if (user.RoleIds.Contains(mutedId))
-                {
-                    await Logger.Custom_UserUnmuted(user, Context.User);
-                    await ReplyAsync($"**{Context.User}** has unmuted **{user}**.");
-                    await user.RemoveRoleAsync(mutedId);
-                    return CommandResult.FromSuccess();
-                }
-
-                return CommandResult.FromError("That user is not muted.");
+                await Logger.Custom_UserUnmuted(user, Context.User);
+                await ReplyAsync($"**{Context.User}** has unmuted **{user}**.");
+                await user.RemoveRoleAsync(roles.MutedRole);
+                return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError("This server's muted role has yet to be set.");
+            return CommandResult.FromError("That user is not muted or the server's muted role has yet to be set.");
         }
     }
 }

@@ -30,7 +30,6 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> Help(string command = "")
         {
             string cmdLower = command.ToLower();
-            IEnumerable<ModuleInfo> modules = Commands.Modules;
 
             if (string.IsNullOrWhiteSpace(command))
             {
@@ -49,7 +48,7 @@ namespace RRBot.Modules
                 return CommandResult.FromSuccess();
             }
 
-            foreach (ModuleInfo moduleInfo in modules)
+            foreach (ModuleInfo moduleInfo in Commands.Modules)
             {
                 foreach (CommandInfo commandInfo in moduleInfo.Commands)
                 {
@@ -59,8 +58,8 @@ namespace RRBot.Modules
                         CollectionReference config = Program.database.Collection($"servers/{Context.Guild.Id}/config");
                         if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
                         {
-                            DocumentSnapshot modSnap = await config.Document("modules").GetSnapshotAsync();
-                            if (!modSnap.TryGetValue("nsfw", out bool nsfw) || !nsfw)
+                            DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
+                            if (!modules.NSFWEnabled)
                                 return CommandResult.FromError("NSFW commands are disabled!");
                         }
 
@@ -145,9 +144,8 @@ namespace RRBot.Modules
                 {
                     if (moduleInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
                     {
-                        DocumentReference modDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
-                        DocumentSnapshot modSnap = await modDoc.GetSnapshotAsync();
-                        if (!modSnap.TryGetValue("nsfw", out bool nsfw) || !nsfw)
+                        DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
+                        if (!modules.NSFWEnabled)
                             return CommandResult.FromError("NSFW commands are disabled!");
                     }
 

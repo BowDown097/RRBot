@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,10 +12,8 @@ namespace RRBot.Preconditions
     {
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{context.Guild.Id}/config").Document("roles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-
-            return snap.TryGetValue("djRole", out ulong djId) && (context.User as IGuildUser).RoleIds.Contains(djId)
+            DbConfigRoles roles = await DbConfigRoles.GetById(context.Guild.Id);
+            return (context.User as IGuildUser)?.RoleIds.Contains(roles.DJRole) == true
                 ? PreconditionResult.FromSuccess()
                 : PreconditionResult.FromError("You must be a DJ!");
         }

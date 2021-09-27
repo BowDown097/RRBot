@@ -136,24 +136,18 @@ namespace RRBot.Modules
             if (target.Perks?.ContainsKey("Pacifist") == true)
                 return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
 
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("roles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("houseRole", out ulong staffId))
-            {
-                if (user.RoleIds.Contains(staffId))
-                    return CommandResult.FromError($"You cannot bully **{user}** as they are a staff member.");
+            DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+            if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
+                return CommandResult.FromError($"You cannot bully **{user}** as they are a staff member.");
 
-                await user.ModifyAsync(props => props.Nickname = nickname);
-                await Logger.Custom_UserBullied(user, Context.User, nickname);
-                await ReplyAsync($"**{Context.User}** has **BULLIED** **{user}** to ``{nickname}``!");
+            await user.ModifyAsync(props => props.Nickname = nickname);
+            await Logger.Custom_UserBullied(user, Context.User, nickname);
+            await ReplyAsync($"**{Context.User}** has **BULLIED** **{user}** to ``{nickname}``!");
 
-                DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-                author.BullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN);
-                await author.Write();
-                return CommandResult.FromSuccess();
-            }
-
-            return CommandResult.FromError("This server's staff role has yet to be set.");
+            DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            author.BullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN);
+            await author.Write();
+            return CommandResult.FromSuccess();
         }
 
         [Command("deal")]

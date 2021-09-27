@@ -2,8 +2,9 @@
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
-using Google.Cloud.Firestore;
+using RRBot.Entities;
 using RRBot.Preconditions;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,11 +19,10 @@ namespace RRBot.Modules
         [Remarks("$createpoll [title] [choice1|choice2|choice3|...|choice9]")]
         public async Task<RuntimeResult> CreatePoll(string title, string choices)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("channels");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("pollsChannel", out ulong id))
+            DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+            if (Context.Guild.TextChannels.Any(channel => channel.Id == channels.PollsChannel))
             {
-                SocketTextChannel pollsChannel = Context.Guild.GetChannel(id) as SocketTextChannel;
+                SocketTextChannel pollsChannel = Context.Guild.GetTextChannel(channels.PollsChannel);
 
                 string[] pollChoices = choices.Split('|');
                 if (pollChoices.Length > 9)
@@ -46,7 +46,7 @@ namespace RRBot.Modules
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError("This server's polls channel has yet to be set.");
+            return CommandResult.FromError("This server's polls channel has yet to be set or no longer exists.");
         }
     }
 }
