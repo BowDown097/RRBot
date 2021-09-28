@@ -161,7 +161,7 @@ namespace RRBot.Modules
         [Alias("dilate")]
         [Command("mute")]
         [Summary("Mute any member for any amount of time with any reason.")]
-        [Remarks("$mute [user] [duration][s/m/h/d] <reason>")]
+        [Remarks("$mute [user] [duration] <reason>")]
         public async Task<RuntimeResult> Mute(IGuildUser user, string duration, [Remainder] string reason = "")
         {
             if (user.IsBot)

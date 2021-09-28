@@ -99,6 +99,9 @@ namespace RRBot.Systems
                 Timestamp = msg.Timestamp
             };
 
+            foreach (Embed msgEmbed in msg.Embeds)
+                embed.Description += $"\n**Embed:**\nTitle: {msgEmbed.Title}\nDescription: {msgEmbed.Description}";
+
             await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
         }
 
@@ -112,10 +115,38 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = $"Message sent by {msgAfter.Author} updated in #{channel}",
-                Description = "**Previous Content:** " + (string.IsNullOrWhiteSpace(msgBefore.Content) ? "None" : $"``{msgBefore.Content}``") +
-                    "\n**New Content:** " + (string.IsNullOrWhiteSpace(msgAfter.Content) ? "None" : $"``{msgAfter.Content}``"),
+                Description = "**Previous Content:** ",
                 Timestamp = DateTime.Now
             };
+
+            if (!string.IsNullOrWhiteSpace(msgBefore.Content))
+            {
+                embed.Description += msgBefore.Content;
+            }
+            else if (msgBefore.Embeds.Count > 0)
+            {
+                foreach (Embed msgEmbed in msgBefore.Embeds)
+                    embed.Description += $"\n**Embed:**\nTitle: {msgEmbed.Title}\nDescription: {msgEmbed.Description}";
+            }
+            else
+            {
+                embed.Description += "None";
+            }
+
+            embed.Description += "\n**New Content:** ";
+            if (!string.IsNullOrWhiteSpace(msgAfter.Content))
+            {
+                embed.Description += msgAfter.Content;
+            }
+            else if (msgAfter.Embeds.Count > 0)
+            {
+                foreach (Embed msgEmbed in msgAfter.Embeds)
+                    embed.Description += $"\n**Embed:**\nTitle: {msgEmbed.Title}\nDescription: {msgEmbed.Description}";
+            }
+            else
+            {
+                embed.Description += "None";
+            }
 
             char[] cleaned = msgAfter.Content.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
@@ -257,7 +288,7 @@ namespace RRBot.Systems
             else if (voiceStateOrig.VoiceChannel.Id != voiceState.VoiceChannel.Id)
             {
                 embed.Title = "User Moved Voice Channels";
-                embed.Description = $"Original: {voiceStateOrig.VoiceChannel}\nCurrent: {voiceState.VoiceChannel}";
+                embed.Description = $"{user}\nOriginal: {voiceStateOrig.VoiceChannel}\nCurrent: {voiceState.VoiceChannel}";
             }
             else
             {

@@ -24,7 +24,7 @@ namespace RRBot.Modules
         [Summary("Ban a user from using the bot.")]
         [Remarks("$blacklist [user]")]
         [RequireOwner]
-        public async Task<RuntimeResult> BotBan(IGuildUser user)
+        public async Task<RuntimeResult> Blacklist(IGuildUser user)
         {
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
@@ -91,16 +91,16 @@ namespace RRBot.Modules
         }
 
         [Command("resetcd")]
-        [Summary("Reset your crime cooldowns.")]
-        [Remarks("$resetcd")]
+        [Summary("Reset a user's crime cooldowns.")]
+        [Remarks("$resetcd [user]")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task ResetCooldowns()
+        public async Task ResetCooldowns(IGuildUser user)
         {
-            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             foreach (string cmd in Economy.CMDS_WITH_COOLDOWN)
-                user[$"{cmd}Cooldown"] = 0L;
-            await user.Write();
-            await Context.User.NotifyAsync(Context.Channel, "Your cooldowns have been reset.");
+                dbUser[$"{cmd}Cooldown"] = 0L;
+            await dbUser.Write();
+            await Context.User.NotifyAsync(Context.Channel, $"Reset **{user}**'s cooldowns.");
         }
 
         [Command("setcash")]
@@ -144,7 +144,7 @@ namespace RRBot.Modules
         [Summary("Unban a user from using the bot.")]
         [Remarks("$unblacklist [user]")]
         [RequireOwner]
-        public async Task<RuntimeResult> UnBotBan(IGuildUser user)
+        public async Task<RuntimeResult> Unblacklist(IGuildUser user)
         {
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");

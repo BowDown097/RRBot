@@ -212,7 +212,7 @@ namespace RRBot.Modules
 
                 EmbedBuilder embed = new()
                 {
-                    Title = (user == null ? "Your " : $"{user}'s ") + "Stats",
+                    Title = user == null ? "Stats" : $"{user}'s Stats",
                     Color = Color.Red,
                     Description = description.ToString()
                 };

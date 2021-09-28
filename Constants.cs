@@ -24,7 +24,7 @@ namespace RRBot
         // ********************
         public const double BULLY_COOLDOWN = 300;
         public const double DEAL_COOLDOWN = 3600;
-        public const double GENERIC_CRIME_ITEM_ODDS = 5;
+        public const double GENERIC_CRIME_ITEM_ODDS = 4;
         public const double GENERIC_CRIME_WIN_ODDS = 80;
         public const double GENERIC_CRIME_LOSS_MAX = 461;
         public const double GENERIC_CRIME_LOSS_MIN = 69;

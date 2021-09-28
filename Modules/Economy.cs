@@ -88,17 +88,18 @@ namespace RRBot.Modules
 
         [Alias("cd")]
         [Command("cooldowns")]
-        [Summary("Check your crime cooldowns.")]
-        [Remarks("$cooldowns")]
-        public async Task Cooldowns()
+        [Summary("Check your own or someone else's crime cooldowns.")]
+        [Remarks("$cooldowns <user>")]
+        public async Task Cooldowns(IGuildUser user = null)
         {
-            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            ulong userId = user == null ? Context.User.Id : user.Id;
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
             StringBuilder description = new();
-            double mult = user.Perks?.Keys.Contains("Speed Demon") == true ? 0.85 : 1;
+            double mult = dbUser.Perks?.Keys.Contains("Speed Demon") == true ? 0.85 : 1;
 
             foreach (string cmd in CMDS_WITH_COOLDOWN)
             {
-                long cooldown = (long)user[$"{cmd}Cooldown"];
+                long cooldown = (long)dbUser[$"{cmd}Cooldown"];
                 long fullCd = (long)((cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) * mult);
                 if (fullCd > 0L)
                     description.AppendLine($"**{cmd}**: {TimeSpan.FromSeconds(fullCd).FormatCompound()}");
@@ -106,7 +107,7 @@ namespace RRBot.Modules
 
             EmbedBuilder embed = new()
             {
-                Title = "Cooldowns",
+                Title = user == null ? "Cooldowns" : $"{user}'s Cooldowns",
                 Color = Color.Red,
                 Description = description.Length > 0 ? description.ToString() : "None"
             };
@@ -151,17 +152,18 @@ namespace RRBot.Modules
         }
 
         [Command("items")]
-        [Summary("Check your items.")]
-        [Remarks("$items")]
+        [Summary("Check your own or someone else's items.")]
+        [Remarks("$items <user>")]
         [RequireItem]
-        public async Task GetItems()
+        public async Task GetItems(IGuildUser user = null)
         {
-            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            ulong userId = user == null ? Context.User.Id : user.Id;
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
             EmbedBuilder embed = new()
             {
-                Title = "Items",
+                Title = user == null ? "Items" : $"{user}'s Items",
                 Color = Color.Red,
-                Description = string.Join(", ", user.Items)
+                Description = string.Join(", ", dbUser.Items)
             };
             await ReplyAsync(embed: embed.Build());
         }

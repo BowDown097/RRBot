@@ -19,7 +19,7 @@ namespace RRBot.Entities
 
         public static async Task<DbConfigRoles> GetById(ulong guildId)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("channels");
+            DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (snap.Exists)
                 return snap.ConvertTo<DbConfigRoles>();

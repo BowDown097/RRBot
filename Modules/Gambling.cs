@@ -187,6 +187,7 @@ namespace RRBot.Modules
                 else if (TwoInARow(results))
                     payoutMult = Constants.SLOTS_MULT_TWOINAROW;
 
+                user.UsingSlots = false;
                 if (payoutMult > 1)
                 {
                     double payout = (bet * payoutMult) - bet;
@@ -213,7 +214,6 @@ namespace RRBot.Modules
                         $"\nBalance: {totalCash:C2}");
                 }
 
-                user.UsingSlots = false;
                 await user.Write();
             });
 
