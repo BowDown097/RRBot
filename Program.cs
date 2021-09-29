@@ -31,23 +31,20 @@ namespace RRBot
         private IServiceProvider serviceProvider;
         private LavaRestClient lavaRestClient;
         private LavaSocketClient lavaSocketClient;
-        private List<ulong> bannedUsers;
 
         public async Task RunBotAsync()
         {
             // services setup
-            audioSystem = new AudioSystem(lavaRestClient, lavaSocketClient);
-            bannedUsers = new List<ulong>();
-            client = new DiscordSocketClient(new DiscordSocketConfig { AlwaysDownloadUsers = true, ExclusiveBulkDelete = true, MessageCacheSize = 100 });
-            commands = new CommandService();
+            audioSystem = new(lavaRestClient, lavaSocketClient);
+            client = new(new() { AlwaysDownloadUsers = true, ExclusiveBulkDelete = true, MessageCacheSize = 100 });
+            commands = new();
             currencyCulture = CultureInfo.CreateSpecificCulture("en-US");
             currencyCulture.NumberFormat.CurrencyNegativePattern = 2;
-            lavaRestClient = new LavaRestClient("127.0.0.1", 2333, "youshallnotpass");
-            lavaSocketClient = new LavaSocketClient();
+            lavaRestClient = new("127.0.0.1", 2333, "youshallnotpass");
+            lavaSocketClient = new();
 
             serviceProvider = new ServiceCollection()
                 .AddSingleton(audioSystem)
-                .AddSingleton(bannedUsers)
                 .AddSingleton(client)
                 .AddSingleton(commands)
                 .AddSingleton(currencyCulture)
@@ -157,10 +154,19 @@ namespace RRBot
             int argPos = 0;
             if (userMsg.HasCharPrefix('$', ref argPos))
             {
-                if (bannedUsers.Contains(context.User.Id))
+                DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
+                if (globalConfig.BannedUsers.Contains(context.User.Id))
                 {
                     await context.Channel.SendMessageAsync($"{context.User.Mention}, you are banned from using the bot!");
                     return;
+                }
+                foreach (string cmd in globalConfig.DisabledCommands)
+                {
+                    if (context.Message.Content.StartsWith($"${cmd}", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await context.Channel.SendMessageAsync($"{context.User.Mention}, this command is temporarily disabled!");
+                        return;
+                    }
                 }
 
                 await commands.ExecuteAsync(context, argPos, serviceProvider);
@@ -206,10 +212,6 @@ namespace RRBot
                 foreach (DocumentSnapshot user in usingQuery.Documents)
                     await user.Reference.SetAsync(new { usingSlots = FieldValue.Delete }, SetOptions.MergeAll);
             }
-
-            QuerySnapshot globalConfig = await database.Collection("globalConfig").GetSnapshotAsync();
-            foreach (DocumentSnapshot blacklist in globalConfig.Where(doc => doc.ContainsField("banned")))
-                bannedUsers.Add(ulong.Parse(blacklist.Id));
 
             await new Monitors(client, database).Initialise();
             await lavaSocketClient.StartAsync(client);
