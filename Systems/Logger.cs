@@ -148,10 +148,6 @@ namespace RRBot.Systems
                 embed.Description += "None";
             }
 
-            char[] cleaned = msgAfter.Content.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
-            if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
-                await msgAfter.DeleteAsync();
-
             await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
         }
 

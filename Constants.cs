@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Discord;
 
 namespace RRBot
 {
@@ -11,7 +12,11 @@ namespace RRBot
         // ********************
         public const int MAX_VOLUME = 200;
         public const int MIN_VOLUME = 5;
-
+        // ********************
+        //         BOT
+        // ********************
+        public const string ACTIVITY = "Pokimane fart compilations";
+        public const ActivityType ACTIVITY_TYPE = ActivityType.Watching;
         // ********************
         //     CASH SYSTEM
         // ********************
@@ -22,7 +27,7 @@ namespace RRBot
         // ********************
         //        CRIME
         // ********************
-        public const double BULLY_COOLDOWN = 300;
+        public const double BULLY_COOLDOWN = 1800;
         public const double DEAL_COOLDOWN = 3600;
         public const double GENERIC_CRIME_ITEM_ODDS = 4;
         public const double GENERIC_CRIME_WIN_ODDS = 80;

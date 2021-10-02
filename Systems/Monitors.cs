@@ -6,9 +6,8 @@ using Discord;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using RRBot.Entities;
-using RRBot.Systems;
 
-namespace RRBot
+namespace RRBot.Systems
 {
     public class Monitors
     {

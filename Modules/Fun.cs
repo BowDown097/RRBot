@@ -58,6 +58,9 @@ namespace RRBot.Modules
         [Remarks("$define [term]")]
         public async Task<RuntimeResult> Define([Remainder] string term)
         {
+            if (term.Equals("nigger", StringComparison.OrdinalIgnoreCase))
+                return CommandResult.FromError("Nope.");
+
             using WebClient client = new();
             string response = await client.DownloadStringTaskAsync($"https://api.pearson.com/v2/dictionaries/ldoce5/entries?headword={term}");
             DefinitionResponse def = JsonConvert.DeserializeObject<DefinitionResponse>(response);

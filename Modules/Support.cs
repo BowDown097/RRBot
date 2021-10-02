@@ -5,6 +5,7 @@ using Google.Cloud.Firestore;
 using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;
+using RRBot.Systems;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,39 +64,36 @@ namespace RRBot.Modules
         [RequireCooldown("SupportCooldown", "You cannot request support again for {0}. This is done to prevent spam.")]
         public async Task<RuntimeResult> GetSupport([Remainder] string request)
         {
-            try
+            char[] cleaned = request.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
+            if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
+                return CommandResult.FromError("You cannot have the funny word in your request.");
+
+            QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();
+            DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, Context.User.Id);
+            if (!string.IsNullOrWhiteSpace(ticket.Request))
             {
-                QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();
-                DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, Context.User.Id);
-                if (!string.IsNullOrWhiteSpace(ticket.Request))
-                {
-                    IGuildUser dbHelper = Context.Guild.GetUser(ticket.Helper);
-                    return CommandResult.FromError($"You already have a support ticket open with **{dbHelper}**.\n" +
-                        "If they have taken an extraordinarily long time to respond, or if the issue has been solved by yourself or someone else, you can use ``$close``.");
-                }
-
-                IEnumerable<SocketGuildUser> helpers = Context.Guild.Roles.FirstOrDefault(role => role.Name == "Helper")
-                    .Members.Where(user => user.Id != Context.User.Id);
-                SocketGuildUser helperUser = helpers.ElementAt(RandomUtil.Next(0, helpers.Count()));
-
-                EmbedBuilder embed = new()
-                {
-                    Color = Color.Red,
-                    Title = $"Support Ticket #{tickets.Count + 1}",
-                    Description = $"Issuer: {Context.User.Mention}\nHelper: {helperUser.Mention}\nRequest: {request}"
-                };
-
-                IUserMessage userMessage = await ReplyAsync($"{helperUser.Mention}, someone needs some help!", embed: embed.Build());
-                ticket.Helper = helperUser.Id;
-                ticket.Issuer = Context.User.Id;
-                ticket.Message = userMessage.Id;
-                ticket.Request = request;
-                await ticket.Write();
+                IGuildUser dbHelper = Context.Guild.GetUser(ticket.Helper);
+                return CommandResult.FromError($"You already have a support ticket open with **{dbHelper}**.\n" +
+                    "If they have taken an extraordinarily long time to respond, or if the issue has been solved by yourself or someone else, you can use ``$close``.");
             }
-            catch (NullReferenceException e)
+
+            IEnumerable<SocketGuildUser> helpers = Context.Guild.Roles.FirstOrDefault(role => role.Name == "Helper")
+                .Members.Where(user => user.Id != Context.User.Id);
+            SocketGuildUser helperUser = helpers.ElementAt(RandomUtil.Next(0, helpers.Count()));
+
+            EmbedBuilder embed = new()
             {
-                Console.WriteLine(e.StackTrace);
-            }
+                Color = Color.Red,
+                Title = $"Support Ticket #{tickets.Count + 1}",
+                Description = $"Issuer: {Context.User.Mention}\nHelper: {helperUser.Mention}\nRequest: {request}"
+            };
+
+            IUserMessage userMessage = await ReplyAsync($"{helperUser.Mention}, someone needs some help!", embed: embed.Build());
+            ticket.Helper = helperUser.Id;
+            ticket.Issuer = Context.User.Id;
+            ticket.Message = userMessage.Id;
+            ticket.Request = request;
+            await ticket.Write();
             return CommandResult.FromSuccess();
         }
 
