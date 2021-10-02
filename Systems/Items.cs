@@ -76,7 +76,7 @@ namespace RRBot.Systems
             if (dbUser.Perks?.ContainsKey("Multiperk") == true && dbUser.Perks?.Count == 3 && perk != "Pacifist")
                 return CommandResult.FromError("You already have 2 perks.");
 
-            if (dbUser.Perks?.ContainsKey(perk) == true)
+            if (dbUser.Perks?.ContainsKey(perk) == false)
             {
                 if (perk == "Pacifist")
                 {

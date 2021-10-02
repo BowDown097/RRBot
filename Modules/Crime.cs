@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Google.Cloud.Firestore;
 using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;

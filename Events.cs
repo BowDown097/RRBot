@@ -31,6 +31,33 @@ namespace RRBot
             lavaSocketClient = serviceProvider.GetRequiredService<LavaSocketClient>();
         }
 
+        public void Initialize()
+        {
+            client.GuildMemberUpdated += Client_GuildMemberUpdated;
+            client.Log += Client_Log;
+            client.MessageReceived += Client_MessageReceived;
+            client.MessageUpdated += Client_MessageUpdated;
+            client.ReactionAdded += Client_ReactionAdded;
+            client.ReactionRemoved += Client_ReactionRemoved;
+            client.Ready += Client_Ready;
+            client.UserJoined += Client_UserJoined;
+            commands.CommandExecuted += Commands_CommandExecuted;
+
+            client.ChannelCreated += Logger.Client_ChannelCreated;
+            client.ChannelDestroyed += Logger.Client_ChannelDestroyed;
+            client.ChannelUpdated += Logger.Client_ChannelUpdated;
+            client.InviteCreated += Logger.Client_InviteCreated;
+            client.MessageDeleted += Logger.Client_MessageDeleted;
+            client.MessageUpdated += Logger.Client_MessageUpdated;
+            client.RoleCreated += Logger.Client_RoleCreated;
+            client.RoleDeleted += Logger.Client_RoleDeleted;
+            client.UserBanned += Logger.Client_UserBanned;
+            client.UserJoined += Logger.Client_UserJoined;
+            client.UserLeft += Logger.Client_UserLeft;
+            client.UserUnbanned += Logger.Client_UserUnbanned;
+            client.UserVoiceStateUpdated += Logger.Client_UserVoiceStateUpdated;
+        }
+
         private static async Task HandleReactionAsync(Cacheable<IUserMessage, ulong> msg,
             ISocketMessageChannel channel, SocketReaction reaction, bool addedReaction)
         {
@@ -83,7 +110,7 @@ namespace RRBot
             }
         }
 
-        public static async Task Client_GuildMemberUpdated(SocketGuildUser userBefore, SocketGuildUser userAfter)
+        private static async Task Client_GuildMemberUpdated(SocketGuildUser userBefore, SocketGuildUser userAfter)
         {
             if (userBefore.Nickname == userAfter.Nickname)
                 return;
@@ -93,13 +120,13 @@ namespace RRBot
                 await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
         }
 
-        public static Task Client_Log(LogMessage arg)
+        private static Task Client_Log(LogMessage arg)
         {
             Console.WriteLine(arg);
             return Task.CompletedTask;
         }
 
-        public async Task Client_MessageReceived(SocketMessage msg)
+        private async Task Client_MessageReceived(SocketMessage msg)
         {
             SocketUserMessage userMsg = msg as SocketUserMessage;
             SocketCommandContext context = new(client, userMsg);
@@ -151,7 +178,7 @@ namespace RRBot
             }
         }
 
-        public async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
+        private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
         {
             if (!msgBeforeCached.HasValue || (msgAfter.Author as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == true)
                 return;
@@ -162,13 +189,13 @@ namespace RRBot
             await Filters.DoScamCheckAsync(userMsgAfter);
         }
 
-        public static async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel,
+        private static async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel,
             SocketReaction reaction) => await HandleReactionAsync(msg, channel, reaction, true);
 
-        public static async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel,
+        private static async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel,
             SocketReaction reaction) => await HandleReactionAsync(msg, channel, reaction, false);
 
-        public async Task Client_Ready()
+        private async Task Client_Ready()
         {
             // reset usingSlots if someone happened to be using slots during bot restart
             foreach (SocketGuild guild in client.Guilds)
@@ -185,7 +212,7 @@ namespace RRBot
             lavaSocketClient.OnTrackFinished += audioSystem.OnTrackFinished;
         }
 
-        public static async Task Client_UserJoined(SocketGuildUser user)
+        private static async Task Client_UserJoined(SocketGuildUser user)
         {
             // circumvent mute bypasses
             DbConfigRoles roles = await DbConfigRoles.GetById(user.Guild.Id);
@@ -201,7 +228,7 @@ namespace RRBot
             }
         }
 
-        public static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
+        private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
             switch (result.Error)
             {
