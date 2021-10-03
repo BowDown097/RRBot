@@ -6,6 +6,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
+using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using RRBot.Entities;
 using RRBot.Extensions;
@@ -150,22 +151,31 @@ namespace RRBot
             int argPos = 0;
             if (userMsg.HasCharPrefix('$', ref argPos))
             {
-                DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
-                if (globalConfig.BannedUsers.Contains(context.User.Id))
+                try
                 {
-                    await context.Channel.SendMessageAsync($"{context.User.Mention}, you are banned from using the bot!");
-                    return;
-                }
-                foreach (string cmd in globalConfig.DisabledCommands)
-                {
-                    if (context.Message.Content.StartsWith($"${cmd}", StringComparison.OrdinalIgnoreCase))
+                    SearchResult search = commands.Search(msg.Content[argPos..]);
+                    if (!search.IsSuccess)
+                        return;
+
+                    DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
+                    if (globalConfig.BannedUsers.Contains(context.User.Id))
                     {
-                        await context.Channel.SendMessageAsync($"{context.User.Mention}, this command is temporarily disabled!");
+                        await context.User.NotifyAsync(context.Channel, "You are banned from using the bot!");
                         return;
                     }
-                }
+                    if (globalConfig.DisabledCommands.Contains(search.Commands[0].Command.Name))
+                    {
+                        await context.User.NotifyAsync(context.Channel, "This command is temporarily disabled!");
+                        return;
+                    }
 
-                await commands.ExecuteAsync(context, argPos, serviceProvider);
+                    await commands.ExecuteAsync(context, argPos, serviceProvider);
+                }
+                catch (RpcException rpcE)
+                {
+                    await context.User.NotifyAsync(context.Channel, "I cannot connect to the database at the moment. Try again later.");
+                    Console.WriteLine(rpcE.Message + "\n" + rpcE.StackTrace);
+                }
             }
             else
             {
@@ -243,6 +253,10 @@ namespace RRBot
                     await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
                         $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``");
                     break;
+                case CommandError.ObjectNotFound:
+                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                        "Couldn't resolve a user from your input!");
+                    break;
                 case CommandError.ParseFailed:
                     await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
                         $"Couldn't understand something you passed into the command.\nThis error info might help: ``{result.ErrorReason}``" +
@@ -252,21 +266,15 @@ namespace RRBot
                     await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, result.ErrorReason);
                     break;
                 case CommandError.Unsuccessful:
+                    if (result.ErrorReason.StartsWith("Your user input") || result.ErrorReason.StartsWith("You have no"))
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, result.ErrorReason);
                     if (result is CommandResult rwm && !string.IsNullOrWhiteSpace(rwm.Reason))
                         await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, rwm.Reason);
                     break;
             }
 
             if (!result.IsSuccess)
-            {
-                if (result.ErrorReason == "User not found.")
-                {
-                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                        "Couldn't resolve a user from your input!");
-                }
-
                 Console.WriteLine(result.ErrorReason);
-            }
         }
     }
 }

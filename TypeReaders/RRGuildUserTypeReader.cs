@@ -4,6 +4,8 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord.WebSocket;
+using RRBot.Extensions;
 
 namespace Discord.Commands
 {
@@ -79,8 +81,17 @@ namespace Discord.Commands
                     AddResult(results, guildUser, guildUser.Nickname == input ? 0.60f : 0.50f);
             }
 
-            if (results.Count > 0)
+            if (results.Count == 1)
+            {
                 return TypeReaderResult.FromSuccess(results.Values.ToImmutableArray());
+            }
+            else if (results.Count > 1)
+            {
+                return TypeReaderResult.FromError(CommandError.Unsuccessful, "Your user input is ambiguous. " +
+                    $"Run the command again, but this time with the user being one of these {results.Values.Count} results:\n" +
+                    string.Join(", ", results.Values.Select(trv => "**" + trv.ToString() + "**")));
+            }
+
             return TypeReaderResult.FromError(CommandError.ObjectNotFound, "User not found.");
         }
 
