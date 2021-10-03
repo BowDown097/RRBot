@@ -69,28 +69,35 @@ namespace RRBot
             // trivia check
             if (message.Embeds.Count > 0 && addedReaction)
             {
-                Embed embed = message.Embeds.ElementAt(0) as Embed;
+                Embed embed = message.Embeds.FirstOrDefault() as Embed;
                 if (embed.Title == "Trivia!")
                 {
-                    using StringReader reader = new(embed.Description);
-                    for (string line = reader.ReadLine(); line != null; line = reader.ReadLine())
+                    if (!Constants.POLL_EMOTES.Any(kvp => kvp.Value == reaction.Emote.ToString()))
                     {
-                        // determine correct answer by using zero-width space lol
-                        if (line.Contains("​"))
+                        await message.RemoveReactionAsync(reaction.Emote, user);
+                        return;
+                    }
+
+                    using StringReader reader = new(embed.Description);
+                    for (string line = await reader.ReadLineAsync(); line != null; line = await reader.ReadLineAsync())
+                    {
+                        if (!line.Contains("​")) // determine correct answer by using zero-width space lol
+                            continue;
+
+                        Emoji numberEmoji = new(Constants.POLL_EMOTES[Convert.ToInt32(line[0].ToString())]);
+                        if (reaction.Emote.ToString() == numberEmoji.ToString())
                         {
-                            Emoji numberEmoji = new(Constants.POLL_EMOTES[Convert.ToInt32(line[0].ToString())]);
-                            if (reaction.Emote.ToString() == numberEmoji.ToString())
+                            EmbedBuilder embedBuilder = new()
                             {
-                                EmbedBuilder embedBuilder = new()
-                                {
-                                    Color = Color.Red,
-                                    Title = "Trivia Over!",
-                                    Description = $"**{reaction.User}** was the first to get the correct answer!"
-                                };
-                                await message.ModifyAsync(msg => msg.Embed = embedBuilder.Build());
-                            }
+                                Color = Color.Red,
+                                Title = "Trivia Over!",
+                                Description = $"**{reaction.User}** was the first to get the correct answer of \"{line[3..]}\"!\n~~{embed.Description}~~"
+                            };
+                            await message.ModifyAsync(msg => msg.Embed = embedBuilder.Build());
                         }
                     }
+
+                    return;
                 }
             }
 
