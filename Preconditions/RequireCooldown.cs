@@ -22,7 +22,7 @@ namespace RRBot.Preconditions
         {
             DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
             long cooldown = (long)user[CooldownNode] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            if (user.Perks?.ContainsKey("Speed Demon") == true)
+            if (user.Perks.ContainsKey("Speed Demon"))
                 cooldown = (long)(cooldown * 0.85);
 
             long newCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(cooldown);

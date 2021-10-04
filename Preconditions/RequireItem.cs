@@ -16,7 +16,7 @@ namespace RRBot.Preconditions
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
-            if (user.Items?.Count > 0)
+            if (user.Items.Count > 0)
             {
                 return string.IsNullOrEmpty(ItemType) || user.Items.Any(item => item.EndsWith(ItemType, StringComparison.Ordinal))
                     ? PreconditionResult.FromSuccess()

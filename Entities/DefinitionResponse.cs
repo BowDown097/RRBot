@@ -1,27 +1,36 @@
-#pragma warning disable IDE1006
+using Newtonsoft.Json;
+
 namespace RRBot.Entities
 {
     public class DefinitionResponse
     {
-        public int count { get; set; }
-        public DefinitionResult[] results { get; set; }
+        [JsonProperty("count")]
+        public int Count { get; set; }
+        [JsonProperty("results")]
+        public DefinitionResult[] Results { get; set; }
     }
 
     public class DefinitionResult
     {
-        public string headword { get; set; }
-        public string part_of_speech { get; set; }
-        public Sense[] senses { get; set; }
+        [JsonProperty("headword")]
+        public string Headword { get; set; }
+        [JsonProperty("part_of_speech")]
+        public string PartOfSpeech { get; set; }
+        [JsonProperty("senses")]
+        public Sense[] Senses { get; set; }
     }
 
     public class Sense
     {
-        public string[] definition { get; set; }
-        public Example[] examples { get; set; }
+        [JsonProperty("definition")]
+        public string[] Definition { get; set; }
+        [JsonProperty("examples")]
+        public Example[] Examples { get; set; }
     }
 
     public class Example
     {
-        public string text { get; set; }
+        [JsonProperty("text")]
+        public string Text { get; set; }
     }
 }

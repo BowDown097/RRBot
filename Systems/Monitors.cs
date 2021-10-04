@@ -138,7 +138,7 @@ namespace RRBot.Systems
                                     string lastPerk = user.Perks.Last().Key;
                                     Tuple<string, string, double, long> tuple = Array.Find(Items.perks, p => p.Item1 == lastPerk);
                                     SocketUser socketUser = guild.GetUser(userId);
-                                    await user.SetCash(socketUser, null, user.Cash + tuple.Item3);
+                                    await user.SetCash(socketUser, user.Cash + tuple.Item3);
                                     user.Perks.Remove(lastPerk);
                                     await user.Write();
                                 }

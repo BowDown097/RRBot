@@ -5,12 +5,16 @@ using Microsoft.CodeAnalysis.Scripting;
 using RRBot.Entities;
 using RRBot.Extensions;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace RRBot.Modules
 {
+    public class FunnyContext
+    {
+        public SocketCommandContext Context;
+        public FunnyContext(SocketCommandContext context) => Context = context;
+    }
+
     [RequireOwner]
     [Summary("Commands for bot owners only.")]
     public class BotOwner : ModuleBase<SocketCommandContext>
@@ -29,7 +33,6 @@ namespace RRBot.Modules
             DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
             globalConfig.BannedUsers.Add(user.Id);
             await globalConfig.Write();
-
             await Context.User.NotifyAsync(Context.Channel, $"Blacklisted {user}.");
             return CommandResult.FromSuccess();
         }
@@ -40,14 +43,13 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> DisableCommand(string cmd)
         {
             string cmdLower = cmd.ToLower();
-            CommandInfo cmdInfo = Commands.Commands.FirstOrDefault(info => info.Name == cmdLower);
-            if (cmdInfo == default)
-                return CommandResult.FromError($"**{cmdLower}** is not a command!");
+            SearchResult search = Commands.Search(cmd);
+            if (!search.IsSuccess)
+                return CommandResult.FromError($"**${cmdLower}** is not a command!");
 
             DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
             globalConfig.DisabledCommands.Add(cmdLower);
             await globalConfig.Write();
-
             await Context.User.NotifyAsync(Context.Channel, $"Disabled ${cmdLower}.");
             return CommandResult.FromSuccess();
         }
@@ -59,12 +61,11 @@ namespace RRBot.Modules
         {
             string cmdLower = cmd.ToLower();
             DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
-            if (!globalConfig.DisabledCommands.Contains(cmd))
+            if (!globalConfig.DisabledCommands.Contains(cmdLower))
                 return CommandResult.FromError($"**{cmdLower}** is either not a command or is not disabled!");
 
             globalConfig.DisabledCommands.Remove(cmdLower);
             await globalConfig.Write();
-
             await Context.User.NotifyAsync(Context.Channel, $"Enabled ${cmdLower}.");
             return CommandResult.FromSuccess();
         }
@@ -79,8 +80,7 @@ namespace RRBot.Modules
             {
                 code = code.Replace("```cs", "").Trim('`');
                 string[] imports = { "System", "System.Collections.Generic", "System.Text" };
-                string evaluation = (await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports),
-                    new FunnyContext(Context))).ToString();
+                object evaluation = await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context));
                 EmbedBuilder embed = new()
                 {
                     Color = Color.Red,
@@ -112,7 +112,6 @@ namespace RRBot.Modules
             DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
             globalConfig.BannedUsers.Remove(user.Id);
             await globalConfig.Write();
-
             await Context.User.NotifyAsync(Context.Channel, $"Unblacklisted {user}.");
             return CommandResult.FromSuccess();
         }

@@ -6,7 +6,6 @@ using Google.Cloud.Firestore.V1;
 using Microsoft.Extensions.DependencyInjection;
 using RRBot.Systems;
 using RRBot.TypeReaders;
-using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
 using Victoria;
@@ -27,12 +26,8 @@ namespace RRBot
                 MessageCacheSize = 100
             });
 
-            CultureInfo currencyCulture = CultureInfo.CreateSpecificCulture("en-US");
-            currencyCulture.NumberFormat.CurrencyNegativePattern = 2;
-
             ServiceProvider serviceProvider = new ServiceCollection()
                 .AddSingleton(client)
-                .AddSingleton(currencyCulture)
                 .AddSingleton<CommandService>()
                 .AddSingleton<LavaRestClient>()
                 .AddSingleton<LavaSocketClient>()

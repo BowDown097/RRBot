@@ -1,15 +1,20 @@
-#pragma warning disable IDE1006
+using Newtonsoft.Json;
+
 namespace RRBot.Entities
 {
     public class Trivia
     {
-        public TriviaQuestion[] results { get; set; }
+        [JsonProperty("results")]
+        public TriviaQuestion[] Results { get; set; }
     }
 
     public class TriviaQuestion
     {
-        public string question { get; set; }
-        public string correct_answer { get; set; }
-        public string[] incorrect_answers { get; set; }
+        [JsonProperty("question")]
+        public string Question { get; set; }
+        [JsonProperty("correct_answer")]
+        public string CorrectAnswer { get; set; }
+        [JsonProperty("incorrect_answers")]
+        public string[] IncorrectAnswers { get; set; }
     }
 }

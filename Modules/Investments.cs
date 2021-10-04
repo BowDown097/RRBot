@@ -17,8 +17,6 @@ namespace RRBot.Modules
     [Summary("Invest in our selection of coins, Bit or Shit. The prices here are updated in REAL TIME with the REAL LIFE values. Experience the fast, entrepreneural life without going broke, having your house repossessed, and having your girlfriend leave you.")]
     public class Investments : ModuleBase<SocketCommandContext>
     {
-        public CultureInfo CurrencyCulture { get; set; }
-
         private static async Task<double> QueryCryptoValue(string crypto)
         {
             using WebClient client = new();
@@ -59,23 +57,24 @@ namespace RRBot.Modules
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             if (user.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-            double cryptoAmount = amount / await QueryCryptoValue(abbreviation);
-
             if (user.Cash < amount)
-            {
                 return CommandResult.FromError("You can't invest more than what you have!");
-            }
+
+            double cryptoAmount = amount / await QueryCryptoValue(abbreviation);
             if (cryptoAmount < Constants.INVESTMENT_MIN_AMOUNT)
             {
                 return CommandResult.FromError($"The amount you specified converts to less than {Constants.INVESTMENT_MIN_AMOUNT} of {abbreviation}, which is not permitted.\n"
                     + $"You'll need to invest at least **{await QueryCryptoValue(abbreviation) * Constants.INVESTMENT_MIN_AMOUNT:C2}**.");
             }
 
-            await user.SetCash(Context.User, Context.Channel, user.Cash - amount);
+            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+            culture.NumberFormat.CurrencyNegativePattern = 2;
+
+            await user.SetCash(Context.User, user.Cash - amount);
             user[abbreviation] = (double)user[abbreviation] + Math.Round(cryptoAmount, 4);
-            user.AddToStats(CurrencyCulture, new Dictionary<string, string>
+            user.AddToStats(new Dictionary<string, string>
             {
-                { $"Money Put Into {abbreviation}", amount.ToString("C2", CurrencyCulture) },
+                { $"Money Put Into {abbreviation}", amount.ToString("C2", culture) },
                 { $"{abbreviation} Purchased", cryptoAmount.ToString("0.####") }
             });
 
@@ -156,6 +155,7 @@ namespace RRBot.Modules
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             if (user.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+
             double cryptoBal = (double)user[abbreviation];
             if (cryptoBal < Constants.INVESTMENT_MIN_AMOUNT)
                 return CommandResult.FromError($"You have no {abbreviation}!");
@@ -165,15 +165,18 @@ namespace RRBot.Modules
             double cryptoValue = await QueryCryptoValue(abbreviation) * amount;
             double finalValue = cryptoValue / 100.0 * (100 - Constants.INVESTMENT_FEE_PERCENT);
 
-            await user.SetCash(Context.User, Context.Channel, user.Cash + finalValue);
+            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+            culture.NumberFormat.CurrencyNegativePattern = 2;
+
+            await user.SetCash(Context.User, user.Cash + finalValue);
             user[abbreviation] = (double)user[abbreviation] - Math.Round(amount, 4);
-            user.AddToStats(CurrencyCulture, new Dictionary<string, string>
+            user.AddToStats(new Dictionary<string, string>
             {
-                { $"Money Gained From {abbreviation}", finalValue.ToString("C2", CurrencyCulture) }
+                { $"Money Gained From {abbreviation}", finalValue.ToString("C2", culture) }
             });
 
             await user.Write();
-            await Context.User.NotifyAsync(Context.Channel, $"You have withdrew **{amount}** {abbreviation}, currently valued at **{cryptoValue:C2}**.\n" +
+            await Context.User.NotifyAsync(Context.Channel, $"You withdrew **{amount:0.####}** {abbreviation}, currently valued at **{cryptoValue:C2}**.\n" +
                 $"A {Constants.INVESTMENT_FEE_PERCENT}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
             return CommandResult.FromSuccess();
         }

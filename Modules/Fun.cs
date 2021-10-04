@@ -64,21 +64,21 @@ namespace RRBot.Modules
             using WebClient client = new();
             string response = await client.DownloadStringTaskAsync($"https://api.pearson.com/v2/dictionaries/ldoce5/entries?headword={term}");
             DefinitionResponse def = JsonConvert.DeserializeObject<DefinitionResponse>(response);
-            if (def.count == 0)
+            if (def.Count == 0)
                 return CommandResult.FromError("Couldn't find anything for that term, chief.");
 
             StringBuilder description = new();
-            DefinitionResult[] filteredResults = def.results.Where(res => res.headword.Equals(term, StringComparison.OrdinalIgnoreCase)
-                && res.senses != null).ToArray();
+            DefinitionResult[] filteredResults = def.Results.Where(res => res.Headword.Equals(term, StringComparison.OrdinalIgnoreCase)
+                && res.Senses != null).ToArray();
             for (int i = 1; i <= filteredResults.Length; i++)
             {
                 DefinitionResult result = filteredResults[i - 1];
-                description.AppendLine($"**{i}:**\n*{result.part_of_speech}*");
-                foreach (Sense sense in result.senses)
+                description.AppendLine($"**{i}:**\n*{result.PartOfSpeech}*");
+                foreach (Sense sense in result.Senses)
                 {
-                    description.AppendLine($"Definition: {sense.definition[0]}");
-                    if (sense.examples != null)
-                        description.AppendLine($"Example: {sense.examples[0].text}");
+                    description.AppendLine($"Definition: {sense.Definition[0]}");
+                    if (sense.Examples != null)
+                        description.AppendLine($"Example: {sense.Examples[0].Text}");
                 }
             }
 
@@ -185,12 +185,12 @@ namespace RRBot.Modules
             using WebClient client = new();
             string response = await client.DownloadStringTaskAsync("https://opentdb.com/api.php?amount=1");
             Trivia trivia = JsonConvert.DeserializeObject<Trivia>(response);
-            string question = HttpUtility.HtmlDecode(trivia.results[0].question);
-            string correctAnswer = "​" + HttpUtility.HtmlDecode(trivia.results[0].correct_answer);
+            string question = HttpUtility.HtmlDecode(trivia.Results[0].Question);
+            string correctAnswer = "​" + HttpUtility.HtmlDecode(trivia.Results[0].CorrectAnswer);
 
             // set up and randomize answers array
             List<string> answers = new() { correctAnswer };
-            foreach (string incorrect in trivia.results[0].incorrect_answers)
+            foreach (string incorrect in trivia.Results[0].IncorrectAnswers)
                 answers.Add(HttpUtility.HtmlDecode(incorrect));
             for (int i = 0; i < answers.Count - 1; i++)
             {

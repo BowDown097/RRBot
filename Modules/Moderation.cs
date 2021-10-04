@@ -10,7 +10,6 @@ using RRBot.Preconditions;
 using RRBot.Systems;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -61,7 +60,7 @@ namespace RRBot.Modules
                 await Logger.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
                 await banDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) }, SetOptions.MergeAll);
                 await user.BanAsync(reason: reason);
-                dbUser.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
+                dbUser.AddToStats(new Dictionary<string, string>
                 {
                     { "Bans", "1" }
                 });
@@ -73,7 +72,7 @@ namespace RRBot.Modules
             if (string.IsNullOrWhiteSpace(reason))
             {
                 await user.BanAsync(reason: duration);
-                dbUser.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
+                dbUser.AddToStats(new Dictionary<string, string>
                 {
                     { "Bans", "1" }
                 });
@@ -149,7 +148,7 @@ namespace RRBot.Modules
             await ReplyAsync(response);
 
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-            dbUser.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
+            dbUser.AddToStats(new Dictionary<string, string>
             {
                 { "Kicks", "1" }
             });
@@ -188,7 +187,7 @@ namespace RRBot.Modules
                     await user.AddRoleAsync(roles.MutedRole);
 
                     DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-                    dbUser.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
+                    dbUser.AddToStats(new Dictionary<string, string>
                     {
                         { "Mutes", "1" }
                     });

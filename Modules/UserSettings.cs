@@ -26,8 +26,7 @@ namespace RRBot.Modules
             {
                 Color = Color.Red,
                 Title = "Your Settings",
-                Description = $"**DM Notifications**: {user.DMNotifs}\n**No Reply Pings**: {user.NoReplyPings}\n" +
-                    $"**Rankup Notifications**: {user.RankupNotifs}"
+                Description = $"**DM Notifications**: {user.DMNotifs}\n**No Reply Pings**: {user.NoReplyPings}"
             };
             await ReplyAsync(embed: embed.Build());
         }
@@ -49,16 +48,6 @@ namespace RRBot.Modules
         {
             await GenericSet("NoReplyPings", status);
             await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "no longer be" : "now be")} pinged in command responses.");
-        }
-
-        [Alias("setrankupnotifs")]
-        [Command("setrankupnotifications")]
-        [Summary("Set whether or not you will be notified of rank-ups/deranks. *(default: false)*")]
-        [Remarks("$setrankupnotifications [true/false]")]
-        public async Task SetRankupNotifications(bool status)
-        {
-            await GenericSet("RankupNotifs", status);
-            await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "now see" : "no longer see")} rankup notifications.");
         }
     }
 }

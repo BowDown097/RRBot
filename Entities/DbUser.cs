@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
-using RRBot.Extensions;
 
 namespace RRBot.Entities
 {
@@ -105,11 +104,13 @@ namespace RRBot.Entities
             return await GetById(guildId, userId);
         }
 
-        public void AddToStats(CultureInfo culture, Dictionary<string, string> statsToAddTo)
+        public void AddToStats(Dictionary<string, string> statsToAddTo)
         {
+            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+            culture.NumberFormat.CurrencyNegativePattern = 2;
             foreach (KeyValuePair<string, string> kvp in statsToAddTo)
             {
-                if (Stats?.ContainsKey(kvp.Key) == true)
+                if (Stats.ContainsKey(kvp.Key))
                 {
                     if (kvp.Value[0] == '$')
                     {
@@ -131,7 +132,7 @@ namespace RRBot.Entities
             }
         }
 
-        public async Task SetCash(SocketUser user, ISocketMessageChannel channel, double amount)
+        public async Task SetCash(SocketUser user, double amount)
         {
             if (user.IsBot)
                 return;
@@ -153,17 +154,9 @@ namespace RRBot.Entities
                     IRole role = guildUser.Guild.GetRole(roleId);
 
                     if (amount >= neededCash && !guildUser.RoleIds.Contains(roleId))
-                    {
-                        if (RankupNotifs)
-                            await user.NotifyAsync(channel, $"**{user}** ranked up to {role.Name}!", $"You have ranked up to {role.Name}!", true);
                         await guildUser.AddRoleAsync(roleId);
-                    }
                     else if (amount <= neededCash && guildUser.RoleIds.Contains(roleId))
-                    {
-                        if (RankupNotifs)
-                            await user.NotifyAsync(channel, $"**{user}** has lost {role.Name}!", $"You lost {role.Name}!", true);
                         await guildUser.RemoveRoleAsync(roleId);
-                    }
                 }
             }
         }

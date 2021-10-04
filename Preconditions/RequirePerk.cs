@@ -11,7 +11,7 @@ namespace RRBot.Preconditions
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
-            return user.Perks?.Count > 0
+            return user.Perks.Count > 0
                 ? PreconditionResult.FromSuccess()
                 : PreconditionResult.FromError("You have no perks!");
         }

@@ -2,6 +2,8 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
+using RRBot.Entities;
+using RRBot.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,45 +16,41 @@ namespace RRBot.Modules
     [RequireUserPermission(GuildPermission.Administrator)]
     public class Config : ModuleBase<SocketCommandContext>
     {
-        private async Task CreateEntry(string document, object data, string message = "")
-        {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document(document);
-            await doc.SetAsync(data, SetOptions.MergeAll);
-            if (!string.IsNullOrWhiteSpace(message))
-                await ReplyAsync(message);
-        }
-
         [Command("addrank")]
-        [Summary("Register the ID for a rank, its level, and the money required to get it.")]
-        [Remarks("$addrank [role-id] [level] [cost]")]
-        public async Task AddRank(ulong id, int level, double cost)
+        [Summary("Register a rank, its level, and the money required to get it.")]
+        [Remarks("$addrank [role] [level] [cost]")]
+        public async Task AddRank(IRole role, int level, double cost)
         {
-            await CreateEntry("ranks", new Dictionary<string, object> { { $"level{level}Id", id.ToString() } });
-            await CreateEntry("ranks", new Dictionary<string, object> { { $"level{level}Cost", cost } }, "Added rank successfully!");
+            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("ranks");
+            await doc.SetAsync(new Dictionary<string, object>
+            {
+                { $"level{level}Id", role.Id.ToString() },
+                { $"level{level}Cost", cost }
+            });
+
+            await Context.User.NotifyAsync(Context.Channel, $"Added {role} as a level {level} rank that costs {cost:C2}.");
         }
 
         [Command("addselfrole")]
         [Summary("Add a self role for the self role message.")]
-        [Remarks("$addselfrole [emoji-id] [role-id]")]
-        public async Task<RuntimeResult> AddSelfRole(IEmote emote, ulong roleId)
+        [Remarks("$addselfrole [emoji] [role]")]
+        public async Task<RuntimeResult> AddSelfRole(IEmote emote, IRole role)
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("selfroles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("channel", out ulong channelId) && snap.TryGetValue("message", out ulong msgId))
+            if (!snap.TryGetValue("channel", out ulong channelId) || !snap.TryGetValue("message", out ulong msgId))
+                return CommandResult.FromError("The self roles message has not been set. Please set it using ``$setselfrolesmsg``.");
+
+            await doc.SetAsync(new Dictionary<string, object>
             {
-                await doc.SetAsync(new Dictionary<string, object>
-                {
-                    { emote.ToString(), roleId }
-                }, SetOptions.MergeAll);
+                { emote.ToString(), role.Id }
+            }, SetOptions.MergeAll);
 
-                SocketTextChannel channel = Context.Guild.GetChannel(channelId) as SocketTextChannel;
-                IMessage message = await channel.GetMessageAsync(msgId);
-                await message.AddReactionAsync(emote);
-                await ReplyAsync("Added self role successfully!");
-                return CommandResult.FromSuccess();
-            }
-
-            return CommandResult.FromError("The self roles message has not been set. Please set it using ``$setselfrolesmsg``.");
+            SocketTextChannel channel = Context.Guild.GetChannel(channelId) as SocketTextChannel;
+            IMessage message = await channel.GetMessageAsync(msgId);
+            await message.AddReactionAsync(emote);
+            await Context.User.NotifyAsync(Context.Channel, $"Added {role} as a self role bound to {emote}.");
+            return CommandResult.FromSuccess();
         }
 
         [Command("clearconfig")]
@@ -63,7 +61,7 @@ namespace RRBot.Modules
             CollectionReference collection = Program.database.Collection($"servers/{Context.Guild.Id}/config");
             foreach (DocumentReference doc in collection.ListDocumentsAsync().ToEnumerable())
                 await doc.DeleteAsync();
-            await ReplyAsync("All configuration cleared!");
+            await Context.User.NotifyAsync(Context.Channel, "All configuration cleared!");
         }
 
         [Command("clearselfroles")]
@@ -73,7 +71,7 @@ namespace RRBot.Modules
         {
             DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("selfroles");
             await doc.DeleteAsync();
-            await ReplyAsync("Any registered self roles removed!");
+            await Context.User.NotifyAsync(Context.Channel, "Any registered self roles removed!");
         }
 
         [Command("currentconfig")]
@@ -97,19 +95,13 @@ namespace RRBot.Modules
                     {
                         case "channels":
                             SocketGuildChannel channel = Context.Guild.GetChannel(Convert.ToUInt64(dict[key]));
-                            if (channel != null)
-                                description.AppendLine($"**{key}**: #{channel}");
-                            else
-                                description.AppendLine($"**{key}**: #deleted-channel");
+                            description.AppendLine($"**{key}**: #{channel.ToString() ?? "deleted-channel"}");
                             break;
                         case "ranks":
-                            if (key.EndsWith("Id", StringComparison.Ordinal))
+                            if (key.EndsWith("Id"))
                             {
                                 SocketRole rank = Context.Guild.GetRole(Convert.ToUInt64(dict[key]));
-                                if (rank != null)
-                                    description.AppendLine($"**{key.Replace("Id", "Role")}**: {rank}");
-                                else
-                                    description.AppendLine($"**{key.Replace("Id", "Role")}**: (deleted role)");
+                                description.AppendLine($"**{key.Replace("Id", "Role")}**: {rank.ToString() ?? "(deleted role)"}");
                             }
                             else
                             {
@@ -121,10 +113,7 @@ namespace RRBot.Modules
                             if (key != "message" && key != "channel")
                             {
                                 SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(dict[key]));
-                                if (role != null)
-                                    description.AppendLine($"**{key}**: {role}");
-                                else
-                                    description.AppendLine($"**{key}**: (deleted role)");
+                                description.AppendLine($"**{key}**: {role.ToString() ?? "(deleted role)"}");
                             }
                             else
                             {
@@ -151,49 +140,93 @@ namespace RRBot.Modules
         [Command("setdjrole")]
         [Summary("Register the ID for the DJ role in your server so that most of the music commands work properly with the bot.")]
         [Remarks("$setdjrole [role]")]
-        public async Task SetDJRole(IRole role) => await CreateEntry("roles", new { djRole = role.Id }, "Set DJ role successfully!");
+        public async Task SetDJRole(IRole role)
+        {
+            DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+            roles.DJRole = role.Id;
+            await Context.User.NotifyAsync(Context.Channel, $"Set {role} as the DJ role.");
+            await roles.Write();
+        }
 
         [Command("setlogschannel")]
         [Summary("Register the ID for the logs channel in your server so that logging works properly with the bot.")]
         [Remarks("$setlogschannel [channel]")]
-        public async Task SetLogsChannel(IChannel channel) => await CreateEntry("channels", new { logsChannel = channel.Id }, "Set logs channel successfully!");
+        public async Task SetLogsChannel(IChannel channel)
+        {
+            DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+            channels.LogsChannel = channel.Id;
+            await Context.User.NotifyAsync(Context.Channel, $"Set logs channel to #{channel}.");
+            await channels.Write();
+        }
 
         [Command("setmutedrole")]
         [Summary("Register the ID for the Muted role in your server so that mutes work properly with the bot.")]
         [Remarks("$setmutedrole [role]")]
-        public async Task SetMutedRole(IRole role) => await CreateEntry("roles", new { mutedRole = role.Id }, "Set muted role successfully!");
+        public async Task SetMutedRole(IRole role)
+        {
+            DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+            roles.MutedRole = role.Id;
+            await Context.User.NotifyAsync(Context.Channel, $"Set muted role to {role}.");
+            await roles.Write();
+        }
 
         [Command("setpollschannel")]
         [Summary("Register the ID for the polls channel in your server so that polls work properly with the bot.")]
         [Remarks("$setpollschannel [channel]")]
-        public async Task SetPollsChannel(IChannel channel) => await CreateEntry("channels", new { pollsChannel = channel.Id }, "Set polls channel successfully!");
+        public async Task SetPollsChannel(IChannel channel)
+        {
+            DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+            channels.PollsChannel = channel.Id;
+            await Context.User.NotifyAsync(Context.Channel, $"Set polls channel to #{channel}.");
+            await channels.Write();
+        }
 
         [Command("setselfrolesmsg")]
         [Summary("Register the ID for the message that users can react to to receive roles.")]
         [Remarks("$setselfrolesmsg [channel] [msg-id]")]
-        public async Task SetSelfRolesMsg(IChannel channel, IMessage msg) => await CreateEntry("selfroles", new { channel = channel.Id, message = msg.Id }, "Set self roles message successfully!");
+        public async Task<RuntimeResult> SetSelfRolesMsg(IChannel channel, ulong msgId)
+        {
+            IMessage msg = await (channel as ITextChannel)?.GetMessageAsync(msgId);
+            if (msg == null)
+                return CommandResult.FromError("You specified an invalid message!");
+
+            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("selfroles");
+            await doc.SetAsync(new { channel = channel.Id, message = msgId }, SetOptions.MergeAll);
+            await Context.User.NotifyAsync(Context.Channel, $"Set self roles message to the one at {msg.GetJumpUrl()}.");
+            return CommandResult.FromSuccess();
+        }
 
         [Command("setstafflvl1role")]
         [Summary("Register the ID for the first level Staff role in your server so that staff-related operations work properly with the bot.")]
         [Remarks("$setstafflvl1role [role]")]
-        public async Task SetStaffLvl1Role(IRole role) => await CreateEntry("roles", new { houseRole = role.Id }, "Set first level Staff role successfully!");
+        public async Task SetStaffLvl1Role(IRole role)
+        {
+            DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+            roles.StaffLvl1Role = role.Id;
+            await Context.User.NotifyAsync(Context.Channel, $"Set first level Staff role to {role}.");
+            await roles.Write();
+        }
 
         [Command("setstafflvl2role")]
         [Summary("Register the ID for the second level Staff role in your server so that staff-related operations work properly with the bot.")]
         [Remarks("$setstafflvl2role [role]")]
-        public async Task SetStaffLvl2Role(IRole role) => await CreateEntry("roles", new { senateRole = role.Id }, "Set second level Staff role successfully!");
+        public async Task SetStaffLvl2Role(IRole role)
+        {
+            DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+            roles.StaffLvl2Role = role.Id;
+            await Context.User.NotifyAsync(Context.Channel, $"Set second level Staff role to {role}.");
+            await roles.Write();
+        }
 
         [Command("togglensfw")]
         [Summary("Toggle the NSFW module.")]
         [Remarks("$togglensfw")]
         public async Task ToggleNSFW()
         {
-            bool status = false;
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("modules");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("nsfw", out bool nsfwEnabled))
-                status = nsfwEnabled;
-            await CreateEntry("modules", new { nsfw = !status }, $"Toggled NSFW enabled to {!status}");
+            DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
+            modules.NSFWEnabled = !modules.NSFWEnabled;
+            await ReplyAsync($"Toggled NSFW enabled to {modules.NSFWEnabled}.");
+            await modules.Write();
         }
     }
 }

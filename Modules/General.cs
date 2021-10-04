@@ -13,12 +13,6 @@ using System.Threading.Tasks;
 
 namespace RRBot.Modules
 {
-    public class FunnyContext
-    {
-        public SocketCommandContext Context;
-        public FunnyContext(SocketCommandContext context) => Context = context;
-    }
-
     [Summary("The name really explains it all. Fun fact, you used one of the commands under this module to view info about this module.")]
     public class General : ModuleBase<SocketCommandContext>
     {
@@ -184,27 +178,24 @@ namespace RRBot.Modules
 
             ulong userId = user == null ? Context.User.Id : user.Id;
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
+            if (dbUser.Stats.Count == 0)
+                return CommandResult.FromError(user == null ? "You have no available stats!" : $"**{user}** has no available stats!");
+
             StringBuilder description = new();
+            List<string> keys = dbUser.Stats.Keys.ToList();
+            keys.Sort();
+            foreach (string key in keys)
+                description.AppendLine($"**{key}**: {dbUser.Stats[key]}");
 
-            if (dbUser.Stats?.Count > 0)
+            EmbedBuilder embed = new()
             {
-                List<string> keys = dbUser.Stats.Keys.ToList();
-                keys.Sort();
-                foreach (string key in keys)
-                    description.AppendLine($"**{key}**: {dbUser.Stats[key]}");
+                Title = user == null ? "Stats" : $"{user}'s Stats",
+                Color = Color.Red,
+                Description = description.ToString()
+            };
 
-                EmbedBuilder embed = new()
-                {
-                    Title = user == null ? "Stats" : $"{user}'s Stats",
-                    Color = Color.Red,
-                    Description = description.ToString()
-                };
-
-                await ReplyAsync(embed: embed.Build());
-                return CommandResult.FromSuccess();
-            }
-
-            return CommandResult.FromError(user == null ? "You have no available stats!" : $"**{user}** has no available stats!");
+            await ReplyAsync(embed: embed.Build());
+            return CommandResult.FromSuccess();
         }
     }
 }

@@ -45,13 +45,13 @@ namespace RRBot.Systems
             if (dbUser.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-            if (dbUser.Items?.Contains(item) == false)
+            if (!dbUser.Items.Contains(item))
             {
                 double price = ComputeItemPrice(item);
                 if (price <= dbUser.Cash)
                 {
                     dbUser.Items.Add(item);
-                    await dbUser.SetCash(user, channel, dbUser.Cash - price);
+                    await dbUser.SetCash(user, dbUser.Cash - price);
                     await user.NotifyAsync(channel, $"You got yourself a fresh {item} for **{price:C2}**!");
                     await dbUser.Write();
                     return CommandResult.FromSuccess();
@@ -69,14 +69,14 @@ namespace RRBot.Systems
             if (dbUser.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-            if (dbUser.Perks?.ContainsKey("Pacifist") == true)
+            if (dbUser.Perks.ContainsKey("Pacifist"))
                 return CommandResult.FromError("You have the Pacifist perk and cannot buy another.");
-            if (dbUser.Perks?.ContainsKey("Multiperk") == true && dbUser.Perks?.Count == 1 && perk != "Pacifist" && perk != "Multiperk")
+            if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && perk != "Pacifist" && perk != "Multiperk")
                 return CommandResult.FromError("You already have a perk.");
-            if (dbUser.Perks?.ContainsKey("Multiperk") == true && dbUser.Perks?.Count == 3 && perk != "Pacifist")
+            if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 3 && perk != "Pacifist")
                 return CommandResult.FromError("You already have 2 perks.");
 
-            if (dbUser.Perks?.ContainsKey(perk) == false)
+            if (!dbUser.Perks.ContainsKey(perk))
             {
                 if (perk == "Pacifist")
                 {
@@ -104,7 +104,7 @@ namespace RRBot.Systems
                 if (price <= dbUser.Cash)
                 {
                     dbUser.Perks.Add(perk, DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration));
-                    await dbUser.SetCash(user, channel, dbUser.Cash - price);
+                    await dbUser.SetCash(user, dbUser.Cash - price);
 
                     StringBuilder notification = new($"You got yourself the {perk} perk for **{price:C2}**!");
                     if (perk == "Pacifist")

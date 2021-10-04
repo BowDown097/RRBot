@@ -3,7 +3,6 @@ using Discord.Commands;
 using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;
-using RRBot.Systems;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -15,7 +14,6 @@ namespace RRBot.Modules
     [Summary("Do you want to test your luck? Do you want to probably go broke? Here you go! By the way, you don't need to be 21 or over in this joint ;)")]
     public class Gambling : ModuleBase<SocketCommandContext>
     {
-        public CultureInfo CurrencyCulture { get; set; }
         private static readonly Emoji[] emojis = { new("\uD83C\uDF4E"), new("\uD83C\uDF47"), new("7️⃣"),  new("\uD83C\uDF52"),
             new("\uD83C\uDF4A"), new("\uD83C\uDF48"), new("\uD83C\uDF4B") }; // apple, grape, seven, cherry, orange, melon, lemon
 
@@ -28,24 +26,26 @@ namespace RRBot.Modules
                 (results[0] + 1 == results[1] && results[1] == results[2] - 1);
         }
 
-        private void StatUpdate(DbUser user, bool success, double gain)
+        private static void StatUpdate(DbUser user, bool success, double gain)
         {
+            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+            culture.NumberFormat.CurrencyNegativePattern = 2;
             if (success)
             {
-                user.AddToStats(CurrencyCulture, new Dictionary<string, string>
+                user.AddToStats(new Dictionary<string, string>
                 {
                     { "Gambles Won", "1" },
-                    { "Money Gained from Gambling", gain.ToString("C2", CurrencyCulture) },
-                    { "Net Gain/Loss from Gambling", gain.ToString("C2", CurrencyCulture) }
+                    { "Money Gained from Gambling", gain.ToString("C2", culture) },
+                    { "Net Gain/Loss from Gambling", gain.ToString("C2", culture) }
                 });
             }
             else
             {
-                user.AddToStats(CurrencyCulture, new Dictionary<string, string>
+                user.AddToStats(new Dictionary<string, string>
                 {
                     { "Gambles Lost", "1" },
-                    { "Money Lost to Gambling", gain.ToString("C2", CurrencyCulture) },
-                    { "Net Gain/Loss from Gambling", (-gain).ToString("C2", CurrencyCulture) }
+                    { "Money Lost to Gambling", gain.ToString("C2", culture) },
+                    { "Net Gain/Loss from Gambling", (-gain).ToString("C2", culture) }
                 });
             }
         }
@@ -62,7 +62,7 @@ namespace RRBot.Modules
                 return CommandResult.FromError("You can't bet more than what you have!");
 
             double roll = Math.Round(RandomUtil.NextDouble(1, 101), 2);
-            if (user.Perks?.ContainsKey("Speed Demon") == true)
+            if (user.Perks.ContainsKey("Speed Demon"))
                 odds *= 0.95;
             bool success = !exactRoll ? roll >= odds : roll.CompareTo(odds) == 0;
             if (success)
@@ -70,7 +70,7 @@ namespace RRBot.Modules
                 double payout = bet * mult;
                 double totalCash = user.Cash + payout;
                 StatUpdate(user, true, payout);
-                await user.SetCash(Context.User, Context.Channel, totalCash);
+                await user.SetCash(Context.User, totalCash);
                 await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout:C2}**!" +
                     $"\nBalance: {totalCash:C2}");
             }
@@ -78,7 +78,7 @@ namespace RRBot.Modules
             {
                 double totalCash = (user.Cash - bet) > 0 ? user.Cash - bet : 0;
                 StatUpdate(user, false, bet);
-                await user.SetCash(Context.User, Context.Channel, totalCash);
+                await user.SetCash(Context.User, totalCash);
                 await Context.User.NotifyAsync(Context.Channel, $"Well damn, you rolled a {roll}, which wasn't enough. You lost **{bet:C2}**." +
                     $"\nBalance: {totalCash:C2}");
             }
@@ -124,12 +124,12 @@ namespace RRBot.Modules
             if (RandomUtil.Next(1, 101) < Constants.DOUBLE_ODDS)
             {
                 StatUpdate(user, true, user.Cash);
-                await user.SetCash(Context.User, Context.Channel, user.Cash * 2);
+                await user.SetCash(Context.User, user.Cash * 2);
             }
             else
             {
                 StatUpdate(user, false, user.Cash);
-                await user.SetCash(Context.User, Context.Channel, 0);
+                await user.SetCash(Context.User, 0);
             }
 
             await user.Write();
@@ -193,7 +193,7 @@ namespace RRBot.Modules
                     double payout = (bet * payoutMult) - bet;
                     double totalCash = user.Cash + payout;
                     StatUpdate(user, true, payout);
-                    await user.SetCash(Context.User, Context.Channel, totalCash);
+                    await user.SetCash(Context.User, totalCash);
 
                     if (payoutMult == Constants.SLOTS_MULT_THREESEVENS)
                     {
@@ -209,7 +209,7 @@ namespace RRBot.Modules
                 {
                     double totalCash = (user.Cash - bet) > 0 ? user.Cash - bet : 0;
                     StatUpdate(user, false, bet);
-                    await user.SetCash(Context.User, Context.Channel, totalCash);
+                    await user.SetCash(Context.User, totalCash);
                     await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet:C2}**." +
                         $"\nBalance: {totalCash:C2}");
                 }

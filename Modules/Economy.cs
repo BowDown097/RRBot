@@ -21,7 +21,7 @@ namespace RRBot.Modules
             "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support" };
 
         private static async Task AddBackUserSettings(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
-            bool dmNotifs, bool noReplyPings, bool rankupNotifs, Dictionary<string, string> stats, long whoreCd,
+            bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long whoreCd,
             long slaveryCd, long rapeCd, long lootCd, long dealCd, long bullyCd, long mineCd, long huntCd, long farmCd,
             long digCd, long chopCd, long supportCd)
         {
@@ -32,7 +32,6 @@ namespace RRBot.Modules
             user.XRP = xrp;
             user.DMNotifs = dmNotifs;
             user.NoReplyPings = noReplyPings;
-            user.RankupNotifs = rankupNotifs;
             user.Stats = stats;
             user.WhoreCooldown = whoreCd;
             user.SlaveryCooldown = slaveryCd;
@@ -60,16 +59,15 @@ namespace RRBot.Modules
 
             ulong userId = user == null ? Context.User.Id : user.Id;
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
-            if (dbUser.Cash > 0)
-            {
-                if (user == null)
-                    await Context.User.NotifyAsync(Context.Channel, $"You have **{dbUser.Cash:C2}**.");
-                else
-                    await ReplyAsync($"**{user}** has **{dbUser.Cash:C2}**.");
-                return CommandResult.FromSuccess();
-            }
+            if (dbUser.Cash < 0.01)
+                return CommandResult.FromError(user == null ? "You're broke!" : $"**{user}** is broke!");
 
-            return CommandResult.FromError(user == null ? "You're broke!" : $"**{user}** is broke!");
+            if (user == null)
+                await Context.User.NotifyAsync(Context.Channel, $"You have **{dbUser.Cash:C2}**.");
+            else
+                await ReplyAsync($"**{user}** has **{dbUser.Cash:C2}**.");
+
+            return CommandResult.FromSuccess();
         }
 
         [Alias("purchase")]
@@ -95,7 +93,7 @@ namespace RRBot.Modules
             ulong userId = user == null ? Context.User.Id : user.Id;
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
             StringBuilder description = new();
-            double mult = dbUser.Perks?.Keys.Contains("Speed Demon") == true ? 0.85 : 1;
+            double mult = dbUser.Perks.Keys.Contains("Speed Demon") ? 0.85 : 1;
 
             foreach (string cmd in CMDS_WITH_COOLDOWN)
             {
@@ -114,6 +112,7 @@ namespace RRBot.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
+        [Alias("sell")]
         [Command("discard")]
         [Summary("Discard an item or the Pacifist perk.")]
         [Remarks("$discard [item]")]
@@ -126,7 +125,7 @@ namespace RRBot.Modules
 
             if (item == "Pacifist")
             {
-                if (user.Perks?.ContainsKey("Pacifist") == true)
+                if (user.Perks.ContainsKey("Pacifist"))
                 {
                     user.Perks.Remove("Pacifist");
                     user.PacifistCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(259200);
@@ -135,10 +134,10 @@ namespace RRBot.Modules
 
                 return CommandResult.FromError("You do not have the Pacifist perk!");
             }
-            else if (user.Items?.Remove(item) == true)
+            else if (user.Items.Remove(item))
             {
                 double price = Items.ComputeItemPrice(item) / 1.5;
-                await user.SetCash(Context.User, Context.Channel, user.Cash + price);
+                await user.SetCash(Context.User, user.Cash + price);
                 await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{price:C2}**.");
             }
             else
@@ -174,12 +173,9 @@ namespace RRBot.Modules
         [Remarks("$leaderboard <currency>")]
         public async Task<RuntimeResult> Leaderboard(string crypto = "cash")
         {
-            string cryptoFormatted = crypto.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : crypto.ToUpper();
-            if (cryptoFormatted != "Cash" && cryptoFormatted != "BTC" && cryptoFormatted != "DOGE"
-                && cryptoFormatted != "ETH" && cryptoFormatted != "LTC" && cryptoFormatted != "XRP")
-            {
+            string cUp = crypto.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : crypto.ToUpper();
+            if (!cUp.In("Cash", "BTC", "DOGE", "ETH", "LTC", "XRP"))
                 return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
-            }
 
             QuerySnapshot users = await Program.database.Collection($"servers/{Context.Guild.Id}/users")
                 .OrderByDescending(crypto).GetSnapshotAsync();
@@ -196,14 +192,14 @@ namespace RRBot.Modules
                     continue;
 
                 DbUser user = await DbUser.GetById(Context.Guild.Id, userId);
-                if (user.Perks?.ContainsKey("Pacifist") == true)
+                if (user.Perks.ContainsKey("Pacifist"))
                     continue;
 
-                double val = (double)user[cryptoFormatted];
+                double val = (double)user[cUp];
                 if (val < Constants.INVESTMENT_MIN_AMOUNT)
                     break;
 
-                lb.AppendLine($"{processedUsers + 1}: **{guildUser}**: {(cryptoFormatted == "Cash" ? val.ToString("C2") : val.ToString("0.####"))}");
+                lb.AppendLine($"{processedUsers + 1}: **{guildUser}**: {(cUp == "Cash" ? val.ToString("C2") : val.ToString("0.####"))}");
                 processedUsers++;
             }
 
@@ -225,7 +221,7 @@ namespace RRBot.Modules
         {
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             StringBuilder perksBuilder = new();
-            foreach (KeyValuePair<string, long> perk in user.Perks?.OrderBy(p => p.Key))
+            foreach (KeyValuePair<string, long> perk in user.Perks.OrderBy(p => p.Key))
             {
                 if (perk.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && perk.Key != "Pacifist")
                     return;
@@ -292,8 +288,8 @@ namespace RRBot.Modules
             if (author.Cash < amount)
                 return CommandResult.FromError("You do not have that much money!");
 
-            await author.SetCash(Context.User, Context.Channel, author.Cash - amount);
-            await target.SetCash(user as SocketUser, Context.Channel, target.Cash + amount);
+            await author.SetCash(Context.User, author.Cash - amount);
+            await target.SetCash(user as SocketUser, target.Cash + amount);
 
             await Context.User.NotifyAsync(Context.Channel, $"You have sauced **{user}** {amount:C2}.");
             await author.Write();
@@ -373,20 +369,20 @@ namespace RRBot.Modules
                 case 2:
                     await Context.User.NotifyAsync(Context.Channel, "​DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await user.Reference.DeleteAsync();
-                    await user.SetCash(Context.User, Context.Channel, 0);
+                    await user.SetCash(Context.User, 0);
                     await AddBackUserSettings(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
-                        temp.NoReplyPings, temp.RankupNotifs, temp.Stats, temp.WhoreCooldown, temp.SlaveryCooldown,
-                        temp.RapeCooldown, temp.LootCooldown, temp.DealCooldown, temp.BullyCooldown, temp.MineCooldown,
-                        temp.HuntCooldown, temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown, temp.SupportCooldown);
+                        temp.NoReplyPings, temp.Stats, temp.WhoreCooldown, temp.SlaveryCooldown, temp.RapeCooldown,
+                        temp.LootCooldown, temp.DealCooldown, temp.BullyCooldown, temp.MineCooldown, temp.HuntCooldown,
+                        temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown, temp.SupportCooldown);
                     break;
                 case 3:
                     await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await user.Reference.DeleteAsync();
-                    await user.SetCash(Context.User, Context.Channel, 0);
+                    await user.SetCash(Context.User, 0);
                     await AddBackUserSettings(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
-                        temp.NoReplyPings, temp.RankupNotifs, temp.Stats, temp.WhoreCooldown, temp.SlaveryCooldown,
-                        temp.RapeCooldown, temp.LootCooldown, temp.DealCooldown, temp.BullyCooldown, temp.MineCooldown,
-                        temp.HuntCooldown, temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown, temp.SupportCooldown);
+                        temp.NoReplyPings, temp.Stats, temp.WhoreCooldown, temp.SlaveryCooldown, temp.RapeCooldown,
+                        temp.LootCooldown, temp.DealCooldown, temp.BullyCooldown, temp.MineCooldown, temp.HuntCooldown,
+                        temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown, temp.SupportCooldown);
                     break;
             }
 

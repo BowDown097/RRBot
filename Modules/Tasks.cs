@@ -5,7 +5,6 @@ using RRBot.Preconditions;
 using RRBot.Systems;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -27,7 +26,7 @@ namespace RRBot.Modules
             else if (item.StartsWith("Diamond", StringComparison.Ordinal))
                 numMined = RandomUtil.Next(Constants.GENERIC_TASK_DIAMOND_MIN, Constants.GENERIC_TASK_DIAMOND_MAX);
 
-            if (user.Perks?.ContainsKey("Enchanter") == true)
+            if (user.Perks.ContainsKey("Enchanter"))
             {
                 int randNum = RandomUtil.Next(100);
                 if (randNum == 1 || randNum == 2)
@@ -47,8 +46,8 @@ namespace RRBot.Modules
             await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained:C2}**." +
                 $"\nBalance: {totalCash:C2}");
 
-            await user.SetCash(Context.User, Context.Channel, totalCash);
-            user.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
+            await user.SetCash(Context.User, totalCash);
+            user.AddToStats(new Dictionary<string, string>
             {
                 { "Tasks Done", "1" },
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
@@ -89,7 +88,7 @@ namespace RRBot.Modules
             KeyValuePair<string, double> fish = Constants.FISH.ElementAt(RandomUtil.Next(Constants.FISH.Count));
             int numCaught = RandomUtil.Next(7, 15);
 
-            if (user.Perks?.ContainsKey("Enchanter") == true)
+            if (user.Perks.ContainsKey("Enchanter"))
             {
                 int randNum = RandomUtil.Next(100);
                 if (randNum == 1 || randNum == 2)
@@ -115,12 +114,12 @@ namespace RRBot.Modules
                 await ReplyAsync("What's this? The fish came with a coconut! You sold it to some dude for **$3.00**.");
             }
 
-            user.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
+            user.AddToStats(new Dictionary<string, string>
             {
                 { "Tasks Done", "1" },
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
-            await user.SetCash(Context.User, Context.Channel, totalCash);
+            await user.SetCash(Context.User, totalCash);
             user.FishCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FISH_COOLDOWN);
             await user.Write();
         }
@@ -143,7 +142,7 @@ namespace RRBot.Modules
             string item = Items.GetBestItem(user.Items, "Pickaxe");
 
             int numMined = RandomUtil.Next(32, 65);
-            if (user.Perks?.ContainsKey("Enchanter") == true)
+            if (user.Perks.ContainsKey("Enchanter"))
             {
                 int randNum = RandomUtil.Next(100);
                 if (randNum == 1 || randNum == 2)
@@ -183,12 +182,12 @@ namespace RRBot.Modules
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
 
-            user.AddToStats(CultureInfo.CurrentCulture, new Dictionary<string, string>
+            user.AddToStats(new Dictionary<string, string>
             {
                 { "Tasks Done", "1" },
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
-            await user.SetCash(Context.User, Context.Channel, totalCash);
+            await user.SetCash(Context.User, totalCash);
             user.MineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN);
             await user.Write();
         }

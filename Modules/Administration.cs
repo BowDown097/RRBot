@@ -25,7 +25,7 @@ namespace RRBot.Modules
                 return CommandResult.FromError($"**{item}** is not a valid item!");
 
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-            if (dbUser.Items?.Contains(item) == true)
+            if (dbUser.Items.Contains(item))
                 return CommandResult.FromError($"**{user}** already has a(n) {item}.");
 
             dbUser.Items.Add(item);
@@ -51,12 +51,14 @@ namespace RRBot.Modules
         [Remarks("$setcash [user] [amount]")]
         public async Task<RuntimeResult> SetCash(IGuildUser user, double amount)
         {
-            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+            if (double.IsNaN(amount) || amount < 0)
+                return CommandResult.FromError("You can't set someone's cash to a negative value or NaN!");
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
-            await dbUser.SetCash(user as SocketUser, Context.Channel, amount);
-            await ReplyAsync($"Set **{user}**'s cash to **{amount:C2}**.");
 
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+            await dbUser.SetCash(user as SocketUser, amount);
+            await ReplyAsync($"Set **{user}**'s cash to **{amount:C2}**.");
             await dbUser.Write();
             return CommandResult.FromSuccess();
         }
@@ -66,14 +68,13 @@ namespace RRBot.Modules
         [Remarks("$setcrypto [user] [crypto] [amount]")]
         public async Task<RuntimeResult> SetCrypto(IGuildUser user, string crypto, double amount)
         {
-            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             string cUp = crypto.ToUpper();
-
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
-            if (cUp != "BTC" && cUp != "DOGE" && cUp != "ETH" && cUp != "LTC" && cUp != "XRP")
+            if (!cUp.In("BTC", "DOGE", "ETH", "LTC", "XRP"))
                 return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             dbUser[cUp] = Math.Round(amount, 4);
             await dbUser.Write();
             await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user}**'s {cUp} balance.");

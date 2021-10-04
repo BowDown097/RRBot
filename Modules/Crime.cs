@@ -17,64 +17,36 @@ namespace RRBot.Modules
     [CheckPacifist]
     public class Crime : ModuleBase<SocketCommandContext>
     {
-        public CultureInfo CurrencyCulture { get; set; }
-
-        private async Task<RuntimeResult> GenericCrime(string outcome1, string outcome2, string outcome3, string outcome4, string outcome5, string cooldown, double duration, bool funny = false)
+        private async Task<RuntimeResult> GenericCrime(string[] successOutcomes, string[] failOutcomes, string cdKey, double duration, bool funny = false)
         {
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             if (user.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-            double winOdds = user.Perks?.Keys.Contains("Speed Demon") == true
-                ? Constants.GENERIC_CRIME_WIN_ODDS * 0.95 : Constants.GENERIC_CRIME_WIN_ODDS;
+            double winOdds = user.Perks.ContainsKey("Speed Demon") ? Constants.GENERIC_CRIME_WIN_ODDS * 0.95 : Constants.GENERIC_CRIME_WIN_ODDS;
             if (RandomUtil.NextDouble(1, 101) < winOdds)
             {
+                int outcomeNum = RandomUtil.Next(successOutcomes.Length);
+                string outcome = successOutcomes[outcomeNum];
                 double moneyEarned = RandomUtil.NextDouble(Constants.GENERIC_CRIME_WIN_MIN, Constants.GENERIC_CRIME_WIN_MAX);
+                if (funny && outcomeNum == successOutcomes.Length - 1)
+                    moneyEarned /= 5;
                 double totalCash = user.Cash + moneyEarned;
 
-                switch (RandomUtil.Next(3))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel,
-                            string.Format($"{outcome1}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel,
-                            string.Format($"{outcome2}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
-                        break;
-                    case 2:
-                        if (funny)
-                        {
-                            moneyEarned /= 5;
-                            totalCash = user.Cash + moneyEarned;
-                        }
-
-                        await Context.User.NotifyAsync(Context.Channel,
-                            string.Format($"{outcome3}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
-                        break;
-                }
-
                 StatUpdate(user, true, moneyEarned);
-                await user.SetCash(Context.User, Context.Channel, totalCash);
+                await user.SetCash(Context.User, totalCash);
+                await Context.User.NotifyAsync(Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
             }
             else
             {
+                string outcome = failOutcomes[RandomUtil.Next(failOutcomes.Length)];
                 double lostCash = RandomUtil.NextDouble(Constants.GENERIC_CRIME_LOSS_MIN, Constants.GENERIC_CRIME_LOSS_MAX);
                 lostCash = (user.Cash - lostCash) < 0 ? lostCash - Math.Abs(user.Cash - lostCash) : lostCash;
                 double totalCash = (user.Cash - lostCash) > 0 ? user.Cash - lostCash : 0;
 
-                switch (RandomUtil.Next(2))
-                {
-                    case 0:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome4 + $"\nBalance: {totalCash:C2}", lostCash.ToString("C2")));
-                        break;
-                    case 1:
-                        await Context.User.NotifyAsync(Context.Channel, string.Format(outcome5 + $"\nBalance: {totalCash:C2}", lostCash.ToString("C2")));
-                        break;
-                }
-
                 StatUpdate(user, false, lostCash);
-                await user.SetCash(Context.User, Context.Channel, totalCash);
+                await user.SetCash(Context.User, totalCash);
+                await Context.User.NotifyAsync(Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", lostCash.ToString("C2")));
             }
 
             if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
@@ -88,29 +60,31 @@ namespace RRBot.Modules
                 }
             }
 
-            user[cooldown] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
+            user[cdKey] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
             await user.Write();
             return CommandResult.FromSuccess();
         }
 
-        private void StatUpdate(DbUser user, bool success, double gain)
+        private static void StatUpdate(DbUser user, bool success, double gain)
         {
+            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+            culture.NumberFormat.CurrencyNegativePattern = 2;
             if (success)
             {
-                user.AddToStats(CurrencyCulture, new Dictionary<string, string>
+                user.AddToStats(new Dictionary<string, string>
                 {
                     { "Crimes Succeeded", "1" },
-                    { "Money Gained from Crimes", gain.ToString("C2", CurrencyCulture) },
-                    { "Net Gain/Loss from Crimes", gain.ToString("C2", CurrencyCulture) }
+                    { "Money Gained from Crimes", gain.ToString("C2", culture) },
+                    { "Net Gain/Loss from Crimes", gain.ToString("C2", culture) }
                 });
             }
             else
             {
-                user.AddToStats(CurrencyCulture, new Dictionary<string, string>
+                user.AddToStats(new Dictionary<string, string>
                 {
                     { "Crimes Failed", "1" },
-                    { "Money Lost to Crimes", gain.ToString("C2", CurrencyCulture) },
-                    { "Net Gain/Loss from Crimes", (-gain).ToString("C2", CurrencyCulture) }
+                    { "Money Lost to Crimes", gain.ToString("C2", culture) },
+                    { "Net Gain/Loss from Crimes", (-gain).ToString("C2", culture) }
                 });
             }
         }
@@ -132,7 +106,7 @@ namespace RRBot.Modules
                 return CommandResult.FromError("Nope.");
 
             DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
-            if (target.Perks?.ContainsKey("Pacifist") == true)
+            if (target.Perks.ContainsKey("Pacifist"))
                 return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
 
             DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
@@ -155,12 +129,12 @@ namespace RRBot.Modules
         [RequireCooldown("DealCooldown", "You don't have any more drugs to deal! Your next shipment comes in {0}.")]
         public async Task<RuntimeResult> Deal()
         {
-            return await GenericCrime("Border patrol let your cocaine-stuffed dog through! You earned **{0}** from the cartel.",
+            string[] successes = { "Border patrol let your cocaine-stuffed dog through! You earned **{0}** from the cartel.",
                 "You continue to capitalize off of some 17 year old's meth addiction, yielding you **{0}**.",
-                "You sold grass to some elementary schoolers and passed it off as weed. They didn't have a lot of course, only **{0}**, but money's money.",
-                "You tripped balls on acid with the boys at a party. After waking up, you realize not only did someone take money from your piggy bank, but you also gave out too much free acid, leaving you a whopping **{0}** poorer.",
-                "The Democrats have launched yet another crime bill, leading to your hood being under heavy investigation. You could not escape the feds and paid **{0}** in fines.",
-                "DealCooldown", Constants.DEAL_COOLDOWN, true);
+                "You sold grass to some elementary schoolers and passed it off as weed. They didn't have a lot of course, only **{0}**, but money's money." };
+            string[] fails = { "You tripped balls on acid with the boys at a party. After waking up, you realize not only did someone take money from your piggy bank, but you also gave out too much free acid, leaving you a whopping **{0}** poorer.",
+                "The Democrats have launched yet another crime bill, leading to your hood being under heavy investigation. You could not escape the feds and paid **{0}** in fines." };
+            return await GenericCrime(successes, fails, "DealCooldown", Constants.DEAL_COOLDOWN, true);
         }
 
         [Command("loot")]
@@ -169,12 +143,12 @@ namespace RRBot.Modules
         [RequireCooldown("LootCooldown", "You cannot loot for {0}.")]
         public async Task<RuntimeResult> Loot()
         {
-            return await GenericCrime("You joined your local BLM protest, looted a Footlocker, and sold what you got. You earned **{0}**.",
+            string[] successes = { "You joined your local BLM protest, looted a Footlocker, and sold what you got. You earned **{0}**.",
                 "That mall had a lot of shit! You earned **{0}**.",
-                "You stole from a gas station because you're a fucking idiot. You earned **{0}**, basically nothing.",
-                "There happened to be a cop coming out of the donut shop next door. You had to pay **{0}** in fines.",
-                "The manager gave no fucks and beat the SHIT out of you. You lost **{0}** paying for face stitches.",
-                "LootCooldown", Constants.LOOT_COOLDOWN, true);
+                "You stole from a gas station because you're a fucking idiot. You earned **{0}**, basically nothing." };
+            string[] fails = { "There happened to be a cop coming out of the donut shop next door. You had to pay **{0}** in fines.",
+                "The manager gave no fucks and beat the SHIT out of you. You lost **{0}** paying for face stitches." };
+            return await GenericCrime(successes, fails, "LootCooldown", Constants.LOOT_COOLDOWN, true);
         }
 
         [Alias("strugglesnuggle")]
@@ -194,35 +168,32 @@ namespace RRBot.Modules
             DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
             if (author.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-            if (target.Perks?.ContainsKey("Pacifist") == true)
+            if (target.Perks.ContainsKey("Pacifist"))
                 return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
+            if (target.Cash < 0.01)
+                return CommandResult.FromError($"Dear Lord, talk about kicking them while they're down! **{user}** is broke! Have some decency.");
 
-            if (target.Cash > 0)
+            double rapePercent = RandomUtil.NextDouble(Constants.RAPE_MIN_PERCENT, Constants.RAPE_MAX_PERCENT);
+            double winOdds = author.Perks.ContainsKey("Speed Demon") ? Constants.RAPE_ODDS * 0.95 : Constants.RAPE_ODDS;
+            if (RandomUtil.NextDouble(1, 101) < winOdds)
             {
-                double rapePercent = RandomUtil.NextDouble(Constants.RAPE_MIN_PERCENT, Constants.RAPE_MAX_PERCENT);
-                double winOdds = author.Perks?.ContainsKey("Speed Demon") == true ? Constants.RAPE_ODDS * 0.95 : Constants.RAPE_ODDS;
-                if (RandomUtil.NextDouble(1, 101) < winOdds)
-                {
-                    double repairs = target.Cash / 100.0 * rapePercent;
-                    StatUpdate(target, false, repairs);
-                    await target.SetCash(user as SocketUser, Context.Channel, target.Cash - repairs);
-                    await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user}**'s asshole! They just paid **{repairs:C2}** in asshole repairs.");
-                }
-                else
-                {
-                    double repairs = author.Cash / 100.0 * rapePercent;
-                    StatUpdate(author, false, repairs);
-                    await author.SetCash(Context.User, Context.Channel, author.Cash - repairs);
-                    await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user}**! You just paid **{repairs:C2}** in asshole repairs.");
-                }
-
-                author.RapeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.RAPE_COOLDOWN);
-                await author.Write();
-                await target.Write();
-                return CommandResult.FromSuccess();
+                double repairs = target.Cash / 100.0 * rapePercent;
+                StatUpdate(target, false, repairs);
+                await target.SetCash(user as SocketUser, target.Cash - repairs);
+                await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user}**'s asshole! They just paid **{repairs:C2}** in asshole repairs.");
+            }
+            else
+            {
+                double repairs = author.Cash / 100.0 * rapePercent;
+                StatUpdate(author, false, repairs);
+                await author.SetCash(Context.User, author.Cash - repairs);
+                await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user}**! You just paid **{repairs:C2}** in asshole repairs.");
             }
 
-            return CommandResult.FromError($"Dear Lord, talk about kicking them while they're down! **{user}** is broke! Have some decency.");
+            author.RapeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.RAPE_COOLDOWN);
+            await author.Write();
+            await target.Write();
+            return CommandResult.FromSuccess();
         }
 
         [Command("rob")]
@@ -242,7 +213,7 @@ namespace RRBot.Modules
             DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
             if (author.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-            if (target.Perks?.ContainsKey("Pacifist") == true)
+            if (target.Perks.ContainsKey("Pacifist"))
                 return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
 
             double robMax = target.Cash / 100.0 * Constants.ROB_MAX_PERCENT;
@@ -254,8 +225,8 @@ namespace RRBot.Modules
             int roll = RandomUtil.Next(1, 101);
             if (roll < Constants.ROB_ODDS)
             {
-                await target.SetCash(user as SocketUser, Context.Channel, target.Cash - amount);
-                await author.SetCash(Context.User, Context.Channel, author.Cash + amount);
+                await target.SetCash(user as SocketUser, target.Cash - amount);
+                await author.SetCash(Context.User, author.Cash + amount);
                 StatUpdate(author, true, amount);
                 StatUpdate(target, false, amount);
                 switch (RandomUtil.Next(2))
@@ -272,7 +243,7 @@ namespace RRBot.Modules
             }
             else
             {
-                await author.SetCash(Context.User, Context.Channel, author.Cash - amount);
+                await author.SetCash(Context.User, author.Cash - amount);
                 StatUpdate(author, false, amount);
                 switch (RandomUtil.Next(2))
                 {
@@ -300,12 +271,12 @@ namespace RRBot.Modules
         [RequireRankLevel(2)]
         public async Task<RuntimeResult> Slavery()
         {
-            return await GenericCrime("You got loads of newfags to tirelessly mine ender chests on the Oldest Anarchy Server in Minecraft. You made **{0}** selling the newfound millions of obsidian to an interested party.",
+            string[] successes = { "You got loads of newfags to tirelessly mine ender chests on the Oldest Anarchy Server in Minecraft. You made **{0}** selling the newfound millions of obsidian to an interested party.",
                 "The innocent Uyghur children working in your labor factory did an especially good job making shoes in the past hour. You made **{0}** from all of them, and lost only like 2 cents paying them their wages.",
-                "This cotton is BUSSIN! The Confederacy is proud. You have been awarded **{0}**.",
-                "Some fucker ratted you out and the police showed up. Thankfully, they're corrupt and you were able to sauce them **{0}** to fuck off. Thank the lord.",
-                "A slave got away and yoinked **{0}** from you. Sad day.",
-                "SlaveryCooldown", Constants.SLAVERY_COOLDOWN);
+                "This cotton is BUSSIN! The Confederacy is proud. You have been awarded **{0}**." };
+            string[] fails = { "Some fucker ratted you out and the police showed up. Thankfully, they're corrupt and you were able to sauce them **{0}** to fuck off. Thank the lord.",
+                "A slave got away and yoinked **{0}** from you. Sad day." };
+            return await GenericCrime(successes, fails, "SlaveryCooldown", Constants.SLAVERY_COOLDOWN);
         }
 
         [Command("whore")]
@@ -315,12 +286,12 @@ namespace RRBot.Modules
         [RequireRankLevel(1)]
         public async Task<RuntimeResult> Whore()
         {
-            return await GenericCrime("You went to the club and some weird fat dude sauced you **{0}**.",
+            string[] successes = { "You went to the club and some weird fat dude sauced you **{0}**.",
                 "The dude you fucked looked super shady, but he did pay up. You earned **{0}**.",
-                "You found the Chad Thundercock himself! **{0}** and some amazing sex. What a great night.",
-                "You were too ugly and nobody wanted you. You lost **{0}** buying clothes for the night.",
-                "You didn't give good enough head to the cop! You had to pay **{0}** in fines.",
-                "WhoreCooldown", Constants.WHORE_COOLDOWN);
+                "You found the Chad Thundercock himself! **{0}** and some amazing sex. What a great night." };
+            string[] fails = { "You were too ugly and nobody wanted you. You lost **{0}** buying clothes for the night.",
+                "You didn't give good enough head to the cop! You had to pay **{0}** in fines." };
+            return await GenericCrime(successes, fails, "WhoreCooldown", Constants.WHORE_COOLDOWN);
         }
     }
 }

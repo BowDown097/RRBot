@@ -4,8 +4,6 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord.WebSocket;
-using RRBot.Extensions;
 
 namespace Discord.Commands
 {
