@@ -22,7 +22,6 @@ namespace RRBot
             DiscordSocketClient client = new(new DiscordSocketConfig
             {
                 AlwaysDownloadUsers = true,
-                ExclusiveBulkDelete = true,
                 MessageCacheSize = 100
             });
 

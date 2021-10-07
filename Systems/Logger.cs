@@ -15,6 +15,7 @@ namespace RRBot.Systems
     {
         private static async Task WriteToLogs(SocketGuild guild, EmbedBuilder embed)
         {
+            embed.Timestamp = DateTime.Now;
             DbConfigChannels channels = await DbConfigChannels.GetById(guild.Id);
             if (guild.TextChannels.Any(channel => channel.Id == channels.LogsChannel))
                 await guild.GetTextChannel(channels.LogsChannel).SendMessageAsync(embed: embed.Build());
@@ -22,53 +23,43 @@ namespace RRBot.Systems
 
         public static async Task Client_ChannelCreated(SocketChannel channel)
         {
-            if (channel is SocketGuildChannel channelGuild)
+            EmbedBuilder embed = new()
             {
-                EmbedBuilder embed = new()
-                {
-                    Color = Color.Blue,
-                    Title = "Channel Created",
-                    Description = channelGuild.Name,
-                    Timestamp = DateTime.Now
-                };
+                Color = Color.Blue,
+                Title = "Channel Created",
+                Description = channel.ToString()
+            };
 
-                await WriteToLogs(channelGuild.Guild, embed);
-            }
+            await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
         }
 
         public static async Task Client_ChannelDestroyed(SocketChannel channel)
         {
-            if (channel is SocketGuildChannel channelGuild)
+            EmbedBuilder embed = new()
             {
-                EmbedBuilder embed = new()
-                {
-                    Color = Color.Blue,
-                    Title = "Channel Deleted",
-                    Description = channelGuild.Name,
-                    Timestamp = DateTime.Now
-                };
+                Color = Color.Blue,
+                Title = "Channel Deleted",
+                Description = channel.ToString()
+            };
 
-                await WriteToLogs(channelGuild.Guild, embed);
-            }
+            await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
         }
 
         public static async Task Client_ChannelUpdated(SocketChannel before, SocketChannel after)
         {
-            if (before is SocketGuildChannel beforeGuild && after is SocketGuildChannel afterGuild)
+            SocketGuildChannel beforeGuild = before as SocketGuildChannel;
+            SocketGuildChannel afterGuild = after as SocketGuildChannel;
+            EmbedBuilder embed = new()
             {
-                EmbedBuilder embed = new()
-                {
-                    Color = Color.Blue,
-                    Title = "Channel Updated",
-                    Description = "**Previous Name:** ``" + beforeGuild.Name + "``\n**Current Name:** ``" + afterGuild.Name + "``\n" +
-                    "**Previous Position:** ``" + beforeGuild.Position + "``\n**Current Position:** ``" + afterGuild.Position + "``\n" +
-                    "**Previous Member Count:** ``" + beforeGuild.Users.Count + "``\n**Current Member Count:** ``" + afterGuild.Users.Count + "``\n" +
-                    "If nothing here appears changed, then the channel permissions were updated.",
-                    Timestamp = DateTime.Now
-                };
+                Color = Color.Blue,
+                Title = "Channel Updated",
+                Description = $"**Previous Name:** ``{before}``\n**New Name:** ``{after}\n\n" +
+                $"**Previous Position:** ``{beforeGuild.Position}``\n**New Position:** ``{afterGuild.Position}``\n\n" +
+                $"**Previous Member Count:** ``{before.Users.Count}``\n**New Member Count:** ``{after.Users.Count}``\n" +
+                "If nothing here appears changed, then the channel permissions were updated."
+            };
 
-                await WriteToLogs(afterGuild.Guild, embed);
-            }
+            await WriteToLogs(afterGuild.Guild, embed);
         }
 
         public static async Task Client_InviteCreated(SocketInvite invite)
@@ -77,46 +68,38 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = "Invite Created",
-                Description = "**URL:** ``" + invite.Url + "``\n**Channel:** ``" + invite.Channel.Name + "``\n**Inviter:** ``" + invite.Inviter + "``\n" +
-                "**Max Age:** ``" + invite.MaxAge + "``\n**Max Uses:** ``" + invite.MaxUses + "``\n",
-                Timestamp = DateTime.Now
+                Description = $"**URL:** ``{invite.Url}``\n**Channel:** ``{invite.Channel}``\n**Inviter:** ``{invite.Inviter}``\n" +
+                $"**Max Age:** ``{invite.MaxAge}``\n**Max Uses:** ``{invite.MaxUses}``"
             };
 
             await WriteToLogs(invite.Guild, embed);
         }
 
-        public static async Task Client_MessageDeleted(Cacheable<IMessage, ulong> msgCached, ISocketMessageChannel channel)
+        public static async Task Client_MessageDeleted(Cacheable<IMessage, ulong> msgCached, Cacheable<IMessageChannel, ulong> channelCached)
         {
-            if (!msgCached.HasValue)
-                return;
-
-            IMessage msg = msgCached.Value;
+            IMessage msg = await msgCached.GetOrDownloadAsync();
+            SocketGuildChannel channel = await channelCached.GetOrDownloadAsync() as SocketGuildChannel;
             EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = $"Message sent by {msg.Author} deleted in #{channel}",
-                Description = msg.Content,
-                Timestamp = msg.Timestamp
+                Description = msg.Content
             };
 
             foreach (Embed msgEmbed in msg.Embeds)
                 embed.Description += $"\n**Embed:**\nTitle: {msgEmbed.Title}\nDescription: {msgEmbed.Description}";
 
-            await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
+            await WriteToLogs(channel.Guild, embed);
         }
 
         public static async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
         {
-            if (!msgBeforeCached.HasValue)
-                return;
-
-            IMessage msgBefore = msgBeforeCached.Value;
+            IMessage msgBefore = await msgBeforeCached.GetOrDownloadAsync();
             EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
                 Title = $"Message sent by {msgAfter.Author} updated in #{channel}",
-                Description = "**Previous Content:** ",
-                Timestamp = DateTime.Now
+                Description = "**Previous Content:** "
             };
 
             if (!string.IsNullOrWhiteSpace(msgBefore.Content))
@@ -157,8 +140,7 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = "Role Created",
-                Description = role.Name,
-                Timestamp = DateTime.Now
+                Description = role.Name
             };
 
             await WriteToLogs(role.Guild, embed);
@@ -170,11 +152,141 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = "Role Deleted",
-                Description = role.Name,
-                Timestamp = DateTime.Now
+                Description = role.Name
             };
 
             await WriteToLogs(role.Guild, embed);
+        }
+
+        public static async Task Client_SpeakerAdded(SocketStageChannel stage, SocketGuildUser user)
+        {
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Blue,
+                Title = $"Speaker Added in #{stage}",
+                Description = user.ToString()
+            };
+
+            await WriteToLogs(user.Guild, embed);
+        }
+
+        public static async Task Client_SpeakerRemoved(SocketStageChannel stage, SocketGuildUser user)
+        {
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Blue,
+                Title = $"Speaker Removed in #{stage}",
+                Description = user.ToString()
+            };
+
+            await WriteToLogs(user.Guild, embed);
+        }
+
+        public static async Task Client_StageEnded(SocketStageChannel stage)
+        {
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Blue,
+                Title = "Stage Ended",
+                Description = $"**Topic:** {stage.Topic}\n**In:** {stage}"
+            };
+
+            await WriteToLogs(stage.Guild, embed);
+        }
+
+        public static async Task Client_StageStarted(SocketStageChannel stage)
+        {
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Blue,
+                Title = "Stage Started",
+                Description = $"**Topic:** {stage.Topic}\n**In:** {stage}"
+            };
+
+            await WriteToLogs(stage.Guild, embed);
+        }
+
+        public static async Task Client_StageUpdated(SocketStageChannel stageBefore, SocketStageChannel stageAfter)
+        {
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Blue,
+                Title = "Stage Updated",
+                Description = $"**Previous Channel Name:** {stageBefore}\n**New Channel Name:** {stageAfter}\n\n" +
+                    $"**Previous Topic:** {stageBefore.Topic}\n**New Lock Status:** {stageAfter.Topic}\n\n" +
+                    $"**Previous Channel Position:** {stageBefore.Position}\n**New Channel Position:** {stageAfter.Position}\n" +
+                    $"**Previous Discoverability Status:** {!stageBefore.DiscoverableDisabled}\n**New Discoverability Status:** {!stageAfter.DiscoverableDisabled}\n\n" +
+                    $"**Previous User Limit:** {stageBefore.UserLimit}\n**New User Limit:** {stageAfter.UserLimit}\n" +
+                    "If nothing here appears changed, then the channel permissions were updated."
+            };
+
+            await WriteToLogs(stageAfter.Guild, embed);
+        }
+
+        public static async Task Client_ThreadCreated(SocketThreadChannel threadChannel)
+        {
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Blue,
+                Title = "Thread Created",
+                Description = threadChannel.Name
+            };
+
+            await WriteToLogs(threadChannel.Guild, embed);
+        }
+
+        public static async Task Client_ThreadDeleted(Cacheable<SocketThreadChannel, ulong> threadChannelCached)
+        {
+            SocketThreadChannel threadChannel = await threadChannelCached.GetOrDownloadAsync();
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Blue,
+                Title = "Thread Deleted",
+                Description = threadChannel.Name
+            };
+
+            await WriteToLogs(threadChannel.Guild, embed);
+        }
+
+        public static async Task Client_ThreadMemberJoined(SocketThreadUser threadUser)
+        {
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Blue,
+                Title = "User Joined Thread",
+                Description = threadUser.ToString()
+            };
+
+            await WriteToLogs(threadUser.Guild, embed);
+        }
+
+        public static async Task Client_ThreadMemberLeft(SocketThreadUser threadUser)
+        {
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Blue,
+                Title = "User Left Thread",
+                Description = threadUser.ToString()
+            };
+
+            await WriteToLogs(threadUser.Guild, embed);
+        }
+
+        public static async Task Client_ThreadUpdated(Cacheable<SocketThreadChannel, ulong> threadBeforeCached, SocketThreadChannel threadAfter)
+        {
+            SocketThreadChannel threadBefore = await threadBeforeCached.GetOrDownloadAsync();
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Blue,
+                Title = "Thread Updated",
+                Description = $"**Previous Name:** {threadBefore}\n**New Name:** {threadAfter}\n\n" +
+                    $"**Previous Lock Status:** {threadBefore.Locked}\n**New Lock Status:** {threadAfter.Locked}\n\n" +
+                    $"**Previous Member Count:** {threadBefore.MemberCount}\n**New Member Count:** {threadAfter.MemberCount}\n\n" +
+                    $"**Previous Position:** {threadBefore.Position}\n**New Position:** {threadAfter.Position}\n" +
+                    "If nothing here appears changed, then the channel permissions were updated."
+            };
+
+            await WriteToLogs(threadAfter.Guild, embed);
         }
 
         public static async Task Client_UserBanned(SocketUser user, SocketGuild guild)
@@ -183,8 +295,7 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = "User Banned",
-                Description = user.ToString(),
-                Timestamp = DateTime.Now
+                Description = user.ToString()
             };
 
             await WriteToLogs(guild, embed);
@@ -196,8 +307,7 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = "User Joined",
-                Description = user.ToString(),
-                Timestamp = DateTime.Now
+                Description = user.ToString()
             };
 
             await WriteToLogs(user.Guild, embed);
@@ -209,8 +319,7 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = "User Left",
-                Description = user.ToString(),
-                Timestamp = DateTime.Now
+                Description = user.ToString()
             };
 
             await WriteToLogs(user.Guild, embed);
@@ -222,8 +331,7 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = "User Unbanned",
-                Description = user.ToString(),
-                Timestamp = DateTime.Now
+                Description = user.ToString()
             };
 
             await WriteToLogs(guild, embed);
@@ -234,12 +342,10 @@ namespace RRBot.Systems
             EmbedBuilder embed = new()
             {
                 Color = Color.Blue,
-                Timestamp = DateTime.Now
+                Description = voiceState.VoiceChannel == null
+                    ? $"{user}\nIn: {voiceStateOrig.VoiceChannel}"
+                    : $"{user}\nIn: {voiceState.VoiceChannel}"
             };
-
-            embed.Description = voiceState.VoiceChannel == null
-                ? $"{user}\nIn: {voiceStateOrig.VoiceChannel}"
-                : $"{user}\nIn: {voiceState.VoiceChannel}";
 
             if (voiceStateOrig.VoiceChannel == null)
             {
@@ -308,8 +414,7 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = $"{messages.Count() - 1} Messages Purged",
-                Description = $"See them at: https://hastebin.com/{hbKey}",
-                Timestamp = DateTime.Now
+                Description = $"See them at: https://hastebin.com/{hbKey}"
             };
 
             await WriteToLogs(guild, embed);
@@ -321,8 +426,7 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = $"Track started by {user}",
-                Description = $"URL: {url}",
-                Timestamp = DateTime.Now
+                Description = $"URL: {url}"
             };
 
             await WriteToLogs(user.Guild, embed);
@@ -334,8 +438,7 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = "User Bullied",
-                Description = $"{actor} bullied {target} to '{nickname}'",
-                Timestamp = DateTime.Now
+                Description = $"{actor} bullied {target} to '{nickname}'"
             };
 
             await WriteToLogs(target.Guild as SocketGuild, embed);
@@ -351,8 +454,7 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = "User Muted",
-                Description = description,
-                Timestamp = DateTime.Now
+                Description = description
             };
 
             await WriteToLogs(target.Guild as SocketGuild, embed);
@@ -364,8 +466,7 @@ namespace RRBot.Systems
             {
                 Color = Color.Blue,
                 Title = "User Unmuted",
-                Description = $"{actor} unmuted {target}",
-                Timestamp = DateTime.Now
+                Description = $"{actor} unmuted {target}"
             };
 
             await WriteToLogs(target.Guild as SocketGuild, embed);
