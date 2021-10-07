@@ -22,7 +22,9 @@ namespace RRBot
             DiscordSocketClient client = new(new DiscordSocketConfig
             {
                 AlwaysDownloadUsers = true,
-                MessageCacheSize = 100
+                GatewayIntents = GatewayIntents.All,
+                LargeThreshold = 250,
+                MessageCacheSize = 1500
             });
 
             ServiceProvider serviceProvider = new ServiceCollection()
