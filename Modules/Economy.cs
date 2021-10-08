@@ -171,14 +171,14 @@ namespace RRBot.Modules
         [Command("leaderboard")]
         [Summary("Check the leaderboard for cash or for a specific currency.")]
         [Remarks("$leaderboard <currency>")]
-        public async Task<RuntimeResult> Leaderboard(string crypto = "cash")
+        public async Task<RuntimeResult> Leaderboard(string currency = "cash")
         {
-            string cUp = crypto.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : crypto.ToUpper();
+            string cUp = currency.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : currency.ToUpper();
             if (!cUp.In("Cash", "BTC", "DOGE", "ETH", "LTC", "XRP"))
-                return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
+                return CommandResult.FromError($"**{currency}** is not a currently accepted currency!");
 
             QuerySnapshot users = await Program.database.Collection($"servers/{Context.Guild.Id}/users")
-                .OrderByDescending(crypto).GetSnapshotAsync();
+                .OrderByDescending(currency).GetSnapshotAsync();
             StringBuilder lb = new();
             int processedUsers = 0;
             foreach (DocumentSnapshot doc in users.Documents)
@@ -186,12 +186,11 @@ namespace RRBot.Modules
                 if (processedUsers == 10)
                     break;
 
-                ulong userId = Convert.ToUInt64(doc.Id);
-                SocketGuildUser guildUser = Context.Guild.GetUser(userId);
+                SocketGuildUser guildUser = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
                 if (guildUser == null)
                     continue;
 
-                DbUser user = await DbUser.GetById(Context.Guild.Id, userId);
+                DbUser user = await DbUser.GetById(Context.Guild.Id, guildUser.Id);
                 if (user.Perks.ContainsKey("Pacifist"))
                     continue;
 
@@ -206,10 +205,20 @@ namespace RRBot.Modules
             EmbedBuilder embed = new()
             {
                 Color = Color.Red,
-                Title = "Leaderboard",
+                Title = $"{cUp} Leaderboard",
                 Description = lb.Length > 0 ? lb.ToString() : "Nothing to see here!"
             };
-            await ReplyAsync(embed: embed.Build());
+
+            if (processedUsers == 10 && users.Documents.Count > 10)
+            {
+                ComponentBuilder component = new ComponentBuilder().WithButton("Next", $"lbnext-{Context.User.Id}");
+                await ReplyAsync(embed: embed.Build(), component: component.Build());
+            }
+            else
+            {
+                await ReplyAsync(embed: embed.Build());
+            }
+
             return CommandResult.FromSuccess();
         }
 

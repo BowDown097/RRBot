@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -10,6 +11,7 @@ using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using RRBot.Entities;
 using RRBot.Extensions;
+using RRBot.Interactions;
 using RRBot.Systems;
 using Victoria;
 
@@ -34,6 +36,7 @@ namespace RRBot
 
         public void Initialize()
         {
+            client.ButtonExecuted += Client_ButtonExecuted;
             client.GuildMemberUpdated += Client_GuildMemberUpdated;
             client.Log += Client_Log;
             client.MessageReceived += Client_MessageReceived;
@@ -128,6 +131,26 @@ namespace RRBot
                     await user.AddRoleAsync(roleId);
                 else
                     await user.RemoveRoleAsync(roleId);
+            }
+        }
+
+        private async Task Client_ButtonExecuted(SocketMessageComponent component)
+        {
+            if (component.Message.Author.Id != client.CurrentUser.Id) // don't wanna interfere with other bots' stuff
+                return;
+
+            ulong executorId = Convert.ToUInt64(component.Data.CustomId.Split('-')[1]);
+            if (component.User.Id != executorId)
+            {
+                await component.RespondAsync("Action not permitted: You did not execute the original command.", ephemeral: true);
+                return;
+            }
+
+            switch (component.Data.CustomId.Split('-')[0])
+            {
+                case "lbnext":
+                    await LeaderboardInteractions.GetNext(component, executorId);
+                    break;
             }
         }
 
