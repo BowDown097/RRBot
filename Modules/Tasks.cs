@@ -17,13 +17,15 @@ namespace RRBot.Modules
         {
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             string item = Items.GetBestItem(user.Items, itemType);
+            int numMined = 0;
 
-            int numMined = RandomUtil.Next(Constants.GENERIC_TASK_WOOD_MIN, Constants.GENERIC_TASK_WOOD_MAX); // default for wooden
-            if (item.StartsWith("Stone", StringComparison.Ordinal))
+            if (item.StartsWith("Wooden"))
+                numMined = RandomUtil.Next(Constants.GENERIC_TASK_WOOD_MIN, Constants.GENERIC_TASK_WOOD_MAX); // default for wooden
+            else if (item.StartsWith("Stone"))
                 numMined = RandomUtil.Next(Constants.GENERIC_TASK_STONE_MIN, Constants.GENERIC_TASK_STONE_MAX);
-            else if (item.StartsWith("Iron", StringComparison.Ordinal))
+            else if (item.StartsWith("Iron"))
                 numMined = RandomUtil.Next(Constants.GENERIC_TASK_IRON_MIN, Constants.GENERIC_TASK_IRON_MAX);
-            else if (item.StartsWith("Diamond", StringComparison.Ordinal))
+            else if (item.StartsWith("Diamond"))
                 numMined = RandomUtil.Next(Constants.GENERIC_TASK_DIAMOND_MIN, Constants.GENERIC_TASK_DIAMOND_MAX);
 
             if (user.Perks.ContainsKey("Enchanter"))
@@ -37,7 +39,7 @@ namespace RRBot.Modules
                     return;
                 }
 
-                numMined = (int)(numMined * 1.1);
+                numMined = (int)(numMined * 1.2);
             }
 
             double cashGained = numMined * 2.5;
@@ -99,7 +101,7 @@ namespace RRBot.Modules
                     return;
                 }
 
-                numCaught = (int)(numCaught * 1.1);
+                numCaught = (int)(numCaught * 1.2);
             }
 
             double cashGained = numCaught * fish.Value;
@@ -153,7 +155,7 @@ namespace RRBot.Modules
                     return;
                 }
 
-                numMined = (int)(numMined * 1.1);
+                numMined = (int)(numMined * 1.2);
             }
 
             double cashGained = numMined * 4;

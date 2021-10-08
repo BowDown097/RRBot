@@ -128,17 +128,17 @@ namespace RRBot.Systems
                     {
                         ulong userId = Convert.ToUInt64(snap.Id);
                         DbUser user = await DbUser.GetById(guild.Id, userId);
-                        foreach (KeyValuePair<string, long> perk in user.Perks)
+                        foreach (KeyValuePair<string, long> kvp in user.Perks)
                         {
-                            if (perk.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && perk.Key != "Pacifist")
+                            if (kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist")
                             {
-                                user.Perks.Remove(perk.Key);
-                                if (perk.Key == "Multiperk" && user.Perks.Count >= 2)
+                                user.Perks.Remove(kvp.Key);
+                                if (kvp.Key == "Multiperk" && user.Perks.Count >= 2)
                                 {
                                     string lastPerk = user.Perks.Last().Key;
-                                    Tuple<string, string, double, long> tuple = Array.Find(Items.perks, p => p.Item1 == lastPerk);
+                                    Perk perk = Array.Find(Items.perks, p => p.name == lastPerk);
                                     SocketUser socketUser = guild.GetUser(userId);
-                                    await user.SetCash(socketUser, user.Cash + tuple.Item3);
+                                    await user.SetCash(socketUser, user.Cash + perk.price);
                                     user.Perks.Remove(lastPerk);
                                     await user.Write();
                                 }

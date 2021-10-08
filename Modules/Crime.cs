@@ -17,7 +17,8 @@ namespace RRBot.Modules
     [CheckPacifist]
     public class Crime : ModuleBase<SocketCommandContext>
     {
-        private async Task<RuntimeResult> GenericCrime(string[] successOutcomes, string[] failOutcomes, string cdKey, double duration, bool funny = false)
+        private async Task<RuntimeResult> GenericCrime(string[] successOutcomes, string[] failOutcomes, string cdKey,
+            double duration, bool hasMehOutcome = false)
         {
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             if (user.UsingSlots)
@@ -29,7 +30,7 @@ namespace RRBot.Modules
                 int outcomeNum = RandomUtil.Next(successOutcomes.Length);
                 string outcome = successOutcomes[outcomeNum];
                 double moneyEarned = RandomUtil.NextDouble(Constants.GENERIC_CRIME_WIN_MIN, Constants.GENERIC_CRIME_WIN_MAX);
-                if (funny && outcomeNum == successOutcomes.Length - 1)
+                if (hasMehOutcome && outcomeNum == successOutcomes.Length - 1)
                     moneyEarned /= 5;
                 double totalCash = user.Cash + moneyEarned;
 
@@ -216,7 +217,7 @@ namespace RRBot.Modules
             if (target.Perks.ContainsKey("Pacifist"))
                 return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
 
-            double robMax = target.Cash / 100.0 * Constants.ROB_MAX_PERCENT;
+            double robMax = Math.Round(target.Cash / 100.0 * Constants.ROB_MAX_PERCENT, 2);
             if (author.Cash < amount)
                 return CommandResult.FromError("You don't have that much money!");
             if (amount > robMax)
@@ -260,6 +261,7 @@ namespace RRBot.Modules
 
             author.RobCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.ROB_COOLDOWN);
             await author.Write();
+            await target.Write();
             return CommandResult.FromSuccess();
         }
 

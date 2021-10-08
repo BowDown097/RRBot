@@ -31,11 +31,11 @@ namespace RRBot.Systems
         };
 
         // name, description, price, duration (secs)
-        public static readonly Tuple<string, string, double, long>[] perks =
+        public static readonly Perk[] perks =
         {
-            new("Enchanter", "Tasks are 10% more effective, but your items have a 2% chance of breaking after use.", 5000, 172800),
+            new("Enchanter", "Tasks are 20% more effective, but your items have a 2% chance of breaking after use.", 5000, 172800),
             new("Speed Demon", "Cooldowns are 15% shorter, but you have a 5% higher chance of failing any command that can fail.", 5000, 172800),
-            new("Multiperk", "Grants the ability to equip 2 perks, not including this one.", 25000, 604800),
+            new("Multiperk", "Grants the ability to equip 2 perks, not including this one.", 10000, 604800),
             new("Pacifist", "You are immune to all crimes, but you cannot use any crime commands and you also cannot appear on the leaderboard. Cannot be stacked with other perks, even if you have the Multiperk. Can be discarded, but cannot be used again for 3 days.", 0, -1)
         };
 
@@ -63,7 +63,7 @@ namespace RRBot.Systems
             return CommandResult.FromError($"You already have a {item}!");
         }
 
-        public static async Task<RuntimeResult> BuyPerk(string perk, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
+        public static async Task<RuntimeResult> BuyPerk(string perkName, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
         {
             DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
             if (dbUser.UsingSlots)
@@ -71,14 +71,14 @@ namespace RRBot.Systems
 
             if (dbUser.Perks.ContainsKey("Pacifist"))
                 return CommandResult.FromError("You have the Pacifist perk and cannot buy another.");
-            if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && perk != "Pacifist" && perk != "Multiperk")
+            if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && !perkName.In("Pacifist", "Multiperk"))
                 return CommandResult.FromError("You already have a perk.");
-            if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 3 && perk != "Pacifist")
+            if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 3 && !perkName.In("Pacifist", "Multiperk"))
                 return CommandResult.FromError("You already have 2 perks.");
 
-            if (!dbUser.Perks.ContainsKey(perk))
+            if (!dbUser.Perks.ContainsKey(perkName))
             {
-                if (perk == "Pacifist")
+                if (perkName == "Pacifist")
                 {
                     if (dbUser.PacifistCooldown != 0)
                     {
@@ -90,24 +90,21 @@ namespace RRBot.Systems
                         dbUser.PacifistCooldown = 0;
                     }
 
-                    foreach (string perkName in dbUser.Perks.Keys)
+                    foreach (string key in dbUser.Perks.Keys)
                     {
-                        Tuple<string, string, double, long> funnyTuple = Array.Find(perks, p => p.Item1 == perkName);
-                        dbUser.Cash += funnyTuple.Item3;
-                        dbUser.Perks.Remove(perkName);
+                        dbUser.Cash += Array.Find(perks, p => p.name == key).price;
+                        dbUser.Perks.Remove(key);
                     }
                 }
 
-                Tuple<string, string, double, long> perkTuple = Array.Find(perks, p => p.Item1 == perk);
-                double price = perkTuple.Item3;
-                long duration = perkTuple.Item4;
-                if (price <= dbUser.Cash)
+                Perk perk = Array.Find(perks, p => p.name == perkName);
+                if (perk.price <= dbUser.Cash)
                 {
-                    dbUser.Perks.Add(perk, DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration));
-                    await dbUser.SetCash(user, dbUser.Cash - price);
+                    dbUser.Perks.Add(perkName, DateTimeOffset.UtcNow.ToUnixTimeSeconds(perk.duration));
+                    await dbUser.SetCash(user, dbUser.Cash - perk.price);
 
-                    StringBuilder notification = new($"You got yourself the {perk} perk for **{price:C2}**!");
-                    if (perk == "Pacifist")
+                    StringBuilder notification = new($"You got yourself the {perkName} perk for **{perk.price:C2}**!");
+                    if (perkName == "Pacifist")
                         notification.Append(" Additionally, as you bought the Pacifist perk, any perks you previously had have been refunded.");
 
                     await user.NotifyAsync(channel, notification.ToString());
@@ -115,10 +112,10 @@ namespace RRBot.Systems
                     return CommandResult.FromSuccess();
                 }
 
-                return CommandResult.FromError($"You do not have enough to buy {perk}!");
+                return CommandResult.FromError($"You do not have enough to buy {perkName}!");
             }
 
-            return CommandResult.FromError($"You already have {perk}!");
+            return CommandResult.FromError($"You already have {perkName}!");
         }
 
         public static double ComputeItemPrice(string item)

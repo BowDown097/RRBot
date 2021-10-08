@@ -78,7 +78,7 @@ namespace RRBot.Modules
         {
             if (Items.items.Any(i => i == item))
                 return await Items.BuyItem(item, Context.User, Context.Guild, Context.Channel);
-            else if (Items.perks.Any(perk => perk.Item1 == item))
+            else if (Items.perks.Any(perk => perk.name == item))
                 return await Items.BuyPerk(item, Context.User, Context.Guild, Context.Channel);
             else
                 return CommandResult.FromError($"**{item}** is not a valid item or perk!\n*Tip: This command is case sensitive.*");
@@ -221,14 +221,14 @@ namespace RRBot.Modules
         {
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             StringBuilder perksBuilder = new();
-            foreach (KeyValuePair<string, long> perk in user.Perks.OrderBy(p => p.Key))
+            foreach (KeyValuePair<string, long> kvp in user.Perks.OrderBy(p => p.Key))
             {
-                if (perk.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && perk.Key != "Pacifist")
+                if (kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist")
                     return;
 
-                Tuple<string, string, double, long> perkT = Array.Find(Items.perks, p => p.Item1.Equals(perk.Key, StringComparison.OrdinalIgnoreCase));
-                perksBuilder.AppendLine($"**{perkT.Item1}**: {perkT.Item2}" +
-                    $"\nTime Left: {(perk.Key != "Pacifist" ? TimeSpan.FromSeconds(perk.Value - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound() : "Infinity")}");
+                Perk perk = Array.Find(Items.perks, p => p.name.Equals(kvp.Key, StringComparison.OrdinalIgnoreCase));
+                perksBuilder.AppendLine($"**{perk.name}**: {perk.description}" +
+                    $"\nTime Left: {(perk.name != "Pacifist" ? TimeSpan.FromSeconds(kvp.Value - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound() : "Indefinite")}");
             }
 
             EmbedBuilder embed = new()
@@ -311,8 +311,8 @@ namespace RRBot.Modules
                 items.AppendLine($"**{item}**: {price:C2}");
             }
 
-            foreach (Tuple<string, string, double, long> perk in Items.perks)
-                perks.AppendLine($"**{perk.Item1}**: {perk.Item2}\nDuration: {TimeSpan.FromSeconds(perk.Item4).FormatCompound()}\nPrice: {perk.Item3:C2}");
+            foreach (Perk perk in Items.perks)
+                perks.AppendLine($"**{perk.name}**: {perk.description}\nDuration: {TimeSpan.FromSeconds(perk.duration).FormatCompound()}\nPrice: {perk.price:C2}");
 
             EmbedBuilder itemsEmbed = new()
             {
