@@ -11,7 +11,7 @@ namespace RRBot.TypeReaders
         public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
         {
             DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
-            if (context.Message.Content.StartsWith("$withdraw", StringComparison.Ordinal))
+            if (context.Message.Content.StartsWith("$withdraw"))
             {
                 double @double;
                 if (input.Equals("all", StringComparison.OrdinalIgnoreCase))

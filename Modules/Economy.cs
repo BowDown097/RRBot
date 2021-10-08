@@ -251,7 +251,7 @@ namespace RRBot.Modules
             DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
 
             StringBuilder ranks = new();
-            foreach (KeyValuePair<string, object> kvp in snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id", StringComparison.Ordinal)).OrderBy(kvp => kvp.Key))
+            foreach (KeyValuePair<string, object> kvp in snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id")).OrderBy(kvp => kvp.Key))
             {
                 double neededCash = snap.GetValue<double>(kvp.Key.Replace("Id", "Cost"));
                 SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));

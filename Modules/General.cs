@@ -82,8 +82,8 @@ namespace RRBot.Modules
                 {
                     DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("ranks");
                     DocumentSnapshot snap = await doc.GetSnapshotAsync();
-                    KeyValuePair<string, object> level = snap.ToDictionary().First(kvp => kvp.Key.StartsWith($"level{rRL.RankLevel}", StringComparison.Ordinal) &&
-                        kvp.Key.EndsWith("Id", StringComparison.Ordinal));
+                    KeyValuePair<string, object> level = snap.ToDictionary().First(kvp => kvp.Key.StartsWith($"level{rRL.RankLevel}") &&
+                        kvp.Key.EndsWith("Id"));
                     IRole rank = Context.Guild.GetRole(Convert.ToUInt64(level.Value));
                     description.AppendLine($"\nRequires {rank.Name}");
                 }
@@ -182,9 +182,7 @@ namespace RRBot.Modules
                 return CommandResult.FromError(user == null ? "You have no available stats!" : $"**{user}** has no available stats!");
 
             StringBuilder description = new();
-            List<string> keys = dbUser.Stats.Keys.ToList();
-            keys.Sort();
-            foreach (string key in keys)
+            foreach (string key in dbUser.Stats.Keys.ToList().OrderBy(s => s))
                 description.AppendLine($"**{key}**: {dbUser.Stats[key]}");
 
             EmbedBuilder embed = new()

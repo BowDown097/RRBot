@@ -120,17 +120,17 @@ namespace RRBot.Systems
 
         public static double ComputeItemPrice(string item)
         {
-            if (item.StartsWith("Wooden", StringComparison.Ordinal)) return 4500;
-            else if (item.StartsWith("Stone", StringComparison.Ordinal)) return 6000;
-            else if (item.StartsWith("Iron", StringComparison.Ordinal)) return 7500;
-            else if (item.StartsWith("Diamond", StringComparison.Ordinal)) return 9000;
+            if (item.StartsWith("Wooden")) return 4500;
+            else if (item.StartsWith("Stone")) return 6000;
+            else if (item.StartsWith("Iron")) return 7500;
+            else if (item.StartsWith("Diamond")) return 9000;
 
             return 7500; // misc item price
         }
 
         public static string GetBestItem(List<string> itemsList, string type)
         {
-            List<string> itemsOfType = itemsList.Where(item => item.EndsWith(type, StringComparison.Ordinal)).ToList();
+            List<string> itemsOfType = itemsList.Where(item => item.EndsWith(type)).ToList();
             return itemsOfType.Count > 0
                 ? itemsOfType.OrderByDescending(item => rankings[item.Replace(type, "").Trim()]).First()
                 : "";

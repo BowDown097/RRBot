@@ -86,10 +86,7 @@ namespace RRBot.Modules
                 description.AppendLine($"***{entry.Id}***");
 
                 Dictionary<string, object> dict = entry.ToDictionary();
-                List<string> keys = dict.Keys.ToList();
-                keys.Sort();
-
-                foreach (string key in keys)
+                foreach (string key in dict.Keys.ToList().OrderBy(s => s))
                 {
                     switch (entry.Id)
                     {

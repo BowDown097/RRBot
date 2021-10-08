@@ -18,7 +18,7 @@ namespace RRBot.Preconditions
             DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
             if (user.Items.Count > 0)
             {
-                return string.IsNullOrEmpty(ItemType) || user.Items.Any(item => item.EndsWith(ItemType, StringComparison.Ordinal))
+                return string.IsNullOrEmpty(ItemType) || user.Items.Any(item => item.EndsWith(ItemType))
                     ? PreconditionResult.FromSuccess()
                     : PreconditionResult.FromError($"You need to have a {ItemType}.");
             }

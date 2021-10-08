@@ -147,7 +147,7 @@ namespace RRBot.Entities
             DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
             if (snap.Exists)
             {
-                foreach (KeyValuePair<string, object> kvp in snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id", StringComparison.Ordinal)))
+                foreach (KeyValuePair<string, object> kvp in snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id")))
                 {
                     double neededCash = snap.GetValue<double>(kvp.Key.Replace("Id", "Cost"));
                     ulong roleId = Convert.ToUInt64(kvp.Value);

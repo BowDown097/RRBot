@@ -161,23 +161,23 @@ namespace RRBot.Modules
             double cashGained = numMined * 4;
             double totalCash = user.Cash + cashGained;
 
-            if (item.StartsWith("Wooden", StringComparison.Ordinal))
+            if (item.StartsWith("Wooden"))
             {
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} stone with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
-            else if (item.StartsWith("Stone", StringComparison.Ordinal))
+            else if (item.StartsWith("Stone"))
             {
                 cashGained *= Constants.MINE_STONE_MULTIPLIER;
                 totalCash = user.Cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} iron with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
-            else if (item.StartsWith("Iron", StringComparison.Ordinal))
+            else if (item.StartsWith("Iron"))
             {
                 cashGained *= Constants.MINE_IRON_MULTIPLIER;
                 totalCash = user.Cash + cashGained;
                 await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} diamonds with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
             }
-            else if (item.StartsWith("Diamond", StringComparison.Ordinal))
+            else if (item.StartsWith("Diamond"))
             {
                 cashGained *= Constants.MINE_DIAMOND_MULTIPLIER;
                 totalCash = user.Cash + cashGained;

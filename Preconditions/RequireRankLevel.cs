@@ -21,8 +21,8 @@ namespace RRBot.Preconditions
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             try
             {
-                KeyValuePair<string, object> level = snap.ToDictionary().First(kvp => kvp.Key.StartsWith($"level{RankLevel}", StringComparison.Ordinal) &&
-                kvp.Key.EndsWith("Id", StringComparison.Ordinal));
+                KeyValuePair<string, object> level = snap.ToDictionary().First(kvp => kvp.Key.StartsWith($"level{RankLevel}") &&
+                    kvp.Key.EndsWith("Id"));
 
                 ulong roleId = Convert.ToUInt64(level.Value);
                 IRole role = context.Guild.GetRole(roleId);
