@@ -11,21 +11,18 @@ namespace RRBot.Interactions
 {
     public static class LeaderboardInteractions
     {
-        public static async Task GetNext(SocketMessageComponent component, ulong executorId)
+        public static async Task GetNext(SocketMessageComponent component, ulong executorId, string currency, int start, int end)
         {
             Embed embed = component.Message.Embeds.FirstOrDefault();
-            string currency = embed.Title[..embed.Title.IndexOf(' ')];
-            string lastEntry = embed.Description.Split('\n').Last();
-            int userIndex = int.Parse(lastEntry[..lastEntry.IndexOf(':')]) + 1;
-            int startingUser = userIndex;
-
             SocketGuild guild = (component.User as SocketGuildUser)?.Guild;
+
             QuerySnapshot users = await Program.database.Collection($"servers/{guild.Id}/users")
                 .OrderByDescending(currency.ToLower()).GetSnapshotAsync();
             StringBuilder lb = new();
-            foreach (DocumentSnapshot doc in users.Documents.Skip(startingUser))
+            int processedUsers = 0;
+            foreach (DocumentSnapshot doc in users.Documents.Skip(start - 1))
             {
-                if (userIndex == startingUser + 10)
+                if (processedUsers == 10)
                     break;
 
                 SocketGuildUser guildUser = guild.GetUser(Convert.ToUInt64(doc.Id));
@@ -40,15 +37,15 @@ namespace RRBot.Interactions
                 if (val < Constants.INVESTMENT_MIN_AMOUNT)
                     break;
 
-                Console.WriteLine(userIndex);
-                lb.AppendLine($"{userIndex}: **{guildUser}**: {(currency == "Cash" ? val.ToString("C2") : val.ToString("0.####"))}");
-                userIndex++;
+                lb.AppendLine($"{start + processedUsers}: **{guildUser}**: {(currency == "Cash" ? val.ToString("C2") : val.ToString("0.####"))}");
+                processedUsers++;
             }
 
             EmbedBuilder embedBuilder = embed.ToEmbedBuilder()
                 .WithDescription(lb.Length > 0 ? lb.ToString() : "Nothing to see here!");
             ComponentBuilder componentBuilder = new ComponentBuilder()
-                .WithButton("Next", $"lbnext-{executorId}", disabled: users.Documents.Count < startingUser + 10);
+                .WithButton("Back", $"lbnext-{executorId}-{currency}-{start-10}-{end-10}", disabled: end <= 10)
+                .WithButton("Next", $"lbnext-{executorId}-{currency}-{end+1}-{end+10}", disabled: processedUsers != 10 || users.Documents.Count < end + 1);
             await component.UpdateAsync(resp => {
                 resp.Embed = embedBuilder.Build();
                 resp.Components = componentBuilder.Build();

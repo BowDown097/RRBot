@@ -208,17 +208,11 @@ namespace RRBot.Modules
                 Title = $"{cUp} Leaderboard",
                 Description = lb.Length > 0 ? lb.ToString() : "Nothing to see here!"
             };
+            ComponentBuilder component = new ComponentBuilder()
+                .WithButton("Back", "dddd", disabled: true)
+                .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20", disabled: users.Documents.Count < 11);
 
-            if (processedUsers == 10 && users.Documents.Count > 10)
-            {
-                ComponentBuilder component = new ComponentBuilder().WithButton("Next", $"lbnext-{Context.User.Id}");
-                await ReplyAsync(embed: embed.Build(), component: component.Build());
-            }
-            else
-            {
-                await ReplyAsync(embed: embed.Build());
-            }
-
+            await ReplyAsync(embed: embed.Build(), component: component.Build());
             return CommandResult.FromSuccess();
         }
 

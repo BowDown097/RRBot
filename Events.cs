@@ -138,17 +138,18 @@ namespace RRBot
             if (component.Message.Author.Id != client.CurrentUser.Id) // don't wanna interfere with other bots' stuff
                 return;
 
-            ulong executorId = Convert.ToUInt64(component.Data.CustomId.Split('-')[1]);
+            string[] split = component.Data.CustomId.Split('-');
+            ulong executorId = Convert.ToUInt64(split[1]);
             if (component.User.Id != executorId)
             {
                 await component.RespondAsync("Action not permitted: You did not execute the original command.", ephemeral: true);
                 return;
             }
 
-            switch (component.Data.CustomId.Split('-')[0])
+            switch (split[0])
             {
                 case "lbnext":
-                    await LeaderboardInteractions.GetNext(component, executorId);
+                    await LeaderboardInteractions.GetNext(component, executorId, split[2], int.Parse(split[3]), int.Parse(split[4]));
                     break;
             }
         }
@@ -160,7 +161,7 @@ namespace RRBot
             if (userBefore.Nickname == userAfter.Nickname)
                 return;
 
-            char[] cleaned = userAfter.Nickname.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
+            char[] cleaned = userAfter.Nickname.Where(char.IsLetterOrDigit).ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
         }
@@ -269,14 +270,14 @@ namespace RRBot
         private static async Task Client_ThreadCreated(SocketThreadChannel thread)
         {
             await thread.JoinAsync();
-            char[] cleaned = thread.Name.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
+            char[] cleaned = thread.Name.Where(char.IsLetterOrDigit).ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await thread.DeleteAsync();
         }
 
         private static async Task Client_ThreadUpdated(Cacheable<SocketThreadChannel, ulong> threadBefore, SocketThreadChannel threadAfter)
         {
-            char[] cleaned = threadAfter.Name.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
+            char[] cleaned = threadAfter.Name.Where(char.IsLetterOrDigit).ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await threadAfter.DeleteAsync();
         }

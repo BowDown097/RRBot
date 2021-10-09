@@ -176,6 +176,11 @@ namespace RRBot.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
+        [Command("sneed")]
+        [Summary("Sneed")]
+        [Remarks("$sneed")]
+        public async Task Sneed() => await ReplyAsync("https://static.wikia.nocookie.net/simpsons/images/1/14/Al_Sneed.png/revision/latest?cb=20210430000431");
+
         [Command("trivia")]
         [Summary("Generate a random trivia question.")]
         [Remarks("$trivia")]

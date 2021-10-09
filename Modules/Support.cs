@@ -64,7 +64,7 @@ namespace RRBot.Modules
         [RequireCooldown("SupportCooldown", "You cannot request support again for {0}. This is done to prevent spam.")]
         public async Task<RuntimeResult> GetSupport([Remainder] string request)
         {
-            char[] cleaned = request.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
+            char[] cleaned = request.Where(char.IsLetterOrDigit).ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 return CommandResult.FromError("You cannot have the funny word in your request.");
 

@@ -25,7 +25,7 @@ namespace RRBot.Systems
 
         public static async Task DoNWordCheckAsync(SocketUserMessage message, IMessageChannel channel)
         {
-            char[] cleaned = message.Content.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
+            char[] cleaned = message.Content.Where(char.IsLetterOrDigit).ToArray();
             if (channel.Name != "extremely-funny" && NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await message.DeleteAsync();
         }

@@ -96,7 +96,7 @@ namespace RRBot.Modules
         [RequireCooldown("BullyCooldown", "You cannot bully anyone for {0}.")]
         public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
         {
-            char[] cleaned = nickname.Where(c => char.IsLetterOrDigit(c) || char.IsSymbol(c) || char.IsPunctuation(c)).ToArray();
+            char[] cleaned = nickname.Where(char.IsLetterOrDigit).ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 return CommandResult.FromError("You cannot bully someone to the funny word.");
             if (nickname.Length > 32)
