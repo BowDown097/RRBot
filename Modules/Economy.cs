@@ -177,6 +177,7 @@ namespace RRBot.Modules
             if (!cUp.In("Cash", "BTC", "DOGE", "ETH", "LTC", "XRP"))
                 return CommandResult.FromError($"**{currency}** is not a currently accepted currency!");
 
+            double cryptoValue = cUp != "Cash" ? await Investments.QueryCryptoValue(cUp) : 0;
             QuerySnapshot users = await Program.database.Collection($"servers/{Context.Guild.Id}/users")
                 .OrderByDescending(currency).GetSnapshotAsync();
             StringBuilder lb = new();
@@ -198,7 +199,11 @@ namespace RRBot.Modules
                 if (val < Constants.INVESTMENT_MIN_AMOUNT)
                     break;
 
-                lb.AppendLine($"{processedUsers + 1}: **{guildUser}**: {(cUp == "Cash" ? val.ToString("C2") : val.ToString("0.####"))}");
+                if (cUp == "Cash")
+                    lb.AppendLine($"{processedUsers + 1}: **{guildUser}**: {val:C2}");
+                else
+                    lb.AppendLine($"{processedUsers + 1}: **{guildUser}**: {val:0.####} ({cryptoValue * val:C2})");
+
                 processedUsers++;
             }
 
@@ -210,7 +215,7 @@ namespace RRBot.Modules
             };
             ComponentBuilder component = new ComponentBuilder()
                 .WithButton("Back", "dddd", disabled: true)
-                .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20", disabled: users.Documents.Count < 11);
+                .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20", disabled: processedUsers != 10 || users.Documents.Count < 11);
 
             await ReplyAsync(embed: embed.Build(), component: component.Build());
             return CommandResult.FromSuccess();
@@ -277,8 +282,8 @@ namespace RRBot.Modules
         [Remarks("$sauce [user] [amount]")]
         public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
         {
-            if (amount < 0.01 || double.IsNaN(amount))
-                return CommandResult.FromError("You can't sauce negative or no money!");
+            if (amount < Constants.TRANSACTION_MIN || double.IsNaN(amount))
+                return CommandResult.FromError($"You need to sauce at least {Constants.TRANSACTION_MIN:C2}.");
             if (Context.User == user)
                 return CommandResult.FromError("You can't sauce yourself money. Don't even know how you would.");
             if (user.IsBot)

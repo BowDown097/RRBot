@@ -52,8 +52,8 @@ namespace RRBot.Modules
 
         private async Task<RuntimeResult> GenericGamble(double bet, double odds, double mult, bool exactRoll = false)
         {
-            if (bet < 0.01 || double.IsNaN(bet))
-                return CommandResult.FromError("You can't bet nothing!");
+            if (bet < Constants.TRANSACTION_MIN || double.IsNaN(bet))
+                return CommandResult.FromError($"You need to bet at least {Constants.TRANSACTION_MIN:C2}.");
 
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             if (user.UsingSlots)
@@ -143,8 +143,8 @@ namespace RRBot.Modules
         [RequireCash]
         public async Task<RuntimeResult> Slots(double bet)
         {
-            if (bet < 0.01 || double.IsNaN(bet))
-                return CommandResult.FromError("You can't bet nothing!");
+            if (bet < Constants.TRANSACTION_MIN || double.IsNaN(bet))
+                return CommandResult.FromError($"You need to bet at least {Constants.TRANSACTION_MIN:C2}.");
 
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
 

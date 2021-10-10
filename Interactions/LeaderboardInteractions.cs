@@ -6,6 +6,7 @@ using Discord;
 using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using RRBot.Entities;
+using RRBot.Modules;
 
 namespace RRBot.Interactions
 {
@@ -16,6 +17,7 @@ namespace RRBot.Interactions
             Embed embed = component.Message.Embeds.FirstOrDefault();
             SocketGuild guild = (component.User as SocketGuildUser)?.Guild;
 
+            double cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
             QuerySnapshot users = await Program.database.Collection($"servers/{guild.Id}/users")
                 .OrderByDescending(currency.ToLower()).GetSnapshotAsync();
             StringBuilder lb = new();
@@ -37,7 +39,11 @@ namespace RRBot.Interactions
                 if (val < Constants.INVESTMENT_MIN_AMOUNT)
                     break;
 
-                lb.AppendLine($"{start + processedUsers}: **{guildUser}**: {(currency == "Cash" ? val.ToString("C2") : val.ToString("0.####"))}");
+                if (currency == "Cash")
+                    lb.AppendLine($"{processedUsers + 1}: **{guildUser}**: {val:C2}");
+                else
+                    lb.AppendLine($"{processedUsers + 1}: **{guildUser}**: {val:0.####} ({cryptoValue * val:C2})");
+
                 processedUsers++;
             }
 

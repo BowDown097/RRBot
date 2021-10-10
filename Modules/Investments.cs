@@ -17,7 +17,7 @@ namespace RRBot.Modules
     [Summary("Invest in our selection of coins, Bit or Shit. The prices here are updated in REAL TIME with the REAL LIFE values. Experience the fast, entrepreneural life without going broke, having your house repossessed, and having your girlfriend leave you.")]
     public class Investments : ModuleBase<SocketCommandContext>
     {
-        private static async Task<double> QueryCryptoValue(string crypto)
+        public static async Task<double> QueryCryptoValue(string crypto)
         {
             using WebClient client = new();
             string current = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
@@ -47,8 +47,8 @@ namespace RRBot.Modules
         [RequireCash]
         public async Task<RuntimeResult> Invest(string crypto, double amount)
         {
-            if (amount < 0 || double.IsNaN(amount))
-                return CommandResult.FromError("You can't invest nothing!");
+            if (amount < Constants.TRANSACTION_MIN || double.IsNaN(amount))
+                return CommandResult.FromError($"You need to invest at least {Constants.TRANSACTION_MIN:C2}.");
 
             string abbreviation = ResolveAbbreviation(crypto);
             if (abbreviation is null)
@@ -146,7 +146,7 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> Withdraw(string crypto, double amount)
         {
             if (amount < Constants.INVESTMENT_MIN_AMOUNT || double.IsNaN(amount))
-                return CommandResult.FromError($"You must withdraw {Constants.INVESTMENT_MIN_AMOUNT} or more of the crypto!");
+                return CommandResult.FromError($"You must withdraw {Constants.INVESTMENT_MIN_AMOUNT} or more of the crypto.");
 
             string abbreviation = ResolveAbbreviation(crypto);
             if (abbreviation is null)
@@ -160,7 +160,7 @@ namespace RRBot.Modules
             if (cryptoBal < Constants.INVESTMENT_MIN_AMOUNT)
                 return CommandResult.FromError($"You have no {abbreviation}!");
             if (cryptoBal < amount)
-                return CommandResult.FromError($"You don't have {amount} {abbreviation}! You've only got **{cryptoBal}** of it.");
+                return CommandResult.FromError($"You don't have {amount} {abbreviation}! You've only got **{cryptoBal:0.####}** of it.");
 
             double cryptoValue = await QueryCryptoValue(abbreviation) * amount;
             double finalValue = cryptoValue / 100.0 * (100 - Constants.INVESTMENT_FEE_PERCENT);
