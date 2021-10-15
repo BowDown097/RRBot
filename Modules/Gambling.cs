@@ -3,6 +3,7 @@ using Discord.Commands;
 using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;
+using RRBot.Systems;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -73,6 +74,16 @@ namespace RRBot.Modules
                 await user.SetCash(Context.User, totalCash);
                 await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout:C2}**!" +
                     $"\nBalance: {totalCash:C2}");
+                if (odds == 99)
+                {
+                    await Achievements.UnlockAchievement("Pretty Damn Lucky", "Win $99+.",
+                        Context.User, Context.Guild, Context.Channel);
+                }
+                else if (odds == 69.69)
+                {
+                    await Achievements.UnlockAchievement("Luckiest Dude Alive", "Win $69.69.",
+                        Context.User, Context.Guild, Context.Channel);
+                }
             }
             else
             {
@@ -159,7 +170,11 @@ namespace RRBot.Modules
             await Task.Factory.StartNew(async () =>
             {
                 double payoutMult = 1;
-                EmbedBuilder embed = new() { Color = Color.Red, Title = "Slots" };
+                EmbedBuilder embed = new()
+                {
+                    Color = Color.Red,
+                    Title = "Slots"
+                };
                 IUserMessage slotMsg = await ReplyAsync(embed: embed.Build());
                 int[] results = new int[3];
 
@@ -199,6 +214,8 @@ namespace RRBot.Modules
                     {
                         await Context.User.NotifyAsync(Context.Channel, $"​SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
                             $"\nBalance: {totalCash:C2}");
+                        await Achievements.UnlockAchievement("Jackpot!", "Get a jackpot with $slots.",
+                            Context.User, Context.Guild, Context.Channel);
                     }
                     else
                     {

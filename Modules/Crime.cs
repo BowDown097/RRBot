@@ -138,6 +138,77 @@ namespace RRBot.Modules
             return await GenericCrime(successes, fails, "DealCooldown", Constants.DEAL_COOLDOWN, true);
         }
 
+        [Command("hack")]
+        [Summary("Hack into someone's crypto wallet.")]
+        [Remarks("$hack [user] [crypto] [amount]")]
+        [RequireCooldown("HackCooldown", "You exhausted all your brain power bro, you're gonna have to wait {0}.")]
+        public async Task<RuntimeResult> Hack(IGuildUser user, string crypto, double amount)
+        {
+            if (amount < Constants.INVESTMENT_MIN_AMOUNT || double.IsNaN(amount))
+                return CommandResult.FromError($"You must rob {Constants.INVESTMENT_MIN_AMOUNT} or more.");
+            if (user.Id == Context.User.Id)
+                return CommandResult.FromError("How are you supposed to hack yourself?");
+            if (user.IsBot)
+                return CommandResult.FromError("Nope.");
+
+            string abbreviation = Investments.ResolveAbbreviation(crypto);
+            if (abbreviation is null)
+                return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
+
+            DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            DbUser target = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            if (author.UsingSlots || target.UsingSlots)
+                return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
+            if (target.Perks.ContainsKey("Pacifist"))
+                return CommandResult.FromError($"You cannot hack **{user}** as they have the Pacifist perk equipped.");
+
+            double authorBal = (double)author[abbreviation];
+            double targetBal = (double)target[abbreviation];
+            double robMax = Math.Round(targetBal / 100.0 * Constants.ROB_MAX_PERCENT, 4);
+            if (authorBal < amount)
+                return CommandResult.FromError($"You don't have that much {abbreviation}!");
+            if (amount > robMax)
+                return CommandResult.FromError($"You can only rob {Constants.ROB_MAX_PERCENT}% of **{user}**'s cash, that being **{robMax}**.");
+
+            int roll = RandomUtil.Next(1, 101);
+            double cryptoValue = await Investments.QueryCryptoValue(abbreviation) * amount;
+            if (roll < Constants.HACK_ODDS)
+            {
+                target[abbreviation] = targetBal - amount;
+                author[abbreviation] = authorBal + amount;
+                StatUpdate(author, true, cryptoValue);
+                StatUpdate(target, false, cryptoValue);
+                switch (RandomUtil.Next(2))
+                {
+                    case 0:
+                        await Context.User.NotifyAsync(Context.Channel, $"The dumbass pushed his private keys to GitHub LMFAO! You sniped that shit and got **{amount:0.####} {crypto}**.");
+                        break;
+                    case 1:
+                        await Context.User.NotifyAsync(Context.Channel, $"You did an ol' SIM swap on {user}'s phone while they weren't looking and yoinked **{amount:0.####} {crypto}** right off their Coinbase. Easy claps!");
+                        break;
+                }
+            }
+            else
+            {
+                author[abbreviation] = authorBal - (amount / 4);
+                StatUpdate(author, false, amount / 4);
+                switch (RandomUtil.Next(2))
+                {
+                    case 0:
+                        await Context.User.NotifyAsync(Context.Channel, $"{user} actually secured their shit properly, got your info, and sent it off to the feds. You got raided and lost **{amount / 4:0.####} {crypto}** in the process.");
+                        break;
+                    case 1:
+                        await Context.User.NotifyAsync(Context.Channel, $"That hacker dude on Instagram scammed your ass! You only had to pay 1/4 of what you were promising starting off, but still sucks. There goes **{amount / 4:0.####} {crypto}**.");
+                        break;
+                }
+            }
+
+            author.HackCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.HACK_COOLDOWN);
+            await author.Write();
+            await target.Write();
+            return CommandResult.FromSuccess();
+        }
+
         [Command("loot")]
         [Summary("Loot some locations.")]
         [Remarks("$loot")]
@@ -167,10 +238,10 @@ namespace RRBot.Modules
 
             DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
-            if (author.UsingSlots)
-                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+            if (author.UsingSlots || target.UsingSlots)
+                return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
             if (target.Perks.ContainsKey("Pacifist"))
-                return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
+                return CommandResult.FromError($"You cannot rape **{user}** as they have the Pacifist perk equipped.");
             if (target.Cash < 0.01)
                 return CommandResult.FromError($"Dear Lord, talk about kicking them while they're down! **{user}** is broke! Have some decency.");
 
@@ -212,10 +283,10 @@ namespace RRBot.Modules
 
             DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
-            if (author.UsingSlots)
-                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+            if (author.UsingSlots || target.UsingSlots)
+                return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
             if (target.Perks.ContainsKey("Pacifist"))
-                return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
+                return CommandResult.FromError($"You cannot rob **{user}** as they have the Pacifist perk equipped.");
 
             double robMax = Math.Round(target.Cash / 100.0 * Constants.ROB_MAX_PERCENT, 2);
             if (author.Cash < amount)

@@ -180,6 +180,8 @@ namespace RRBot.Modules
                         return CommandResult.FromError("You specified an invalid amount of time!");
                     response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
                     await ReplyAsync(response);
+                    await Achievements.UnlockAchievement("Literally 1984", "Get muted.",
+                        user as SocketUser, Context.Guild, Context.Channel);
 
                     DocumentReference muteDoc = Program.database.Collection($"servers/{Context.Guild.Id}/mutes").Document(user.Id.ToString());
                     await Logger.Custom_UserMuted(user, Context.User, duration, reason);

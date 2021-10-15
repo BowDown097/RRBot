@@ -18,6 +18,27 @@ namespace RRBot.Modules
     {
         public CommandService Commands { get; set; }
 
+        [Alias("ach")]
+        [Command("achievements")]
+        [Summary("View your own or someone else's achievements.")]
+        [Remarks("$achievements <user>")]
+        public async Task Achievements(IGuildUser user = null)
+        {
+            ulong userId = user != null ? user.Id : Context.User.Id;
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
+            StringBuilder description = new();
+            foreach (KeyValuePair<string, string> achievement in dbUser.Achievements)
+                description.AppendLine($"**{achievement.Key}**: {achievement.Value}");
+
+            EmbedBuilder embed = new()
+            {
+                Color = Color.Red,
+                Title = user == null ? "Cooldowns" : $"{user}'s Cooldowns",
+                Description = description.Length > 0 ? description.ToString() : "None"
+            };
+            await ReplyAsync(embed: embed.Build());
+        }
+
         [Command("help")]
         [Summary("View info about the bot or view info about a command, depending on if you specify a command or not.")]
         [Remarks("$help <command>")]

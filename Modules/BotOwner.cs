@@ -43,6 +43,9 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> DisableCommand(string cmd)
         {
             string cmdLower = cmd.ToLower();
+            if (cmdLower == "disablecmd")
+                return CommandResult.FromError("I don't think that's a good idea.");
+
             SearchResult search = Commands.Search(cmd);
             if (!search.IsSuccess)
                 return CommandResult.FromError($"**${cmdLower}** is not a command!");

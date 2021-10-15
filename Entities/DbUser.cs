@@ -15,6 +15,8 @@ namespace RRBot.Entities
     {
         [FirestoreDocumentId]
         public DocumentReference Reference { get; set; }
+        [FirestoreProperty("achievements")]
+        public Dictionary<string, string> Achievements { get; set; }
         [FirestoreProperty("btc")]
         public double BTC { get; set; }
         [FirestoreProperty("bullyCooldown")]
@@ -37,6 +39,8 @@ namespace RRBot.Entities
         public long FarmCooldown { get; set; }
         [FirestoreProperty("fishCooldown")]
         public long FishCooldown { get; set; }
+        [FirestoreProperty("hackCooldown")]
+        public long HackCooldown { get; set; }
         [FirestoreProperty("huntCooldown")]
         public long HuntCooldown { get; set; }
         [FirestoreProperty("items")]

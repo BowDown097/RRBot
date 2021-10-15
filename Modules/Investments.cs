@@ -69,7 +69,6 @@ namespace RRBot.Modules
 
             CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
             culture.NumberFormat.CurrencyNegativePattern = 2;
-
             await user.SetCash(Context.User, user.Cash - amount);
             user[abbreviation] = (double)user[abbreviation] + Math.Round(cryptoAmount, 4);
             user.AddToStats(new Dictionary<string, string>

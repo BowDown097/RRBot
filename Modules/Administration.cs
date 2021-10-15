@@ -80,5 +80,11 @@ namespace RRBot.Modules
             await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user}**'s {cUp} balance.");
             return CommandResult.FromSuccess();
         }
+
+        [Command("unlockachievement")]
+        [Summary("Unlock an achievement for a user.")]
+        [Remarks("$unlockachievement [user] [name] [desc] <reward>")]
+        public async Task UnlockAchievement(IGuildUser user, string name, string desc, double reward = 0)
+            => await Achievements.UnlockAchievement(name, desc, user as SocketUser, Context.Guild, Context.Channel, reward);
     }
 }

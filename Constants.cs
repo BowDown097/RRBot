@@ -36,6 +36,8 @@ namespace RRBot
         public const double GENERIC_CRIME_LOSS_MIN = 69;
         public const double GENERIC_CRIME_WIN_MAX = 691;
         public const double GENERIC_CRIME_WIN_MIN = 69;
+        public const double HACK_COOLDOWN = 10800;
+        public const double HACK_ODDS = 10;
         public const double LOOT_COOLDOWN = 3600;
         public const double RAPE_COOLDOWN = 7200;
         public const double RAPE_ODDS = 50;

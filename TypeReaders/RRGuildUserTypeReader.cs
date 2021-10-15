@@ -44,7 +44,7 @@ namespace Discord.Commands
             int index = input.LastIndexOf('#');
             if (index >= 0)
             {
-                string username = input.Substring(0, index);
+                string username = input[..index];
                 if (ushort.TryParse(input[(index + 1)..], out ushort discriminator))
                 {
                     var channelUser = await channelUsers.FirstOrDefaultAsync(x => x.DiscriminatorValue == discriminator &&
