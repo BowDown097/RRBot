@@ -103,12 +103,10 @@ namespace RRBot
                         Emoji numberEmoji = new(Constants.POLL_EMOTES[Convert.ToInt32(line[0].ToString())]);
                         if (reaction.Emote.ToString() == numberEmoji.ToString())
                         {
-                            EmbedBuilder embedBuilder = new()
-                            {
-                                Color = Color.Red,
-                                Title = "Trivia Over!",
-                                Description = $"**{reaction.User}** was the first to get the correct answer of \"{line[3..]}\"!\n~~{embed.Description}~~"
-                            };
+                            EmbedBuilder embedBuilder = new EmbedBuilder()
+                                .WithColor(Color.Red)
+                                .WithTitle("Trivia Over!")
+                                .WithDescription($"**{reaction.User}** was the first to get the correct answer of \"{line[3..]}\"!\n~~{embed.Description}~~");
                             await msg.ModifyAsync(msg => msg.Embed = embedBuilder.Build());
                         }
                     }

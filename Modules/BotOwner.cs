@@ -84,12 +84,11 @@ namespace RRBot.Modules
                 code = code.Replace("```cs", "").Trim('`');
                 string[] imports = { "System", "System.Collections.Generic", "System.Text" };
                 object evaluation = await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context));
-                EmbedBuilder embed = new()
-                {
-                    Color = Color.Red,
-                    Title = "Code evaluation",
-                    Description = $"Your code, ```cs\n{code}``` evaluates to: ```cs\n\"{evaluation}\"```"
-                };
+
+                EmbedBuilder embed = new EmbedBuilder()
+                    .WithColor(Color.Red)
+                    .WithTitle("Code Evaluation")
+                    .WithDescription($"Your code, ```cs\n{code}``` evaluates to: ```cs\n\"{evaluation}\"```");
                 await ReplyAsync(embed: embed.Build());
                 return CommandResult.FromSuccess();
             }

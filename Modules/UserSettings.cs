@@ -22,12 +22,11 @@ namespace RRBot.Modules
         public async Task MySettings()
         {
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = "Your Settings",
-                Description = $"**DM Notifications**: {user.DMNotifs}\n**No Reply Pings**: {user.NoReplyPings}"
-            };
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Your Settings")
+                .AddField("DM Notifications", user.DMNotifs)
+                .AddField("No Reply Pings", user.NoReplyPings);
             await ReplyAsync(embed: embed.Build());
         }
 

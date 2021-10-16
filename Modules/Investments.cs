@@ -105,13 +105,10 @@ namespace RRBot.Modules
             if (dbUser.XRP >= Constants.INVESTMENT_MIN_AMOUNT)
                 investments.AppendLine($"**XRP**: {dbUser.XRP:0.####} ({await QueryCryptoValue("XRP") * dbUser.XRP:C2})");
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = user == null ? "Your Investments" : $"{user}'s Investments",
-                Description = investments.Length > 0 ? investments.ToString() : "None"
-            };
-
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(user == null ? "Your Investments" : $"{user}'s Investments")
+                .WithDescription(investments.Length > 0 ? investments.ToString() : "None");
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();
         }
@@ -128,14 +125,14 @@ namespace RRBot.Modules
             double ltc = await QueryCryptoValue("LTC");
             double xrp = await QueryCryptoValue("XRP");
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = "Cryptocurrency Values",
-                Description = $"**Bitcoin (BTC)**: {btc:C2}\n**Dogecoin (DOGE)**: {doge:C2}\n**Ethereum (ETH)**: {eth:C2}" +
-                    $"\n**Litecoin (LTC)**: {ltc:C2}\n**XRP**: {xrp:C2}"
-            };
-
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Cryptocurrency Values")
+                .AddField("Bitcoin (BTC)", btc.ToString("C2"))
+                .AddField("Dogecoin (DOGE)", doge.ToString("C2"))
+                .AddField("Ethereum (ETH)", eth.ToString("C2"))
+                .AddField("Litecoin (LTC)", ltc.ToString("C2"))
+                .AddField("XRP", xrp.ToString("C2"));
             await ReplyAsync(embed: embed.Build());
         }
 

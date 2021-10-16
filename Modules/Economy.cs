@@ -103,12 +103,10 @@ namespace RRBot.Modules
                     description.AppendLine($"**{cmd}**: {TimeSpan.FromSeconds(fullCd).FormatCompound()}");
             }
 
-            EmbedBuilder embed = new()
-            {
-                Title = user == null ? "Cooldowns" : $"{user}'s Cooldowns",
-                Color = Color.Red,
-                Description = description.Length > 0 ? description.ToString() : "None"
-            };
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(user == null ? "Cooldowns" : $"{user}'s Cooldowns")
+                .WithDescription(description.Length > 0 ? description.ToString() : "None");
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -158,12 +156,10 @@ namespace RRBot.Modules
         {
             ulong userId = user == null ? Context.User.Id : user.Id;
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
-            EmbedBuilder embed = new()
-            {
-                Title = user == null ? "Items" : $"{user}'s Items",
-                Color = Color.Red,
-                Description = string.Join(", ", dbUser.Items)
-            };
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(user == null ? "Items" : $"{user}'s Items")
+                .WithDescription(string.Join(", ", dbUser.Items));
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -207,16 +203,13 @@ namespace RRBot.Modules
                 processedUsers++;
             }
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = $"{cUp} Leaderboard",
-                Description = lb.Length > 0 ? lb.ToString() : "Nothing to see here!"
-            };
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle($"{cUp} Leaderboard")
+                .WithDescription(lb.Length > 0 ? lb.ToString() : "Nothing to see here!");
             ComponentBuilder component = new ComponentBuilder()
                 .WithButton("Back", "dddd", disabled: true)
                 .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20", disabled: processedUsers != 10 || users.Documents.Count < 11);
-
             await ReplyAsync(embed: embed.Build(), component: component.Build());
             return CommandResult.FromSuccess();
         }
@@ -239,13 +232,10 @@ namespace RRBot.Modules
                     $"\nTime Left: {(perk.name != "Pacifist" ? TimeSpan.FromSeconds(kvp.Value - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound() : "Indefinite")}");
             }
 
-            EmbedBuilder embed = new()
-            {
-                Title = "Perks",
-                Color = Color.Red,
-                Description = perksBuilder.Length > 0 ? perksBuilder.ToString() : "None"
-            };
-
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Perks")
+                .WithDescription(perksBuilder.Length > 0 ? perksBuilder.ToString() : "None");
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -266,13 +256,10 @@ namespace RRBot.Modules
                 ranks.AppendLine($"**{role.Name}**: {neededCash:C2}");
             }
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = "Available Ranks",
-                Description = ranks.Length > 0 ? ranks.ToString() : "None"
-            };
-
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Available Ranks")
+                .WithDescription(ranks.Length > 0 ? ranks.ToString() : "None");
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -322,19 +309,14 @@ namespace RRBot.Modules
             foreach (Perk perk in Items.perks)
                 perks.AppendLine($"**{perk.name}**: {perk.description}\nDuration: {TimeSpan.FromSeconds(perk.duration).FormatCompound()}\nPrice: {perk.price:C2}");
 
-            EmbedBuilder itemsEmbed = new()
-            {
-                Color = Color.Red,
-                Title = "⛏️Items⛏️️",
-                Description = items.ToString()
-            };
-
-            EmbedBuilder perksEmbed = new()
-            {
-                Color = Color.Red,
-                Title = "️️🧪Perks🧪",
-                Description = perks.ToString()
-            };
+            EmbedBuilder itemsEmbed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("⛏️Items⛏️️")
+                .WithDescription(items.ToString());
+            EmbedBuilder perksEmbed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("️️🧪Perks🧪")
+                .WithDescription(perks.ToString());
 
             if (string.IsNullOrWhiteSpace(category))
             {

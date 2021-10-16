@@ -124,13 +124,10 @@ namespace RRBot.Modules
                 }
             }
 
-            EmbedBuilder embed = new()
-            {
-                Title = "Current Configuration",
-                Color = Color.Red,
-                Description = description.ToString()
-            };
-
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Current Configuration")
+                .WithDescription(description.ToString());
             await ReplyAsync(embed: embed.Build());
         }
 

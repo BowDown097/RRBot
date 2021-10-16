@@ -32,12 +32,10 @@ namespace RRBot.Modules
                 for (int i = 1; i <= pollChoices.Length; i++)
                     choicesStr.AppendLine($"**[{i}]** {pollChoices[i - 1]}");
 
-                EmbedBuilder pollEmbed = new()
-                {
-                    Color = Color.Red,
-                    Title = title,
-                    Description = choicesStr.ToString()
-                };
+                EmbedBuilder pollEmbed = new EmbedBuilder()
+                    .WithColor(Color.Red)
+                    .WithTitle(title)
+                    .WithDescription(choicesStr.ToString());
 
                 RestUserMessage pollMsg = await pollsChannel.SendMessageAsync(embed: pollEmbed.Build());
                 for (int i = 1; i <= pollChoices.Length; i++)

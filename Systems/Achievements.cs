@@ -21,13 +21,10 @@ namespace RRBot.Systems
                 description += $"\nReward: {reward:C2}";
             }
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = "Achievement Get!",
-                Description = description
-            };
-
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Achievement Get!")
+                .WithDescription(description);
             await channel.SendMessageAsync(embed: embed.Build());
             await dbUser.Write();
         }

@@ -30,12 +30,10 @@ namespace RRBot.Modules
             foreach (KeyValuePair<string, string> achievement in dbUser.Achievements)
                 description.AppendLine($"**{achievement.Key}**: {achievement.Value}");
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = user == null ? "Cooldowns" : $"{user}'s Cooldowns",
-                Description = description.Length > 0 ? description.ToString() : "None"
-            };
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(user == null ? "Cooldowns" : $"{user}'s Cooldowns")
+                .WithDescription(description.Length > 0 ? description.ToString() : "None");
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -46,17 +44,14 @@ namespace RRBot.Modules
         {
             if (string.IsNullOrWhiteSpace(command))
             {
-                EmbedBuilder infoEmbed = new()
-                {
-                    Color = Color.Red,
-                    Title = "Rush Reborn Bot",
-                    Description = "Say hello to the most amazing bot you will ever bare witness to, made by the greatest programmer who has ever lived! ~~definitely not capping~~\n\n" +
+                EmbedBuilder infoEmbed = new EmbedBuilder()
+                    .WithColor(Color.Red)
+                    .WithTitle("Rush Reborn Bot")
+                    .WithDescription("Say hello to the most amazing bot you will ever bare witness to, made by the greatest programmer who has ever lived! ~~definitely not capping~~\n\n" +
                         "This is a module-based bot, so all of the commands are split up into modules.\n\n" +
                         "If you want to learn about a particular module, use ``$modules`` to view the bot's modules and ``$module [module]`` to view the information of whatever module you want to look up.\n\n" +
                         "If you want to learn about a particular command in a module, use ``$help [command]``. In command usage examples, [] indicate required arguments and <> indicate optional arguments.\n\n" +
-                        "If you have **ANY** questions, just ask!"
-                };
-
+                        "If you have **ANY** questions, just ask!");
                 await ReplyAsync(embed: infoEmbed.Build());
                 return CommandResult.FromSuccess();
             }
@@ -124,13 +119,10 @@ namespace RRBot.Modules
                 description.Append("\nExclusive to Rush Reborn");
             }
 
-            EmbedBuilder commandEmbed = new()
-            {
-                Color = Color.Red,
-                Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(command.ToLower()),
-                Description = description.ToString()
-            };
-
+            EmbedBuilder commandEmbed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(command.ToLower()))
+                .WithDescription(description.ToString());
             await ReplyAsync(embed: commandEmbed.Build());
             return CommandResult.FromSuccess();
         }
@@ -158,13 +150,11 @@ namespace RRBot.Modules
                 return CommandResult.FromError("You have specified a nonexistent module!");
             }
 
-            EmbedBuilder moduleEmbed = new()
-            {
-                Color = Color.Red,
-                Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(module.ToLower()),
-                Description = $"**Available commands**: {string.Join(", ", moduleInfo.Commands.Select(x => x.Name).ToArray())}\n**Description**: {moduleInfo.Summary}"
-            };
-
+            EmbedBuilder moduleEmbed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(module.ToLower()))
+                .AddField("Available commands", string.Join(", ", moduleInfo.Commands.Select(x => x.Name)))
+                .AddField("Description", moduleInfo.Summary);
             await ReplyAsync(embed: moduleEmbed.Build());
             return CommandResult.FromSuccess();
         }
@@ -178,13 +168,10 @@ namespace RRBot.Modules
             if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
                 modulesList.Remove("Support");
 
-            EmbedBuilder modulesEmbed = new()
-            {
-                Color = Color.Red,
-                Title = "Currently available modules",
-                Description = string.Join(", ", modulesList)
-            };
-
+            EmbedBuilder modulesEmbed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Modules")
+                .WithDescription(string.Join(", ", modulesList));
             await ReplyAsync(embed: modulesEmbed.Build());
         }
 
@@ -206,13 +193,10 @@ namespace RRBot.Modules
             foreach (string key in dbUser.Stats.Keys.ToList().OrderBy(s => s))
                 description.AppendLine($"**{key}**: {dbUser.Stats[key]}");
 
-            EmbedBuilder embed = new()
-            {
-                Title = user == null ? "Stats" : $"{user}'s Stats",
-                Color = Color.Red,
-                Description = description.ToString()
-            };
-
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(user == null ? "Stats" : $"{user}'s Stats")
+                .WithDescription(description.ToString());
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();
         }

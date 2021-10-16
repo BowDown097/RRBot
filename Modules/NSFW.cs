@@ -41,14 +41,11 @@ namespace RRBot.Modules
             }
 
             string englishTitle = string.IsNullOrEmpty(gallery.englishTitle) ? "No English title" : gallery.englishTitle;
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = "One hentai coming right up!",
-                Description = $"Well, buddy, I've found you **{gallery.japaneseTitle}** ({englishTitle}).\nIt's at: {gallery.url}",
-                ImageUrl = gallery.cover.imageUrl.ToString()
-            };
-
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("One hentai coming right up!")
+                .WithDescription($"Well, buddy, I've found you **{gallery.japaneseTitle}** ({englishTitle}).\nIt's at: {gallery.url}")
+                .WithImageUrl(gallery.cover.imageUrl.ToString());
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();
         }

@@ -36,12 +36,10 @@ namespace RRBot.Modules
             if (string.IsNullOrWhiteSpace(image))
                 return CommandResult.FromError("Couldn't find the picture you wanted :(");
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = "Found one!",
-                ImageUrl = image
-            };
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Found one!")
+                .WithImageUrl(image);
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();
         }
@@ -85,13 +83,10 @@ namespace RRBot.Modules
             if (description.Length == 0)
                 return CommandResult.FromError("Couldn't find anything for that term, chief.");
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(term.ToLower()),
-                Description = description.ToString()
-            };
-
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(term.ToLower()))
+                .WithDescription(description.ToString());
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();
         }
@@ -107,11 +102,9 @@ namespace RRBot.Modules
         [Remarks("$flip")]
         public async Task Flip()
         {
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = "Coin"
-            };
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Coin");
 
             if (RandomUtil.Next(0, 2) != 0)
             {
@@ -134,20 +127,19 @@ namespace RRBot.Modules
         {
             int gay = !user.IsBot ? RandomUtil.Next(1, 101) : 0;
 
-            string title = "Not Gay";
-            if (gay > 10 && gay < 50)
-                title = "Kinda Gay";
-            else if (gay >= 50 && gay < 90)
-                title = "Gay";
-            else if (gay >= 90)
-                title = "Hella Gay!";
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithDescription($"{user} is {gay}% gay.");
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = title,
-                Description = $"{user} is {gay}% gay."
-            };
+            if (gay <= 10)
+                embed.WithTitle("Not Gay");
+            else if (gay > 10 && gay < 50)
+                embed.WithTitle("Kinda Gay");
+            else if (gay >= 50 && gay < 90)
+                embed.WithTitle("Gay");
+            else
+                embed.WithTitle("Hella Gay!");
+
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -159,20 +151,19 @@ namespace RRBot.Modules
             int equals = !user.IsBot ? RandomUtil.Next(1, 16) : 20;
             string penis = "8" + new string('=', equals) + "D";
 
-            string title = "Micropenis LMFAO";
-            if (equals > 3 && equals < 7)
-                title = "Ehhh";
-            else if (equals >= 7 && equals < 12)
-                title = "Not bad at all!";
-            else if (equals >= 12)
-                title = "God damn, he's packin'!";
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithDescription($"{user}'s penis: {penis}");
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = title,
-                Description = $"{user}'s penis: {penis}"
-            };
+            if (equals <= 3)
+                embed.WithTitle("Micropenis LMFAO");
+            else if (equals > 3 && equals < 7)
+                embed.WithTitle("Ehhh");
+            else if (equals >= 7 && equals < 12)
+                embed.WithTitle("Not bad at all!");
+            else
+                embed.WithTitle("God damn, he's packin'!");
+
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -209,12 +200,10 @@ namespace RRBot.Modules
             for (int i = 1; i <= answers.Count; i++)
                 description.AppendLine($"{i}: {answers[i-1]}");
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = "Trivia!",
-                Description = description.ToString()
-            };
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Trivia!")
+                .WithDescription(description.ToString());
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -226,12 +215,11 @@ namespace RRBot.Modules
             using WebClient client = new();
             string response = await client.DownloadStringTaskAsync("https://labs.bible.org/api/?passage=random&type=json");
             dynamic verse = JArray.Parse(response)[0];
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = $"{verse.bookname} {verse.chapter}:{verse.verse}",
-                Description = verse.text
-            };
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle($"{verse.bookname} {verse.chapter}:{verse.verse}")
+                .WithDescription(verse.text);
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -243,14 +231,11 @@ namespace RRBot.Modules
             List<string> keys = Constants.WAIFUS.Keys.ToList();
             string waifu = keys[RandomUtil.Next(Constants.WAIFUS.Count)];
 
-            EmbedBuilder waifuEmbed = new()
-            {
-                Color = Color.Red,
-                Title = "Say hello to your new waifu!",
-                Description = $"Your waifu is **{waifu}**.",
-                ImageUrl = Constants.WAIFUS[waifu]
-            };
-
+            EmbedBuilder waifuEmbed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Say hello to your new waifu!")
+                .WithDescription($"Your waifu is **{waifu}**.")
+                .WithImageUrl(Constants.WAIFUS[waifu]);
             await ReplyAsync(embed: waifuEmbed.Build());
         }
     }

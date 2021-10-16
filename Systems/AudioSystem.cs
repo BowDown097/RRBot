@@ -38,13 +38,10 @@ namespace RRBot.Systems
                     builder.AppendLine($"Length: {track.Length}\nPosition: {pos}");
                 }
 
-                EmbedBuilder embed = new()
-                {
-                    Color = Color.Red,
-                    Title = track.Title,
-                    Description = builder.ToString()
-                };
-
+                EmbedBuilder embed = new EmbedBuilder()
+                    .WithColor(Color.Red)
+                    .WithTitle(track.Title)
+                    .WithDescription(builder.ToString());
                 await context.Channel.SendMessageAsync(embed: embed.Build());
                 return CommandResult.FromSuccess();
             }
@@ -113,15 +110,11 @@ namespace RRBot.Systems
                     if (!track.IsStream) playlist.AppendLine($" ({track.Length})");
                 }
 
-                EmbedBuilder embed = new()
-                {
-                    Color = Color.Red,
-                    Title = "Playlist",
-                    Description = playlist.ToString()
-                };
-
+                EmbedBuilder embed = new EmbedBuilder()
+                    .WithColor(Color.Red)
+                    .WithTitle("Playlist")
+                    .WithDescription(playlist.ToString());
                 await context.Channel.SendMessageAsync(embed: embed.Build());
-
                 return CommandResult.FromSuccess();
             }
 

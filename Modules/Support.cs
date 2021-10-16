@@ -81,12 +81,12 @@ namespace RRBot.Modules
                 .Members.Where(user => user.Id != Context.User.Id);
             SocketGuildUser helperUser = helpers.ElementAt(RandomUtil.Next(0, helpers.Count()));
 
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = $"Support Ticket #{tickets.Count + 1}",
-                Description = $"Issuer: {Context.User.Mention}\nHelper: {helperUser.Mention}\nRequest: {request}"
-            };
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle($"Support Ticket #{tickets.Count + 1}")
+                .AddField("Issuer", Context.User.Mention)
+                .AddField("Helper", helperUser.Mention)
+                .AddField("Request", request);
 
             IUserMessage userMessage = await ReplyAsync($"{helperUser.Mention}, someone needs some help!", embed: embed.Build());
             ticket.Helper = helperUser.Id;
@@ -119,13 +119,12 @@ namespace RRBot.Modules
 
             SocketGuildUser helper = Context.Guild.GetUser(ticket.Helper);
             SocketGuildUser issuer = Context.Guild.GetUser(ticket.Issuer);
-            EmbedBuilder embed = new()
-            {
-                Color = Color.Red,
-                Title = $"Support Ticket From {issuer}",
-                Description = $"Issuer: {issuer}\nHelper: {helper}\nRequest: {ticket.Request}"
-            };
 
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle($"Support Ticket from {issuer}")
+                .AddField("Helper", helper.Mention)
+                .AddField("Request", ticket.Request);
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();
         }

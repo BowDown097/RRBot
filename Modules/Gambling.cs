@@ -170,11 +170,9 @@ namespace RRBot.Modules
             await Task.Factory.StartNew(async () =>
             {
                 double payoutMult = 1;
-                EmbedBuilder embed = new()
-                {
-                    Color = Color.Red,
-                    Title = "Slots"
-                };
+                EmbedBuilder embed = new EmbedBuilder()
+                    .WithColor(Color.Red)
+                    .WithTitle("Slots");
                 IUserMessage slotMsg = await ReplyAsync(embed: embed.Build());
                 int[] results = new int[3];
 

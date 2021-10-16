@@ -88,7 +88,7 @@ namespace RRBot.Systems
 
             foreach (Embed msgEmbed in msg.Embeds)
             {
-                embed = embed.AddField("Embed Title", msgEmbed.Title)
+                embed.AddField("Embed Title", msgEmbed.Title)
                     .AddField("Embed Description", msgEmbed.Description)
                     .AddSeparatorField();
             }
@@ -106,15 +106,15 @@ namespace RRBot.Systems
 
             foreach (Embed msgEmbed in msgBefore.Embeds)
             {
-                embed = embed.AddField("Embed Title", msgEmbed.Title)
+                embed.AddField("Embed Title", msgEmbed.Title)
                     .AddField("Embed Description", msgEmbed.Description)
                     .AddSeparatorField();
             }
 
-            embed = embed.AddField("New Content", msgAfter.Content ?? "N/A");
+            embed.AddField("New Content", msgAfter.Content ?? "N/A");
             foreach (Embed msgEmbed in msgAfter.Embeds)
             {
-                embed = embed.AddField("Embed Title", msgEmbed.Title)
+                embed.AddField("Embed Title", msgEmbed.Title)
                     .AddField("Embed Description", msgEmbed.Description)
                     .AddSeparatorField();
             }
