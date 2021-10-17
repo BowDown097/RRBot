@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+#pragma warning disable RCS1163, IDE0060 // both warnings fire for events, which they shouldn't
 
 namespace RRBot.Systems
 {
@@ -60,17 +61,89 @@ namespace RRBot.Systems
             await WriteToLogs(beforeText.Guild, embed);
         }
 
+        public static async Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> userBeforeCached,
+            SocketGuildUser userAfter)
+        {
+            SocketGuildUser userBefore = await userBeforeCached.GetOrDownloadAsync();
+            if (userBefore.Nickname == userAfter.Nickname && userBefore.Roles.SequenceEqual(userAfter.Roles))
+                return;
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithDescription("**Member Updated**")
+                .AddStringField("Previous Nickname", userBefore.Nickname, true)
+                .AddStringField("Current Nickname", userAfter.Nickname, true)
+                .AddSeparatorField()
+                .AddStringField("Previous Roles", string.Join(", ", userBefore.Roles.Select(r => r.Name)), true)
+                .AddStringField("Current Roles", string.Join(", ", userAfter.Roles.Select(r => r.Name)), true);
+
+            await WriteToLogs(userAfter.Guild, embed);
+        }
+
+        public static async Task Client_GuildStickerCreated(SocketCustomSticker sticker)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithDescription("**Sticker Created**")
+                .WithImageUrl(sticker.GetStickerUrl())
+                .AddStringField("Name", sticker.Name)
+                .AddStringField("Description", sticker.Description);
+
+            if (sticker.Author != null) // sticker.Author can randomly be null :(
+                embed.WithAuthor(sticker.Author);
+
+            await WriteToLogs(sticker.Guild, embed);
+        }
+
+        public static async Task Client_GuildStickerDeleted(SocketCustomSticker sticker)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithDescription("**Sticker Deleted**")
+                .WithImageUrl(sticker.GetStickerUrl())
+                .AddStringField("Name", sticker.Name)
+                .AddStringField("Description", sticker.Description);
+
+            if (sticker.Author != null) // sticker.Author can randomly be null :(
+                embed.WithAuthor(sticker.Author);
+
+            await WriteToLogs(sticker.Guild, embed);
+        }
+
+        public static async Task Client_GuildUpdated(SocketGuild guildBefore, SocketGuild guildAfter)
+        {
+            if (guildBefore.Name == guildAfter.Name && guildBefore.Description == guildAfter.Description)
+                return;
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithDescription("**Guild Updated**")
+                .AddStringField("Previous Name", guildBefore.Name, true)
+                .AddStringField("Current Name", guildAfter.Name, true)
+                .AddSeparatorField()
+                .AddStringField("Previous Description", guildBefore.Description, true)
+                .AddStringField("Current Description", guildAfter.Description, true);
+
+            await WriteToLogs(guildAfter, embed);
+        }
+
         public static async Task Client_InviteCreated(SocketInvite invite)
         {
             EmbedBuilder embed = new EmbedBuilder()
+                .WithAuthor(invite.Inviter)
                 .WithDescription("**Invite Created**")
                 .AddStringField("URL", invite.Url)
                 .AddStringField("Channel", MentionUtils.MentionChannel(invite.ChannelId))
-                .AddStringField("Inviter", invite.Inviter.Mention)
                 .AddField("Max Age", invite.MaxAge)
                 .AddField("Max Uses", invite.MaxUses);
 
             await WriteToLogs(invite.Guild, embed);
+        }
+
+        public static async Task Client_InviteDeleted(SocketGuildChannel channel, string code)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithDescription("**Invite Deleted**")
+                .AddStringField("Channel", MentionUtils.MentionChannel(channel.Id))
+                .AddStringField("Code", code);
+
+            await WriteToLogs(channel.Guild, embed);
         }
 
         public static async Task Client_MessageDeleted(Cacheable<IMessage, ulong> msgCached, Cacheable<IMessageChannel, ulong> channelCached)
@@ -121,6 +194,42 @@ namespace RRBot.Systems
             await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
         }
 
+        public static async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msgCached,
+            Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction)
+        {
+            IUserMessage msg = await msgCached.GetOrDownloadAsync();
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithAuthor(reaction.User.Value)
+                .WithDescription("**Reaction Added**")
+                .AddStringField("Channel", MentionUtils.MentionChannel(reaction.Channel.Id))
+                .AddStringField("Emoji", reaction.Emote.Name)
+                .AddStringField("Message", $"**{msg.Author}**: {msg.Content}");
+
+            if (reaction.Emote is Emote emote)
+                embed.WithImageUrl(emote.Url + "?size=48");
+
+            await WriteToLogs((reaction.Channel as SocketGuildChannel)?.Guild, embed);
+        }
+
+        public static async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msgCached,
+            Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction)
+        {
+            IUserMessage msg = await msgCached.GetOrDownloadAsync();
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithAuthor(reaction.User.Value)
+                .WithDescription("**Reaction Removed**")
+                .AddStringField("Channel", MentionUtils.MentionChannel(reaction.Channel.Id))
+                .AddStringField("Emoji", reaction.Emote.Name)
+                .AddStringField("Message", $"**{msg.Author}**: {msg.Content}");
+
+            if (reaction.Emote is Emote emote)
+                embed.WithImageUrl(emote.Url + "?size=48");
+
+            await WriteToLogs((reaction.Channel as SocketGuildChannel)?.Guild, embed);
+        }
+
         public static async Task Client_RoleCreated(SocketRole role)
         {
             EmbedBuilder embed = new EmbedBuilder()
@@ -135,6 +244,22 @@ namespace RRBot.Systems
                 .WithDescription($"**Role Deleted**\n{role.Name}");
 
             await WriteToLogs(role.Guild, embed);
+        }
+
+        public static async Task Client_RoleUpdated(SocketRole roleBefore, SocketRole roleAfter)
+        {
+            if (roleBefore.Name == roleAfter.Name && roleBefore.Color == roleAfter.Color)
+                return;
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithDescription("**Role Updated**")
+                .AddStringField("Previous Name", roleBefore.Name, true)
+                .AddStringField("Current Name", roleAfter.Name, true)
+                .AddSeparatorField()
+                .AddField("Previous Color", $"{roleBefore.Color} ({roleBefore.Color.R}, {roleBefore.Color.G}, {roleBefore.Color.B})", true)
+                .AddField("Current Color", $"{roleAfter.Color} ({roleAfter.Color.R}, {roleAfter.Color.G}, {roleAfter.Color.B})", true);
+
+            await WriteToLogs(roleAfter.Guild, embed);
         }
 
         public static async Task Client_SpeakerAdded(SocketStageChannel stage, SocketGuildUser user)
