@@ -16,7 +16,7 @@ namespace RRBot.Entities
         [FirestoreDocumentId]
         public DocumentReference Reference { get; set; }
         [FirestoreProperty("achievements")]
-        public Dictionary<string, string> Achievements { get; set; }
+        public Dictionary<string, string> Achievements { get; set; } = new();
         [FirestoreProperty("btc")]
         public double BTC { get; set; }
         [FirestoreProperty("bullyCooldown")]

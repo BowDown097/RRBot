@@ -32,7 +32,7 @@ namespace RRBot.Modules
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithTitle(user == null ? "Cooldowns" : $"{user}'s Cooldowns")
+                .WithTitle(user == null ? "Achievements" : $"{user}'s Achievements")
                 .WithDescription(description.Length > 0 ? description.ToString() : "None");
             await ReplyAsync(embed: embed.Build());
         }

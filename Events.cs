@@ -190,8 +190,15 @@ namespace RRBot
                 try
                 {
                     SearchResult search = commands.Search(msg.Content[argPos..]);
-                    if (!search.IsSuccess || (client.CurrentUser as IGuildUser)?.GetPermissions(context.Channel as IGuildChannel).Has(ChannelPermission.SendMessages) == false)
+                    if (!search.IsSuccess)
                         return;
+
+                    CommandInfo command = search.Commands[0].Command;
+                    if ((client.CurrentUser as IGuildUser)?.GetPermissions(context.Channel as IGuildChannel).Has(ChannelPermission.SendMessages) == false
+                        && command.Module.Name != "Moderation")
+                    {
+                        return;
+                    }
 
                     DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
                     if (globalConfig.BannedUsers.Contains(context.User.Id))
@@ -199,7 +206,7 @@ namespace RRBot
                         await context.User.NotifyAsync(context.Channel, "You are banned from using the bot!");
                         return;
                     }
-                    if (globalConfig.DisabledCommands.Contains(search.Commands[0].Command.Name))
+                    if (globalConfig.DisabledCommands.Contains(command.Name))
                     {
                         await context.User.NotifyAsync(context.Channel, "This command is temporarily disabled!");
                         return;

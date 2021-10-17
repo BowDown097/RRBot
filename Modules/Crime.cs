@@ -145,7 +145,7 @@ namespace RRBot.Modules
         public async Task<RuntimeResult> Hack(IGuildUser user, string crypto, double amount)
         {
             if (amount < Constants.INVESTMENT_MIN_AMOUNT || double.IsNaN(amount))
-                return CommandResult.FromError($"You must rob {Constants.INVESTMENT_MIN_AMOUNT} or more.");
+                return CommandResult.FromError($"You must hack {Constants.INVESTMENT_MIN_AMOUNT} or more.");
             if (user.Id == Context.User.Id)
                 return CommandResult.FromError("How are you supposed to hack yourself?");
             if (user.IsBot)
@@ -156,7 +156,7 @@ namespace RRBot.Modules
                 return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
             DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-            DbUser target = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
             if (author.UsingSlots || target.UsingSlots)
                 return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
             if (target.Perks.ContainsKey("Pacifist"))
@@ -168,7 +168,7 @@ namespace RRBot.Modules
             if (authorBal < amount)
                 return CommandResult.FromError($"You don't have that much {abbreviation}!");
             if (amount > robMax)
-                return CommandResult.FromError($"You can only rob {Constants.ROB_MAX_PERCENT}% of **{user}**'s cash, that being **{robMax}**.");
+                return CommandResult.FromError($"You can only hack {Constants.ROB_MAX_PERCENT}% of **{user}**'s {abbreviation}, that being **{robMax}**.");
 
             int roll = RandomUtil.Next(1, 101);
             double cryptoValue = await Investments.QueryCryptoValue(abbreviation) * amount;
@@ -181,10 +181,10 @@ namespace RRBot.Modules
                 switch (RandomUtil.Next(2))
                 {
                     case 0:
-                        await Context.User.NotifyAsync(Context.Channel, $"The dumbass pushed his private keys to GitHub LMFAO! You sniped that shit and got **{amount:0.####} {crypto}**.");
+                        await Context.User.NotifyAsync(Context.Channel, $"The dumbass pushed his private keys to GitHub LMFAO! You sniped that shit and got **{amount:0.####} {abbreviation}**.");
                         break;
                     case 1:
-                        await Context.User.NotifyAsync(Context.Channel, $"You did an ol' SIM swap on {user}'s phone while they weren't looking and yoinked **{amount:0.####} {crypto}** right off their Coinbase. Easy claps!");
+                        await Context.User.NotifyAsync(Context.Channel, $"You did an ol' SIM swap on {user}'s phone while they weren't looking and yoinked **{amount:0.####} {abbreviation}** right off their Coinbase. Easy claps!");
                         break;
                 }
             }
@@ -195,10 +195,10 @@ namespace RRBot.Modules
                 switch (RandomUtil.Next(2))
                 {
                     case 0:
-                        await Context.User.NotifyAsync(Context.Channel, $"{user} actually secured their shit properly, got your info, and sent it off to the feds. You got raided and lost **{amount / 4:0.####} {crypto}** in the process.");
+                        await Context.User.NotifyAsync(Context.Channel, $"**{user}** actually secured their shit properly, got your info, and sent it off to the feds. You got raided and lost **{amount / 4:0.####} {abbreviation}** in the process.");
                         break;
                     case 1:
-                        await Context.User.NotifyAsync(Context.Channel, $"That hacker dude on Instagram scammed your ass! You only had to pay 1/4 of what you were promising starting off, but still sucks. There goes **{amount / 4:0.####} {crypto}**.");
+                        await Context.User.NotifyAsync(Context.Channel, $"That hacker dude on Instagram scammed your ass! You only had to pay 1/4 of what you were promising starting off, but still sucks. There goes **{amount / 4:0.####} {abbreviation}**.");
                         break;
                 }
             }

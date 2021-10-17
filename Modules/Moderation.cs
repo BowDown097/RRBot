@@ -50,11 +50,8 @@ namespace RRBot.Modules
             if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
             {
                 Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"banned **{user}**");
-                string response = resolved.Item2;
                 if (resolved.Item1 == TimeSpan.Zero)
                     return CommandResult.FromError("You specified an invalid amount of time!");
-                response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
-                await ReplyAsync(response);
 
                 DocumentReference banDoc = Program.database.Collection($"servers/{Context.Guild.Id}/bans").Document(user.Id.ToString());
                 await Logger.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
@@ -64,8 +61,11 @@ namespace RRBot.Modules
                 {
                     { "Bans", "1" }
                 });
-
                 await dbUser.Write();
+
+                string response = resolved.Item2;
+                response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
+                await ReplyAsync(response);
                 return CommandResult.FromSuccess();
             }
 
@@ -111,7 +111,6 @@ namespace RRBot.Modules
                     return CommandResult.FromError($"You cannot chill the chat for less than {Constants.CHILL_MIN_SECONDS} seconds.");
                 if (resolved.Item1.TotalSeconds > Constants.CHILL_MAX_SECONDS)
                     return CommandResult.FromError($"You cannot chill the chat for more than {Constants.CHILL_MAX_SECONDS} seconds.");
-                await ReplyAsync(resolved.Item2 + ".");
 
                 SocketTextChannel channel = Context.Channel as SocketTextChannel;
                 OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
@@ -122,6 +121,7 @@ namespace RRBot.Modules
                 DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/chills").Document(Context.Channel.Id.ToString());
                 await doc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) }, SetOptions.MergeAll);
 
+                await ReplyAsync(resolved.Item2 + ".");
                 return CommandResult.FromSuccess();
             }
 
@@ -142,11 +142,6 @@ namespace RRBot.Modules
                 return CommandResult.FromError($"You cannot kick **{user}** because they are a staff member.");
 
             await user.KickAsync(reason);
-
-            string response = $"**{Context.User}** has kicked **{user}**";
-            response += string.IsNullOrWhiteSpace(reason) ? "." : $"for '{reason}'";
-            await ReplyAsync(response);
-
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             dbUser.AddToStats(new Dictionary<string, string>
             {
@@ -154,6 +149,9 @@ namespace RRBot.Modules
             });
             await dbUser.Write();
 
+            string response = $"**{Context.User}** has kicked **{user}**";
+            response += string.IsNullOrWhiteSpace(reason) ? "." : $"for '{reason}'";
+            await ReplyAsync(response);
             return CommandResult.FromSuccess();
         }
 
@@ -175,13 +173,8 @@ namespace RRBot.Modules
                 if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
                 {
                     Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"muted **{user}**");
-                    string response = resolved.Item2;
                     if (resolved.Item1 == TimeSpan.Zero)
                         return CommandResult.FromError("You specified an invalid amount of time!");
-                    response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
-                    await ReplyAsync(response);
-                    await Achievements.UnlockAchievement("Literally 1984", "Get muted.",
-                        user as SocketUser, Context.Guild, Context.Channel);
 
                     DocumentReference muteDoc = Program.database.Collection($"servers/{Context.Guild.Id}/mutes").Document(user.Id.ToString());
                     await Logger.Custom_UserMuted(user, Context.User, duration, reason);
@@ -195,6 +188,11 @@ namespace RRBot.Modules
                     });
                     await dbUser.Write();
 
+                    string response = resolved.Item2;
+                    response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
+                    await ReplyAsync(response);
+                    await Achievements.UnlockAchievement("Literally 1984", "Get muted.",
+                        user as SocketUser, Context.Guild, Context.Channel);
                     return CommandResult.FromSuccess();
                 }
 
@@ -220,11 +218,12 @@ namespace RRBot.Modules
 
             if (!messages.Any())
                 return CommandResult.FromError("No messages were deleted.");
-            if (messages.Any(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays > 14))
-                await Context.User.NotifyAsync(Context.Channel, "Warning: Some messages were found to be older than 2 weeks and can't be deleted.");
 
             await (Context.Channel as SocketTextChannel)?.DeleteMessagesAsync(messages);
             await Logger.Custom_MessagesPurged(messages, Context.Guild);
+
+            if (messages.Any(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays > 14))
+                await Context.User.NotifyAsync(Context.Channel, "Warning: Some messages were found to be older than 2 weeks and can't be deleted.");
             return CommandResult.FromSuccess();
         }
 
@@ -236,10 +235,10 @@ namespace RRBot.Modules
             IReadOnlyCollection<RestBan> bans = await Context.Guild.GetBansAsync();
             if (!bans.Any(ban => ban.User.Id == user.Id))
                 return CommandResult.FromError("That user is not currently banned.");
+            await Context.Guild.RemoveBanAsync(user.Id);
 
             string userString = bans.FirstOrDefault(ban => ban.User.Id == user.Id).User.ToString();
             await ReplyAsync($"**{Context.User}** has unbanned **{userString}**.");
-            await Context.Guild.RemoveBanAsync(user.Id);
             return CommandResult.FromSuccess();
         }
 
@@ -271,8 +270,8 @@ namespace RRBot.Modules
             if (user.RoleIds.Contains(roles.MutedRole))
             {
                 await Logger.Custom_UserUnmuted(user, Context.User);
-                await ReplyAsync($"**{Context.User}** has unmuted **{user}**.");
                 await user.RemoveRoleAsync(roles.MutedRole);
+                await ReplyAsync($"**{Context.User}** has unmuted **{user}**.");
                 return CommandResult.FromSuccess();
             }
 
