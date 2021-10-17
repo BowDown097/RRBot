@@ -69,6 +69,7 @@ namespace RRBot.Systems
                 return;
 
             EmbedBuilder embed = new EmbedBuilder()
+                .WithAuthor(userAfter)
                 .WithDescription("**Member Updated**")
                 .AddStringField("Previous Nickname", userBefore.Nickname, true)
                 .AddStringField("Current Nickname", userAfter.Nickname, true)
@@ -155,11 +156,10 @@ namespace RRBot.Systems
                 .WithDescription($"**Message Deleted in {MentionUtils.MentionChannel(channel.Id)}**\n{msg.Content}")
                 .WithFooter($"ID: {msg.Id}");
 
-            foreach (Embed msgEmbed in msg.Embeds)
+            foreach (Embed msgEmbed in msg.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)))
             {
                 embed.AddStringField("Embed Title", msgEmbed.Title)
-                    .AddStringField("Embed Description", msgEmbed.Description)
-                    .AddSeparatorField();
+                    .AddStringField("Embed Description", msgEmbed.Description);
             }
 
             await WriteToLogs(channel.Guild, embed);
@@ -173,22 +173,20 @@ namespace RRBot.Systems
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(msgAfter.Author)
-                .WithDescription($"**Message Updated in {MentionUtils.MentionChannel(channel.Id)}**")
+                .WithDescription($"**Message Updated in {MentionUtils.MentionChannel(channel.Id)}**\n[Jump]({msgAfter.GetJumpUrl()})")
                 .AddStringField("Previous Content", msgBefore.Content);
 
-            foreach (Embed msgEmbed in msgBefore.Embeds)
+            foreach (Embed msgEmbed in msgBefore.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)))
             {
                 embed.AddStringField("Embed Title", msgEmbed.Title)
-                    .AddStringField("Embed Description", msgEmbed.Description)
-                    .AddSeparatorField();
+                    .AddStringField("Embed Description", msgEmbed.Description);
             }
 
             embed.AddStringField("Current Content", msgAfter.Content);
-            foreach (Embed msgEmbed in msgAfter.Embeds)
+            foreach (Embed msgEmbed in msgAfter.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)))
             {
                 embed.AddStringField("Embed Title", msgEmbed.Title)
-                    .AddStringField("Embed Description", msgEmbed.Description)
-                    .AddSeparatorField();
+                    .AddStringField("Embed Description", msgEmbed.Description);
             }
 
             await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
@@ -201,10 +199,9 @@ namespace RRBot.Systems
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(reaction.User.Value)
-                .WithDescription("**Reaction Added**")
-                .AddStringField("Channel", MentionUtils.MentionChannel(reaction.Channel.Id))
+                .WithDescription($"**Reaction Added in {MentionUtils.MentionChannel(reaction.Channel.Id)}**")
                 .AddStringField("Emoji", reaction.Emote.Name)
-                .AddStringField("Message", $"**{msg.Author}**: {msg.Content}");
+                .AddStringField("Message", $"[Jump]({msg.GetJumpUrl()})");
 
             if (reaction.Emote is Emote emote)
                 embed.WithImageUrl(emote.Url + "?size=48");
@@ -219,10 +216,9 @@ namespace RRBot.Systems
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(reaction.User.Value)
-                .WithDescription("**Reaction Removed**")
-                .AddStringField("Channel", MentionUtils.MentionChannel(reaction.Channel.Id))
+                .WithDescription($"**Reaction Removed in {MentionUtils.MentionChannel(reaction.Channel.Id)}**")
                 .AddStringField("Emoji", reaction.Emote.Name)
-                .AddStringField("Message", $"**{msg.Author}**: {msg.Content}");
+                .AddStringField("Message", $"[Jump]({msg.GetJumpUrl()})");
 
             if (reaction.Emote is Emote emote)
                 embed.WithImageUrl(emote.Url + "?size=48");
