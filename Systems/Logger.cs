@@ -74,8 +74,8 @@ namespace RRBot.Systems
                 .AddStringField("Previous Nickname", userBefore.Nickname, true)
                 .AddStringField("Current Nickname", userAfter.Nickname, true)
                 .AddSeparatorField()
-                .AddStringField("Previous Roles", string.Join(", ", userBefore.Roles.Select(r => r.Name)), true)
-                .AddStringField("Current Roles", string.Join(", ", userAfter.Roles.Select(r => r.Name)), true);
+                .AddStringField("Previous Roles", string.Join(" ", userBefore.Roles.Select(r => r.Mention)), true)
+                .AddStringField("Current Roles", string.Join(" ", userAfter.Roles.Select(r => r.Mention)), true);
 
             await WriteToLogs(userAfter.Guild, embed);
         }

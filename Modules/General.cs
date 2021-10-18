@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Google.Cloud.Firestore;
 using RRBot.Entities;
 using RRBot.Extensions;
@@ -38,91 +39,61 @@ namespace RRBot.Modules
         }
 
         [Command("help")]
-        [Summary("View info about the bot or view info about a command, depending on if you specify a command or not.")]
-        [Remarks("$help <command>")]
-        public async Task<RuntimeResult> Help(string command = "")
+        [Summary("View info about a command.")]
+        [Remarks("$help [command]")]
+        public async Task<RuntimeResult> Help(string command)
         {
-            if (string.IsNullOrWhiteSpace(command))
-            {
-                EmbedBuilder infoEmbed = new EmbedBuilder()
-                    .WithColor(Color.Red)
-                    .WithTitle("Rush Reborn Bot")
-                    .WithDescription("Say hello to the most amazing bot you will ever bare witness to, made by the greatest programmer who has ever lived! ~~definitely not capping~~\n\n" +
-                        "This is a module-based bot, so all of the commands are split up into modules.\n\n" +
-                        "If you want to learn about a particular module, use ``$modules`` to view the bot's modules and ``$module [module]`` to view the information of whatever module you want to look up.\n\n" +
-                        "If you want to learn about a particular command in a module, use ``$help [command]``. In command usage examples, [] indicate required arguments and <> indicate optional arguments.\n\n" +
-                        "If you have **ANY** questions, just ask!");
-                await ReplyAsync(embed: infoEmbed.Build());
-                return CommandResult.FromSuccess();
-            }
-
             SearchResult search = Commands.Search(command);
             if (!search.IsSuccess)
                 return CommandResult.FromError("You have specified a nonexistent command!");
+
             CommandInfo commandInfo = search.Commands[0].Command;
-            IEnumerable<string> aliases = commandInfo.Aliases.Except(new string[] { commandInfo.Name });
-
-            StringBuilder description = new($"**Description**: {commandInfo.Summary}\n**Usage**: ``{commandInfo.Remarks}``");
-            if (aliases.Any())
-                description.Append($"\n**Aliases**: {string.Join(", ", aliases)}");
-
-            if (commandInfo.TryGetPrecondition<CheckPacifistAttribute>())
-                description.Append("\nRequires not having the Pacifist perk equipped");
-            if (commandInfo.TryGetPrecondition<RequireCashAttribute>())
-                description.Append("\nRequires any amount of cash");
-            if (commandInfo.TryGetPrecondition<RequireDJAttribute>())
-                description.Append("\nRequires DJ");
-            if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>())
-                description.Append("\nMust be in NSFW channel");
-            if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>())
-                description.Append("\nRequires Bot Owner");
-            if (commandInfo.TryGetPrecondition<RequirePerkAttribute>())
-                description.Append("\nRequires a perk");
-            if (commandInfo.TryGetPrecondition<RequireStaffAttribute>())
-                description.Append("\nRequires Staff");
-            if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC))
-                description.Append($"\nMust be in #{rBIC.Name}");
-            if (commandInfo.TryGetPrecondition(out RequireItemAttribute ri))
-                description.Append(string.IsNullOrEmpty(ri.ItemType) ? "\nRequires an item" : $"\nRequires a {ri.ItemType}");
-            if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP))
-                description.Append($"\nRequires {Enum.GetName(rUP.GuildPermission.GetType(), rUP.GuildPermission)} permission");
             if (commandInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
             {
                 DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
                 if (!modules.NSFWEnabled)
                     return CommandResult.FromError("NSFW commands are disabled!");
             }
-            if (commandInfo.TryGetPrecondition(out RequireRankLevelAttribute rRL))
+            if (commandInfo.TryGetPrecondition<RequireRushRebornAttribute>()
+                && Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN
+                && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
             {
-                try
-                {
-                    DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("ranks");
-                    DocumentSnapshot snap = await doc.GetSnapshotAsync();
-                    KeyValuePair<string, object> level = snap.ToDictionary().First(kvp => kvp.Key.StartsWith($"level{rRL.RankLevel}") &&
-                        kvp.Key.EndsWith("Id"));
-                    IRole rank = Context.Guild.GetRole(Convert.ToUInt64(level.Value));
-                    description.AppendLine($"\nRequires {rank.Name}");
-                }
-                catch (Exception)
-                {
-                    description.Append($"\nRequires rank level {rRL.RankLevel} (rank has not been set)");
-                }
+                return CommandResult.FromError("You have specified a nonexistent command!");
             }
-            if (commandInfo.TryGetPrecondition<RequireRushRebornAttribute>())
-            {
-                if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN &&
-                    Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
-                {
-                    return CommandResult.FromError("You have specified a nonexistent command!");
-                }
 
-                description.Append("\nExclusive to Rush Reborn");
-            }
+            StringBuilder preconditions = new();
+            if (commandInfo.TryGetPrecondition<CheckPacifistAttribute>())
+                preconditions.AppendLine("Requires not having the Pacifist perk equipped");
+            if (commandInfo.TryGetPrecondition<RequireCashAttribute>())
+                preconditions.AppendLine("Requires any amount of cash");
+            if (commandInfo.TryGetPrecondition<RequireDJAttribute>())
+                preconditions.AppendLine("Requires DJ");
+            if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>())
+                preconditions.AppendLine("Must be in NSFW channel");
+            if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>())
+                preconditions.AppendLine("Requires Bot Owner");
+            if (commandInfo.TryGetPrecondition<RequireRushRebornAttribute>())
+                preconditions.AppendLine("Exclusive to Rush Reborn");
+            if (commandInfo.TryGetPrecondition<RequirePerkAttribute>())
+                preconditions.AppendLine("Requires a perk");
+            if (commandInfo.TryGetPrecondition(out RequireRankLevelAttribute rRL))
+                preconditions.AppendLine($"Requires rank level {rRL.RankLevel}");
+            if (commandInfo.TryGetPrecondition<RequireStaffAttribute>())
+                preconditions.AppendLine("Requires Staff");
+            if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC))
+                preconditions.AppendLine($"Must be in #{rBIC.Name}");
+            if (commandInfo.TryGetPrecondition(out RequireItemAttribute ri))
+                preconditions.AppendLine(string.IsNullOrEmpty(ri.ItemType) ? "Requires an item" : $"Requires {ri.ItemType}");
+            if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP))
+                preconditions.AppendLine($"Requires {Enum.GetName(rUP.GuildPermission.GetType(), rUP.GuildPermission)} permission");
 
             EmbedBuilder commandEmbed = new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithTitle(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(command.ToLower()))
-                .WithDescription(description.ToString());
+                .WithDescription("**" + CultureInfo.CurrentCulture.TextInfo.ToTitleCase(command.ToLower()) + "**")
+                .AddStringField("Description", commandInfo.Summary)
+                .AddStringField("Usage", commandInfo.Remarks)
+                .AddStringField("Aliases", string.Join(", ", commandInfo.Aliases.Where(a => a != commandInfo.Name)))
+                .AddStringField("Preconditions", preconditions.ToString());
             await ReplyAsync(embed: commandEmbed.Build());
             return CommandResult.FromSuccess();
         }
@@ -136,23 +107,20 @@ namespace RRBot.Modules
             if (moduleInfo == default)
                 return CommandResult.FromError("You have specified a nonexistent module!");
 
-            if (moduleInfo.Commands[0].TryGetPrecondition<RequireNsfwEnabledAttribute>())
+            if (moduleInfo.Name == "NSFW")
             {
                 DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
                 if (!modules.NSFWEnabled)
                     return CommandResult.FromError("NSFW commands are disabled!");
             }
-
-            if (moduleInfo.Commands[0].TryGetPrecondition<RequireRushRebornAttribute>() &&
-                Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN &&
-                Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+            if (moduleInfo.Name == "Support")
             {
                 return CommandResult.FromError("You have specified a nonexistent module!");
             }
 
             EmbedBuilder moduleEmbed = new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithTitle(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(module.ToLower()))
+                .WithDescription("**" + CultureInfo.CurrentCulture.TextInfo.ToTitleCase(module.ToLower()) + "**")
                 .AddField("Available commands", string.Join(", ", moduleInfo.Commands.Select(x => x.Name)))
                 .AddField("Description", moduleInfo.Summary);
             await ReplyAsync(embed: moduleEmbed.Build());
@@ -165,14 +133,55 @@ namespace RRBot.Modules
         public async Task Modules()
         {
             List<string> modulesList = Commands.Modules.Select(x => x.Name).ToList();
-            if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+            if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN
+                && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+            {
                 modulesList.Remove("Support");
+            }
 
             EmbedBuilder modulesEmbed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle("Modules")
                 .WithDescription(string.Join(", ", modulesList));
             await ReplyAsync(embed: modulesEmbed.Build());
+        }
+
+        [Command("serverinfo")]
+        [Summary("View info about this server.")]
+        [Remarks("$serverinfo")]
+        public async Task ServerInfo()
+        {
+            string banner = Context.Guild.BannerUrl;
+            string discovery = Context.Guild.DiscoverySplashUrl;
+            string icon = Context.Guild.IconUrl;
+            string invSplash = Context.Guild.SplashUrl;
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithAuthor(Context.Guild.Name, Context.Guild.IconUrl)
+                .WithColor(Color.Red)
+                .WithDescription("**Server Info**")
+                .WithThumbnailUrl(Context.Guild.IconUrl)
+                .AddField("Banner", !string.IsNullOrWhiteSpace(banner) ? $"[Here]({banner})" : "N/A", true)
+                .AddField("Discovery Splash", !string.IsNullOrWhiteSpace(discovery) ? $"[Here]({discovery})" : "N/A", true)
+                .AddField("Icon", !string.IsNullOrWhiteSpace(icon) ? $"[Here]({icon})" : "N/A", true)
+                .AddField("Invite Splash", !string.IsNullOrWhiteSpace(invSplash) ? $"[Here]({invSplash})" : "N/A", true)
+                .AddSeparatorField()
+                .AddField("Categories", Context.Guild.CategoryChannels.Count, true)
+                .AddField("Text Channels", Context.Guild.TextChannels.Count, true)
+                .AddField("Voice Channels", Context.Guild.VoiceChannels.Count, true)
+                .AddSeparatorField()
+                .AddField("Boosts", Context.Guild.PremiumSubscriptionCount, true)
+                .AddField("Emotes", Context.Guild.Emotes.Count, true)
+                .AddField("Members", Context.Guild.MemberCount, true)
+                .AddField("Roles", Context.Guild.Roles.Count, true)
+                .AddField("Stickers", Context.Guild.Stickers.Count, true)
+                .AddSeparatorField()
+                .AddStringField("Created At", Context.Guild.CreatedAt.ToString())
+                .AddStringField("Description", Context.Guild.Description)
+                .AddField("ID", Context.Guild.Id)
+                .AddStringField("Owner", Context.Guild.Owner.ToString())
+                .AddStringField("Vanity URL", Context.Guild.VanityURLCode);
+
+            await ReplyAsync(embed: embed.Build());
         }
 
         [Alias("statistics")]
@@ -199,6 +208,30 @@ namespace RRBot.Modules
                 .WithDescription(description.ToString());
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();
+        }
+
+        [Alias("whois")]
+        [Command("userinfo")]
+        [Summary("View info about a user.")]
+        [Remarks("$userinfo [user]")]
+        public async Task UserInfo(SocketGuildUser user)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithAuthor(user)
+                .WithColor(Color.Red)
+                .WithDescription("**User Info**")
+                .WithImageUrl(user.GetBannerUrl())
+                .WithThumbnailUrl(user.GetAvatarUrl())
+                .AddStringField("ID", user.Id.ToString(), true)
+                .AddStringField("Nickname", user.Nickname, true)
+                .AddSeparatorField()
+                .AddStringField("Joined At", user.JoinedAt.Value.ToString(), true)
+                .AddStringField("Created At", user.CreatedAt.ToString(), true)
+                .AddSeparatorField()
+                .AddStringField("Permissions", string.Join(", ", user.GuildPermissions.ToList().Select(p => Enum.GetName(p.GetType(), p))))
+                .AddStringField("Roles", string.Join(" ", user.Roles.Select(r => r.Mention)));
+
+            await ReplyAsync(embed: embed.Build());
         }
     }
 }

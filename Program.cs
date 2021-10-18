@@ -40,6 +40,7 @@ namespace RRBot
             commands.AddTypeReader(typeof(double), new DoubleTypeReader());
             commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
             commands.AddTypeReader(typeof(IGuildUser), new RRGuildUserTypeReader());
+            commands.AddTypeReader(typeof(SocketGuildUser), new RRGuildUserTypeReader());
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
             await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
             await client.SetGameAsync(Constants.ACTIVITY, type: Constants.ACTIVITY_TYPE);
