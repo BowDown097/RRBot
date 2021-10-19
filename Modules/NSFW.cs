@@ -1,8 +1,10 @@
 ﻿using Discord;
 using Discord.Commands;
+using Newtonsoft.Json.Linq;
 using NHentaiSharp.Search;
 using RRBot.Preconditions;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace RRBot.Modules
@@ -12,6 +14,25 @@ namespace RRBot.Modules
     [RequireNsfw]
     public class NSFW : ModuleBase<SocketCommandContext>
     {
+        [Command("neko")]
+        [Summary("Some good ol' neko hentai (sometimes just saucy lewds too).")]
+        [Remarks("$neko")]
+        public async Task Neko()
+        {
+            using WebClient client = new();
+            string apiUrl = RandomUtil.Next(2) == 0
+                ? "https://nekos.life/api/v2/img/nsfw_neko_gif"
+                : "https://nekos.life/api/v2/img/lewd";
+            string response = await client.DownloadStringTaskAsync(apiUrl);
+            string imgUrl = JObject.Parse(response)["url"].Value<string>();
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("One neko coming right up!")
+                .WithImageUrl(imgUrl);
+            await ReplyAsync(embed: embed.Build());
+        }
+
         [Command("nhentai")]
         [Summary("Search for a doujinshi/manga from NHentai, or go for a completely random one! If you provide multiple keywords for a search, separate them with a comma with no spaces.")]
         [Remarks("$nhentai")]
