@@ -84,9 +84,9 @@ namespace RRBot.Modules
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle($"Support Ticket #{tickets.Count + 1}")
-                .AddField("Issuer", Context.User.Mention)
-                .AddField("Helper", helperUser.Mention)
-                .AddField("Request", request);
+                .RRAddField("Issuer", Context.User.Mention)
+                .RRAddField("Helper", helperUser.Mention)
+                .RRAddField("Request", request);
 
             IUserMessage userMessage = await ReplyAsync($"{helperUser.Mention}, someone needs some help!", embed: embed.Build());
             ticket.Helper = helperUser.Id;
@@ -123,8 +123,8 @@ namespace RRBot.Modules
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle($"Support Ticket from {issuer}")
-                .AddField("Helper", helper.Mention)
-                .AddField("Request", ticket.Request);
+                .RRAddField("Helper", helper.Mention)
+                .RRAddField("Request", ticket.Request);
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();
         }

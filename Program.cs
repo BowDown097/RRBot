@@ -37,10 +37,10 @@ namespace RRBot
 
             new Events(serviceProvider).Initialize();
             CommandService commands = serviceProvider.GetRequiredService<CommandService>();
-            commands.AddTypeReader(typeof(double), new DoubleTypeReader());
-            commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
-            commands.AddTypeReader(typeof(IGuildUser), new RRGuildUserTypeReader());
-            commands.AddTypeReader(typeof(SocketGuildUser), new RRGuildUserTypeReader());
+            commands.AddTypeReader<double>(new DoubleTypeReader());
+            commands.AddTypeReader<IEmote>(new EmoteTypeReader());
+            commands.AddTypeReader<IGuildUser>(new RRGuildUserTypeReader());
+            commands.AddTypeReader<SocketGuildUser>(new RRGuildUserTypeReader());
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
             await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
             await client.SetGameAsync(Constants.ACTIVITY, type: Constants.ACTIVITY_TYPE);

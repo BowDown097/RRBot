@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -180,14 +181,13 @@ namespace RRBot.Modules
             // get all the stuff we need
             using WebClient client = new();
             string response = await client.DownloadStringTaskAsync("https://opentdb.com/api.php?amount=1");
-            Trivia trivia = JsonConvert.DeserializeObject<Trivia>(response);
-            string question = HttpUtility.HtmlDecode(trivia.Results[0].Question);
-            string correctAnswer = "​" + HttpUtility.HtmlDecode(trivia.Results[0].CorrectAnswer);
+            TriviaQuestion trivia = JsonConvert.DeserializeObject<Trivia>(response).Results[0];
+            string question = HttpUtility.HtmlDecode(trivia.Question);
+            string correctAnswer = HttpUtility.HtmlDecode(trivia.CorrectAnswer);
+            IEnumerable<string> incorrectAnswers = trivia.IncorrectAnswers.Select(a => HttpUtility.HtmlDecode(a));
 
             // set up and randomize answers array
-            List<string> answers = new() { correctAnswer };
-            foreach (string incorrect in trivia.Results[0].IncorrectAnswers)
-                answers.Add(HttpUtility.HtmlDecode(incorrect));
+            List<string> answers = new(incorrectAnswers.Append(correctAnswer));
             for (int i = 0; i < answers.Count - 1; i++)
             {
                 int j = RandomUtil.Next(i, answers.Count);
@@ -196,15 +196,20 @@ namespace RRBot.Modules
                 answers[j] = temp;
             }
 
-            StringBuilder description = new($"{question}\n\nReact with the respective number to submit your answer.\n");
+            ComponentBuilder components = new();
+            StringBuilder description = new($"{question}\n\nPress the button with the respective number to submit your answer.\n");
             for (int i = 1; i <= answers.Count; i++)
-                description.AppendLine($"{i}: {answers[i-1]}");
+            {
+                string answer = answers[i - 1];
+                description.AppendLine($"{i}: {answer}");
+                components.WithButton(i.ToString(), $"trivia-{Context.User.Id}-{i}-{answer == correctAnswer}");
+            }
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle("Trivia!")
                 .WithDescription(description.ToString());
-            await ReplyAsync(embed: embed.Build());
+            await ReplyAsync(embed: embed.Build(), component: components.Build());
         }
 
         [Command("verse")]

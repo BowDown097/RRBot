@@ -128,11 +128,11 @@ namespace RRBot.Modules
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle("Cryptocurrency Values")
-                .AddField("Bitcoin (BTC)", btc.ToString("C2"))
-                .AddField("Dogecoin (DOGE)", doge.ToString("C2"))
-                .AddField("Ethereum (ETH)", eth.ToString("C2"))
-                .AddField("Litecoin (LTC)", ltc.ToString("C2"))
-                .AddField("XRP", xrp.ToString("C2"));
+                .RRAddField("Bitcoin (BTC)", btc.ToString("C2"))
+                .RRAddField("Dogecoin (DOGE)", doge.ToString("C2"))
+                .RRAddField("Ethereum (ETH)", eth.ToString("C2"))
+                .RRAddField("Litecoin (LTC)", ltc.ToString("C2"))
+                .RRAddField("XRP", xrp.ToString("C2"));
             await ReplyAsync(embed: embed.Build());
         }
 

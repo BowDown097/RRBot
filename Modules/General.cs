@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Google.Cloud.Firestore;
 using RRBot.Entities;
 using RRBot.Extensions;
 using RRBot.Preconditions;
@@ -90,10 +89,10 @@ namespace RRBot.Modules
             EmbedBuilder commandEmbed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithDescription("**" + CultureInfo.CurrentCulture.TextInfo.ToTitleCase(command.ToLower()) + "**")
-                .AddStringField("Description", commandInfo.Summary)
-                .AddStringField("Usage", commandInfo.Remarks)
-                .AddStringField("Aliases", string.Join(", ", commandInfo.Aliases.Where(a => a != commandInfo.Name)))
-                .AddStringField("Preconditions", preconditions.ToString());
+                .RRAddField("Description", commandInfo.Summary)
+                .RRAddField("Usage", commandInfo.Remarks)
+                .RRAddField("Aliases", string.Join(", ", commandInfo.Aliases.Where(a => a != commandInfo.Name)))
+                .RRAddField("Preconditions", preconditions.ToString());
             await ReplyAsync(embed: commandEmbed.Build());
             return CommandResult.FromSuccess();
         }
@@ -121,8 +120,8 @@ namespace RRBot.Modules
             EmbedBuilder moduleEmbed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithDescription("**" + CultureInfo.CurrentCulture.TextInfo.ToTitleCase(module.ToLower()) + "**")
-                .AddField("Available commands", string.Join(", ", moduleInfo.Commands.Select(x => x.Name)))
-                .AddField("Description", moduleInfo.Summary);
+                .RRAddField("Available commands", string.Join(", ", moduleInfo.Commands.Select(x => x.Name)))
+                .RRAddField("Description", moduleInfo.Summary);
             await ReplyAsync(embed: moduleEmbed.Build());
             return CommandResult.FromSuccess();
         }
@@ -160,26 +159,26 @@ namespace RRBot.Modules
                 .WithColor(Color.Red)
                 .WithDescription("**Server Info**")
                 .WithThumbnailUrl(Context.Guild.IconUrl)
-                .AddField("Banner", !string.IsNullOrWhiteSpace(banner) ? $"[Here]({banner})" : "N/A", true)
-                .AddField("Discovery Splash", !string.IsNullOrWhiteSpace(discovery) ? $"[Here]({discovery})" : "N/A", true)
-                .AddField("Icon", !string.IsNullOrWhiteSpace(icon) ? $"[Here]({icon})" : "N/A", true)
-                .AddField("Invite Splash", !string.IsNullOrWhiteSpace(invSplash) ? $"[Here]({invSplash})" : "N/A", true)
+                .RRAddField("Banner", !string.IsNullOrWhiteSpace(banner) ? $"[Here]({banner})" : "N/A", true)
+                .RRAddField("Discovery Splash", !string.IsNullOrWhiteSpace(discovery) ? $"[Here]({discovery})" : "N/A", true)
+                .RRAddField("Icon", !string.IsNullOrWhiteSpace(icon) ? $"[Here]({icon})" : "N/A", true)
+                .RRAddField("Invite Splash", !string.IsNullOrWhiteSpace(invSplash) ? $"[Here]({invSplash})" : "N/A", true)
                 .AddSeparatorField()
-                .AddField("Categories", Context.Guild.CategoryChannels.Count, true)
-                .AddField("Text Channels", Context.Guild.TextChannels.Count, true)
-                .AddField("Voice Channels", Context.Guild.VoiceChannels.Count, true)
+                .RRAddField("Categories", Context.Guild.CategoryChannels.Count, true)
+                .RRAddField("Text Channels", Context.Guild.TextChannels.Count, true)
+                .RRAddField("Voice Channels", Context.Guild.VoiceChannels.Count, true)
                 .AddSeparatorField()
-                .AddField("Boosts", Context.Guild.PremiumSubscriptionCount, true)
-                .AddField("Emotes", Context.Guild.Emotes.Count, true)
-                .AddField("Members", Context.Guild.MemberCount, true)
-                .AddField("Roles", Context.Guild.Roles.Count, true)
-                .AddField("Stickers", Context.Guild.Stickers.Count, true)
+                .RRAddField("Boosts", Context.Guild.PremiumSubscriptionCount, true)
+                .RRAddField("Emotes", Context.Guild.Emotes.Count, true)
+                .RRAddField("Members", Context.Guild.MemberCount, true)
+                .RRAddField("Roles", Context.Guild.Roles.Count, true)
+                .RRAddField("Stickers", Context.Guild.Stickers.Count, true)
                 .AddSeparatorField()
-                .AddStringField("Created At", Context.Guild.CreatedAt.ToString())
-                .AddStringField("Description", Context.Guild.Description)
-                .AddField("ID", Context.Guild.Id)
-                .AddStringField("Owner", Context.Guild.Owner.ToString())
-                .AddStringField("Vanity URL", Context.Guild.VanityURLCode);
+                .RRAddField("Created At", Context.Guild.CreatedAt)
+                .RRAddField("Description", Context.Guild.Description)
+                .RRAddField("ID", Context.Guild.Id)
+                .RRAddField("Owner", Context.Guild.Owner)
+                .RRAddField("Vanity URL", Context.Guild.VanityURLCode);
 
             await ReplyAsync(embed: embed.Build());
         }
@@ -216,20 +215,23 @@ namespace RRBot.Modules
         [Remarks("$userinfo [user]")]
         public async Task UserInfo(SocketGuildUser user)
         {
+            IEnumerable<string> perms = user.GuildPermissions.ToList()
+                .Select(p => Enum.GetName(p.GetType(), p).SplitPascalCase());
+
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(user)
                 .WithColor(Color.Red)
                 .WithDescription("**User Info**")
                 .WithImageUrl(user.GetBannerUrl())
                 .WithThumbnailUrl(user.GetAvatarUrl())
-                .AddStringField("ID", user.Id.ToString(), true)
-                .AddStringField("Nickname", user.Nickname, true)
+                .RRAddField("ID", user.Id.ToString(), true)
+                .RRAddField("Nickname", user.Nickname, true)
                 .AddSeparatorField()
-                .AddStringField("Joined At", user.JoinedAt.Value.ToString(), true)
-                .AddStringField("Created At", user.CreatedAt.ToString(), true)
+                .RRAddField("Joined At", user.JoinedAt.Value.ToString(), true)
+                .RRAddField("Created At", user.CreatedAt.ToString(), true)
                 .AddSeparatorField()
-                .AddStringField("Permissions", string.Join(", ", user.GuildPermissions.ToList().Select(p => Enum.GetName(p.GetType(), p))))
-                .AddStringField("Roles", string.Join(" ", user.Roles.Select(r => r.Mention)));
+                .RRAddField("Permissions", string.Join(", ", perms))
+                .RRAddField("Roles", string.Join(" ", user.Roles.Select(r => r.Mention)));
 
             await ReplyAsync(embed: embed.Build());
         }

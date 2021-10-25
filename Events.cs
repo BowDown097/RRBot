@@ -81,47 +81,12 @@ namespace RRBot
             client.UserVoiceStateUpdated += Logger.Client_UserVoiceStateUpdated;
         }
 
-        private static async Task HandleReactionAsync(Cacheable<IUserMessage, ulong> msgCached,
-            Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction, bool addedReaction)
+        private static async Task HandleReactionAsync(Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction, bool addedReaction)
         {
             IMessageChannel channel = await channelCached.GetOrDownloadAsync();
             SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
             if (user.IsBot)
                 return;
-
-            IUserMessage msg = await msgCached.GetOrDownloadAsync();
-            // trivia check
-            if (msg.Embeds.Count > 0 && addedReaction)
-            {
-                Embed embed = msg.Embeds.FirstOrDefault() as Embed;
-                if (embed.Title == "Trivia!")
-                {
-                    if (!Constants.POLL_EMOTES.Any(kvp => kvp.Value == reaction.Emote.ToString()))
-                    {
-                        await msg.RemoveReactionAsync(reaction.Emote, user);
-                        return;
-                    }
-
-                    using StringReader reader = new(embed.Description);
-                    for (string line = await reader.ReadLineAsync(); line != null; line = await reader.ReadLineAsync())
-                    {
-                        if (!line.Contains("​")) // determine correct answer by using zero-width space lol
-                            continue;
-
-                        Emoji numberEmoji = new(Constants.POLL_EMOTES[Convert.ToInt32(line[0].ToString())]);
-                        if (reaction.Emote.ToString() == numberEmoji.ToString())
-                        {
-                            EmbedBuilder embedBuilder = new EmbedBuilder()
-                                .WithColor(Color.Red)
-                                .WithTitle("Trivia Over!")
-                                .WithDescription($"**{reaction.User}** was the first to get the correct answer of \"{line[3..]}\"!\n~~{embed.Description}~~");
-                            await msg.ModifyAsync(msg => msg.Embed = embedBuilder.Build());
-                        }
-                    }
-
-                    return;
-                }
-            }
 
             // selfroles check
             IGuild guild = (channel as ITextChannel)?.Guild;
@@ -145,17 +110,20 @@ namespace RRBot
                 return;
 
             string[] split = component.Data.CustomId.Split('-');
-            ulong executorId = Convert.ToUInt64(split[1]);
-            if (component.User.Id != executorId)
-            {
-                await component.RespondAsync("Action not permitted: You did not execute the original command.", ephemeral: true);
-                return;
-            }
-
             switch (split[0])
             {
                 case "lbnext":
+                    ulong executorId = Convert.ToUInt64(split[1]);
+                    if (component.User.Id != executorId)
+                    {
+                        await component.RespondAsync("Action not permitted: You did not execute the original command.", ephemeral: true);
+                        return;
+                    }
+
                     await LeaderboardInteractions.GetNext(component, executorId, split[2], int.Parse(split[3]), int.Parse(split[4]));
+                    break;
+                case "trivia":
+                    await TriviaInteractions.Respond(component, split[2], bool.Parse(split[3]));
                     break;
             }
         }
@@ -258,10 +226,10 @@ namespace RRBot
         }
 
         private static async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, Cacheable<IMessageChannel, ulong> channel,
-            SocketReaction reaction) => await HandleReactionAsync(msg, channel, reaction, true);
+            SocketReaction reaction) => await HandleReactionAsync(channel, reaction, true);
 
         private static async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msg, Cacheable<IMessageChannel, ulong> channel,
-            SocketReaction reaction) => await HandleReactionAsync(msg, channel, reaction, false);
+            SocketReaction reaction) => await HandleReactionAsync(channel, reaction, false);
 
         private async Task Client_Ready()
         {

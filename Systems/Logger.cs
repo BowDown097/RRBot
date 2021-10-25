@@ -46,17 +46,17 @@ namespace RRBot.Systems
             SocketTextChannel afterText = after as SocketTextChannel;
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Channel Updated**\n*(If nothing here appears changed, then the channel permissions were updated)*")
-                .AddStringField("Previous Name", $"#{before}", true)
-                .AddStringField("Current Name", MentionUtils.MentionChannel(after.Id), true)
+                .RRAddField("Previous Name", before, true)
+                .RRAddField("Current Name", MentionUtils.MentionChannel(after.Id), true)
                 .AddSeparatorField()
-                .AddStringField("Previous Topic", beforeText.Topic, true)
-                .AddStringField("Current Topic", afterText.Topic, true)
+                .RRAddField("Previous Topic", beforeText.Topic, true)
+                .RRAddField("Current Topic", afterText.Topic, true)
                 .AddSeparatorField()
-                .AddField("Previous Position", beforeText.Position, true)
-                .AddField("Current Position", afterText.Position, true)
+                .RRAddField("Previous Position", beforeText.Position, true)
+                .RRAddField("Current Position", afterText.Position, true)
                 .AddSeparatorField()
-                .AddField("Previous Member Count", before.Users.Count, true)
-                .AddField("Current Member Count", after.Users.Count, true);
+                .RRAddField("Previous Member Count", before.Users.Count, true)
+                .RRAddField("Current Member Count", after.Users.Count, true);
 
             await WriteToLogs(beforeText.Guild, embed);
         }
@@ -71,11 +71,11 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(userAfter)
                 .WithDescription("**Member Updated**")
-                .AddStringField("Previous Nickname", userBefore.Nickname, true)
-                .AddStringField("Current Nickname", userAfter.Nickname, true)
+                .RRAddField("Previous Nickname", userBefore.Nickname, true)
+                .RRAddField("Current Nickname", userAfter.Nickname, true)
                 .AddSeparatorField()
-                .AddStringField("Previous Roles", string.Join(" ", userBefore.Roles.Select(r => r.Mention)), true)
-                .AddStringField("Current Roles", string.Join(" ", userAfter.Roles.Select(r => r.Mention)), true);
+                .RRAddField("Previous Roles", string.Join(" ", userBefore.Roles.Select(r => r.Mention)), true)
+                .RRAddField("Current Roles", string.Join(" ", userAfter.Roles.Select(r => r.Mention)), true);
 
             await WriteToLogs(userAfter.Guild, embed);
         }
@@ -85,8 +85,8 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Sticker Created**")
                 .WithImageUrl(sticker.GetStickerUrl())
-                .AddStringField("Name", sticker.Name)
-                .AddStringField("Description", sticker.Description);
+                .RRAddField("Name", sticker.Name)
+                .RRAddField("Description", sticker.Description);
 
             if (sticker.Author != null) // sticker.Author can randomly be null :(
                 embed.WithAuthor(sticker.Author);
@@ -99,8 +99,8 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Sticker Deleted**")
                 .WithImageUrl(sticker.GetStickerUrl())
-                .AddStringField("Name", sticker.Name)
-                .AddStringField("Description", sticker.Description);
+                .RRAddField("Name", sticker.Name)
+                .RRAddField("Description", sticker.Description);
 
             if (sticker.Author != null) // sticker.Author can randomly be null :(
                 embed.WithAuthor(sticker.Author);
@@ -115,11 +115,11 @@ namespace RRBot.Systems
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Guild Updated**")
-                .AddStringField("Previous Name", guildBefore.Name, true)
-                .AddStringField("Current Name", guildAfter.Name, true)
+                .RRAddField("Previous Name", guildBefore.Name, true)
+                .RRAddField("Current Name", guildAfter.Name, true)
                 .AddSeparatorField()
-                .AddStringField("Previous Description", guildBefore.Description, true)
-                .AddStringField("Current Description", guildAfter.Description, true);
+                .RRAddField("Previous Description", guildBefore.Description, true)
+                .RRAddField("Current Description", guildAfter.Description, true);
 
             await WriteToLogs(guildAfter, embed);
         }
@@ -129,10 +129,10 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(invite.Inviter)
                 .WithDescription("**Invite Created**")
-                .AddStringField("URL", invite.Url)
-                .AddStringField("Channel", MentionUtils.MentionChannel(invite.ChannelId))
-                .AddField("Max Age", invite.MaxAge)
-                .AddField("Max Uses", invite.MaxUses);
+                .RRAddField("URL", invite.Url)
+                .RRAddField("Channel", MentionUtils.MentionChannel(invite.ChannelId))
+                .RRAddField("Max Age", invite.MaxAge)
+                .RRAddField("Max Uses", invite.MaxUses);
 
             await WriteToLogs(invite.Guild, embed);
         }
@@ -141,8 +141,8 @@ namespace RRBot.Systems
         {
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Invite Deleted**")
-                .AddStringField("Channel", MentionUtils.MentionChannel(channel.Id))
-                .AddStringField("Code", code);
+                .RRAddField("Channel", MentionUtils.MentionChannel(channel.Id))
+                .RRAddField("Code", code);
 
             await WriteToLogs(channel.Guild, embed);
         }
@@ -158,8 +158,8 @@ namespace RRBot.Systems
 
             foreach (Embed msgEmbed in msg.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)))
             {
-                embed.AddStringField("Embed Title", msgEmbed.Title)
-                    .AddStringField("Embed Description", msgEmbed.Description);
+                embed.RRAddField("Embed Title", msgEmbed.Title)
+                    .RRAddField("Embed Description", msgEmbed.Description);
             }
 
             await WriteToLogs(channel.Guild, embed);
@@ -174,19 +174,19 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(msgAfter.Author)
                 .WithDescription($"**Message Updated in {MentionUtils.MentionChannel(channel.Id)}**\n[Jump]({msgAfter.GetJumpUrl()})")
-                .AddStringField("Previous Content", msgBefore.Content);
+                .RRAddField("Previous Content", msgBefore.Content);
 
             foreach (Embed msgEmbed in msgBefore.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)))
             {
-                embed.AddStringField("Embed Title", msgEmbed.Title)
-                    .AddStringField("Embed Description", msgEmbed.Description);
+                embed.RRAddField("Embed Title", msgEmbed.Title)
+                    .RRAddField("Embed Description", msgEmbed.Description);
             }
 
-            embed.AddStringField("Current Content", msgAfter.Content);
+            embed.RRAddField("Current Content", msgAfter.Content);
             foreach (Embed msgEmbed in msgAfter.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)))
             {
-                embed.AddStringField("Embed Title", msgEmbed.Title)
-                    .AddStringField("Embed Description", msgEmbed.Description);
+                embed.RRAddField("Embed Title", msgEmbed.Title)
+                    .RRAddField("Embed Description", msgEmbed.Description);
             }
 
             await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
@@ -200,8 +200,8 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(reaction.User.Value)
                 .WithDescription($"**Reaction Added in {MentionUtils.MentionChannel(reaction.Channel.Id)}**")
-                .AddStringField("Emoji", reaction.Emote.Name)
-                .AddStringField("Message", $"[Jump]({msg.GetJumpUrl()})");
+                .RRAddField("Emoji", reaction.Emote.Name)
+                .RRAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
 
             if (reaction.Emote is Emote emote)
                 embed.WithImageUrl(emote.Url + "?size=48");
@@ -217,8 +217,8 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(reaction.User.Value)
                 .WithDescription($"**Reaction Removed in {MentionUtils.MentionChannel(reaction.Channel.Id)}**")
-                .AddStringField("Emoji", reaction.Emote.Name)
-                .AddStringField("Message", $"[Jump]({msg.GetJumpUrl()})");
+                .RRAddField("Emoji", reaction.Emote.Name)
+                .RRAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
 
             if (reaction.Emote is Emote emote)
                 embed.WithImageUrl(emote.Url + "?size=48");
@@ -249,11 +249,11 @@ namespace RRBot.Systems
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Role Updated**")
-                .AddStringField("Previous Name", roleBefore.Name, true)
-                .AddStringField("Current Name", roleAfter.Name, true)
+                .RRAddField("Previous Name", roleBefore.Name, true)
+                .RRAddField("Current Name", roleAfter.Name, true)
                 .AddSeparatorField()
-                .AddField("Previous Color", $"{roleBefore.Color} ({roleBefore.Color.R}, {roleBefore.Color.G}, {roleBefore.Color.B})", true)
-                .AddField("Current Color", $"{roleAfter.Color} ({roleAfter.Color.R}, {roleAfter.Color.G}, {roleAfter.Color.B})", true);
+                .RRAddField("Previous Color", $"{roleBefore.Color} ({roleBefore.Color.R}, {roleBefore.Color.G}, {roleBefore.Color.B})", true)
+                .RRAddField("Current Color", $"{roleAfter.Color} ({roleAfter.Color.R}, {roleAfter.Color.G}, {roleAfter.Color.B})", true);
 
             await WriteToLogs(roleAfter.Guild, embed);
         }
@@ -280,8 +280,8 @@ namespace RRBot.Systems
         {
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Stage Ended**")
-                .AddStringField("Channel", MentionUtils.MentionChannel(stage.Id))
-                .AddStringField("Topic", stage.Topic);
+                .RRAddField("Channel", MentionUtils.MentionChannel(stage.Id))
+                .RRAddField("Topic", stage.Topic);
 
             await WriteToLogs(stage.Guild, embed);
         }
@@ -290,8 +290,8 @@ namespace RRBot.Systems
         {
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Stage Started**")
-                .AddStringField("Channel", MentionUtils.MentionChannel(stage.Id))
-                .AddStringField("Topic", stage.Topic);
+                .RRAddField("Channel", MentionUtils.MentionChannel(stage.Id))
+                .RRAddField("Topic", stage.Topic);
 
             await WriteToLogs(stage.Guild, embed);
         }
@@ -300,17 +300,17 @@ namespace RRBot.Systems
         {
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Stage Updated**\n*(If nothing here appears changed, then the channel permissions were updated)*")
-                .AddStringField("Previous Channel Name", $"#{stageBefore}", true)
-                .AddStringField("Current Channel Name", MentionUtils.MentionChannel(stageAfter.Id), true)
+                .RRAddField("Previous Channel Name", $"#{stageBefore}", true)
+                .RRAddField("Current Channel Name", MentionUtils.MentionChannel(stageAfter.Id), true)
                 .AddSeparatorField()
-                .AddStringField("Previous Topic", stageBefore.Topic, true)
-                .AddStringField("Current Topic", stageAfter.Topic, true)
+                .RRAddField("Previous Topic", stageBefore.Topic, true)
+                .RRAddField("Current Topic", stageAfter.Topic, true)
                 .AddSeparatorField()
-                .AddField("Previous Discoverability Status", !stageBefore.DiscoverableDisabled, true)
-                .AddField("Current Discoverability Status", !stageAfter.DiscoverableDisabled, true)
+                .RRAddField("Previous Discoverability Status", !stageBefore.DiscoverableDisabled, true)
+                .RRAddField("Current Discoverability Status", !stageAfter.DiscoverableDisabled, true)
                 .AddSeparatorField()
-                .AddField("Previous User Limit", stageBefore.UserLimit, true)
-                .AddField("Current User Limit", stageAfter.UserLimit, true);
+                .RRAddField("Previous User Limit", stageBefore.UserLimit, true)
+                .RRAddField("Current User Limit", stageAfter.UserLimit, true);
 
             await WriteToLogs(stageAfter.Guild, embed);
         }
@@ -319,8 +319,8 @@ namespace RRBot.Systems
         {
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Thread Created**")
-                .AddStringField("Channel", MentionUtils.MentionChannel(threadChannel.ParentChannel.Id))
-                .AddStringField("Name", threadChannel.Name);
+                .RRAddField("Channel", MentionUtils.MentionChannel(threadChannel.ParentChannel.Id))
+                .RRAddField("Name", threadChannel.Name);
 
             await WriteToLogs(threadChannel.Guild, embed);
         }
@@ -330,8 +330,8 @@ namespace RRBot.Systems
             SocketThreadChannel threadChannel = await threadChannelCached.GetOrDownloadAsync();
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Thread Deleted**")
-                .AddStringField("Channel", MentionUtils.MentionChannel(threadChannel.ParentChannel.Id))
-                .AddStringField("Name", threadChannel.Name);
+                .RRAddField("Channel", MentionUtils.MentionChannel(threadChannel.ParentChannel.Id))
+                .RRAddField("Name", threadChannel.Name);
 
             await WriteToLogs(threadChannel.Guild, embed);
         }
@@ -362,17 +362,17 @@ namespace RRBot.Systems
             SocketThreadChannel threadBefore = await threadBeforeCached.GetOrDownloadAsync();
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Thread Updated**\n*(If nothing here appears changed, then the thread permissions were updated)*")
-                .AddStringField("Previous Name", threadBefore.Name, true)
-                .AddStringField("Current Name", threadAfter.Name, true)
+                .RRAddField("Previous Name", threadBefore.Name, true)
+                .RRAddField("Current Name", threadAfter.Name, true)
                 .AddSeparatorField()
-                .AddField("Previous Lock Status", threadBefore.Locked, true)
-                .AddField("Current Lock Status", threadAfter.Locked, true)
+                .RRAddField("Previous Lock Status", threadBefore.Locked, true)
+                .RRAddField("Current Lock Status", threadAfter.Locked, true)
                 .AddSeparatorField()
-                .AddField("Previous Member Count", threadBefore.MemberCount, true)
-                .AddField("Current Member Count", threadAfter.MemberCount, true)
+                .RRAddField("Previous Member Count", threadBefore.MemberCount, true)
+                .RRAddField("Current Member Count", threadAfter.MemberCount, true)
                 .AddSeparatorField()
-                .AddField("Previous Position", threadBefore.Position, true)
-                .AddField("Current Position", threadAfter.Position, true);
+                .RRAddField("Previous Position", threadBefore.Position, true)
+                .RRAddField("Current Position", threadAfter.Position, true);
 
             await WriteToLogs(threadAfter.Guild, embed);
         }
@@ -492,9 +492,9 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(target)
                 .WithDescription("**User Muted**")
-                .AddField("Duration", duration)
-                .AddField("Muter", actor)
-                .AddStringField("Reason", reason);
+                .RRAddField("Duration", duration)
+                .RRAddField("Muter", actor)
+                .RRAddField("Reason", reason);
 
             await WriteToLogs(target.Guild as SocketGuild, embed);
         }

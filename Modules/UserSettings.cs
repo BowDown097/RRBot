@@ -25,8 +25,8 @@ namespace RRBot.Modules
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle("Your Settings")
-                .AddField("DM Notifications", user.DMNotifs)
-                .AddField("No Reply Pings", user.NoReplyPings);
+                .RRAddField("DM Notifications", user.DMNotifs)
+                .RRAddField("No Reply Pings", user.NoReplyPings);
             await ReplyAsync(embed: embed.Build());
         }
 
