@@ -1,6 +1,7 @@
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -26,7 +27,7 @@ namespace RRBot.Systems
         public static async Task DoNWordCheckAsync(SocketUserMessage message, IMessageChannel channel)
         {
             char[] cleaned = message.Content.Where(char.IsLetterOrDigit).ToArray();
-            if (channel.Name != "extremely-funny" && NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
+            if (channel.Name != "extremely-funny" && NWORD_REGEX.IsMatch(new string(cleaned).ToLower()))
                 await message.DeleteAsync();
         }
 
@@ -42,10 +43,15 @@ namespace RRBot.Systems
 
             foreach (Embed epicEmbed in message.Embeds)
             {
-                if ((epicEmbed.Title.StartsWith("Trade offer") && !epicEmbed.Url.Contains("steamcommunity.com"))
-                    || (epicEmbed.Title.StartsWith("Steam Community") && !epicEmbed.Url.Contains("steamcommunity.com")))
+                if (Uri.TryCreate(epicEmbed.Url, UriKind.Absolute, out Uri uri))
                 {
-                    await message.DeleteAsync();
+                    string host = uri.Host.Replace("www.", "").ToLower();
+                    if ((epicEmbed.Title.StartsWith("Trade offer") && host != "steamcommunity.com")
+                        || (epicEmbed.Title.StartsWith("Steam Community") && host != "steamcommunity.com")
+                        || (epicEmbed.Title.StartsWith("You've been gifted") && host != "discord.gift"))
+                    {
+                        await message.DeleteAsync();
+                    }
                 }
             }
         }
