@@ -12,7 +12,7 @@ namespace RRBot.Systems
     {
         public static readonly Regex INVITE_REGEX = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
         public static readonly Regex NWORD_REGEX = new("[nɴⁿₙñńņňÑŃŅŇℕ𝒩][i1!¡ɪᶦᵢ¹₁jįīïîíìl|;:𝕀ℐ][g9ɢᵍ𝓰𝓰qģğĢĞ𝔾𝒢][g9ɢᵍ𝓰𝓰qģğĢĞ𝔾𝒢][e3€ᴇᵉₑ³₃ĖĘĚĔėęěĕəèéêëēеЕ£ℇ𝔼ℰ][rʀʳᵣŔŘŕřяℝℛ]");
-
+        public static readonly string NWORD_SPCHARS = "𝒩!¡¹₁|;:𝕀𝓰𝓰𝔾𝒢𝓰𝓰𝔾𝒢€³₃£𝔼";
         public static async Task DoInviteCheckAsync(SocketUserMessage message, DiscordSocketClient client)
         {
             foreach (Match match in INVITE_REGEX.Matches(message.Content))
@@ -26,7 +26,9 @@ namespace RRBot.Systems
 
         public static async Task DoNWordCheckAsync(SocketUserMessage message, IMessageChannel channel)
         {
-            char[] cleaned = message.Content.Where(char.IsLetterOrDigit).ToArray();
+            char[] cleaned = message.Content
+                .Where(c => char.IsLetterOrDigit(c) || NWORD_SPCHARS.Contains(c))
+                .ToArray();
             if (channel.Name != "extremely-funny" && NWORD_REGEX.IsMatch(new string(cleaned).ToLower()))
                 await message.DeleteAsync();
         }

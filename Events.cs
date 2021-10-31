@@ -120,7 +120,7 @@ namespace RRBot
                         return;
                     }
 
-                    await LeaderboardInteractions.GetNext(component, executorId, split[2], int.Parse(split[3]), int.Parse(split[4]));
+                    await LeaderboardInteractions.GetNext(component, executorId, split[2], int.Parse(split[3]), int.Parse(split[4]), int.Parse(split[5]), bool.Parse(split[6]));
                     break;
                 case "trivia":
                     await TriviaInteractions.Respond(component, split[2], bool.Parse(split[3]));
@@ -135,7 +135,9 @@ namespace RRBot
             if (userBefore.Nickname == userAfter.Nickname)
                 return;
 
-            char[] cleaned = userAfter.Nickname.Where(char.IsLetterOrDigit).ToArray();
+            char[] cleaned = userAfter.Nickname
+                .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
         }
@@ -251,14 +253,18 @@ namespace RRBot
         private static async Task Client_ThreadCreated(SocketThreadChannel thread)
         {
             await thread.JoinAsync();
-            char[] cleaned = thread.Name.Where(char.IsLetterOrDigit).ToArray();
+            char[] cleaned = thread.Name
+                .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await thread.DeleteAsync();
         }
 
         private static async Task Client_ThreadUpdated(Cacheable<SocketThreadChannel, ulong> threadBefore, SocketThreadChannel threadAfter)
         {
-            char[] cleaned = threadAfter.Name.Where(char.IsLetterOrDigit).ToArray();
+            char[] cleaned = threadAfter.Name
+                .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await threadAfter.DeleteAsync();
         }

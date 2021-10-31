@@ -177,7 +177,7 @@ namespace RRBot.Modules
             QuerySnapshot users = await Program.database.Collection($"servers/{Context.Guild.Id}/users")
                 .OrderByDescending(currency).GetSnapshotAsync();
             StringBuilder lb = new();
-            int processedUsers = 0;
+            int processedUsers = 0, failedUsers = 0;
             foreach (DocumentSnapshot doc in users.Documents)
             {
                 if (processedUsers == 10)
@@ -185,11 +185,17 @@ namespace RRBot.Modules
 
                 SocketGuildUser guildUser = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
                 if (guildUser == null)
+                {
+                    failedUsers++;
                     continue;
+                }
 
                 DbUser user = await DbUser.GetById(Context.Guild.Id, guildUser.Id);
                 if (user.Perks.ContainsKey("Pacifist"))
+                {
+                    failedUsers++;
                     continue;
+                }
 
                 double val = (double)user[cUp];
                 if (val < Constants.INVESTMENT_MIN_AMOUNT)
@@ -209,7 +215,7 @@ namespace RRBot.Modules
                 .WithDescription(lb.Length > 0 ? lb.ToString() : "Nothing to see here!");
             ComponentBuilder component = new ComponentBuilder()
                 .WithButton("Back", "dddd", disabled: true)
-                .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20", disabled: processedUsers != 10 || users.Documents.Count < 11);
+                .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20-{failedUsers}-False", disabled: processedUsers != 10 || users.Documents.Count < 11);
             await ReplyAsync(embed: embed.Build(), component: component.Build());
             return CommandResult.FromSuccess();
         }
