@@ -28,18 +28,15 @@ namespace RRBot.Modules
             return Math.Round(latestEntry[1].Value<double>(), 2);
         }
 
-        public static string ResolveAbbreviation(string crypto)
+        public static string ResolveAbbreviation(string crypto) => crypto.ToLower() switch
         {
-            return crypto.ToLower() switch
-            {
-                "bitcoin" or "btc" => "BTC",
-                "dogecoin" or "doge" => "DOGE",
-                "ethereum" or "eth" => "ETH",
-                "litecoin" or "ltc" => "LTC",
-                "xrp" => "XRP",
-                _ => null,
-            };
-        }
+            "bitcoin" or "btc" => "BTC",
+            "dogecoin" or "doge" => "DOGE",
+            "ethereum" or "eth" => "ETH",
+            "litecoin" or "ltc" => "LTC",
+            "xrp" => "XRP",
+            _ => null,
+        };
 
         [Command("invest")]
         [Summary("Invest in a cryptocurrency. Currently accepted currencies are BTC, DOGE, ETH, LTC, and XRP. Here, the amount you put in should be RR Cash.")]

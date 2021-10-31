@@ -123,6 +123,7 @@ namespace RRBot
         // ********************
         public static readonly Dictionary<int, string> POLL_EMOTES = new()
         {
+            { 0, "0️⃣" },
             { 1, "1️⃣" },
             { 2, "2️⃣" },
             { 3, "3️⃣" },
