@@ -137,6 +137,7 @@ namespace RRBot
 
             char[] cleaned = userAfter.Nickname
                 .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .Distinct()
                 .ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
@@ -255,6 +256,7 @@ namespace RRBot
             await thread.JoinAsync();
             char[] cleaned = thread.Name
                 .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .Distinct()
                 .ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await thread.DeleteAsync();
@@ -264,6 +266,7 @@ namespace RRBot
         {
             char[] cleaned = threadAfter.Name
                 .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .Distinct()
                 .ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 await threadAfter.DeleteAsync();

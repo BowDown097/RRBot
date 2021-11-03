@@ -66,6 +66,7 @@ namespace RRBot.Modules
         {
             char[] cleaned = request
                 .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .Distinct()
                 .ToArray();
             if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
                 return CommandResult.FromError("You cannot have the funny word in your request.");
