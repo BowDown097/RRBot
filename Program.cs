@@ -29,6 +29,7 @@
             commands.AddTypeReader<IEmote>(new EmoteTypeReader());
             commands.AddTypeReader<IGuildUser>(new RRGuildUserTypeReader());
             commands.AddTypeReader<SocketGuildUser>(new RRGuildUserTypeReader());
+            commands.AddTypeReader<string>(new SanitizedStringTypeReader());
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
             await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
             await client.SetGameAsync(Constants.ACTIVITY, type: Constants.ACTIVITY_TYPE);

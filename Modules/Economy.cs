@@ -4,7 +4,7 @@
     public class Economy : ModuleBase<SocketCommandContext>
     {
         public static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Slavery", "Whore", "Bully",
-            "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support" };
+            "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack" };
 
         private static async Task AddBackUserSettings(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
             bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long whoreCd,
@@ -109,14 +109,12 @@
 
             if (item == "Pacifist")
             {
-                if (user.Perks.ContainsKey("Pacifist"))
-                {
-                    user.Perks.Remove("Pacifist");
-                    user.PacifistCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(259200);
-                    await Context.User.NotifyAsync(Context.Channel, "You discarded your Pacifist perk. If you wish to buy it again, you will have to wait 3 days.");
-                }
+                if (!user.Perks.ContainsKey("Pacifist"))
+                    return CommandResult.FromError("You do not have the Pacifist perk!");
 
-                return CommandResult.FromError("You do not have the Pacifist perk!");
+                user.Perks.Remove("Pacifist");
+                user.PacifistCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(259200);
+                await Context.User.NotifyAsync(Context.Channel, "You discarded your Pacifist perk. If you wish to buy it again, you will have to wait 3 days.");
             }
             else if (user.Items.Remove(item))
             {
