@@ -1,12 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Google.Cloud.Firestore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace RRBot.Preconditions
+﻿namespace RRBot.Preconditions
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
     public class RequireRankLevelAttribute : PreconditionAttribute

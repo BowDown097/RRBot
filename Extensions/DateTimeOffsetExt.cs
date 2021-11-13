@@ -1,6 +1,4 @@
-﻿using System;
-#pragma warning disable IDE0060 // this warning fires for "this" parameters, which it shouldn't
-
+﻿#pragma warning disable IDE0060 // this warning fires for "this" parameters, which it shouldn't
 namespace RRBot.Extensions
 {
     public static class DateTimeOffsetExt

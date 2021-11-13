@@ -1,16 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Newtonsoft.Json.Linq;
-using RRBot.Entities;
-using RRBot.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-#pragma warning disable RCS1163, IDE0060 // both warnings fire for events, which they shouldn't
-
+﻿#pragma warning disable RCS1163, IDE0060 // both warnings fire for events, which they shouldn't
 namespace RRBot.Systems
 {
     public static class Logger
@@ -306,8 +294,8 @@ namespace RRBot.Systems
                 .RRAddField("Previous Topic", stageBefore.Topic, true)
                 .RRAddField("Current Topic", stageAfter.Topic, true)
                 .AddSeparatorField()
-                .RRAddField("Previous Discoverability Status", !stageBefore.DiscoverableDisabled, true)
-                .RRAddField("Current Discoverability Status", !stageAfter.DiscoverableDisabled, true)
+                .RRAddField("Previous Discoverability Status", !stageBefore.IsDiscoverableDisabled, true)
+                .RRAddField("Current Discoverability Status", !stageAfter.IsDiscoverableDisabled, true)
                 .AddSeparatorField()
                 .RRAddField("Previous User Limit", stageBefore.UserLimit, true)
                 .RRAddField("Current User Limit", stageAfter.UserLimit, true);
@@ -365,8 +353,8 @@ namespace RRBot.Systems
                 .RRAddField("Previous Name", threadBefore.Name, true)
                 .RRAddField("Current Name", threadAfter.Name, true)
                 .AddSeparatorField()
-                .RRAddField("Previous Lock Status", threadBefore.Locked, true)
-                .RRAddField("Current Lock Status", threadAfter.Locked, true)
+                .RRAddField("Previous Lock Status", threadBefore.IsLocked, true)
+                .RRAddField("Current Lock Status", threadAfter.IsLocked, true)
                 .AddSeparatorField()
                 .RRAddField("Previous Member Count", threadBefore.MemberCount, true)
                 .RRAddField("Current Member Count", threadAfter.MemberCount, true)
@@ -459,9 +447,10 @@ namespace RRBot.Systems
             foreach (IMessage message in messages)
                 msgLogs.AppendLine($"{message.Author} @ {message.Timestamp}: {message.Content}");
 
-            using WebClient webClient = new();
-            string hbPOST = await webClient.UploadStringTaskAsync("https://hastebin.com/documents", msgLogs.ToString());
-            string hbKey = JObject.Parse(hbPOST)["key"].ToString();
+            using HttpClient client = new();
+            HttpContent content = new StringContent(msgLogs.ToString());
+            HttpResponseMessage response = await client.PostAsync("https://hastebin.com/documents", content);
+            string hbKey = JObject.Parse(await response.Content.ReadAsStringAsync())["key"].ToString();
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription($"**{messages.Count() - 1} Messages Purged**\nSee them [here](https://hastebin.com/{hbKey})");

@@ -1,11 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using RRBot.Entities;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace RRBot.Preconditions
+﻿namespace RRBot.Preconditions
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
     public class RequireStaffAttribute : PreconditionAttribute

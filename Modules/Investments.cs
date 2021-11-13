@@ -1,28 +1,14 @@
-﻿using Discord;
-using Discord.Commands;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using RRBot.Entities;
-using RRBot.Extensions;
-using RRBot.Preconditions;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("Invest in our selection of coins, Bit or Shit. The prices here are updated in REAL TIME with the REAL LIFE values. Experience the fast, entrepreneural life without going broke, having your house repossessed, and having your girlfriend leave you.")]
     public class Investments : ModuleBase<SocketCommandContext>
     {
         public static async Task<double> QueryCryptoValue(string crypto)
         {
-            using WebClient client = new();
+            using HttpClient client = new();
             string current = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
             string today = DateTime.Now.ToString("yyyy-MM-dd") + "T00:00";
-            string data = await client.DownloadStringTaskAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
+            string data = await client.GetStringAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
             dynamic obj = JsonConvert.DeserializeObject(data);
             JToken latestEntry = JArray.FromObject(obj.data.entries).Last;
             return Math.Round(latestEntry[1].Value<double>(), 2);

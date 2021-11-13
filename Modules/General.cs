@@ -1,17 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using RRBot.Entities;
-using RRBot.Extensions;
-using RRBot.Preconditions;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("The name really explains it all. Fun fact, you used one of the commands under this module to view info about this module.")]
     public class General : ModuleBase<SocketCommandContext>
@@ -42,7 +29,7 @@ namespace RRBot.Modules
         [Remarks("$help [command]")]
         public async Task<RuntimeResult> Help(string command)
         {
-            SearchResult search = Commands.Search(command);
+            Discord.Commands.SearchResult search = Commands.Search(command);
             if (!search.IsSuccess)
                 return CommandResult.FromError("You have specified a nonexistent command!");
 
@@ -222,7 +209,6 @@ namespace RRBot.Modules
                 .WithAuthor(user)
                 .WithColor(Color.Red)
                 .WithDescription("**User Info**")
-                .WithImageUrl(user.GetBannerUrl())
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .RRAddField("ID", user.Id.ToString(), true)
                 .RRAddField("Nickname", user.Nickname, true)

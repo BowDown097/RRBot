@@ -1,17 +1,3 @@
-using Discord;
-using Discord.Commands;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using RRBot.Entities;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
-
 namespace RRBot.Modules
 {
     [Summary("Commands that don't do anything related to the bot's systems: they just exist for fun (hence the name).")]
@@ -19,8 +5,8 @@ namespace RRBot.Modules
     {
         private async Task<RuntimeResult> RandomImg(string apiUrl, string key, bool cat = false)
         {
-            using WebClient client = new();
-            string response = await client.DownloadStringTaskAsync(apiUrl);
+            using HttpClient client = new();
+            string response = await client.GetStringAsync(apiUrl);
             string image = "";
             if (cat)
             {
@@ -59,8 +45,8 @@ namespace RRBot.Modules
             if (term.Equals("nigger", StringComparison.OrdinalIgnoreCase))
                 return CommandResult.FromError("Nope.");
 
-            using WebClient client = new();
-            string response = await client.DownloadStringTaskAsync($"https://api.pearson.com/v2/dictionaries/ldoce5/entries?headword={term}");
+            using HttpClient client = new();
+            string response = await client.GetStringAsync($"https://api.pearson.com/v2/dictionaries/ldoce5/entries?headword={term}");
             DefinitionResponse def = JsonConvert.DeserializeObject<DefinitionResponse>(response);
             if (def.Count == 0)
                 return CommandResult.FromError("Couldn't find anything for that term, chief.");
@@ -178,8 +164,8 @@ namespace RRBot.Modules
         public async Task Trivia()
         {
             // get all the stuff we need
-            using WebClient client = new();
-            string response = await client.DownloadStringTaskAsync("https://opentdb.com/api.php?amount=1");
+            using HttpClient client = new();
+            string response = await client.GetStringAsync("https://opentdb.com/api.php?amount=1");
             TriviaQuestion trivia = JsonConvert.DeserializeObject<Trivia>(response).Results[0];
             string question = HttpUtility.HtmlDecode(trivia.Question);
             string correctAnswer = HttpUtility.HtmlDecode(trivia.CorrectAnswer);
@@ -216,8 +202,8 @@ namespace RRBot.Modules
         [Remarks("$verse")]
         public async Task Verse()
         {
-            using WebClient client = new();
-            string response = await client.DownloadStringTaskAsync("https://labs.bible.org/api/?passage=random&type=json");
+            using HttpClient client = new();
+            string response = await client.GetStringAsync("https://labs.bible.org/api/?passage=random&type=json");
             dynamic verse = JArray.Parse(response)[0];
 
             EmbedBuilder embed = new EmbedBuilder()

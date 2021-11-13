@@ -1,16 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Victoria;
-using Victoria.Entities;
-using Victoria.Queue;
-#pragma warning disable RCS1163, IDE0060 // both warnings fire for events, which they shouldn't
-
+﻿#pragma warning disable RCS1163, IDE0060 // both warnings fire for events, which they shouldn't
 namespace RRBot.Systems
 {
     public sealed class AudioSystem

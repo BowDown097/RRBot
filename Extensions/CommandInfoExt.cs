@@ -1,7 +1,4 @@
-﻿using Discord.Commands;
-using System.Linq;
-
-namespace RRBot.Extensions
+﻿namespace RRBot.Extensions
 {
     public static class CommandInfoExt
     {

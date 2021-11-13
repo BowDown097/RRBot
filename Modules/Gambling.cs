@@ -1,16 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using RRBot.Entities;
-using RRBot.Extensions;
-using RRBot.Preconditions;
-using RRBot.Systems;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("Do you want to test your luck? Do you want to probably go broke? Here you go! By the way, you don't need to be 21 or over in this joint ;)")]
     public class Gambling : ModuleBase<SocketCommandContext>
@@ -148,7 +136,7 @@ namespace RRBot.Modules
             return CommandResult.FromSuccess();
         }
 
-        [Command("slots")]
+        [Command("slots", RunMode = RunMode.Async)]
         [Summary("Take the slot machine for a spin!")]
         [Remarks("$slots [bet]")]
         [RequireCash]
@@ -167,70 +155,67 @@ namespace RRBot.Modules
             user.UsingSlots = true;
             await user.Write();
 
-            await Task.Factory.StartNew(async () =>
+            double payoutMult = 1;
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Slots");
+            IUserMessage slotMsg = await ReplyAsync(embed: embed.Build());
+            int[] results = new int[3];
+
+            for (int i = 0; i < 5; i++)
             {
-                double payoutMult = 1;
-                EmbedBuilder embed = new EmbedBuilder()
-                    .WithColor(Color.Red)
-                    .WithTitle("Slots");
-                IUserMessage slotMsg = await ReplyAsync(embed: embed.Build());
-                int[] results = new int[3];
+                results[0] = RandomUtil.Next(1, 6);
+                results[1] = RandomUtil.Next(1, 6);
+                results[2] = RandomUtil.Next(1, 6);
 
-                for (int i = 0; i < 5; i++)
+                embed.WithDescription("------------\n" +
+                $"{emojis[results[0] - 1]}  {emojis[results[1] - 1]}  {emojis[results[2] - 1]}\n" +
+                $"{emojis[results[0]]}  {emojis[results[1]]}  {emojis[results[2]]}\n" +
+                $"{emojis[results[0] + 1]}  {emojis[results[1] + 1]}  {emojis[results[2] + 1]}\n" +
+                "------------");
+                await slotMsg.ModifyAsync(msg => msg.Embed = embed.Build());
+
+                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
+
+            int sevens = results.Count(num => num == 2);
+            if (sevens == 3)
+                payoutMult = Constants.SLOTS_MULT_THREESEVENS;
+            else if (ThreeInARow(results))
+                payoutMult = Constants.SLOTS_MULT_THREEINAROW;
+            else if (TwoInARow(results))
+                payoutMult = Constants.SLOTS_MULT_TWOINAROW;
+
+            user.UsingSlots = false;
+            if (payoutMult > 1)
+            {
+                double payout = (bet * payoutMult) - bet;
+                double totalCash = user.Cash + payout;
+                StatUpdate(user, true, payout);
+                await user.SetCash(Context.User, totalCash);
+
+                if (payoutMult == Constants.SLOTS_MULT_THREESEVENS)
                 {
-                    results[0] = RandomUtil.Next(1, 6);
-                    results[1] = RandomUtil.Next(1, 6);
-                    results[2] = RandomUtil.Next(1, 6);
-
-                    embed.WithDescription("------------\n" +
-                    $"{emojis[results[0] - 1]}  {emojis[results[1] - 1]}  {emojis[results[2] - 1]}\n" +
-                    $"{emojis[results[0]]}  {emojis[results[1]]}  {emojis[results[2]]}\n" +
-                    $"{emojis[results[0] + 1]}  {emojis[results[1] + 1]}  {emojis[results[2] + 1]}\n" +
-                    "------------");
-                    await slotMsg.ModifyAsync(msg => msg.Embed = embed.Build());
-
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-                }
-
-                int sevens = results.Count(num => num == 2);
-                if (sevens == 3)
-                    payoutMult = Constants.SLOTS_MULT_THREESEVENS;
-                else if (ThreeInARow(results))
-                    payoutMult = Constants.SLOTS_MULT_THREEINAROW;
-                else if (TwoInARow(results))
-                    payoutMult = Constants.SLOTS_MULT_TWOINAROW;
-
-                user.UsingSlots = false;
-                if (payoutMult > 1)
-                {
-                    double payout = (bet * payoutMult) - bet;
-                    double totalCash = user.Cash + payout;
-                    StatUpdate(user, true, payout);
-                    await user.SetCash(Context.User, totalCash);
-
-                    if (payoutMult == Constants.SLOTS_MULT_THREESEVENS)
-                    {
-                        await Context.User.NotifyAsync(Context.Channel, $"​SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
-                            $"\nBalance: {totalCash:C2}");
-                        await Achievements.UnlockAchievement("Jackpot!", "Get a jackpot with $slots.",
-                            Context.User, Context.Guild, Context.Channel);
-                    }
-                    else
-                    {
-                        await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout:C2}**.\nBalance: {totalCash:C2}");
-                    }
+                    await Context.User.NotifyAsync(Context.Channel, $"​SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
+                        $"\nBalance: {totalCash:C2}");
+                    await Achievements.UnlockAchievement("Jackpot!", "Get a jackpot with $slots.",
+                        Context.User, Context.Guild, Context.Channel);
                 }
                 else
                 {
-                    double totalCash = (user.Cash - bet) > 0 ? user.Cash - bet : 0;
-                    StatUpdate(user, false, bet);
-                    await user.SetCash(Context.User, totalCash);
-                    await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet:C2}**." +
-                        $"\nBalance: {totalCash:C2}");
+                    await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout:C2}**.\nBalance: {totalCash:C2}");
                 }
+            }
+            else
+            {
+                double totalCash = (user.Cash - bet) > 0 ? user.Cash - bet : 0;
+                StatUpdate(user, false, bet);
+                await user.SetCash(Context.User, totalCash);
+                await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet:C2}**." +
+                    $"\nBalance: {totalCash:C2}");
+            }
 
-                await user.Write();
-            });
+            await user.Write();
 
             return CommandResult.FromSuccess();
         }

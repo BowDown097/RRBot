@@ -1,7 +1,4 @@
-﻿using System;
-using System.Text;
-
-namespace RRBot.Extensions
+﻿namespace RRBot.Extensions
 {
     public static class TimeSpanExt
     {

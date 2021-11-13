@@ -1,16 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using Google.Cloud.Firestore;
-using Google.Cloud.Firestore.V1;
-using Microsoft.Extensions.DependencyInjection;
-using RRBot.Systems;
-using RRBot.TypeReaders;
-using System.Reflection;
-using System.Threading.Tasks;
-using Victoria;
-
-namespace RRBot
+﻿namespace RRBot
 {
     internal static class Program
     {

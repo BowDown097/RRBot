@@ -1,13 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Newtonsoft.Json.Linq;
-using NHentaiSharp.Search;
-using RRBot.Preconditions;
-using System;
-using System.Net;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("Degenerates and retards with no significant other (and probably no friends either) unite!")]
     [RequireNsfwEnabled]
@@ -19,11 +10,11 @@ namespace RRBot.Modules
         [Remarks("$neko")]
         public async Task Neko()
         {
-            using WebClient client = new();
+            using HttpClient client = new();
             string apiUrl = RandomUtil.Next(2) == 0
                 ? "https://nekos.life/api/v2/img/nsfw_neko_gif"
                 : "https://nekos.life/api/v2/img/lewd";
-            string response = await client.DownloadStringTaskAsync(apiUrl);
+            string response = await client.GetStringAsync(apiUrl);
             string imgUrl = JObject.Parse(response)["url"].Value<string>();
 
             EmbedBuilder embed = new EmbedBuilder()

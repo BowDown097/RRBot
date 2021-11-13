@@ -1,9 +1,4 @@
-﻿using Discord.Commands;
-using RRBot.Preconditions;
-using RRBot.Systems;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("Jam out with the boys!")]
     public class Music : ModuleBase<SocketCommandContext>

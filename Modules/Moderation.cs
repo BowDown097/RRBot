@@ -1,20 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.Rest;
-using Discord.WebSocket;
-using Google.Cloud.Firestore;
-using Microsoft.CodeAnalysis;
-using RRBot.Entities;
-using RRBot.Extensions;
-using RRBot.Preconditions;
-using RRBot.Systems;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("Impose an Orwellian life on the poor normies in chat, through bans, kicks, mutes, you name it.")]
     [RequireStaff]

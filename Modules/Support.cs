@@ -1,17 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using Google.Cloud.Firestore;
-using RRBot.Entities;
-using RRBot.Extensions;
-using RRBot.Preconditions;
-using RRBot.Systems;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("Technical support, not from bots and not from creepy dudes out of New Delhi. Your wish is our command!")]
     [RequireBeInChannel("help-requests")]
@@ -64,11 +51,10 @@ namespace RRBot.Modules
         [RequireCooldown("SupportCooldown", "You cannot request support again for {0}. This is done to prevent spam.")]
         public async Task<RuntimeResult> GetSupport([Remainder] string request)
         {
-            char[] cleaned = request
+            string cleaned = new string(request
                 .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
-                .Distinct()
-                .ToArray();
-            if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
+                .ToArray()).ToLower();
+            if (Filters.NWORD_REGEX.IsMatch(cleaned))
                 return CommandResult.FromError("You cannot have the funny word in your request.");
 
             QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();

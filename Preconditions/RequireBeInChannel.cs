@@ -1,8 +1,4 @@
-﻿using Discord.Commands;
-using System;
-using System.Threading.Tasks;
-
-namespace RRBot.Preconditions
+﻿namespace RRBot.Preconditions
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
     public class RequireBeInChannelAttribute : PreconditionAttribute

@@ -1,13 +1,3 @@
-using System;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Discord;
-using Discord.WebSocket;
-using Google.Cloud.Firestore;
-using RRBot.Entities;
-using RRBot.Modules;
-
 namespace RRBot.Interactions
 {
     public static class LeaderboardInteractions

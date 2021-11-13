@@ -1,12 +1,3 @@
-using Discord;
-using Discord.Commands;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
-using Microsoft.CodeAnalysis.Scripting;
-using RRBot.Entities;
-using RRBot.Extensions;
-using System;
-using System.Threading.Tasks;
-
 namespace RRBot.Modules
 {
     public class FunnyContext
@@ -46,7 +37,7 @@ namespace RRBot.Modules
             if (cmdLower == "disablecmd")
                 return CommandResult.FromError("I don't think that's a good idea.");
 
-            SearchResult search = Commands.Search(cmd);
+            Discord.Commands.SearchResult search = Commands.Search(cmd);
             if (!search.IsSuccess)
                 return CommandResult.FromError($"**${cmdLower}** is not a command!");
 

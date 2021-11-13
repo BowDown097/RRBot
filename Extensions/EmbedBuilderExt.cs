@@ -1,6 +1,4 @@
-using Discord;
 #nullable enable
-
 namespace RRBot.Extensions
 {
     public static class EmbedBuilderExt

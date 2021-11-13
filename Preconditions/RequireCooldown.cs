@@ -1,10 +1,4 @@
-﻿using Discord.Commands;
-using RRBot.Entities;
-using RRBot.Extensions;
-using System;
-using System.Threading.Tasks;
-
-namespace RRBot.Preconditions
+﻿namespace RRBot.Preconditions
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
     public class RequireCooldownAttribute : PreconditionAttribute

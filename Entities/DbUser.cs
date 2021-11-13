@@ -1,13 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using Discord;
-using Discord.WebSocket;
-using Google.Cloud.Firestore;
-
 namespace RRBot.Entities
 {
     [FirestoreData]

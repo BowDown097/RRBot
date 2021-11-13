@@ -1,17 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using RRBot.Entities;
-using RRBot.Extensions;
-using RRBot.Preconditions;
-using RRBot.Systems;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("Hell yeah! Crime! Reject the ways of being a law-abiding citizen for some cold hard cash and maybe even an item. Or, maybe not. Depends how good you are at being a criminal.")]
     [CheckPacifist]
@@ -96,11 +83,10 @@ namespace RRBot.Modules
         [RequireCooldown("BullyCooldown", "You cannot bully anyone for {0}.")]
         public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
         {
-            char[] cleaned = nickname
+            string cleaned = new string(nickname
                 .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
-                .Distinct()
-                .ToArray();
-            if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
+                .ToArray()).ToLower();
+            if (Filters.NWORD_REGEX.IsMatch(cleaned))
                 return CommandResult.FromError("You cannot bully someone to the funny word.");
             if (nickname.Length > 32)
                 return CommandResult.FromError("The nickname you put is longer than the maximum accepted length (32).");

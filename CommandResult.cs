@@ -1,5 +1,3 @@
-using Discord.Commands;
-
 namespace RRBot
 {
     public class CommandResult : RuntimeResult

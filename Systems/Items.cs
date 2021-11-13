@@ -1,14 +1,4 @@
-﻿using Discord.Commands;
-using Discord.WebSocket;
-using RRBot.Entities;
-using RRBot.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace RRBot.Systems
+﻿namespace RRBot.Systems
 {
     public static class Items
     {

@@ -1,14 +1,4 @@
-﻿using Discord.Commands;
-using RRBot.Entities;
-using RRBot.Extensions;
-using RRBot.Preconditions;
-using RRBot.Systems;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("The best way to earn money by far, at least for those lucky or rich enough to get themselves an item.")]
     public class Tasks : ModuleBase<SocketCommandContext>

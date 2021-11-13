@@ -1,9 +1,3 @@
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Discord;
-using Discord.WebSocket;
-
 namespace RRBot.Interactions
 {
     public static class TriviaInteractions

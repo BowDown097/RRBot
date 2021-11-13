@@ -1,14 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.Rest;
-using Discord.WebSocket;
-using RRBot.Entities;
-using RRBot.Preconditions;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("Self explanatory.")]
     [RequireStaff]

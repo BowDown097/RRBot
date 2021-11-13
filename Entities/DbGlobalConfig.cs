@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Google.Cloud.Firestore;
-
 namespace RRBot.Entities
 {
     [FirestoreData]

@@ -1,19 +1,3 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using Google.Cloud.Firestore;
-using Grpc.Core;
-using Microsoft.Extensions.DependencyInjection;
-using RRBot.Entities;
-using RRBot.Extensions;
-using RRBot.Interactions;
-using RRBot.Systems;
-using Victoria;
-
 namespace RRBot
 {
     public class Events
@@ -135,11 +119,10 @@ namespace RRBot
             if (userBefore.Nickname == userAfter.Nickname)
                 return;
 
-            char[] cleaned = userAfter.Nickname
+            string cleaned = new string(userAfter.Nickname
                 .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
-                .Distinct()
-                .ToArray();
-            if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
+                .ToArray()).ToLower();
+            if (Filters.NWORD_REGEX.IsMatch(cleaned))
                 await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
         }
 
@@ -156,19 +139,16 @@ namespace RRBot
             if (context.User.IsBot)
                 return;
 
-            if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false)
-            {
-                await Filters.DoInviteCheckAsync(userMsg, client);
-                await Filters.DoNWordCheckAsync(userMsg, context.Channel);
-                await Filters.DoScamCheckAsync(userMsg);
-            }
+            await Filters.DoInviteCheckAsync(userMsg, client);
+            await Filters.DoNWordCheckAsync(userMsg, context.Channel);
+            await Filters.DoScamCheckAsync(userMsg);
 
             int argPos = 0;
             if (userMsg.HasCharPrefix('$', ref argPos))
             {
                 try
                 {
-                    SearchResult search = commands.Search(msg.Content[argPos..]);
+                    Discord.Commands.SearchResult search = commands.Search(msg.Content[argPos..]);
                     if (!search.IsSuccess)
                         return;
 
@@ -219,9 +199,6 @@ namespace RRBot
 
         private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
         {
-            if ((msgAfter.Author as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == true)
-                return;
-
             SocketUserMessage userMsgAfter = msgAfter as SocketUserMessage;
             await Filters.DoInviteCheckAsync(userMsgAfter, client);
             await Filters.DoNWordCheckAsync(userMsgAfter, channel);
@@ -254,21 +231,19 @@ namespace RRBot
         private static async Task Client_ThreadCreated(SocketThreadChannel thread)
         {
             await thread.JoinAsync();
-            char[] cleaned = thread.Name
+            string cleaned = new string(thread.Name
                 .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
-                .Distinct()
-                .ToArray();
-            if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
+                .ToArray()).ToLower();
+            if (Filters.NWORD_REGEX.IsMatch(cleaned))
                 await thread.DeleteAsync();
         }
 
         private static async Task Client_ThreadUpdated(Cacheable<SocketThreadChannel, ulong> threadBefore, SocketThreadChannel threadAfter)
         {
-            char[] cleaned = threadAfter.Name
+            string cleaned = new string(threadAfter.Name
                 .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
-                .Distinct()
-                .ToArray();
-            if (Filters.NWORD_REGEX.Matches(new string(cleaned).ToLower()).Count != 0)
+                .ToArray()).ToLower();
+            if (Filters.NWORD_REGEX.IsMatch(cleaned))
                 await threadAfter.DeleteAsync();
         }
 
@@ -290,6 +265,10 @@ namespace RRBot
 
         private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
+            string reason = result.ErrorReason.Replace("@everyone", "").Replace("@here", "").Replace("`", "");
+            if (Filters.NWORD_REGEX.IsMatch(new string(reason.Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c)).ToArray()).ToLower()))
+                return;
+
             switch (result.Error)
             {
                 case CommandError.BadArgCount:
@@ -302,22 +281,22 @@ namespace RRBot
                     break;
                 case CommandError.ParseFailed:
                     await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                        $"Couldn't understand something you passed into the command.\nThis error info might help: ``{result.ErrorReason}``" +
+                        $"Couldn't understand something you passed into the command.\nThis error info might help: ``{reason}``" +
                         $"\nOr maybe the command usage will: ``{command.Value.Remarks}``");
                     break;
                 case CommandError.UnmetPrecondition:
-                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, result.ErrorReason);
+                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, reason);
                     break;
                 case CommandError.Unsuccessful:
-                    if (result.ErrorReason.StartsWith("Your user input") || result.ErrorReason.StartsWith("You have no"))
-                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, result.ErrorReason);
-                    if (result is CommandResult rwm && !string.IsNullOrWhiteSpace(rwm.Reason))
-                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, rwm.Reason);
+                    if (reason.StartsWith("Your user input") || reason.StartsWith("You have no"))
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, reason);
+                    if (result is CommandResult rwm)
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, reason);
                     break;
             }
 
             if (!result.IsSuccess)
-                Console.WriteLine(result.ErrorReason);
+                Console.WriteLine(reason);
         }
     }
 }

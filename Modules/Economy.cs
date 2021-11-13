@@ -1,18 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using Google.Cloud.Firestore;
-using RRBot.Entities;
-using RRBot.Extensions;
-using RRBot.Preconditions;
-using RRBot.Systems;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
     public class Economy : ModuleBase<SocketCommandContext>
@@ -93,7 +79,7 @@ namespace RRBot.Modules
             ulong userId = user == null ? Context.User.Id : user.Id;
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
             StringBuilder description = new();
-            double mult = dbUser.Perks.Keys.Contains("Speed Demon") ? 0.85 : 1;
+            double mult = dbUser.Perks.ContainsKey("Speed Demon") ? 0.85 : 1;
 
             foreach (string cmd in CMDS_WITH_COOLDOWN)
             {

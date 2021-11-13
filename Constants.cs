@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using Discord;
-
 namespace RRBot
 {
     // Note: Win odds will always be out of 100, so if you want an 80% win chance, set the respective constant to 80.

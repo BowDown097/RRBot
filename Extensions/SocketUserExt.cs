@@ -1,9 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using RRBot.Entities;
-using System.Threading.Tasks;
-
-namespace RRBot.Extensions
+﻿namespace RRBot.Extensions
 {
     public static class SocketUserExt
     {

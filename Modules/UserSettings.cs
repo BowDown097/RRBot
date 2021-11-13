@@ -1,10 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using RRBot.Entities;
-using RRBot.Extensions;
-using System.Threading.Tasks;
-
-namespace RRBot.Modules
+﻿namespace RRBot.Modules
 {
     [Summary("Choose how you want me to bug you. I can do it in DM, I can do it when you rank up, and I can even ping you, too.")]
     public class UserSettings : ModuleBase<SocketCommandContext>

@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-
 namespace RRBot.Entities
 {
     public class DefinitionResponse

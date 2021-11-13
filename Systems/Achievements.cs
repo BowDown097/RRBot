@@ -1,8 +1,3 @@
-using System.Threading.Tasks;
-using Discord;
-using Discord.WebSocket;
-using RRBot.Entities;
-
 namespace RRBot.Systems
 {
     public static class Achievements

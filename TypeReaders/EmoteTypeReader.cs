@@ -1,10 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace RRBot.TypeReaders
+﻿namespace RRBot.TypeReaders
 {
     public class EmoteTypeReader : TypeReader
     {

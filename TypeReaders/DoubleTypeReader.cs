@@ -1,10 +1,4 @@
-﻿using Discord.Commands;
-using RRBot.Entities;
-using RRBot.Modules;
-using System;
-using System.Threading.Tasks;
-
-namespace RRBot.TypeReaders
+﻿namespace RRBot.TypeReaders
 {
     public class DoubleTypeReader : TypeReader
     {
