@@ -75,6 +75,9 @@
         [Summary("Unlock an achievement for a user.")]
         [Remarks("$unlockachievement [user] [name] [desc] <reward>")]
         public async Task UnlockAchievement(IGuildUser user, string name, string desc, double reward = 0)
-            => await Achievements.UnlockAchievement(name, desc, user as SocketUser, Context.Guild, Context.Channel, reward);
+        {
+            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            await dbUser.UnlockAchievement(name, desc, user as SocketUser, Context.Channel, reward);
+        }
     }
 }

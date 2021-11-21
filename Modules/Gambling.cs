@@ -63,15 +63,9 @@
                 await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout:C2}**!" +
                     $"\nBalance: {totalCash:C2}");
                 if (odds == 99)
-                {
-                    await Achievements.UnlockAchievement("Pretty Damn Lucky", "Win $99+.",
-                        Context.User, Context.Guild, Context.Channel);
-                }
+                    await user.UnlockAchievement("Pretty Damn Lucky", "Win $99+.", Context.User, Context.Channel);
                 else if (odds == 69.69)
-                {
-                    await Achievements.UnlockAchievement("Luckiest Dude Alive", "Win $69.69.",
-                        Context.User, Context.Guild, Context.Channel);
-                }
+                    await user.UnlockAchievement("Luckiest Dude Alive", "Win $69.69.", Context.User, Context.Channel);
             }
             else
             {
@@ -198,8 +192,7 @@
                 {
                     await Context.User.NotifyAsync(Context.Channel, $"​SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
                         $"\nBalance: {totalCash:C2}");
-                    await Achievements.UnlockAchievement("Jackpot!", "Get a jackpot with $slots.",
-                        Context.User, Context.Guild, Context.Channel);
+                    await user.UnlockAchievement("Jackpot!", "Get a jackpot with $slots.", Context.User, Context.Channel);
                 }
                 else
                 {

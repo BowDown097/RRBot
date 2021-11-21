@@ -170,13 +170,12 @@
                     {
                         { "Mutes", "1" }
                     });
+                    await dbUser.UnlockAchievement("Literally 1984", "Get muted.", user as SocketUser, Context.Channel);
                     await dbUser.Write();
 
                     string response = resolved.Item2;
                     response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
                     await ReplyAsync(response);
-                    await Achievements.UnlockAchievement("Literally 1984", "Get muted.",
-                        user as SocketUser, Context.Guild, Context.Channel);
                     return CommandResult.FromSuccess();
                 }
 

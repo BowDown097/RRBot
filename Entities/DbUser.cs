@@ -155,6 +155,26 @@ namespace RRBot.Entities
             }
         }
 
+        public async Task UnlockAchievement(string name, string desc, SocketUser user, ISocketMessageChannel channel, double reward = 0)
+        {
+            if (Achievements.ContainsKey(name))
+                return;
+
+            Achievements.Add(name, desc);
+            string description = $"GG {user}, you unlocked an achievement.\n**{name}**: {desc}";
+            if (reward != 0)
+            {
+                Cash += reward;
+                description += $"\nReward: {reward:C2}";
+            }
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Achievement Get!")
+                .WithDescription(description);
+            await channel.SendMessageAsync(embed: embed.Build());
+        }
+
         public async Task Write() => await Reference.SetAsync(this);
     }
 }
