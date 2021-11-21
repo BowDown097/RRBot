@@ -1,7 +1,7 @@
 ﻿#pragma warning disable RCS1163, IDE0060 // both warnings fire for events, which they shouldn't
 namespace RRBot.Systems
 {
-    public static class Logger
+    public static class LoggingSystem
     {
         private static async Task WriteToLogs(SocketGuild guild, EmbedBuilder embed)
         {

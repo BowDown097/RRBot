@@ -39,7 +39,7 @@
 
             if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
             {
-                string[] availableItems = Items.items.Where(i => !user.Items.Contains(i)).ToArray();
+                string[] availableItems = ItemSystem.items.Where(i => !user.Items.Contains(i)).ToArray();
                 if (availableItems.Length > 0)
                 {
                     string item = availableItems[RandomUtil.Next(availableItems.Length)];
@@ -84,9 +84,9 @@
         public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
         {
             string cleaned = new string(nickname
-                .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c))
                 .ToArray()).ToLower();
-            if (Filters.NWORD_REGEX.IsMatch(cleaned))
+            if (FilterSystem.NWORD_REGEX.IsMatch(cleaned))
                 return CommandResult.FromError("You cannot bully someone to the funny word.");
             if (nickname.Length > 32)
                 return CommandResult.FromError("The nickname you put is longer than the maximum accepted length (32).");
@@ -104,7 +104,7 @@
                 return CommandResult.FromError($"You cannot bully **{user}** as they are a staff member.");
 
             await user.ModifyAsync(props => props.Nickname = nickname);
-            await Logger.Custom_UserBullied(user, Context.User, nickname);
+            await LoggingSystem.Custom_UserBullied(user, Context.User, nickname);
             await ReplyAsync($"**{Context.User}** has **BULLIED** **{user}** to ``{nickname}``!");
 
             DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);

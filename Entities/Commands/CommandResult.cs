@@ -1,4 +1,4 @@
-namespace RRBot
+namespace RRBot.Entities.Commands
 {
     public class CommandResult : RuntimeResult
     {

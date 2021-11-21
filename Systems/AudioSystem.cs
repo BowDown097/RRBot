@@ -74,7 +74,7 @@ namespace RRBot.Systems
 
             await context.Channel.SendMessageAsync(message.ToString());
 
-            await Logger.Custom_TrackStarted(user, track.Uri);
+            await LoggingSystem.Custom_TrackStarted(user, track.Uri);
 
             return CommandResult.FromSuccess();
         }

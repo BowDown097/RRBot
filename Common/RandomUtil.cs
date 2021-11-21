@@ -1,4 +1,4 @@
-namespace RRBot
+namespace RRBot.Common
 {
     public static class RandomUtil
     {

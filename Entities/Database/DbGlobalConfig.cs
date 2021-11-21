@@ -1,4 +1,4 @@
-namespace RRBot.Entities
+namespace RRBot.Entities.Database
 {
     [FirestoreData]
     public class DbGlobalConfig
@@ -14,10 +14,13 @@ namespace RRBot.Entities
         {
             DocumentReference doc = Program.database.Collection("globalConfig").Document("banstuff");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.Exists)
-                return snap.ConvertTo<DbGlobalConfig>();
-            await doc.CreateAsync(new { bannedUsers = new List<ulong>() });
-            return await Get();
+            if (!snap.Exists)
+            {
+                await doc.CreateAsync(new { bannedUsers = new List<ulong>() });
+                return await Get();
+            }
+
+            return snap.ConvertTo<DbGlobalConfig>();
         }
 
         public async Task Write() => await Reference.SetAsync(this);

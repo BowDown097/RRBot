@@ -1,6 +1,6 @@
 ﻿namespace RRBot.Systems
 {
-    public static class Items
+    public static class ItemSystem
     {
         private static readonly Dictionary<string, int> rankings = new()
         {

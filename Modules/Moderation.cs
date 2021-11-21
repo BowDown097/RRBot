@@ -38,7 +38,7 @@
                     return CommandResult.FromError("You specified an invalid amount of time!");
 
                 DocumentReference banDoc = Program.database.Collection($"servers/{Context.Guild.Id}/bans").Document(user.Id.ToString());
-                await Logger.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
+                await LoggingSystem.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
                 await banDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) }, SetOptions.MergeAll);
                 await user.BanAsync(reason: reason);
                 dbUser.AddToStats(new Dictionary<string, string>
@@ -161,7 +161,7 @@
                         return CommandResult.FromError("You specified an invalid amount of time!");
 
                     DocumentReference muteDoc = Program.database.Collection($"servers/{Context.Guild.Id}/mutes").Document(user.Id.ToString());
-                    await Logger.Custom_UserMuted(user, Context.User, duration, reason);
+                    await LoggingSystem.Custom_UserMuted(user, Context.User, duration, reason);
                     await muteDoc.SetAsync(new { Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds) }, SetOptions.MergeAll);
                     await user.AddRoleAsync(roles.MutedRole);
 
@@ -203,7 +203,7 @@
                 return CommandResult.FromError("No messages were deleted.");
 
             await (Context.Channel as SocketTextChannel)?.DeleteMessagesAsync(messages);
-            await Logger.Custom_MessagesPurged(messages, Context.Guild);
+            await LoggingSystem.Custom_MessagesPurged(messages, Context.Guild);
 
             if (messages.Any(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays > 14))
                 await Context.User.NotifyAsync(Context.Channel, "Warning: Some messages were found to be older than 2 weeks and can't be deleted.");
@@ -252,7 +252,7 @@
             DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
             if (user.RoleIds.Contains(roles.MutedRole))
             {
-                await Logger.Custom_UserUnmuted(user, Context.User);
+                await LoggingSystem.Custom_UserUnmuted(user, Context.User);
                 await user.RemoveRoleAsync(roles.MutedRole);
                 await ReplyAsync($"**{Context.User}** has unmuted **{user}**.");
                 return CommandResult.FromSuccess();

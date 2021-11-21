@@ -1,6 +1,6 @@
 namespace RRBot.Systems
 {
-    public static class Filters
+    public static class FilterSystem
     {
         public static readonly Regex INVITE_REGEX = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
         public static readonly Regex NWORD_REGEX = new("[nɴⁿₙñńņňÑŃŅŇℕ𝒩][i1!¡ɪᶦᵢ¹₁jįīïîíìl|;:𝕀ℐ][g9ɢᵍ𝓰𝓰qģğĢĞ𝔾𝒢][g9ɢᵍ𝓰𝓰qģğĢĞ𝔾𝒢][e3€ᴇᵉₑ³₃ĖĘĚĔėęěĕəèéêëēеЕ£ℇ𝔼ℰ][rʀʳᵣŔŘŕřяℝℛ]");

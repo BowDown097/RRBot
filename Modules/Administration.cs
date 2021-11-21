@@ -11,7 +11,7 @@
         {
             if (user.IsBot)
                 return CommandResult.FromError("Nope.");
-            if (!Items.items.Contains(item))
+            if (!ItemSystem.items.Contains(item))
                 return CommandResult.FromError($"**{item}** is not a valid item!");
 
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);

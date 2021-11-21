@@ -52,9 +52,9 @@
         public async Task<RuntimeResult> GetSupport([Remainder] string request)
         {
             string cleaned = new string(request
-                .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c))
                 .ToArray()).ToLower();
-            if (Filters.NWORD_REGEX.IsMatch(cleaned))
+            if (FilterSystem.NWORD_REGEX.IsMatch(cleaned))
                 return CommandResult.FromError("You cannot have the funny word in your request.");
 
             QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();

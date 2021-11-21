@@ -1,11 +1,11 @@
 namespace RRBot.Systems
 {
-    public class Monitors
+    public class MonitorSystem
     {
         private readonly DiscordSocketClient client;
         private readonly FirestoreDb database;
 
-        public Monitors(DiscordSocketClient client, FirestoreDb database)
+        public MonitorSystem(DiscordSocketClient client, FirestoreDb database)
         {
             this.client = client;
             this.database = database;
@@ -127,7 +127,7 @@ namespace RRBot.Systems
                                 if (kvp.Key == "Multiperk" && user.Perks.Count >= 2)
                                 {
                                     string lastPerk = user.Perks.Last().Key;
-                                    Perk perk = Array.Find(Items.perks, p => p.name == lastPerk);
+                                    Perk perk = Array.Find(ItemSystem.perks, p => p.name == lastPerk);
                                     SocketUser socketUser = guild.GetUser(userId);
                                     await user.SetCash(socketUser, user.Cash + perk.price);
                                     user.Perks.Remove(lastPerk);

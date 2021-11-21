@@ -1,4 +1,4 @@
-namespace RRBot.Entities
+namespace RRBot.Entities.Commands
 {
     public struct BoardPos
     {

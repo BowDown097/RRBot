@@ -62,10 +62,10 @@
         [Remarks("$buy [item]")]
         public async Task<RuntimeResult> Buy([Remainder] string item)
         {
-            if (Items.items.Any(i => i == item))
-                return await Items.BuyItem(item, Context.User, Context.Guild, Context.Channel);
-            else if (Items.perks.Any(perk => perk.name == item))
-                return await Items.BuyPerk(item, Context.User, Context.Guild, Context.Channel);
+            if (ItemSystem.items.Any(i => i == item))
+                return await ItemSystem.BuyItem(item, Context.User, Context.Guild, Context.Channel);
+            else if (ItemSystem.perks.Any(perk => perk.name == item))
+                return await ItemSystem.BuyPerk(item, Context.User, Context.Guild, Context.Channel);
             else
                 return CommandResult.FromError($"**{item}** is not a valid item or perk!\n*Tip: This command is case sensitive.*");
         }
@@ -118,7 +118,7 @@
             }
             else if (user.Items.Remove(item))
             {
-                double price = Items.ComputeItemPrice(item) / 1.5;
+                double price = ItemSystem.ComputeItemPrice(item) / 1.5;
                 await user.SetCash(Context.User, user.Cash + price);
                 await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{price:C2}**.");
             }
@@ -217,7 +217,7 @@
                 if (kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist")
                     return;
 
-                Perk perk = Array.Find(Items.perks, p => p.name.Equals(kvp.Key, StringComparison.OrdinalIgnoreCase));
+                Perk perk = Array.Find(ItemSystem.perks, p => p.name.Equals(kvp.Key, StringComparison.OrdinalIgnoreCase));
                 perksBuilder.AppendLine($"**{perk.name}**: {perk.description}" +
                     $"\nTime Left: {(perk.name != "Pacifist" ? TimeSpan.FromSeconds(kvp.Value - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound() : "Indefinite")}");
             }
@@ -290,13 +290,13 @@
             StringBuilder items = new();
             StringBuilder perks = new();
 
-            foreach (string item in Items.items)
+            foreach (string item in ItemSystem.items)
             {
-                double price = Items.ComputeItemPrice(item);
+                double price = ItemSystem.ComputeItemPrice(item);
                 items.AppendLine($"**{item}**: {price:C2}");
             }
 
-            foreach (Perk perk in Items.perks)
+            foreach (Perk perk in ItemSystem.perks)
                 perks.AppendLine($"**{perk.name}**: {perk.description}\nDuration: {TimeSpan.FromSeconds(perk.duration).FormatCompound()}\nPrice: {perk.price:C2}");
 
             EmbedBuilder itemsEmbed = new EmbedBuilder()

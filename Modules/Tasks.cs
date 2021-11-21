@@ -6,7 +6,7 @@
         private async Task GenericTask(string itemType, string activity, string thing, string cooldown, double duration)
         {
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-            string item = Items.GetBestItem(user.Items, itemType);
+            string item = ItemSystem.GetBestItem(user.Items, itemType);
             int numMined = 0;
 
             if (item.StartsWith("Wooden"))
@@ -131,7 +131,7 @@
         public async Task Mine()
         {
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-            string item = Items.GetBestItem(user.Items, "Pickaxe");
+            string item = ItemSystem.GetBestItem(user.Items, "Pickaxe");
 
             int numMined = RandomUtil.Next(32, 65);
             if (user.Perks.ContainsKey("Enchanter"))

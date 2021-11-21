@@ -1,4 +1,4 @@
-namespace RRBot.Entities
+namespace RRBot.Entities.Database
 {
     [FirestoreData]
     public class DbSupportTicket
@@ -18,10 +18,13 @@ namespace RRBot.Entities
         {
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/supportTickets").Document(userId.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.Exists)
-                return snap.ConvertTo<DbSupportTicket>();
-            await doc.CreateAsync(new { req = "" });
-            return await GetById(guildId, userId);
+            if (!snap.Exists)
+            {
+                await doc.CreateAsync(new { req = "" });
+                return await GetById(guildId, userId);
+            }
+
+            return snap.ConvertTo<DbSupportTicket>();
         }
 
         public async Task Write() => await Reference.SetAsync(this);

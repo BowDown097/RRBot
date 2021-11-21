@@ -1,6 +1,6 @@
-namespace RRBot
+namespace RRBot.Systems
 {
-    public class Events
+    public class EventSystem
     {
         private readonly AudioSystem audioSystem;
         private readonly CommandService commands;
@@ -8,7 +8,7 @@ namespace RRBot
         private readonly LavaSocketClient lavaSocketClient;
         private readonly ServiceProvider serviceProvider;
 
-        public Events(ServiceProvider serviceProvider)
+        public EventSystem(ServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
             audioSystem = serviceProvider.GetRequiredService<AudioSystem>();
@@ -17,7 +17,7 @@ namespace RRBot
             lavaSocketClient = serviceProvider.GetRequiredService<LavaSocketClient>();
         }
 
-        public void Initialize()
+        public void SubscribeEvents()
         {
             client.ButtonExecuted += Client_ButtonExecuted;
             client.GuildMemberUpdated += Client_GuildMemberUpdated;
@@ -32,37 +32,37 @@ namespace RRBot
             client.UserJoined += Client_UserJoined;
             commands.CommandExecuted += Commands_CommandExecuted;
 
-            client.ChannelCreated += Logger.Client_ChannelCreated;
-            client.ChannelDestroyed += Logger.Client_ChannelDestroyed;
-            client.ChannelUpdated += Logger.Client_ChannelUpdated;
-            client.GuildMemberUpdated += Logger.Client_GuildMemberUpdated;
-            client.GuildStickerCreated += Logger.Client_GuildStickerCreated;
-            client.GuildStickerDeleted += Logger.Client_GuildStickerDeleted;
-            client.GuildUpdated += Logger.Client_GuildUpdated;
-            client.InviteCreated += Logger.Client_InviteCreated;
-            client.InviteDeleted += Logger.Client_InviteDeleted;
-            client.MessageDeleted += Logger.Client_MessageDeleted;
-            client.MessageUpdated += Logger.Client_MessageUpdated;
-            client.ReactionAdded += Logger.Client_ReactionAdded;
-            client.ReactionRemoved += Logger.Client_ReactionRemoved;
-            client.RoleCreated += Logger.Client_RoleCreated;
-            client.RoleDeleted += Logger.Client_RoleDeleted;
-            client.RoleUpdated += Logger.Client_RoleUpdated;
-            client.SpeakerAdded += Logger.Client_SpeakerAdded;
-            client.SpeakerRemoved += Logger.Client_SpeakerRemoved;
-            client.StageEnded += Logger.Client_StageEnded;
-            client.StageStarted += Logger.Client_StageStarted;
-            client.StageUpdated += Logger.Client_StageUpdated;
-            client.ThreadCreated += Logger.Client_ThreadCreated;
-            client.ThreadDeleted += Logger.Client_ThreadDeleted;
-            client.ThreadMemberJoined += Logger.Client_ThreadMemberJoined;
-            client.ThreadMemberLeft += Logger.Client_ThreadMemberLeft;
-            client.ThreadUpdated += Logger.Client_ThreadUpdated;
-            client.UserBanned += Logger.Client_UserBanned;
-            client.UserJoined += Logger.Client_UserJoined;
-            client.UserLeft += Logger.Client_UserLeft;
-            client.UserUnbanned += Logger.Client_UserUnbanned;
-            client.UserVoiceStateUpdated += Logger.Client_UserVoiceStateUpdated;
+            client.ChannelCreated += LoggingSystem.Client_ChannelCreated;
+            client.ChannelDestroyed += LoggingSystem.Client_ChannelDestroyed;
+            client.ChannelUpdated += LoggingSystem.Client_ChannelUpdated;
+            client.GuildMemberUpdated += LoggingSystem.Client_GuildMemberUpdated;
+            client.GuildStickerCreated += LoggingSystem.Client_GuildStickerCreated;
+            client.GuildStickerDeleted += LoggingSystem.Client_GuildStickerDeleted;
+            client.GuildUpdated += LoggingSystem.Client_GuildUpdated;
+            client.InviteCreated += LoggingSystem.Client_InviteCreated;
+            client.InviteDeleted += LoggingSystem.Client_InviteDeleted;
+            client.MessageDeleted += LoggingSystem.Client_MessageDeleted;
+            client.MessageUpdated += LoggingSystem.Client_MessageUpdated;
+            client.ReactionAdded += LoggingSystem.Client_ReactionAdded;
+            client.ReactionRemoved += LoggingSystem.Client_ReactionRemoved;
+            client.RoleCreated += LoggingSystem.Client_RoleCreated;
+            client.RoleDeleted += LoggingSystem.Client_RoleDeleted;
+            client.RoleUpdated += LoggingSystem.Client_RoleUpdated;
+            client.SpeakerAdded += LoggingSystem.Client_SpeakerAdded;
+            client.SpeakerRemoved += LoggingSystem.Client_SpeakerRemoved;
+            client.StageEnded += LoggingSystem.Client_StageEnded;
+            client.StageStarted += LoggingSystem.Client_StageStarted;
+            client.StageUpdated += LoggingSystem.Client_StageUpdated;
+            client.ThreadCreated += LoggingSystem.Client_ThreadCreated;
+            client.ThreadDeleted += LoggingSystem.Client_ThreadDeleted;
+            client.ThreadMemberJoined += LoggingSystem.Client_ThreadMemberJoined;
+            client.ThreadMemberLeft += LoggingSystem.Client_ThreadMemberLeft;
+            client.ThreadUpdated += LoggingSystem.Client_ThreadUpdated;
+            client.UserBanned += LoggingSystem.Client_UserBanned;
+            client.UserJoined += LoggingSystem.Client_UserJoined;
+            client.UserLeft += LoggingSystem.Client_UserLeft;
+            client.UserUnbanned += LoggingSystem.Client_UserUnbanned;
+            client.UserVoiceStateUpdated += LoggingSystem.Client_UserVoiceStateUpdated;
         }
 
         private static async Task HandleReactionAsync(Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction, bool addedReaction)
@@ -120,9 +120,9 @@ namespace RRBot
                 return;
 
             string cleaned = new string(userAfter.Nickname
-                .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c))
                 .ToArray()).ToLower();
-            if (Filters.NWORD_REGEX.IsMatch(cleaned))
+            if (FilterSystem.NWORD_REGEX.IsMatch(cleaned))
                 await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
         }
 
@@ -139,9 +139,9 @@ namespace RRBot
             if (context.User.IsBot)
                 return;
 
-            await Filters.DoInviteCheckAsync(userMsg, client);
-            await Filters.DoNWordCheckAsync(userMsg, context.Channel);
-            await Filters.DoScamCheckAsync(userMsg);
+            await FilterSystem.DoInviteCheckAsync(userMsg, client);
+            await FilterSystem.DoNWordCheckAsync(userMsg, context.Channel);
+            await FilterSystem.DoScamCheckAsync(userMsg);
 
             int argPos = 0;
             if (userMsg.HasCharPrefix('$', ref argPos))
@@ -200,9 +200,9 @@ namespace RRBot
         private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
         {
             SocketUserMessage userMsgAfter = msgAfter as SocketUserMessage;
-            await Filters.DoInviteCheckAsync(userMsgAfter, client);
-            await Filters.DoNWordCheckAsync(userMsgAfter, channel);
-            await Filters.DoScamCheckAsync(userMsgAfter);
+            await FilterSystem.DoInviteCheckAsync(userMsgAfter, client);
+            await FilterSystem.DoNWordCheckAsync(userMsgAfter, channel);
+            await FilterSystem.DoScamCheckAsync(userMsgAfter);
         }
 
         private static async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, Cacheable<IMessageChannel, ulong> channel,
@@ -222,7 +222,7 @@ namespace RRBot
                     await user.Reference.SetAsync(new { usingSlots = FieldValue.Delete }, SetOptions.MergeAll);
             }
 
-            await new Monitors(client, Program.database).Initialise();
+            await new MonitorSystem(client, Program.database).Initialise();
             await lavaSocketClient.StartAsync(client);
             lavaSocketClient.OnPlayerUpdated += audioSystem.OnPlayerUpdated;
             lavaSocketClient.OnTrackFinished += audioSystem.OnTrackFinished;
@@ -232,18 +232,18 @@ namespace RRBot
         {
             await thread.JoinAsync();
             string cleaned = new string(thread.Name
-                .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c))
                 .ToArray()).ToLower();
-            if (Filters.NWORD_REGEX.IsMatch(cleaned))
+            if (FilterSystem.NWORD_REGEX.IsMatch(cleaned))
                 await thread.DeleteAsync();
         }
 
         private static async Task Client_ThreadUpdated(Cacheable<SocketThreadChannel, ulong> threadBefore, SocketThreadChannel threadAfter)
         {
             string cleaned = new string(threadAfter.Name
-                .Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c))
+                .Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c))
                 .ToArray()).ToLower();
-            if (Filters.NWORD_REGEX.IsMatch(cleaned))
+            if (FilterSystem.NWORD_REGEX.IsMatch(cleaned))
                 await threadAfter.DeleteAsync();
         }
 
@@ -266,7 +266,7 @@ namespace RRBot
         private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
             string reason = result.ErrorReason.Replace("@everyone", "").Replace("@here", "").Replace("`", "");
-            if (Filters.NWORD_REGEX.IsMatch(new string(reason.Where(c => char.IsLetterOrDigit(c) || Filters.NWORD_SPCHARS.Contains(c)).ToArray()).ToLower()))
+            if (FilterSystem.NWORD_REGEX.IsMatch(new string(reason.Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c)).ToArray()).ToLower()))
                 return;
 
             switch (result.Error)

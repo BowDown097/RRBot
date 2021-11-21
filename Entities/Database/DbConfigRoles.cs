@@ -1,4 +1,4 @@
-namespace RRBot.Entities
+namespace RRBot.Entities.Database
 {
     [FirestoreData]
     public class DbConfigRoles
@@ -18,10 +18,13 @@ namespace RRBot.Entities
         {
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.Exists)
-                return snap.ConvertTo<DbConfigRoles>();
-            await doc.CreateAsync(new { djRole = 0UL });
-            return await GetById(guildId);
+            if (!snap.Exists)
+            {
+                await doc.CreateAsync(new { djRole = 0UL });
+                return await GetById(guildId);
+            }
+
+            return snap.ConvertTo<DbConfigRoles>();
         }
 
         public async Task Write() => await Reference.SetAsync(this);

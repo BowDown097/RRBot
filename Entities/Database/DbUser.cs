@@ -1,4 +1,4 @@
-namespace RRBot.Entities
+namespace RRBot.Entities.Database
 {
     [FirestoreData]
     public class DbUser
@@ -73,18 +73,16 @@ namespace RRBot.Entities
             get
             {
                 PropertyInfo property = typeof(DbUser).GetProperty(name);
-                if (property.CanRead)
-                    return property.GetValue(this, null);
-
-                throw new ArgumentException("Property does not exist");
+                if (!property.CanRead)
+                    throw new ArgumentException("Property does not exist");
+                return property.GetValue(this, null);
             }
             set
             {
                 PropertyInfo property = typeof(DbUser).GetProperty(name);
-                if (property.CanWrite)
-                    property.SetValue(this, value);
-                else
+                if (!property.CanWrite)
                     throw new ArgumentException("Property does not exist");
+                property.SetValue(this, value);
             }
         }
 
@@ -92,10 +90,13 @@ namespace RRBot.Entities
         {
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/users").Document(userId.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.Exists)
-                return snap.ConvertTo<DbUser>();
-            await doc.CreateAsync(new { cash = 100.0 });
-            return await GetById(guildId, userId);
+            if (!snap.Exists)
+            {
+                await doc.CreateAsync(new { cash = 100.0 });
+                return await GetById(guildId, userId);
+            }
+
+            return snap.ConvertTo<DbUser>();
         }
 
         public void AddToStats(Dictionary<string, string> statsToAddTo)
