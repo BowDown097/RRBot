@@ -36,6 +36,13 @@ namespace RRBot.Systems
             client.ChannelDestroyed += LoggingSystem.Client_ChannelDestroyed;
             client.ChannelUpdated += LoggingSystem.Client_ChannelUpdated;
             client.GuildMemberUpdated += LoggingSystem.Client_GuildMemberUpdated;
+            client.GuildScheduledEventCancelled += LoggingSystem.Client_GuildScheduledEventCancelled;
+            client.GuildScheduledEventCompleted += LoggingSystem.Client_GuildScheduledEventCompleted;
+            client.GuildScheduledEventCreated += LoggingSystem.Client_GuildScheduledEventCreated;
+            client.GuildScheduledEventStarted += LoggingSystem.Client_GuildScheduledEventStarted;
+            client.GuildScheduledEventUpdated += LoggingSystem.Client_GuildScheduledEventUpdated;
+            client.GuildScheduledEventUserAdd += LoggingSystem.Client_GuildScheduledEventUserAdd;
+            client.GuildScheduledEventUserRemove += LoggingSystem.Client_GuildScheduledEventUserRemove;
             client.GuildStickerCreated += LoggingSystem.Client_GuildStickerCreated;
             client.GuildStickerDeleted += LoggingSystem.Client_GuildStickerDeleted;
             client.GuildUpdated += LoggingSystem.Client_GuildUpdated;

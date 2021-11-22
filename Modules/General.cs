@@ -79,7 +79,7 @@
                 .RRAddField("Description", commandInfo.Summary)
                 .RRAddField("Usage", commandInfo.Remarks)
                 .RRAddField("Aliases", string.Join(", ", commandInfo.Aliases.Where(a => a != commandInfo.Name)))
-                .RRAddField("Preconditions", preconditions.ToString());
+                .RRAddField("Preconditions", preconditions);
             await ReplyAsync(embed: commandEmbed.Build());
             return CommandResult.FromSuccess();
         }
@@ -210,11 +210,11 @@
                 .WithColor(Color.Red)
                 .WithDescription("**User Info**")
                 .WithThumbnailUrl(user.GetAvatarUrl())
-                .RRAddField("ID", user.Id.ToString(), true)
+                .RRAddField("ID", user.Id, true)
                 .RRAddField("Nickname", user.Nickname, true)
                 .AddSeparatorField()
-                .RRAddField("Joined At", user.JoinedAt.Value.ToString(), true)
-                .RRAddField("Created At", user.CreatedAt.ToString(), true)
+                .RRAddField("Joined At", user.JoinedAt.Value, true)
+                .RRAddField("Created At", user.CreatedAt, true)
                 .AddSeparatorField()
                 .RRAddField("Permissions", string.Join(", ", perms))
                 .RRAddField("Roles", string.Join(" ", user.Roles.Select(r => r.Mention)));

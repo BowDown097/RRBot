@@ -7,6 +7,9 @@ namespace RRBot.Systems
         {
             embed.Color = Color.Blue;
             embed.Timestamp = DateTime.Now;
+            if (embed.Fields.Count != 0 && embed.Fields.Last().Name == "\u200b")
+                embed.Fields.RemoveAt(embed.Fields.Count - 1);
+
             DbConfigChannels channels = await DbConfigChannels.GetById(guild.Id);
             if (guild.TextChannels.Any(channel => channel.Id == channels.LogsChannel))
                 await guild.GetTextChannel(channels.LogsChannel).SendMessageAsync(embed: embed.Build());
@@ -33,18 +36,11 @@ namespace RRBot.Systems
             SocketTextChannel beforeText = before as SocketTextChannel;
             SocketTextChannel afterText = after as SocketTextChannel;
             EmbedBuilder embed = new EmbedBuilder()
-                .WithDescription("**Channel Updated**\n*(If nothing here appears changed, then the channel permissions were updated)*")
-                .RRAddField("Previous Name", before, true)
-                .RRAddField("Current Name", MentionUtils.MentionChannel(after.Id), true)
-                .AddSeparatorField()
-                .RRAddField("Previous Topic", beforeText.Topic, true)
-                .RRAddField("Current Topic", afterText.Topic, true)
-                .AddSeparatorField()
-                .RRAddField("Previous Position", beforeText.Position, true)
-                .RRAddField("Current Position", afterText.Position, true)
-                .AddSeparatorField()
-                .RRAddField("Previous Member Count", before.Users.Count, true)
-                .RRAddField("Current Member Count", after.Users.Count, true);
+                .WithDescription($"**Channel Updated**\n*(If nothing here appears changed, then the channel permissions were updated)*\n{MentionUtils.MentionChannel(after.Id)}")
+                .AddUpdateCompField("Name", before, after)
+                .AddUpdateCompField("Topic", beforeText.Topic, afterText.Topic)
+                .AddUpdateCompField("Position", beforeText.Position, afterText.Position)
+                .AddUpdateCompField("Member Count", before.Users.Count, after.Users.Count, false);
 
             await WriteToLogs(beforeText.Guild, embed);
         }
@@ -56,16 +52,99 @@ namespace RRBot.Systems
             if (userBefore.Nickname == userAfter.Nickname && userBefore.Roles.SequenceEqual(userAfter.Roles))
                 return;
 
+            string rolesBefore = string.Join(" ", userBefore.Roles.Select(r => r.Mention));
+            string rolesAfter = string.Join(" ", userAfter.Roles.Select(r => r.Mention));
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(userAfter)
-                .WithDescription("**Member Updated**")
-                .RRAddField("Previous Nickname", userBefore.Nickname, true)
-                .RRAddField("Current Nickname", userAfter.Nickname, true)
-                .AddSeparatorField()
-                .RRAddField("Previous Roles", string.Join(" ", userBefore.Roles.Select(r => r.Mention)), true)
-                .RRAddField("Current Roles", string.Join(" ", userAfter.Roles.Select(r => r.Mention)), true);
+                .WithDescription($"**Member Updated**\n{userAfter.Mention}")
+                .AddUpdateCompField("Nickname", userBefore.Nickname, userAfter.Nickname)
+                .AddUpdateCompField("Roles", rolesBefore, rolesAfter, false);
 
             await WriteToLogs(userAfter.Guild, embed);
+        }
+
+        public static async Task Client_GuildScheduledEventCancelled(SocketGuildEvent guildEvent)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithDescription("**Event Cancelled**")
+                .RRAddField("Name", guildEvent.Name)
+                .RRAddField("Description", guildEvent.Description)
+                .RRAddField("Location", guildEvent.Location);
+
+            await WriteToLogs(guildEvent.Guild, embed);
+        }
+
+        public static async Task Client_GuildScheduledEventCompleted(SocketGuildEvent guildEvent)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithDescription("**Event Ended**")
+                .RRAddField("Name", guildEvent.Name)
+                .RRAddField("Description", guildEvent.Description)
+                .RRAddField("Location", guildEvent.Location);
+
+            await WriteToLogs(guildEvent.Guild, embed);
+        }
+
+        public static async Task Client_GuildScheduledEventCreated(SocketGuildEvent guildEvent)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithAuthor(guildEvent.Creator)
+                .WithDescription("**Event Created**")
+                .RRAddField("Name", guildEvent.Name)
+                .RRAddField("Description", guildEvent.Description)
+                .RRAddField("Location", guildEvent.Location)
+                .RRAddField("Start Time", guildEvent.StartTime)
+                .RRAddField("End Time", guildEvent.EndTime);
+
+            await WriteToLogs(guildEvent.Guild, embed);
+        }
+
+        public static async Task Client_GuildScheduledEventStarted(SocketGuildEvent guildEvent)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithDescription("**Event Started**")
+                .RRAddField("Name", guildEvent.Name)
+                .RRAddField("Description", guildEvent.Description)
+                .RRAddField("Location", guildEvent.Location);
+
+            await WriteToLogs(guildEvent.Guild, embed);
+        }
+
+        public static async Task Client_GuildScheduledEventUpdated(Cacheable<SocketGuildEvent, ulong> guildEventBeforeCached,
+            SocketGuildEvent guildEventAfter)
+        {
+            SocketGuildEvent guildEventBefore = await guildEventBeforeCached.GetOrDownloadAsync();
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithDescription($"**Event Updated**\n{guildEventAfter.Name}")
+                .AddUpdateCompField("Name", guildEventBefore.Name, guildEventAfter.Name)
+                .AddUpdateCompField("Description", guildEventBefore.Description, guildEventAfter.Description)
+                .AddUpdateCompField("Location", guildEventBefore.Location, guildEventAfter.Location)
+                .AddUpdateCompField("Start Time", guildEventBefore.StartTime, guildEventAfter.StartTime)
+                .AddUpdateCompField("End Time", guildEventBefore.EndTime, guildEventAfter.EndTime, false);
+
+            await WriteToLogs(guildEventAfter.Guild, embed);
+        }
+
+        public static async Task Client_GuildScheduledEventUserAdd(Cacheable<SocketUser, RestUser, IUser, ulong> userCached,
+            SocketGuildEvent guildEvent)
+        {
+            IUser user = await userCached.GetOrDownloadAsync();
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithAuthor(user)
+                .WithDescription($"**User Joined Event**\n{guildEvent.Name}");
+
+            await WriteToLogs(guildEvent.Guild, embed);
+        }
+
+        public static async Task Client_GuildScheduledEventUserRemove(Cacheable<SocketUser, RestUser, IUser, ulong> userCached,
+            SocketGuildEvent guildEvent)
+        {
+            IUser user = await userCached.GetOrDownloadAsync();
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithAuthor(user)
+                .WithDescription($"**User Left Event**\n{guildEvent.Name}");
+
+            await WriteToLogs(guildEvent.Guild, embed);
         }
 
         public static async Task Client_GuildStickerCreated(SocketCustomSticker sticker)
@@ -103,11 +182,8 @@ namespace RRBot.Systems
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Guild Updated**")
-                .RRAddField("Previous Name", guildBefore.Name, true)
-                .RRAddField("Current Name", guildAfter.Name, true)
-                .AddSeparatorField()
-                .RRAddField("Previous Description", guildBefore.Description, true)
-                .RRAddField("Current Description", guildAfter.Description, true);
+                .AddUpdateCompField("Name", guildBefore.Name, guildAfter.Name)
+                .AddUpdateCompField("Description", guildBefore.Description, guildAfter.Description, false);
 
             await WriteToLogs(guildAfter, embed);
         }
@@ -192,7 +268,7 @@ namespace RRBot.Systems
                 .RRAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
 
             if (reaction.Emote is Emote emote)
-                embed.WithImageUrl(emote.Url + "?size=48");
+                embed.WithImageUrl(emote.Url + "?size=40");
 
             await WriteToLogs((reaction.Channel as SocketGuildChannel)?.Guild, embed);
         }
@@ -209,7 +285,7 @@ namespace RRBot.Systems
                 .RRAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
 
             if (reaction.Emote is Emote emote)
-                embed.WithImageUrl(emote.Url + "?size=48");
+                embed.WithImageUrl(emote.Url + "?size=40");
 
             await WriteToLogs((reaction.Channel as SocketGuildChannel)?.Guild, embed);
         }
@@ -217,7 +293,9 @@ namespace RRBot.Systems
         public static async Task Client_RoleCreated(SocketRole role)
         {
             EmbedBuilder embed = new EmbedBuilder()
-                .WithDescription($"**Role Created**\n{role.Name}");
+                .WithDescription("**Role Created**")
+                .RRAddField("Name", role)
+                .RRAddField("Color", $"{role.Color} ({role.Color.R}, {role.Color.G}, {role.Color.B})");
 
             await WriteToLogs(role.Guild, embed);
         }
@@ -225,7 +303,7 @@ namespace RRBot.Systems
         public static async Task Client_RoleDeleted(SocketRole role)
         {
             EmbedBuilder embed = new EmbedBuilder()
-                .WithDescription($"**Role Deleted**\n{role.Name}");
+                .WithDescription($"**Role Deleted**\n{role}");
 
             await WriteToLogs(role.Guild, embed);
         }
@@ -235,13 +313,12 @@ namespace RRBot.Systems
             if (roleBefore.Name == roleAfter.Name && roleBefore.Color == roleAfter.Color)
                 return;
 
+            string colorBefore = $"{roleBefore.Color} ({roleBefore.Color.R}, {roleBefore.Color.G}, {roleBefore.Color.B})";
+            string colorAfter = $"{roleAfter.Color} ({roleAfter.Color.R}, {roleAfter.Color.G}, {roleAfter.Color.B})";
             EmbedBuilder embed = new EmbedBuilder()
-                .WithDescription("**Role Updated**")
-                .RRAddField("Previous Name", roleBefore.Name, true)
-                .RRAddField("Current Name", roleAfter.Name, true)
-                .AddSeparatorField()
-                .RRAddField("Previous Color", $"{roleBefore.Color} ({roleBefore.Color.R}, {roleBefore.Color.G}, {roleBefore.Color.B})", true)
-                .RRAddField("Current Color", $"{roleAfter.Color} ({roleAfter.Color.R}, {roleAfter.Color.G}, {roleAfter.Color.B})", true);
+                .WithDescription($"**Role Updated**\n{roleAfter.Mention}")
+                .AddUpdateCompField("Name", roleBefore, roleAfter)
+                .AddUpdateCompField("Color", colorBefore, colorAfter, false);
 
             await WriteToLogs(roleAfter.Guild, embed);
         }
@@ -287,18 +364,11 @@ namespace RRBot.Systems
         public static async Task Client_StageUpdated(SocketStageChannel stageBefore, SocketStageChannel stageAfter)
         {
             EmbedBuilder embed = new EmbedBuilder()
-                .WithDescription("**Stage Updated**\n*(If nothing here appears changed, then the channel permissions were updated)*")
-                .RRAddField("Previous Channel Name", $"#{stageBefore}", true)
-                .RRAddField("Current Channel Name", MentionUtils.MentionChannel(stageAfter.Id), true)
-                .AddSeparatorField()
-                .RRAddField("Previous Topic", stageBefore.Topic, true)
-                .RRAddField("Current Topic", stageAfter.Topic, true)
-                .AddSeparatorField()
-                .RRAddField("Previous Discoverability Status", !stageBefore.IsDiscoverableDisabled, true)
-                .RRAddField("Current Discoverability Status", !stageAfter.IsDiscoverableDisabled, true)
-                .AddSeparatorField()
-                .RRAddField("Previous User Limit", stageBefore.UserLimit, true)
-                .RRAddField("Current User Limit", stageAfter.UserLimit, true);
+                .WithDescription($"**Stage Updated**\n*(If nothing here appears changed, then the channel permissions were updated)*\n{stageAfter}")
+                .AddUpdateCompField("Channel Name", stageBefore, stageAfter)
+                .AddUpdateCompField("Topic", stageBefore.Topic, stageAfter.Topic)
+                .AddUpdateCompField("Discoverability Status", stageBefore.IsDiscoverableDisabled, stageAfter.IsDiscoverableDisabled)
+                .AddUpdateCompField("User Limit", stageBefore.UserLimit, stageAfter.UserLimit, false);
 
             await WriteToLogs(stageAfter.Guild, embed);
         }
@@ -340,7 +410,7 @@ namespace RRBot.Systems
         {
             EmbedBuilder embed = new EmbedBuilder()
                 .WithAuthor(threadUser)
-                .WithTitle($"**User Left Thread**\n{threadUser.Thread}");
+                .WithDescription($"**User Left Thread**\n{threadUser.Thread}");
 
             await WriteToLogs(threadUser.Guild, embed);
         }
@@ -349,18 +419,11 @@ namespace RRBot.Systems
         {
             SocketThreadChannel threadBefore = await threadBeforeCached.GetOrDownloadAsync();
             EmbedBuilder embed = new EmbedBuilder()
-                .WithDescription("**Thread Updated**\n*(If nothing here appears changed, then the thread permissions were updated)*")
-                .RRAddField("Previous Name", threadBefore.Name, true)
-                .RRAddField("Current Name", threadAfter.Name, true)
-                .AddSeparatorField()
-                .RRAddField("Previous Lock Status", threadBefore.IsLocked, true)
-                .RRAddField("Current Lock Status", threadAfter.IsLocked, true)
-                .AddSeparatorField()
-                .RRAddField("Previous Member Count", threadBefore.MemberCount, true)
-                .RRAddField("Current Member Count", threadAfter.MemberCount, true)
-                .AddSeparatorField()
-                .RRAddField("Previous Position", threadBefore.Position, true)
-                .RRAddField("Current Position", threadAfter.Position, true);
+                .WithDescription($"**Thread Updated**\n*(If nothing here appears changed, then the thread permissions were updated)*{threadAfter}")
+                .AddUpdateCompField("Name", threadBefore, threadAfter)
+                .AddUpdateCompField("Lock Status", threadBefore.IsLocked, threadAfter.IsLocked)
+                .AddUpdateCompField("Member Count", threadBefore.MemberCount, threadAfter.MemberCount)
+                .AddUpdateCompField("Position", threadBefore.Position, threadAfter.Position, false);
 
             await WriteToLogs(threadAfter.Guild, embed);
         }
