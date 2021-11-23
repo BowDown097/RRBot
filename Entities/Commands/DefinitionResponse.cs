@@ -5,10 +5,10 @@ namespace RRBot.Entities.Commands
         [JsonProperty("count")]
         public int Count { get; set; }
         [JsonProperty("results")]
-        public DefinitionResult[] Results { get; set; }
+        public Definition[] Results { get; set; }
     }
 
-    public class DefinitionResult
+    public class Definition
     {
         [JsonProperty("headword")]
         public string Headword { get; set; }

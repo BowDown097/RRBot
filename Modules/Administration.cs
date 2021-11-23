@@ -48,8 +48,8 @@
 
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             await dbUser.SetCash(user as SocketUser, amount);
-            await ReplyAsync($"Set **{user}**'s cash to **{amount:C2}**.");
             await dbUser.Write();
+            await ReplyAsync($"Set **{user}**'s cash to **{amount:C2}**.");
             return CommandResult.FromSuccess();
         }
 

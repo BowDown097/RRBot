@@ -40,7 +40,7 @@ namespace RRBot.Systems
                 .AddUpdateCompField("Name", before, after)
                 .AddUpdateCompField("Topic", beforeText.Topic, afterText.Topic)
                 .AddUpdateCompField("Position", beforeText.Position, afterText.Position)
-                .AddUpdateCompField("Member Count", before.Users.Count, after.Users.Count, false);
+                .AddUpdateCompField("Member Count", before.Users.Count, after.Users.Count);
 
             await WriteToLogs(beforeText.Guild, embed);
         }
@@ -58,7 +58,7 @@ namespace RRBot.Systems
                 .WithAuthor(userAfter)
                 .WithDescription($"**Member Updated**\n{userAfter.Mention}")
                 .AddUpdateCompField("Nickname", userBefore.Nickname, userAfter.Nickname)
-                .AddUpdateCompField("Roles", rolesBefore, rolesAfter, false);
+                .AddUpdateCompField("Roles", rolesBefore, rolesAfter);
 
             await WriteToLogs(userAfter.Guild, embed);
         }
@@ -120,7 +120,7 @@ namespace RRBot.Systems
                 .AddUpdateCompField("Description", guildEventBefore.Description, guildEventAfter.Description)
                 .AddUpdateCompField("Location", guildEventBefore.Location, guildEventAfter.Location)
                 .AddUpdateCompField("Start Time", guildEventBefore.StartTime, guildEventAfter.StartTime)
-                .AddUpdateCompField("End Time", guildEventBefore.EndTime, guildEventAfter.EndTime, false);
+                .AddUpdateCompField("End Time", guildEventBefore.EndTime, guildEventAfter.EndTime);
 
             await WriteToLogs(guildEventAfter.Guild, embed);
         }
@@ -183,7 +183,7 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription("**Guild Updated**")
                 .AddUpdateCompField("Name", guildBefore.Name, guildAfter.Name)
-                .AddUpdateCompField("Description", guildBefore.Description, guildAfter.Description, false);
+                .AddUpdateCompField("Description", guildBefore.Description, guildAfter.Description);
 
             await WriteToLogs(guildAfter, embed);
         }
@@ -318,7 +318,7 @@ namespace RRBot.Systems
             EmbedBuilder embed = new EmbedBuilder()
                 .WithDescription($"**Role Updated**\n{roleAfter.Mention}")
                 .AddUpdateCompField("Name", roleBefore, roleAfter)
-                .AddUpdateCompField("Color", colorBefore, colorAfter, false);
+                .AddUpdateCompField("Color", colorBefore, colorAfter);
 
             await WriteToLogs(roleAfter.Guild, embed);
         }
@@ -368,7 +368,7 @@ namespace RRBot.Systems
                 .AddUpdateCompField("Channel Name", stageBefore, stageAfter)
                 .AddUpdateCompField("Topic", stageBefore.Topic, stageAfter.Topic)
                 .AddUpdateCompField("Discoverability Status", stageBefore.IsDiscoverableDisabled, stageAfter.IsDiscoverableDisabled)
-                .AddUpdateCompField("User Limit", stageBefore.UserLimit, stageAfter.UserLimit, false);
+                .AddUpdateCompField("User Limit", stageBefore.UserLimit, stageAfter.UserLimit);
 
             await WriteToLogs(stageAfter.Guild, embed);
         }
@@ -423,7 +423,7 @@ namespace RRBot.Systems
                 .AddUpdateCompField("Name", threadBefore, threadAfter)
                 .AddUpdateCompField("Lock Status", threadBefore.IsLocked, threadAfter.IsLocked)
                 .AddUpdateCompField("Member Count", threadBefore.MemberCount, threadAfter.MemberCount)
-                .AddUpdateCompField("Position", threadBefore.Position, threadAfter.Position, false);
+                .AddUpdateCompField("Position", threadBefore.Position, threadAfter.Position);
 
             await WriteToLogs(threadAfter.Guild, embed);
         }

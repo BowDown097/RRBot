@@ -83,10 +83,7 @@
         [RequireCooldown("BullyCooldown", "You cannot bully anyone for {0}.")]
         public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
         {
-            string cleaned = new string(nickname
-                .Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c))
-                .ToArray()).ToLower();
-            if (FilterSystem.NWORD_REGEX.IsMatch(cleaned))
+            if (FilterSystem.ContainsNWord(nickname))
                 return CommandResult.FromError("You cannot bully someone to the funny word.");
             if (nickname.Length > 32)
                 return CommandResult.FromError("The nickname you put is longer than the maximum accepted length (32).");
@@ -330,7 +327,7 @@
         [Summary("Get some slave labor goin'.")]
         [Remarks("$slavery")]
         [RequireCooldown("SlaveryCooldown", "The slaves will die if you keep going like this! You should wait {0}.")]
-        [RequireRankLevel(2)]
+        [RequireRankLevel("2")]
         public async Task<RuntimeResult> Slavery()
         {
             string[] successes = { "You got loads of newfags to tirelessly mine ender chests on the Oldest Anarchy Server in Minecraft. You made **{0}** selling the newfound millions of obsidian to an interested party.",
@@ -345,7 +342,7 @@
         [Summary("Sell your body for quick cash.")]
         [Remarks("$whore")]
         [RequireCooldown("WhoreCooldown", "You cannot whore yourself out for {0}.")]
-        [RequireRankLevel(1)]
+        [RequireRankLevel("1")]
         public async Task<RuntimeResult> Whore()
         {
             string[] successes = { "You went to the club and some weird fat dude sauced you **{0}**.",

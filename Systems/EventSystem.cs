@@ -81,18 +81,15 @@ namespace RRBot.Systems
 
             // selfroles check
             IGuild guild = (channel as ITextChannel)?.Guild;
-            DocumentReference doc = Program.database.Collection($"servers/{guild.Id}/config").Document("selfroles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (snap.TryGetValue("message", out ulong msgId) && snap.TryGetValue(reaction.Emote.ToString(), out ulong roleId))
-            {
-                if (reaction.MessageId != msgId)
-                    return;
+            DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(guild.Id);
+            if (reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(reaction.Emote.ToString()))
+                return;
 
-                if (addedReaction)
-                    await user.AddRoleAsync(roleId);
-                else
-                    await user.RemoveRoleAsync(roleId);
-            }
+            ulong roleId = selfRoles.SelfRoles[reaction.Emote.ToString()];
+            if (addedReaction)
+                await user.AddRoleAsync(roleId);
+            else
+                await user.RemoveRoleAsync(roleId);
         }
 
         private async Task Client_ButtonExecuted(SocketMessageComponent component)
@@ -126,10 +123,7 @@ namespace RRBot.Systems
             if (userBefore.Nickname == userAfter.Nickname)
                 return;
 
-            string cleaned = new string(userAfter.Nickname
-                .Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c))
-                .ToArray()).ToLower();
-            if (FilterSystem.NWORD_REGEX.IsMatch(cleaned))
+            if (FilterSystem.ContainsNWord(userAfter.Nickname))
                 await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
         }
 
@@ -238,19 +232,13 @@ namespace RRBot.Systems
         private static async Task Client_ThreadCreated(SocketThreadChannel thread)
         {
             await thread.JoinAsync();
-            string cleaned = new string(thread.Name
-                .Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c))
-                .ToArray()).ToLower();
-            if (FilterSystem.NWORD_REGEX.IsMatch(cleaned))
+            if (FilterSystem.ContainsNWord(thread.Name))
                 await thread.DeleteAsync();
         }
 
         private static async Task Client_ThreadUpdated(Cacheable<SocketThreadChannel, ulong> threadBefore, SocketThreadChannel threadAfter)
         {
-            string cleaned = new string(threadAfter.Name
-                .Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c))
-                .ToArray()).ToLower();
-            if (FilterSystem.NWORD_REGEX.IsMatch(cleaned))
+            if (FilterSystem.ContainsNWord(threadAfter.Name))
                 await threadAfter.DeleteAsync();
         }
 
@@ -273,7 +261,7 @@ namespace RRBot.Systems
         private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
             string reason = result.ErrorReason.Replace("@everyone", "").Replace("@here", "").Replace("`", "");
-            if (FilterSystem.NWORD_REGEX.IsMatch(new string(reason.Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c)).ToArray()).ToLower()))
+            if (FilterSystem.ContainsNWord(reason))
                 return;
 
             switch (result.Error)

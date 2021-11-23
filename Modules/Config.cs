@@ -9,12 +9,10 @@
         [Remarks("$addrank [role] [level] [cost]")]
         public async Task AddRank(IRole role, int level, double cost)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("ranks");
-            await doc.SetAsync(new Dictionary<string, object>
-            {
-                { $"level{level}Id", role.Id.ToString() },
-                { $"level{level}Cost", cost }
-            });
+            DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
+            ranks.Costs.Add(level.ToString(), cost);
+            ranks.Ids.Add(level.ToString(), role.Id);
+            await ranks.Write();
 
             await Context.User.NotifyAsync(Context.Channel, $"Added {role} as a level {level} rank that costs {cost:C2}.");
         }
@@ -24,19 +22,17 @@
         [Remarks("$addselfrole [emoji] [role]")]
         public async Task<RuntimeResult> AddSelfRole(IEmote emote, IRole role)
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("selfroles");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (!snap.TryGetValue("channel", out ulong channelId) || !snap.TryGetValue("message", out ulong msgId))
+            DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
+            if (selfRoles.Channel == 0UL)
                 return CommandResult.FromError("The self roles message has not been set. Please set it using ``$setselfrolesmsg``.");
 
-            await doc.SetAsync(new Dictionary<string, object>
-            {
-                { emote.ToString(), role.Id }
-            }, SetOptions.MergeAll);
-
-            SocketTextChannel channel = Context.Guild.GetChannel(channelId) as SocketTextChannel;
-            IMessage message = await channel.GetMessageAsync(msgId);
+            SocketTextChannel channel = Context.Guild.GetChannel(selfRoles.Channel) as SocketTextChannel;
+            IMessage message = await channel.GetMessageAsync(selfRoles.Message);
             await message.AddReactionAsync(emote);
+
+            selfRoles.SelfRoles.Add(emote.ToString(), role.Id);
+            await selfRoles.Write();
+
             await Context.User.NotifyAsync(Context.Channel, $"Added {role} as a self role bound to {emote}.");
             return CommandResult.FromSuccess();
         }
@@ -57,8 +53,8 @@
         [Remarks("$clearselfroles")]
         public async Task ClearSelfRoles()
         {
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("selfroles");
-            await doc.DeleteAsync();
+            DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
+            await selfRoles.Reference.DeleteAsync();
             await Context.User.NotifyAsync(Context.Channel, "Any registered self roles removed!");
         }
 
@@ -72,43 +68,51 @@
             foreach (DocumentSnapshot entry in config.Documents)
             {
                 description.AppendLine($"***{entry.Id}***");
-
-                Dictionary<string, object> dict = entry.ToDictionary();
-                foreach (string key in dict.Keys.ToList().OrderBy(s => s))
+                switch (entry.Id)
                 {
-                    switch (entry.Id)
-                    {
-                        case "channels":
-                            SocketGuildChannel channel = Context.Guild.GetChannel(Convert.ToUInt64(dict[key]));
-                            description.AppendLine($"**{key}**: #{channel.ToString() ?? "deleted-channel"}");
-                            break;
-                        case "ranks":
-                            if (key.EndsWith("Id"))
-                            {
-                                SocketRole rank = Context.Guild.GetRole(Convert.ToUInt64(dict[key]));
-                                description.AppendLine($"**{key.Replace("Id", "Role")}**: {rank.ToString() ?? "(deleted role)"}");
-                            }
-                            else
-                            {
-                                description.AppendLine($"**{key}**: ${Convert.ToSingle(dict[key])}");
-                            }
-                            break;
-                        case "roles":
-                        case "selfroles":
-                            if (key != "message" && key != "channel")
-                            {
-                                SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(dict[key]));
-                                description.AppendLine($"**{key}**: {role.ToString() ?? "(deleted role)"}");
-                            }
-                            else
-                            {
-                                description.AppendLine($"**{key}**: {dict[key]}");
-                            }
-                            break;
-                        default:
-                            description.AppendLine($"**{key}**: {dict[key]}");
-                            break;
-                    }
+                    case "channels":
+                        DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+                        SocketGuildChannel logsChannel = Context.Guild.GetChannel(channels.LogsChannel);
+                        SocketGuildChannel pollsChannel = Context.Guild.GetChannel(channels.PollsChannel);
+                        description.AppendLine($"Logs Channel: #{logsChannel?.ToString() ?? "deleted-channel"}");
+                        description.AppendLine($"Polls Channel: #{pollsChannel?.ToString() ?? "deleted-channel"}");
+                        break;
+                    case "modules":
+                        DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
+                        description.AppendLine($"NSFW Enabled: {modules.NSFWEnabled}");
+                        break;
+                    case "ranks":
+                        DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
+                        foreach (KeyValuePair<string, double> kvp in ranks.Costs.OrderBy(kvp => int.Parse(kvp.Key)))
+                        {
+                            SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
+                            description.AppendLine($"Level {kvp.Key} Role: {role?.ToString() ?? "(deleted role)"}");
+                            description.AppendLine($"Level {kvp.Key} Cost: {kvp.Value:C2}");
+                        }
+                        break;
+                    case "roles":
+                        DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+                        SocketRole djRole = Context.Guild.GetRole(roles.DJRole);
+                        SocketRole mutedRole = Context.Guild.GetRole(roles.MutedRole);
+                        SocketRole staffLvl1Role = Context.Guild.GetRole(roles.StaffLvl1Role);
+                        SocketRole staffLvl2Role = Context.Guild.GetRole(roles.StaffLvl2Role);
+                        description.AppendLine($"DJ Role: {djRole?.ToString() ?? "(deleted role)"}");
+                        description.AppendLine($"Muted Role: {mutedRole?.ToString() ?? "(deleted role)"}");
+                        description.AppendLine($"Staff Level 1 Role: {staffLvl1Role?.ToString() ?? "(deleted role)"}");
+                        description.AppendLine($"Staff Level 2 Role: {staffLvl2Role?.ToString() ?? "(deleted role)"}");
+                        break;
+                    case "selfroles":
+                        DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
+                        SocketTextChannel channel = Context.Guild.GetTextChannel(selfRoles.Channel);
+                        IMessage message = await channel?.GetMessageAsync(selfRoles.Message);
+                        string messageContent = message != null ? $"[Jump]({message.GetJumpUrl()})" : "(deleted)";
+                        description.AppendLine($"Message: {messageContent}");
+                        foreach (KeyValuePair<string, ulong> kvp in selfRoles.SelfRoles)
+                        {
+                            SocketRole role = Context.Guild.GetRole(kvp.Value);
+                            description.AppendLine($"{kvp.Key}: {role?.ToString() ?? "(deleted role)"}");
+                        }
+                        break;
                 }
             }
 
@@ -172,8 +176,10 @@
             if (msg == null)
                 return CommandResult.FromError("You specified an invalid message!");
 
-            DocumentReference doc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("selfroles");
-            await doc.SetAsync(new { channel = channel.Id, message = msgId }, SetOptions.MergeAll);
+            DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
+            selfRoles.Channel = channel.Id;
+            selfRoles.Message = msgId;
+            await selfRoles.Write();
             await Context.User.NotifyAsync(Context.Channel, $"Set self roles message to the one at {msg.GetJumpUrl()}.");
             return CommandResult.FromSuccess();
         }

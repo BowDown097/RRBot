@@ -138,21 +138,15 @@ namespace RRBot.Entities.Database
             amount = Math.Round(amount, 2) * Constants.CASH_MULTIPLIER;
             Cash = amount;
 
-            DocumentReference ranksDoc = Program.database.Collection($"servers/{guildUser.GuildId}/config").Document("ranks");
-            DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
-            if (snap.Exists)
+            DbConfigRanks ranks = await DbConfigRanks.GetById(guildUser.GuildId);
+            foreach (KeyValuePair<string, double> kvp in ranks.Costs)
             {
-                foreach (KeyValuePair<string, object> kvp in snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id")))
-                {
-                    double neededCash = snap.GetValue<double>(kvp.Key.Replace("Id", "Cost"));
-                    ulong roleId = Convert.ToUInt64(kvp.Value);
-                    IRole role = guildUser.Guild.GetRole(roleId);
-
-                    if (amount >= neededCash && !guildUser.RoleIds.Contains(roleId))
-                        await guildUser.AddRoleAsync(roleId);
-                    else if (amount <= neededCash && guildUser.RoleIds.Contains(roleId))
-                        await guildUser.RemoveRoleAsync(roleId);
-                }
+                double neededCash = kvp.Value;
+                ulong roleId = ranks.Ids[kvp.Key];
+                if (amount >= neededCash && !guildUser.RoleIds.Contains(roleId))
+                    await guildUser.AddRoleAsync(roleId);
+                else if (amount <= neededCash && guildUser.RoleIds.Contains(roleId))
+                    await guildUser.RemoveRoleAsync(roleId);
             }
         }
 

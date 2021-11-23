@@ -3,38 +3,20 @@ namespace RRBot.Modules
     [Summary("Commands that don't do anything related to the bot's systems: they just exist for fun (hence the name).")]
     public class Fun : ModuleBase<SocketCommandContext>
     {
-        private async Task<RuntimeResult> RandomImg(string apiUrl, string key, bool cat = false)
-        {
-            using HttpClient client = new();
-            string response = await client.GetStringAsync(apiUrl);
-            string image = "";
-            if (cat)
-            {
-                JArray arr = JArray.Parse(response);
-                image = arr[0][key].Value<string>();
-            }
-            else
-            {
-                JObject json = JObject.Parse(response);
-                image = json[key].Value<string>();
-            }
-
-            if (string.IsNullOrWhiteSpace(image))
-                return CommandResult.FromError("Couldn't find the picture you wanted :(");
-
-            EmbedBuilder embed = new EmbedBuilder()
-                .WithColor(Color.Red)
-                .WithTitle("Found one!")
-                .WithImageUrl(image);
-            await ReplyAsync(embed: embed.Build());
-            return CommandResult.FromSuccess();
-        }
-
         [Alias("gato", "kitty")]
         [Command("cat")]
         [Summary("Random cat picture!")]
         [Remarks("$cat")]
-        public async Task<RuntimeResult> Cat() => await RandomImg("https://api.thecatapi.com/v1/images/search", "url", true);
+        public async Task Cat()
+        {
+            using HttpClient client = new();
+            string response = await client.GetStringAsync("https://api.thecatapi.com/v1/images/search");
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Found one!")
+                .WithImageUrl(JArray.Parse(response)[0]["url"].Value<string>());
+            await ReplyAsync(embed: embed.Build());
+        }
 
         [Alias("definition")]
         [Command("define")]
@@ -42,7 +24,7 @@ namespace RRBot.Modules
         [Remarks("$define [term]")]
         public async Task<RuntimeResult> Define([Remainder] string term)
         {
-            if (term.Equals("nigger", StringComparison.OrdinalIgnoreCase))
+            if (FilterSystem.ContainsNWord(term))
                 return CommandResult.FromError("Nope.");
 
             using HttpClient client = new();
@@ -52,13 +34,13 @@ namespace RRBot.Modules
                 return CommandResult.FromError("Couldn't find anything for that term, chief.");
 
             StringBuilder description = new();
-            DefinitionResult[] filteredResults = def.Results.Where(res => res.Headword.Equals(term, StringComparison.OrdinalIgnoreCase)
+            Definition[] filtered = def.Results.Where(res => res.Headword.Equals(term, StringComparison.OrdinalIgnoreCase)
                 && res.Senses != null).ToArray();
-            for (int i = 1; i <= filteredResults.Length; i++)
+            for (int i = 1; i <= filtered.Length; i++)
             {
-                DefinitionResult result = filteredResults[i - 1];
-                description.AppendLine($"**{i}:**\n*{result.PartOfSpeech}*");
-                foreach (Sense sense in result.Senses)
+                Definition definition = filtered[i - 1];
+                description.AppendLine($"**{i}:**\n*{definition.PartOfSpeech}*");
+                foreach (Sense sense in definition.Senses)
                 {
                     description.AppendLine($"Definition: {sense.Definition[0]}");
                     if (sense.Examples != null)
@@ -81,7 +63,16 @@ namespace RRBot.Modules
         [Command("dog")]
         [Summary("Random dog picture!")]
         [Remarks("$dog")]
-        public async Task<RuntimeResult> Dog() => await RandomImg("https://dog.ceo/api/breeds/image/random", "message");
+        public async Task Dog()
+        {
+            using HttpClient client = new();
+            string response = await client.GetStringAsync("https://dog.ceo/api/breeds/image/random");
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Found one!")
+                .WithImageUrl(JObject.Parse(response)["message"].Value<string>());
+            await ReplyAsync(embed: embed.Build());
+        }
 
         [Command("flip")]
         [Summary("Flip a coin.")]
@@ -112,20 +103,18 @@ namespace RRBot.Modules
         public async Task Gay(IGuildUser user)
         {
             int gay = !user.IsBot ? RandomUtil.Next(1, 101) : 0;
+            string title = gay switch
+            {
+                <= 10 => "Not Gay",
+                > 10 and < 50 => "Kinda Gay",
+                >= 50 and < 90 => "Gay",
+                _ => "Hella Gay!"
+            };
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
+                .WithTitle(title)
                 .WithDescription($"{user} is {gay}% gay.");
-
-            if (gay <= 10)
-                embed.WithTitle("Not Gay");
-            else if (gay > 10 && gay < 50)
-                embed.WithTitle("Kinda Gay");
-            else if (gay >= 50 && gay < 90)
-                embed.WithTitle("Gay");
-            else
-                embed.WithTitle("Hella Gay!");
-
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -135,21 +124,18 @@ namespace RRBot.Modules
         public async Task Penis(IGuildUser user)
         {
             int equals = !user.IsBot ? RandomUtil.Next(1, 16) : 20;
-            string penis = "8" + new string('=', equals) + "D";
+            string title = equals switch
+            {
+                <= 3 => "Micropenis LMFAO",
+                > 3 and < 7 => "Ehhh",
+                >= 7 and < 12 => "Not bad at all!",
+                _ => "God damn, he's packin'!"
+            };
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithDescription($"{user}'s penis: {penis}");
-
-            if (equals <= 3)
-                embed.WithTitle("Micropenis LMFAO");
-            else if (equals > 3 && equals < 7)
-                embed.WithTitle("Ehhh");
-            else if (equals >= 7 && equals < 12)
-                embed.WithTitle("Not bad at all!");
-            else
-                embed.WithTitle("God damn, he's packin'!");
-
+                .WithTitle(title)
+                .WithDescription($"{user}'s penis: {"8" + new string('=', equals) + "D"}");
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -167,27 +153,25 @@ namespace RRBot.Modules
             using HttpClient client = new();
             string response = await client.GetStringAsync("https://opentdb.com/api.php?amount=1");
             TriviaQuestion trivia = JsonConvert.DeserializeObject<Trivia>(response).Results[0];
-            string question = HttpUtility.HtmlDecode(trivia.Question);
-            string correctAnswer = HttpUtility.HtmlDecode(trivia.CorrectAnswer);
-            IEnumerable<string> incorrectAnswers = trivia.IncorrectAnswers.Select(a => HttpUtility.HtmlDecode(a));
+            trivia.DecodeMembers();
+            string[] answers = trivia.IncorrectAnswers.Append(trivia.CorrectAnswer).ToArray();
 
             // set up and randomize answers array
-            List<string> answers = new(incorrectAnswers.Append(correctAnswer));
-            for (int i = 0; i < answers.Count - 1; i++)
+            for (int i = 0; i < answers.Length - 1; i++)
             {
-                int j = RandomUtil.Next(i, answers.Count);
+                int j = RandomUtil.Next(i, answers.Length);
                 string temp = answers[i];
                 answers[i] = answers[j];
                 answers[j] = temp;
             }
 
             ComponentBuilder components = new();
-            StringBuilder description = new($"{question}\n\nPress the button with the respective number to submit your answer.\n");
-            for (int i = 1; i <= answers.Count; i++)
+            StringBuilder description = new($"{trivia.Question}\n\nPress the button with the respective number to submit your answer.\n");
+            for (int i = 1; i <= answers.Length; i++)
             {
                 string answer = answers[i - 1];
                 description.AppendLine($"{i}: {answer}");
-                components.WithButton(i.ToString(), $"trivia-{Context.User.Id}-{i}-{answer == correctAnswer}");
+                components.WithButton(i.ToString(), $"trivia-{Context.User.Id}-{i}-{answer == trivia.CorrectAnswer}");
             }
 
             EmbedBuilder embed = new EmbedBuilder()
@@ -218,9 +202,7 @@ namespace RRBot.Modules
         [Remarks("$waifu")]
         public async Task Waifu()
         {
-            List<string> keys = Constants.WAIFUS.Keys.ToList();
-            string waifu = keys[RandomUtil.Next(Constants.WAIFUS.Count)];
-
+            string waifu = Constants.WAIFUS.Keys.ElementAt(RandomUtil.Next(Constants.WAIFUS.Count));
             EmbedBuilder waifuEmbed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle("Say hello to your new waifu!")

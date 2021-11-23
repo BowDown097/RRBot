@@ -7,7 +7,7 @@ namespace RRBot.Extensions
             => builder.AddField("\u200b", "\u200b");
 
         public static EmbedBuilder AddUpdateCompField(this EmbedBuilder builder, string name,
-            object? value1, object? value2, bool addSeparator = true, string defaultValue = "N/A")
+            object? value1, object? value2, string defaultValue = "N/A")
         {
             string? value1Str = value1?.ToString();
             string? value2Str = value2?.ToString();
@@ -16,9 +16,7 @@ namespace RRBot.Extensions
             {
                 string desc1 = !string.IsNullOrWhiteSpace(value1Str) ? value1Str : defaultValue;
                 string desc2 = !string.IsNullOrWhiteSpace(value2Str) ? value2Str : defaultValue;
-                builder.AddField($"Previous {name}", desc1, true).AddField($"Current {name}", desc2, true);
-                if (addSeparator)
-                    builder.AddSeparatorField();
+                builder.AddField($"Previous {name}", desc1, true).AddField($"Current {name}", desc2, true).AddSeparatorField();
             }
 
             return builder;

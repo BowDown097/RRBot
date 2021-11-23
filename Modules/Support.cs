@@ -14,9 +14,9 @@
             await message.ModifyAsync(msg => msg.Embed = embed.Build());
 
             DbUser dbUser = await DbUser.GetById(context.Guild.Id, user.Id);
-            await ticket.Reference.DeleteAsync();
             dbUser.SupportCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(600);
             await dbUser.Write();
+            await ticket.Reference.DeleteAsync();
 
             await user.NotifyAsync(context.Channel, response);
             return CommandResult.FromSuccess();
@@ -51,14 +51,11 @@
         [RequireCooldown("SupportCooldown", "You cannot request support again for {0}. This is done to prevent spam.")]
         public async Task<RuntimeResult> GetSupport([Remainder] string request)
         {
-            string cleaned = new string(request
-                .Where(c => char.IsLetterOrDigit(c) || FilterSystem.NWORD_SPCHARS.Contains(c))
-                .ToArray()).ToLower();
-            if (FilterSystem.NWORD_REGEX.IsMatch(cleaned))
-                return CommandResult.FromError("You cannot have the funny word in your request.");
+            if (FilterSystem.ContainsNWord(request))
+                return CommandResult.FromError("Nope.");
 
-            QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();
             DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, Context.User.Id);
+            int tickets = await ticket.Reference.Parent.ListDocumentsAsync().CountAsync();
             if (!string.IsNullOrWhiteSpace(ticket.Request))
             {
                 IGuildUser dbHelper = Context.Guild.GetUser(ticket.Helper);
@@ -72,7 +69,7 @@
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithTitle($"Support Ticket #{tickets.Count + 1}")
+                .WithTitle($"Support Ticket #{tickets + 1}")
                 .RRAddField("Issuer", Context.User.Mention)
                 .RRAddField("Helper", helperUser.Mention)
                 .RRAddField("Request", request);

@@ -235,21 +235,19 @@
         [Remarks("$ranks")]
         public async Task Ranks()
         {
-            DocumentReference ranksDoc = Program.database.Collection($"servers/{Context.Guild.Id}/config").Document("ranks");
-            DocumentSnapshot snap = await ranksDoc.GetSnapshotAsync();
-
-            StringBuilder ranks = new();
-            foreach (KeyValuePair<string, object> kvp in snap.ToDictionary().Where(kvp => kvp.Key.EndsWith("Id")).OrderBy(kvp => kvp.Key))
+            DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
+            StringBuilder description = new();
+            foreach (KeyValuePair<string, double> kvp in ranks.Costs.OrderBy(kvp => int.Parse(kvp.Key)))
             {
-                double neededCash = snap.GetValue<double>(kvp.Key.Replace("Id", "Cost"));
-                SocketRole role = Context.Guild.GetRole(Convert.ToUInt64(kvp.Value));
-                ranks.AppendLine($"**{role.Name}**: {neededCash:C2}");
+                SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
+                if (role == null) continue;
+                description.AppendLine($"**{role.Name}**: {kvp.Value:C2}");
             }
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle("Available Ranks")
-                .WithDescription(ranks.Length > 0 ? ranks.ToString() : "None");
+                .WithDescription(description.Length > 0 ? description.ToString() : "None");
             await ReplyAsync(embed: embed.Build());
         }
 

@@ -2,22 +2,10 @@ namespace RRBot.Interactions
 {
     public static class TriviaInteractions
     {
-        private static async Task<string> AnswerAt(Embed embed, string num)
-        {
-            using StringReader reader = new(embed.Description);
-            for (string line = await reader.ReadLineAsync(); line != null; line = await reader.ReadLineAsync())
-            {
-                if (line.StartsWith(num))
-                    return line[3..];
-            }
-
-            return "";
-        }
-
         public static async Task Respond(SocketMessageComponent component, string num, bool correct)
         {
             Embed embed = component.Message.Embeds.First();
-            string answer = await AnswerAt(embed, num);
+            string answer = Array.Find(embed.Description.Split('\n'), l => l.StartsWith(num))[3..];
 
             if (correct)
             {

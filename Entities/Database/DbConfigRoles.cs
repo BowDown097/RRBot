@@ -7,11 +7,11 @@ namespace RRBot.Entities.Database
         public DocumentReference Reference { get; set; }
         [FirestoreProperty("djRole")]
         public ulong DJRole { get; set; }
-        [FirestoreProperty("houseRole")]
-        public ulong StaffLvl1Role { get; set; }
         [FirestoreProperty("mutedRole")]
         public ulong MutedRole { get; set; }
-        [FirestoreProperty("senateRole")]
+        [FirestoreProperty("staffLvl1Role")]
+        public ulong StaffLvl1Role { get; set; }
+        [FirestoreProperty("staffLvl2Role")]
         public ulong StaffLvl2Role { get; set; }
 
         public static async Task<DbConfigRoles> GetById(ulong guildId)
