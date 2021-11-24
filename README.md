@@ -9,8 +9,6 @@ The bot for the Rush Reborn Discord server, heavily inspired by the [DEA Discord
 
 [Join the official Discord!](https://discord.gg/kThRDbMYqq)
 
-[Invite RR to your server!](https://discord.com/oauth2/authorize?client_id=817790099823525909&permissions=8&scope=bot)
-
 ## Features
 RR is a Discord bot that can do many, many things. It's got a cash system, it's got music playing support, it's got various moderation commands, and tons of other stuff. Oh, and it's highly configurable.
 
