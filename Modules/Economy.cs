@@ -100,7 +100,6 @@
         [Command("discard")]
         [Summary("Discard an item or the Pacifist perk.")]
         [Remarks("$discard [item]")]
-        [RequireItem]
         public async Task<RuntimeResult> Discard([Remainder] string item)
         {
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
