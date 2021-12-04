@@ -19,7 +19,6 @@
                 return CommandResult.FromError($"**{user}** already has a(n) {item}.");
 
             dbUser.Items.Add(item);
-            await dbUser.Write();
             await Context.User.NotifyAsync(Context.Channel, $"Gave **{user}** a(n) {item}.");
             return CommandResult.FromSuccess();
         }
@@ -32,7 +31,6 @@
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             foreach (string cmd in Economy.CMDS_WITH_COOLDOWN)
                 dbUser[$"{cmd}Cooldown"] = 0L;
-            await dbUser.Write();
             await Context.User.NotifyAsync(Context.Channel, $"Reset **{user}**'s cooldowns.");
         }
 
@@ -48,7 +46,6 @@
 
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             await dbUser.SetCash(user as SocketUser, amount);
-            await dbUser.Write();
             await ReplyAsync($"Set **{user}**'s cash to **{amount:C2}**.");
             return CommandResult.FromSuccess();
         }
@@ -66,7 +63,6 @@
 
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             dbUser[cUp] = Math.Round(amount, 4);
-            await dbUser.Write();
             await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user}**'s {cUp} balance.");
             return CommandResult.FromSuccess();
         }

@@ -1,10 +1,10 @@
 namespace RRBot.Entities.Database
 {
     [FirestoreData]
-    public class DbConfigRanks
+    public class DbConfigRanks : DbObject
     {
         [FirestoreDocumentId]
-        public DocumentReference Reference { get; set; }
+        public override DocumentReference Reference { get; set; }
         [FirestoreProperty("costs")]
         public Dictionary<string, double> Costs { get; set; } = new();
         [FirestoreProperty("ids")]
@@ -12,6 +12,9 @@ namespace RRBot.Entities.Database
 
         public static async Task<DbConfigRanks> GetById(ulong guildId)
         {
+            if (MemoryCache.Default.Contains($"rankconf-{guildId}"))
+                return (DbConfigRanks)MemoryCache.Default.Get($"rankconf-{guildId}");
+
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("ranks");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
@@ -20,9 +23,9 @@ namespace RRBot.Entities.Database
                 return await GetById(guildId);
             }
 
-            return snap.ConvertTo<DbConfigRanks>();
+            DbConfigRanks config = snap.ConvertTo<DbConfigRanks>();
+            MemoryCache.Default.CacheDatabaseObject($"rankconf-{guildId}", config);
+            return config;
         }
-
-        public async Task Write() => await Reference.SetAsync(this);
     }
 }

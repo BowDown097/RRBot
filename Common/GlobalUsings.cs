@@ -23,6 +23,7 @@ global using RRBot.TypeReaders;
 global using System.Collections.Immutable;
 global using System.Globalization;
 global using System.Reflection;
+global using System.Runtime.Caching;
 global using System.Security.Cryptography;
 global using System.Text;
 global using System.Text.RegularExpressions;

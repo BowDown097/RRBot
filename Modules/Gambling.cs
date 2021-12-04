@@ -76,7 +76,6 @@
                     $"\nBalance: {totalCash:C2}");
             }
 
-            await user.Write();
             return CommandResult.FromSuccess();
         }
 
@@ -125,7 +124,6 @@
                 await user.SetCash(Context.User, 0);
             }
 
-            await user.Write();
             await Context.User.NotifyAsync(Context.Channel, "​I have doubled your cash.");
             return CommandResult.FromSuccess();
         }
@@ -147,7 +145,6 @@
                 return CommandResult.FromError("You are already using the slot machine!");
 
             user.UsingSlots = true;
-            await user.Write();
 
             double payoutMult = 1;
             EmbedBuilder embed = new EmbedBuilder()
@@ -207,8 +204,6 @@
                 await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet:C2}**." +
                     $"\nBalance: {totalCash:C2}");
             }
-
-            await user.Write();
 
             return CommandResult.FromSuccess();
         }

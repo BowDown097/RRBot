@@ -7,7 +7,6 @@
         {
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             user[property] = status;
-            await user.Write();
         }
 
         [Command("mysettings")]

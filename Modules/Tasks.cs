@@ -25,7 +25,6 @@
                 {
                     user.Items.Remove(item);
                     await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
-                    await user.Write();
                     return;
                 }
 
@@ -45,7 +44,6 @@
                 { "Money Gained from Tasks", cashGained.ToString("C2") }
             });
             user[cooldown] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
-            await user.Write();
         }
 
         [Command("chop")]
@@ -87,7 +85,6 @@
                 {
                     user.Items.Remove("Fishing Rod");
                     await Context.User.NotifyAsync(Context.Channel, "Your Fishing Rod broke into pieces as soon as you tried to use it. You made no money.");
-                    await user.Write();
                     return;
                 }
 
@@ -113,7 +110,6 @@
             });
             await user.SetCash(Context.User, totalCash);
             user.FishCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FISH_COOLDOWN);
-            await user.Write();
         }
 
         [Command("hunt")]
@@ -141,7 +137,6 @@
                 {
                     user.Items.Remove(item);
                     await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
-                    await user.Write();
                     return;
                 }
 
@@ -181,7 +176,6 @@
             });
             await user.SetCash(Context.User, totalCash);
             user.MineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN);
-            await user.Write();
         }
     }
 }

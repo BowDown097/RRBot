@@ -131,7 +131,6 @@ namespace RRBot.Systems
                                     SocketUser socketUser = guild.GetUser(userId);
                                     await user.SetCash(socketUser, user.Cash + perk.price);
                                     user.Perks.Remove(lastPerk);
-                                    await user.Write();
                                 }
                             }
                         }

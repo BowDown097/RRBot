@@ -49,7 +49,6 @@
             }
 
             user[cdKey] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
-            await user.Write();
             return CommandResult.FromSuccess();
         }
 
@@ -106,7 +105,6 @@
 
             DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             author.BullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN);
-            await author.Write();
             return CommandResult.FromSuccess();
         }
 
@@ -190,8 +188,6 @@
             }
 
             author.HackCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.HACK_COOLDOWN);
-            await author.Write();
-            await target.Write();
             return CommandResult.FromSuccess();
         }
 
@@ -249,8 +245,6 @@
             }
 
             author.RapeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.RAPE_COOLDOWN);
-            await author.Write();
-            await target.Write();
             return CommandResult.FromSuccess();
         }
 
@@ -317,8 +311,6 @@
             }
 
             author.RobCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.ROB_COOLDOWN);
-            await author.Write();
-            await target.Write();
             return CommandResult.FromSuccess();
         }
 

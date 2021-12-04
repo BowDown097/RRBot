@@ -1,15 +1,18 @@
 namespace RRBot.Entities.Database
 {
     [FirestoreData]
-    public class DbConfigModules
+    public class DbConfigModules : DbObject
     {
         [FirestoreDocumentId]
-        public DocumentReference Reference { get; set; }
+        public override DocumentReference Reference { get; set; }
         [FirestoreProperty("nsfw")]
         public bool NSFWEnabled { get; set; }
 
         public static async Task<DbConfigModules> GetById(ulong guildId)
         {
+            if (MemoryCache.Default.Contains($"moduleconf-{guildId}"))
+                return (DbConfigModules)MemoryCache.Default.Get($"moduleconf-{guildId}");
+
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("modules");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
@@ -18,9 +21,9 @@ namespace RRBot.Entities.Database
                 return await GetById(guildId);
             }
 
-            return snap.ConvertTo<DbConfigModules>();
+            DbConfigModules config = snap.ConvertTo<DbConfigModules>();
+            MemoryCache.Default.CacheDatabaseObject($"moduleconf-{guildId}", config);
+            return config;
         }
-
-        public async Task Write() => await Reference.SetAsync(this);
     }
 }

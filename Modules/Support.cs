@@ -15,7 +15,6 @@
 
             DbUser dbUser = await DbUser.GetById(context.Guild.Id, user.Id);
             dbUser.SupportCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(600);
-            await dbUser.Write();
             await ticket.Reference.DeleteAsync();
 
             await user.NotifyAsync(context.Channel, response);
@@ -79,7 +78,6 @@
             ticket.Issuer = Context.User.Id;
             ticket.Message = userMessage.Id;
             ticket.Request = request;
-            await ticket.Write();
             return CommandResult.FromSuccess();
         }
 

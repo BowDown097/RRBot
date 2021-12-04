@@ -1,10 +1,10 @@
 namespace RRBot.Entities.Database
 {
     [FirestoreData]
-    public class DbUser
+    public class DbUser : DbObject
     {
         [FirestoreDocumentId]
-        public DocumentReference Reference { get; set; }
+        public override DocumentReference Reference { get; set; }
         [FirestoreProperty("achievements")]
         public Dictionary<string, string> Achievements { get; set; } = new();
         [FirestoreProperty("btc")]
@@ -88,6 +88,9 @@ namespace RRBot.Entities.Database
 
         public static async Task<DbUser> GetById(ulong guildId, ulong userId)
         {
+            if (MemoryCache.Default.Contains($"user-{guildId}-{userId}"))
+                return (DbUser)MemoryCache.Default.Get($"user-{guildId}-{userId}");
+
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/users").Document(userId.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
@@ -96,7 +99,9 @@ namespace RRBot.Entities.Database
                 return await GetById(guildId, userId);
             }
 
-            return snap.ConvertTo<DbUser>();
+            DbUser user = snap.ConvertTo<DbUser>();
+            MemoryCache.Default.CacheDatabaseObject($"user-{guildId}-{userId}", user);
+            return user;
         }
 
         public void AddToStats(Dictionary<string, string> statsToAddTo)
@@ -169,7 +174,5 @@ namespace RRBot.Entities.Database
                 .WithDescription(description);
             await channel.SendMessageAsync(embed: embed.Build());
         }
-
-        public async Task Write() => await Reference.SetAsync(this);
     }
 }

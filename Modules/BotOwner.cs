@@ -23,7 +23,6 @@ namespace RRBot.Modules
 
             DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
             globalConfig.BannedUsers.Add(user.Id);
-            await globalConfig.Write();
             await Context.User.NotifyAsync(Context.Channel, $"Blacklisted {user}.");
             return CommandResult.FromSuccess();
         }
@@ -43,7 +42,6 @@ namespace RRBot.Modules
 
             DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
             globalConfig.DisabledCommands.Add(cmdLower);
-            await globalConfig.Write();
             await Context.User.NotifyAsync(Context.Channel, $"Disabled ${cmdLower}.");
             return CommandResult.FromSuccess();
         }
@@ -59,7 +57,6 @@ namespace RRBot.Modules
                 return CommandResult.FromError($"**{cmdLower}** is either not a command or is not disabled!");
 
             globalConfig.DisabledCommands.Remove(cmdLower);
-            await globalConfig.Write();
             await Context.User.NotifyAsync(Context.Channel, $"Enabled ${cmdLower}.");
             return CommandResult.FromSuccess();
         }
@@ -104,7 +101,6 @@ namespace RRBot.Modules
 
             DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
             globalConfig.BannedUsers.Remove(user.Id);
-            await globalConfig.Write();
             await Context.User.NotifyAsync(Context.Channel, $"Unblacklisted {user}.");
             return CommandResult.FromSuccess();
         }

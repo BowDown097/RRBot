@@ -1,10 +1,10 @@
 namespace RRBot.Entities.Database
 {
     [FirestoreData]
-    public class DbSupportTicket
+    public class DbSupportTicket : DbObject
     {
         [FirestoreDocumentId]
-        public DocumentReference Reference { get; set; }
+        public override DocumentReference Reference { get; set; }
         [FirestoreProperty("helper")]
         public ulong Helper { get; set; }
         [FirestoreProperty("issuer")]
@@ -16,6 +16,9 @@ namespace RRBot.Entities.Database
 
         public static async Task<DbSupportTicket> GetById(ulong guildId, ulong userId)
         {
+            if (MemoryCache.Default.Contains($"ticket-{guildId}-{userId}"))
+                return (DbSupportTicket)MemoryCache.Default.Get($"ticket-{guildId}-{userId}");
+
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/supportTickets").Document(userId.ToString());
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
@@ -24,9 +27,9 @@ namespace RRBot.Entities.Database
                 return await GetById(guildId, userId);
             }
 
-            return snap.ConvertTo<DbSupportTicket>();
+            DbSupportTicket config = snap.ConvertTo<DbSupportTicket>();
+            MemoryCache.Default.CacheDatabaseObject($"ticket-{guildId}-{userId}", config);
+            return config;
         }
-
-        public async Task Write() => await Reference.SetAsync(this);
     }
 }

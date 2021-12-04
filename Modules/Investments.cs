@@ -60,7 +60,6 @@
                 { $"{abbreviation} Purchased", cryptoAmount.ToString("0.####") }
             });
 
-            await user.Write();
             await Context.User.NotifyAsync(Context.Channel, $"You have invested in **{cryptoAmount:0.####}** {abbreviation}, currently valued at **{amount:C2}**.");
             return CommandResult.FromSuccess();
         }
@@ -154,7 +153,6 @@
                 { $"Money Gained From {abbreviation}", finalValue.ToString("C2", culture) }
             });
 
-            await user.Write();
             await Context.User.NotifyAsync(Context.Channel, $"You withdrew **{amount:0.####}** {abbreviation}, currently valued at **{cryptoValue:C2}**.\n" +
                 $"A {Constants.INVESTMENT_FEE_PERCENT}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
             return CommandResult.FromSuccess();

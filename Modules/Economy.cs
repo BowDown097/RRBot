@@ -6,7 +6,7 @@
         public static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Slavery", "Whore", "Bully",
             "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack" };
 
-        private static async Task AddBackUserSettings(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
+        private void AddBackUserSettings(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
             bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long whoreCd,
             long slaveryCd, long rapeCd, long lootCd, long dealCd, long bullyCd, long mineCd, long huntCd, long farmCd,
             long digCd, long chopCd, long supportCd)
@@ -31,7 +31,6 @@
             user.DigCooldown = digCd;
             user.ChopCooldown = chopCd;
             user.SupportCooldown = supportCd;
-            await user.Write();
         }
 
         [Alias("bal", "cash")]
@@ -127,7 +126,6 @@
                     "\n*Tip: This command is case sensitive and does not accept perks other than Pacifist.*");
             }
 
-            await user.Write();
             return CommandResult.FromSuccess();
         }
 
@@ -274,8 +272,6 @@
             await target.SetCash(user as SocketUser, target.Cash + amount);
 
             await Context.User.NotifyAsync(Context.Channel, $"You have sauced **{user}** {amount:C2}.");
-            await author.Write();
-            await target.Write();
             return CommandResult.FromSuccess();
         }
 
@@ -347,7 +343,7 @@
                     await Context.User.NotifyAsync(Context.Channel, "​DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                     await user.Reference.DeleteAsync();
                     await user.SetCash(Context.User, 0);
-                    await AddBackUserSettings(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
+                    AddBackUserSettings(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
                         temp.NoReplyPings, temp.Stats, temp.WhoreCooldown, temp.SlaveryCooldown, temp.RapeCooldown,
                         temp.LootCooldown, temp.DealCooldown, temp.BullyCooldown, temp.MineCooldown, temp.HuntCooldown,
                         temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown, temp.SupportCooldown);
@@ -356,7 +352,7 @@
                     await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                     await user.Reference.DeleteAsync();
                     await user.SetCash(Context.User, 0);
-                    await AddBackUserSettings(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
+                    AddBackUserSettings(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
                         temp.NoReplyPings, temp.Stats, temp.WhoreCooldown, temp.SlaveryCooldown, temp.RapeCooldown,
                         temp.LootCooldown, temp.DealCooldown, temp.BullyCooldown, temp.MineCooldown, temp.HuntCooldown,
                         temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown, temp.SupportCooldown);

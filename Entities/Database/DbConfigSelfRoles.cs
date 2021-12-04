@@ -1,10 +1,10 @@
 namespace RRBot.Entities.Database
 {
     [FirestoreData]
-    public class DbConfigSelfRoles
+    public class DbConfigSelfRoles : DbObject
     {
         [FirestoreDocumentId]
-        public DocumentReference Reference { get; set; }
+        public override DocumentReference Reference { get; set; }
         [FirestoreProperty("channel")]
         public ulong Channel { get; set; }
         [FirestoreProperty("message")]
@@ -14,6 +14,9 @@ namespace RRBot.Entities.Database
 
         public static async Task<DbConfigSelfRoles> GetById(ulong guildId)
         {
+            if (MemoryCache.Default.Contains($"selfroleconf-{guildId}"))
+                return (DbConfigSelfRoles)MemoryCache.Default.Get($"selfroleconf-{guildId}");
+
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("selfroles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
@@ -22,9 +25,9 @@ namespace RRBot.Entities.Database
                 return await GetById(guildId);
             }
 
-            return snap.ConvertTo<DbConfigSelfRoles>();
+            DbConfigSelfRoles config = snap.ConvertTo<DbConfigSelfRoles>();
+            MemoryCache.Default.CacheDatabaseObject($"selfroleconf-{guildId}", config);
+            return config;
         }
-
-        public async Task Write() => await Reference.SetAsync(this);
     }
 }

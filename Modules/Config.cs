@@ -12,7 +12,6 @@
             DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
             ranks.Costs.Add(level.ToString(), cost);
             ranks.Ids.Add(level.ToString(), role.Id);
-            await ranks.Write();
 
             await Context.User.NotifyAsync(Context.Channel, $"Added {role} as a level {level} rank that costs {cost:C2}.");
         }
@@ -31,7 +30,6 @@
             await message.AddReactionAsync(emote);
 
             selfRoles.SelfRoles.Add(emote.ToString(), role.Id);
-            await selfRoles.Write();
 
             await Context.User.NotifyAsync(Context.Channel, $"Added {role} as a self role bound to {emote}.");
             return CommandResult.FromSuccess();
@@ -131,7 +129,6 @@
             DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
             roles.DJRole = role.Id;
             await Context.User.NotifyAsync(Context.Channel, $"Set {role} as the DJ role.");
-            await roles.Write();
         }
 
         [Command("setlogschannel")]
@@ -142,7 +139,6 @@
             DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
             channels.LogsChannel = channel.Id;
             await Context.User.NotifyAsync(Context.Channel, $"Set logs channel to #{channel}.");
-            await channels.Write();
         }
 
         [Command("setmutedrole")]
@@ -153,7 +149,6 @@
             DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
             roles.MutedRole = role.Id;
             await Context.User.NotifyAsync(Context.Channel, $"Set muted role to {role}.");
-            await roles.Write();
         }
 
         [Command("setpollschannel")]
@@ -164,7 +159,6 @@
             DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
             channels.PollsChannel = channel.Id;
             await Context.User.NotifyAsync(Context.Channel, $"Set polls channel to #{channel}.");
-            await channels.Write();
         }
 
         [Command("setselfrolesmsg")]
@@ -179,7 +173,6 @@
             DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
             selfRoles.Channel = channel.Id;
             selfRoles.Message = msgId;
-            await selfRoles.Write();
             await Context.User.NotifyAsync(Context.Channel, $"Set self roles message to the one at {msg.GetJumpUrl()}.");
             return CommandResult.FromSuccess();
         }
@@ -192,7 +185,6 @@
             DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
             roles.StaffLvl1Role = role.Id;
             await Context.User.NotifyAsync(Context.Channel, $"Set first level Staff role to {role}.");
-            await roles.Write();
         }
 
         [Command("setstafflvl2role")]
@@ -203,7 +195,6 @@
             DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
             roles.StaffLvl2Role = role.Id;
             await Context.User.NotifyAsync(Context.Channel, $"Set second level Staff role to {role}.");
-            await roles.Write();
         }
 
         [Command("togglensfw")]
@@ -214,7 +205,6 @@
             DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
             modules.NSFWEnabled = !modules.NSFWEnabled;
             await ReplyAsync($"Toggled NSFW enabled to {modules.NSFWEnabled}.");
-            await modules.Write();
         }
     }
 }

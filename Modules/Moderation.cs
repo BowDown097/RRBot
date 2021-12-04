@@ -45,7 +45,6 @@
                 {
                     { "Bans", "1" }
                 });
-                await dbUser.Write();
 
                 string response = resolved.Item2;
                 response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
@@ -61,7 +60,6 @@
                     { "Bans", "1" }
                 });
 
-                await dbUser.Write();
                 return CommandResult.FromSuccess();
             }
 
@@ -131,7 +129,6 @@
             {
                 { "Kicks", "1" }
             });
-            await dbUser.Write();
 
             string response = $"**{Context.User}** has kicked **{user}**";
             response += string.IsNullOrWhiteSpace(reason) ? "." : $"for '{reason}'";
@@ -171,7 +168,6 @@
                         { "Mutes", "1" }
                     });
                     await dbUser.UnlockAchievement("Literally 1984", "Get muted.", user as SocketUser, Context.Channel);
-                    await dbUser.Write();
 
                     string response = resolved.Item2;
                     response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";

@@ -1,10 +1,10 @@
 namespace RRBot.Entities.Database
 {
     [FirestoreData]
-    public class DbGlobalConfig
+    public class DbGlobalConfig : DbObject
     {
         [FirestoreDocumentId]
-        public DocumentReference Reference { get; set; }
+        public override DocumentReference Reference { get; set; }
         [FirestoreProperty("bannedUsers")]
         public List<ulong> BannedUsers { get; set; } = new();
         [FirestoreProperty("disabledCommands")]
@@ -12,6 +12,9 @@ namespace RRBot.Entities.Database
 
         public static async Task<DbGlobalConfig> Get()
         {
+            if (MemoryCache.Default.Contains("globalconfig"))
+                return (DbGlobalConfig)MemoryCache.Default.Get("globalconfig");
+
             DocumentReference doc = Program.database.Collection("globalConfig").Document("banstuff");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
@@ -20,9 +23,9 @@ namespace RRBot.Entities.Database
                 return await Get();
             }
 
-            return snap.ConvertTo<DbGlobalConfig>();
+            DbGlobalConfig config = snap.ConvertTo<DbGlobalConfig>();
+            MemoryCache.Default.CacheDatabaseObject("globalconfig", config);
+            return config;
         }
-
-        public async Task Write() => await Reference.SetAsync(this);
     }
 }

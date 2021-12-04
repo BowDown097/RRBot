@@ -193,8 +193,6 @@ namespace RRBot.Systems
                     await user.SetCash(context.User, user.Cash + Constants.MESSAGE_CASH);
                     user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN);
                 }
-
-                await user.Write();
             }
         }
 

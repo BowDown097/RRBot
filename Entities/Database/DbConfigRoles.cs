@@ -1,10 +1,10 @@
 namespace RRBot.Entities.Database
 {
     [FirestoreData]
-    public class DbConfigRoles
+    public class DbConfigRoles : DbObject
     {
         [FirestoreDocumentId]
-        public DocumentReference Reference { get; set; }
+        public override DocumentReference Reference { get; set; }
         [FirestoreProperty("djRole")]
         public ulong DJRole { get; set; }
         [FirestoreProperty("mutedRole")]
@@ -16,6 +16,9 @@ namespace RRBot.Entities.Database
 
         public static async Task<DbConfigRoles> GetById(ulong guildId)
         {
+            if (MemoryCache.Default.Contains($"roleconf-{guildId}"))
+                return (DbConfigRoles)MemoryCache.Default.Get($"roleconf-{guildId}");
+
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("roles");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
@@ -24,9 +27,9 @@ namespace RRBot.Entities.Database
                 return await GetById(guildId);
             }
 
-            return snap.ConvertTo<DbConfigRoles>();
+            DbConfigRoles config = snap.ConvertTo<DbConfigRoles>();
+            MemoryCache.Default.CacheDatabaseObject($"roleconf-{guildId}", config);
+            return config;
         }
-
-        public async Task Write() => await Reference.SetAsync(this);
     }
 }

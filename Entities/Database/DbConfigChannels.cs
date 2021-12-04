@@ -1,10 +1,10 @@
 namespace RRBot.Entities.Database
 {
     [FirestoreData]
-    public class DbConfigChannels
+    public class DbConfigChannels : DbObject
     {
         [FirestoreDocumentId]
-        public DocumentReference Reference { get; set; }
+        public override DocumentReference Reference { get; set; }
         [FirestoreProperty("logsChannel")]
         public ulong LogsChannel { get; set; }
         [FirestoreProperty("pollsChannel")]
@@ -12,6 +12,9 @@ namespace RRBot.Entities.Database
 
         public static async Task<DbConfigChannels> GetById(ulong guildId)
         {
+            if (MemoryCache.Default.Contains($"chanconf-{guildId}"))
+                return (DbConfigChannels)MemoryCache.Default.Get($"chanconf-{guildId}");
+
             DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("channels");
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
@@ -20,9 +23,9 @@ namespace RRBot.Entities.Database
                 return await GetById(guildId);
             }
 
-            return snap.ConvertTo<DbConfigChannels>();
+            DbConfigChannels config = snap.ConvertTo<DbConfigChannels>();
+            MemoryCache.Default.CacheDatabaseObject($"chanconf-{guildId}", config);
+            return config;
         }
-
-        public async Task Write() => await Reference.SetAsync(this);
     }
 }

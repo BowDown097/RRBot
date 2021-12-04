@@ -27,7 +27,6 @@
             }
 
             user[CooldownNode] = 0;
-            await user.Write();
             return PreconditionResult.FromSuccess();
         }
     }

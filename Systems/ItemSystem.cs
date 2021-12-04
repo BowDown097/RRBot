@@ -43,7 +43,6 @@
                     dbUser.Items.Add(item);
                     await dbUser.SetCash(user, dbUser.Cash - price);
                     await user.NotifyAsync(channel, $"You got yourself a fresh {item} for **{price:C2}**!");
-                    await dbUser.Write();
                     return CommandResult.FromSuccess();
                 }
 
@@ -98,7 +97,6 @@
                         notification.Append(" Additionally, as you bought the Pacifist perk, any perks you previously had have been refunded.");
 
                     await user.NotifyAsync(channel, notification.ToString());
-                    await dbUser.Write();
                     return CommandResult.FromSuccess();
                 }
 
