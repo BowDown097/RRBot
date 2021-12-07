@@ -45,12 +45,12 @@
             ulong userId = user == null ? Context.User.Id : user.Id;
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
             if (dbUser.Cash < 0.01)
-                return CommandResult.FromError(user == null ? "You're broke!" : $"**{user}** is broke!");
+                return CommandResult.FromError(user == null ? "You're broke!" : $"**{user.Sanitize()}** is broke!");
 
             if (user == null)
                 await Context.User.NotifyAsync(Context.Channel, $"You have **{dbUser.Cash:C2}**.");
             else
-                await ReplyAsync($"**{user}** has **{dbUser.Cash:C2}**.");
+                await ReplyAsync($"**{user.Sanitize()}** has **{dbUser.Cash:C2}**.");
 
             return CommandResult.FromSuccess();
         }
@@ -90,7 +90,7 @@
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithTitle(user == null ? "Cooldowns" : $"{user}'s Cooldowns")
+                .WithTitle(user == null ? "Cooldowns" : $"{user.Sanitize()}'s Cooldowns")
                 .WithDescription(description.Length > 0 ? description.ToString() : "None");
             await ReplyAsync(embed: embed.Build());
         }
@@ -139,7 +139,7 @@
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithTitle(user == null ? "Items" : $"{user}'s Items")
+                .WithTitle(user == null ? "Items" : $"{user.Sanitize()}'s Items")
                 .WithDescription(string.Join(", ", dbUser.Items));
             await ReplyAsync(embed: embed.Build());
         }
@@ -156,7 +156,7 @@
 
             double cryptoValue = cUp != "Cash" ? await Investments.QueryCryptoValue(cUp) : 0;
             QuerySnapshot users = await Program.database.Collection($"servers/{Context.Guild.Id}/users")
-                .OrderByDescending(currency).GetSnapshotAsync();
+                .OrderByDescending(cUp).GetSnapshotAsync();
             StringBuilder lb = new();
             int processedUsers = 0, failedUsers = 0;
             foreach (DocumentSnapshot doc in users.Documents)
@@ -183,9 +183,9 @@
                     break;
 
                 if (cUp == "Cash")
-                    lb.AppendLine($"{processedUsers + 1}: **{guildUser}**: {val:C2}");
+                    lb.AppendLine($"{processedUsers + 1}: **{guildUser.Sanitize()}**: {val:C2}");
                 else
-                    lb.AppendLine($"{processedUsers + 1}: **{guildUser}**: {val:0.####} ({cryptoValue * val:C2})");
+                    lb.AppendLine($"{processedUsers + 1}: **{guildUser.Sanitize()}**: {val:0.####} ({cryptoValue * val:C2})");
 
                 processedUsers++;
             }
@@ -271,7 +271,7 @@
             await author.SetCash(Context.User, author.Cash - amount);
             await target.SetCash(user as SocketUser, target.Cash + amount);
 
-            await Context.User.NotifyAsync(Context.Channel, $"You have sauced **{user}** {amount:C2}.");
+            await Context.User.NotifyAsync(Context.Channel, $"You sauced **{user.Sanitize()}** {amount:C2}.");
             return CommandResult.FromSuccess();
         }
 

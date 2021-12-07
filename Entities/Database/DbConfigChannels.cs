@@ -5,9 +5,9 @@ namespace RRBot.Entities.Database
     {
         [FirestoreDocumentId]
         public override DocumentReference Reference { get; set; }
-        [FirestoreProperty("logsChannel")]
+        [FirestoreProperty]
         public ulong LogsChannel { get; set; }
-        [FirestoreProperty("pollsChannel")]
+        [FirestoreProperty]
         public ulong PollsChannel { get; set; }
 
         public static async Task<DbConfigChannels> GetById(ulong guildId)
@@ -19,7 +19,7 @@ namespace RRBot.Entities.Database
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
             {
-                await doc.CreateAsync(new { logsChannel = 0UL });
+                await doc.CreateAsync(new { LogsChannel = 0UL });
                 return await GetById(guildId);
             }
 

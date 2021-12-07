@@ -5,11 +5,11 @@ namespace RRBot.Entities.Database
     {
         [FirestoreDocumentId]
         public override DocumentReference Reference { get; set; }
-        [FirestoreProperty("channel")]
+        [FirestoreProperty]
         public ulong Channel { get; set; }
-        [FirestoreProperty("message")]
+        [FirestoreProperty]
         public ulong Message { get; set; }
-        [FirestoreProperty("selfroles")]
+        [FirestoreProperty]
         public Dictionary<string, ulong> SelfRoles { get; set; } = new();
 
         public static async Task<DbConfigSelfRoles> GetById(ulong guildId)

@@ -17,7 +17,7 @@
 
                     @double = (double)user[abbreviation];
                     if (@double < Constants.INVESTMENT_MIN_AMOUNT)
-                        return TypeReaderResult.FromError(CommandError.Unsuccessful, $"You have no {crypto.ToUpper()}!");
+                        return TypeReaderResult.FromError((CommandError)9, $"You have no {crypto.ToUpper()}!");
                 }
                 else if (!double.TryParse(input, out @double))
                 {

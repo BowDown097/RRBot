@@ -5,13 +5,13 @@ namespace RRBot.Entities.Database
     {
         [FirestoreDocumentId]
         public override DocumentReference Reference { get; set; }
-        [FirestoreProperty("djRole")]
+        [FirestoreProperty]
         public ulong DJRole { get; set; }
-        [FirestoreProperty("mutedRole")]
+        [FirestoreProperty]
         public ulong MutedRole { get; set; }
-        [FirestoreProperty("staffLvl1Role")]
+        [FirestoreProperty]
         public ulong StaffLvl1Role { get; set; }
-        [FirestoreProperty("staffLvl2Role")]
+        [FirestoreProperty]
         public ulong StaffLvl2Role { get; set; }
 
         public static async Task<DbConfigRoles> GetById(ulong guildId)
@@ -23,7 +23,7 @@ namespace RRBot.Entities.Database
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
             {
-                await doc.CreateAsync(new { djRole = 0UL });
+                await doc.CreateAsync(new { DJRole = 0UL });
                 return await GetById(guildId);
             }
 

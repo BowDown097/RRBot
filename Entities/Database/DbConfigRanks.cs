@@ -5,9 +5,9 @@ namespace RRBot.Entities.Database
     {
         [FirestoreDocumentId]
         public override DocumentReference Reference { get; set; }
-        [FirestoreProperty("costs")]
+        [FirestoreProperty]
         public Dictionary<string, double> Costs { get; set; } = new();
-        [FirestoreProperty("ids")]
+        [FirestoreProperty]
         public Dictionary<string, ulong> Ids { get; set; } = new();
 
         public static async Task<DbConfigRanks> GetById(ulong guildId)

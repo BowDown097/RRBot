@@ -89,7 +89,7 @@
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithTitle(user == null ? "Your Investments" : $"{user}'s Investments")
+                .WithTitle(user == null ? "Your Investments" : $"{user.Sanitize()}'s Investments")
                 .WithDescription(investments.Length > 0 ? investments.ToString() : "None");
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();

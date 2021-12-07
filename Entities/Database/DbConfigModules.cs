@@ -5,7 +5,7 @@ namespace RRBot.Entities.Database
     {
         [FirestoreDocumentId]
         public override DocumentReference Reference { get; set; }
-        [FirestoreProperty("nsfw")]
+        [FirestoreProperty]
         public bool NSFWEnabled { get; set; }
 
         public static async Task<DbConfigModules> GetById(ulong guildId)
@@ -17,7 +17,7 @@ namespace RRBot.Entities.Database
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
             {
-                await doc.CreateAsync(new { nsfw = false });
+                await doc.CreateAsync(new { NSFWEnabled = false });
                 return await GetById(guildId);
             }
 

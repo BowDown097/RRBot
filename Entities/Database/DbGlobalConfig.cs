@@ -5,9 +5,9 @@ namespace RRBot.Entities.Database
     {
         [FirestoreDocumentId]
         public override DocumentReference Reference { get; set; }
-        [FirestoreProperty("bannedUsers")]
+        [FirestoreProperty]
         public List<ulong> BannedUsers { get; set; } = new();
-        [FirestoreProperty("disabledCommands")]
+        [FirestoreProperty]
         public List<string> DisabledCommands { get; set; } = new();
 
         public static async Task<DbGlobalConfig> Get()
@@ -19,7 +19,7 @@ namespace RRBot.Entities.Database
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
             {
-                await doc.CreateAsync(new { bannedUsers = new List<ulong>() });
+                await doc.CreateAsync(new { BannedUsers = new List<ulong>() });
                 return await Get();
             }
 

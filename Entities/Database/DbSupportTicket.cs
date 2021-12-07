@@ -5,13 +5,13 @@ namespace RRBot.Entities.Database
     {
         [FirestoreDocumentId]
         public override DocumentReference Reference { get; set; }
-        [FirestoreProperty("helper")]
+        [FirestoreProperty]
         public ulong Helper { get; set; }
-        [FirestoreProperty("issuer")]
+        [FirestoreProperty]
         public ulong Issuer { get; set; }
-        [FirestoreProperty("message")]
+        [FirestoreProperty]
         public ulong Message { get; set; }
-        [FirestoreProperty("req")]
+        [FirestoreProperty]
         public string Request { get; set; }
 
         public static async Task<DbSupportTicket> GetById(ulong guildId, ulong userId)
@@ -23,7 +23,7 @@ namespace RRBot.Entities.Database
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
             {
-                await doc.CreateAsync(new { req = "" });
+                await doc.CreateAsync(new { Request = "" });
                 return await GetById(guildId, userId);
             }
 

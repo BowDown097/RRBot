@@ -9,7 +9,7 @@ namespace RRBot.Interactions
 
             double cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
             QuerySnapshot users = await Program.database.Collection($"servers/{guild.Id}/users")
-                .OrderByDescending(currency.ToLower()).GetSnapshotAsync();
+                .OrderByDescending(currency).GetSnapshotAsync();
             StringBuilder lb = new();
             int processedUsers = 0;
             foreach (DocumentSnapshot doc in users.Documents.Skip(start - 1 + failedUsers))
@@ -36,9 +36,9 @@ namespace RRBot.Interactions
                     break;
 
                 if (currency == "Cash")
-                    lb.AppendLine($"{start + processedUsers}: **{guildUser}**: {val:C2}");
+                    lb.AppendLine($"{start + processedUsers}: **{guildUser.Sanitize()}**: {val:C2}");
                 else
-                    lb.AppendLine($"{start + processedUsers}: **{guildUser}**: {val:0.####} ({cryptoValue * val:C2})");
+                    lb.AppendLine($"{start + processedUsers}: **{guildUser.Sanitize()}**: {val:0.####} ({cryptoValue * val:C2})");
 
                 processedUsers++;
             }

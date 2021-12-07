@@ -28,12 +28,12 @@
 
             DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
             if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
-                return CommandResult.FromError($"You cannot ban **{user}** because they are a staff member.");
+                return CommandResult.FromError($"You cannot ban **{user.Sanitize()}** because they are a staff member.");
 
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
             if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
             {
-                Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"banned **{user}**");
+                Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"banned **{user.Sanitize()}**");
                 if (resolved.Item1 == TimeSpan.Zero)
                     return CommandResult.FromError("You specified an invalid amount of time!");
 
@@ -76,7 +76,7 @@
             DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, user.Id);
             if (string.IsNullOrWhiteSpace(ticket.Request))
                 return CommandResult.FromError("That user does not have an open support ticket!");
-            return await Support.CloseTicket(Context, Context.User, ticket, $"Support ticket by {user} deleted successfully!");
+            return await Support.CloseTicket(Context, Context.User, ticket, $"Support ticket by {user.Sanitize()} deleted successfully!");
         }
 
         [Command("chill")]
@@ -121,7 +121,7 @@
 
             DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
             if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
-                return CommandResult.FromError($"You cannot kick **{user}** because they are a staff member.");
+                return CommandResult.FromError($"You cannot kick **{user.Sanitize()}** because they are a staff member.");
 
             await user.KickAsync(reason);
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
@@ -130,7 +130,7 @@
                 { "Kicks", "1" }
             });
 
-            string response = $"**{Context.User}** has kicked **{user}**";
+            string response = $"**{Context.User}** has kicked **{user.Sanitize()}**";
             response += string.IsNullOrWhiteSpace(reason) ? "." : $"for '{reason}'";
             await ReplyAsync(response);
             return CommandResult.FromSuccess();
@@ -149,11 +149,11 @@
             if (roles.MutedRole != 0 && roles.StaffLvl1Role != 0 && roles.StaffLvl2Role != 0)
             {
                 if (user.RoleIds.Contains(roles.MutedRole) || user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
-                    return CommandResult.FromError($"You cannot mute **{user}** because they are either already muted or a staff member.");
+                    return CommandResult.FromError($"You cannot mute **{user.Sanitize()}** because they are either already muted or a staff member.");
 
                 if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
                 {
-                    Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"muted **{user}**");
+                    Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"muted **{user.Sanitize()}**");
                     if (resolved.Item1 == TimeSpan.Zero)
                         return CommandResult.FromError("You specified an invalid amount of time!");
 
@@ -250,7 +250,7 @@
             {
                 await LoggingSystem.Custom_UserUnmuted(user, Context.User);
                 await user.RemoveRoleAsync(roles.MutedRole);
-                await ReplyAsync($"**{Context.User}** has unmuted **{user}**.");
+                await ReplyAsync($"**{Context.User}** has unmuted **{user.Sanitize()}**.");
                 return CommandResult.FromSuccess();
             }
 

@@ -5,67 +5,67 @@ namespace RRBot.Entities.Database
     {
         [FirestoreDocumentId]
         public override DocumentReference Reference { get; set; }
-        [FirestoreProperty("achievements")]
+        [FirestoreProperty]
         public Dictionary<string, string> Achievements { get; set; } = new();
-        [FirestoreProperty("btc")]
+        [FirestoreProperty]
         public double BTC { get; set; }
-        [FirestoreProperty("bullyCooldown")]
+        [FirestoreProperty]
         public long BullyCooldown { get; set; }
-        [FirestoreProperty("cash")]
+        [FirestoreProperty]
         public double Cash { get; set; }
-        [FirestoreProperty("chopCooldown")]
+        [FirestoreProperty]
         public long ChopCooldown { get; set; }
-        [FirestoreProperty("dealCooldown")]
+        [FirestoreProperty]
         public long DealCooldown { get; set; }
-        [FirestoreProperty("digCooldown")]
+        [FirestoreProperty]
         public long DigCooldown { get; set; }
-        [FirestoreProperty("dmNotifs")]
+        [FirestoreProperty]
         public bool DMNotifs { get; set; }
-        [FirestoreProperty("doge")]
+        [FirestoreProperty]
         public double DOGE { get; set; }
-        [FirestoreProperty("eth")]
+        [FirestoreProperty]
         public double ETH { get; set; }
-        [FirestoreProperty("farmCooldown")]
+        [FirestoreProperty]
         public long FarmCooldown { get; set; }
-        [FirestoreProperty("fishCooldown")]
+        [FirestoreProperty]
         public long FishCooldown { get; set; }
-        [FirestoreProperty("hackCooldown")]
+        [FirestoreProperty]
         public long HackCooldown { get; set; }
-        [FirestoreProperty("huntCooldown")]
+        [FirestoreProperty]
         public long HuntCooldown { get; set; }
-        [FirestoreProperty("items")]
+        [FirestoreProperty]
         public List<string> Items { get; set; } = new();
-        [FirestoreProperty("lootCooldown")]
+        [FirestoreProperty]
         public long LootCooldown { get; set; }
-        [FirestoreProperty("ltc")]
+        [FirestoreProperty]
         public double LTC { get; set; }
-        [FirestoreProperty("mineCooldown")]
+        [FirestoreProperty]
         public long MineCooldown { get; set; }
-        [FirestoreProperty("noReplyPings")]
+        [FirestoreProperty]
         public bool NoReplyPings { get; set; }
-        [FirestoreProperty("pacifistCooldown")]
+        [FirestoreProperty]
         public long PacifistCooldown { get; set; }
-        [FirestoreProperty("perks")]
+        [FirestoreProperty]
         public Dictionary<string, long> Perks { get; set; } = new();
-        [FirestoreProperty("rankupNotifs")]
+        [FirestoreProperty]
         public bool RankupNotifs { get; set; }
-        [FirestoreProperty("rapeCooldown")]
+        [FirestoreProperty]
         public long RapeCooldown { get; set; }
-        [FirestoreProperty("robCooldown")]
+        [FirestoreProperty]
         public long RobCooldown { get; set; }
-        [FirestoreProperty("stats")]
+        [FirestoreProperty]
         public Dictionary<string, string> Stats { get; set; } = new();
-        [FirestoreProperty("slaveryCooldown")]
+        [FirestoreProperty]
         public long SlaveryCooldown { get; set; }
-        [FirestoreProperty("supportCooldown")]
+        [FirestoreProperty]
         public long SupportCooldown { get; set; }
-        [FirestoreProperty("timeTillCash")]
+        [FirestoreProperty]
         public long TimeTillCash { get; set; }
-        [FirestoreProperty("usingSlots")]
+        [FirestoreProperty]
         public bool UsingSlots { get; set; }
-        [FirestoreProperty("whoreCooldown")]
+        [FirestoreProperty]
         public long WhoreCooldown { get; set; }
-        [FirestoreProperty("xrp")]
+        [FirestoreProperty]
         public double XRP { get; set; }
 
         public object this[string name]
@@ -95,7 +95,7 @@ namespace RRBot.Entities.Database
             DocumentSnapshot snap = await doc.GetSnapshotAsync();
             if (!snap.Exists)
             {
-                await doc.CreateAsync(new { cash = 100.0 });
+                await doc.CreateAsync(new { Cash = 100.0 });
                 return await GetById(guildId, userId);
             }
 

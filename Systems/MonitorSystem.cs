@@ -114,7 +114,7 @@ namespace RRBot.Systems
                 foreach (SocketGuild guild in client.Guilds)
                 {
                     QuerySnapshot usersWPerks = await database.Collection($"servers/{guild.Id}/users")
-                        .WhereNotEqualTo("perks", null).WhereNotEqualTo("perks", new Dictionary<string, long>()).GetSnapshotAsync();
+                        .WhereNotEqualTo("Perks", null).WhereNotEqualTo("Perks", new Dictionary<string, long>()).GetSnapshotAsync();
                     foreach (DocumentSnapshot snap in usersWPerks.Documents)
                     {
                         ulong userId = Convert.ToUInt64(snap.Id);

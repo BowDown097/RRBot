@@ -38,7 +38,7 @@
             if (user == null)
                 return await CloseTicket(Context, Context.User, ticket, $"Your support ticket with **{helper}** has been closed.");
             else if (helper.Id == Context.User.Id)
-                return await CloseTicket(Context, Context.User, ticket, $"Your support ticket with **{user}** has been closed.");
+                return await CloseTicket(Context, Context.User, ticket, $"Your support ticket with **{user.Sanitize()}** has been closed.");
             else
                 return CommandResult.FromError("That user has created a support ticket, but you are not assigned as the helper.");
         }

@@ -93,15 +93,15 @@
 
             DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
             if (target.Perks.ContainsKey("Pacifist"))
-                return CommandResult.FromError($"You cannot bully **{user}** as they have the Pacifist perk equipped.");
+                return CommandResult.FromError($"You cannot bully **{user.Sanitize()}** as they have the Pacifist perk equipped.");
 
             DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
             if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
-                return CommandResult.FromError($"You cannot bully **{user}** as they are a staff member.");
+                return CommandResult.FromError($"You cannot bully **{user.Sanitize()}** as they are a staff member.");
 
             await user.ModifyAsync(props => props.Nickname = nickname);
             await LoggingSystem.Custom_UserBullied(user, Context.User, nickname);
-            await ReplyAsync($"**{Context.User}** has **BULLIED** **{user}** to ``{nickname}``!");
+            await ReplyAsync($"**{Context.User}** has BULLIED **{user.Sanitize()}** to ``{nickname}``!");
 
             DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             author.BullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN);
@@ -144,7 +144,7 @@
             if (author.UsingSlots || target.UsingSlots)
                 return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
             if (target.Perks.ContainsKey("Pacifist"))
-                return CommandResult.FromError($"You cannot hack **{user}** as they have the Pacifist perk equipped.");
+                return CommandResult.FromError($"You cannot hack **{user.Sanitize()}** as they have the Pacifist perk equipped.");
 
             double authorBal = (double)author[abbreviation];
             double targetBal = (double)target[abbreviation];
@@ -152,7 +152,7 @@
             if (authorBal < amount)
                 return CommandResult.FromError($"You don't have that much {abbreviation}!");
             if (amount > robMax)
-                return CommandResult.FromError($"You can only hack {Constants.ROB_MAX_PERCENT}% of **{user}**'s {abbreviation}, that being **{robMax}**.");
+                return CommandResult.FromError($"You can only hack {Constants.ROB_MAX_PERCENT}% of **{user.Sanitize()}**'s {abbreviation}, that being **{robMax}**.");
 
             int roll = RandomUtil.Next(1, 101);
             double cryptoValue = await Investments.QueryCryptoValue(abbreviation) * amount;
@@ -168,7 +168,7 @@
                         await Context.User.NotifyAsync(Context.Channel, $"The dumbass pushed his private keys to GitHub LMFAO! You sniped that shit and got **{amount:0.####} {abbreviation}**.");
                         break;
                     case 1:
-                        await Context.User.NotifyAsync(Context.Channel, $"You did an ol' SIM swap on {user}'s phone while they weren't looking and yoinked **{amount:0.####} {abbreviation}** right off their Coinbase. Easy claps!");
+                        await Context.User.NotifyAsync(Context.Channel, $"You did an ol' SIM swap on {user.Sanitize()}'s phone while they weren't looking and yoinked **{amount:0.####} {abbreviation}** right off their Coinbase. Easy claps!");
                         break;
                 }
             }
@@ -179,7 +179,7 @@
                 switch (RandomUtil.Next(2))
                 {
                     case 0:
-                        await Context.User.NotifyAsync(Context.Channel, $"**{user}** actually secured their shit properly, got your info, and sent it off to the feds. You got raided and lost **{amount / 4:0.####} {abbreviation}** in the process.");
+                        await Context.User.NotifyAsync(Context.Channel, $"**{user.Sanitize()}** actually secured their shit properly, got your info, and sent it off to the feds. You got raided and lost **{amount / 4:0.####} {abbreviation}** in the process.");
                         break;
                     case 1:
                         await Context.User.NotifyAsync(Context.Channel, $"That hacker dude on Instagram scammed your ass! You only had to pay 1/4 of what you were promising starting off, but still sucks. There goes **{amount / 4:0.####} {abbreviation}**.");
@@ -223,9 +223,9 @@
             if (author.UsingSlots || target.UsingSlots)
                 return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
             if (target.Perks.ContainsKey("Pacifist"))
-                return CommandResult.FromError($"You cannot rape **{user}** as they have the Pacifist perk equipped.");
+                return CommandResult.FromError($"You cannot rape **{user.Sanitize()}** as they have the Pacifist perk equipped.");
             if (target.Cash < 0.01)
-                return CommandResult.FromError($"Dear Lord, talk about kicking them while they're down! **{user}** is broke! Have some decency.");
+                return CommandResult.FromError($"Dear Lord, talk about kicking them while they're down! **{user.Sanitize()}** is broke! Have some decency.");
 
             double rapePercent = RandomUtil.NextDouble(Constants.RAPE_MIN_PERCENT, Constants.RAPE_MAX_PERCENT);
             double winOdds = author.Perks.ContainsKey("Speed Demon") ? Constants.RAPE_ODDS * 0.95 : Constants.RAPE_ODDS;
@@ -234,14 +234,14 @@
                 double repairs = target.Cash / 100.0 * rapePercent;
                 StatUpdate(target, false, repairs);
                 await target.SetCash(user as SocketUser, target.Cash - repairs);
-                await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user}**'s asshole! They just paid **{repairs:C2}** in asshole repairs.");
+                await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user.Sanitize()}**'s asshole! They just paid **{repairs:C2}** in asshole repairs.");
             }
             else
             {
                 double repairs = author.Cash / 100.0 * rapePercent;
                 StatUpdate(author, false, repairs);
                 await author.SetCash(Context.User, author.Cash - repairs);
-                await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user}**! You just paid **{repairs:C2}** in asshole repairs.");
+                await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user.Sanitize()}**! You just paid **{repairs:C2}** in asshole repairs.");
             }
 
             author.RapeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.RAPE_COOLDOWN);
@@ -266,13 +266,13 @@
             if (author.UsingSlots || target.UsingSlots)
                 return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
             if (target.Perks.ContainsKey("Pacifist"))
-                return CommandResult.FromError($"You cannot rob **{user}** as they have the Pacifist perk equipped.");
+                return CommandResult.FromError($"You cannot rob **{user.Sanitize()}** as they have the Pacifist perk equipped.");
 
             double robMax = Math.Round(target.Cash / 100.0 * Constants.ROB_MAX_PERCENT, 2);
             if (author.Cash < amount)
                 return CommandResult.FromError("You don't have that much money!");
             if (amount > robMax)
-                return CommandResult.FromError($"You can only rob {Constants.ROB_MAX_PERCENT}% of **{user}**'s cash, that being **{robMax:C2}**.");
+                return CommandResult.FromError($"You can only rob {Constants.ROB_MAX_PERCENT}% of **{user.Sanitize()}**'s cash, that being **{robMax:C2}**.");
 
             int roll = RandomUtil.Next(1, 101);
             if (roll < Constants.ROB_ODDS)
@@ -284,11 +284,11 @@
                 switch (RandomUtil.Next(2))
                 {
                     case 0:
-                        await Context.User.NotifyAsync(Context.Channel, $"You beat the shit out of **{user}** and took **{amount:C2}** from their ass!" +
+                        await Context.User.NotifyAsync(Context.Channel, $"You beat the shit out of **{user.Sanitize()}** and took **{amount:C2}** from their ass!" +
                             $"\nBalance: {author.Cash:C2}");
                         break;
                     case 1:
-                        await Context.User.NotifyAsync(Context.Channel, $"You walked up to **{user}** and yoinked **{amount:C2}** straight from their pocket, without a trace." +
+                        await Context.User.NotifyAsync(Context.Channel, $"You walked up to **{user.Sanitize()}** and yoinked **{amount:C2}** straight from their pocket, without a trace." +
                             $"\nBalance: {author.Cash:C2}");
                         break;
                 }
@@ -300,7 +300,7 @@
                 switch (RandomUtil.Next(2))
                 {
                     case 0:
-                        await Context.User.NotifyAsync(Context.Channel, $"You yoinked the money from **{user}**, but they noticed and shanked you when you were on your way out." +
+                        await Context.User.NotifyAsync(Context.Channel, $"You yoinked the money from **{user.Sanitize()}**, but they noticed and shanked you when you were on your way out." +
                             $" You lost all the resources in the process.\nBalance: {author.Cash:C2}");
                         break;
                     case 1:

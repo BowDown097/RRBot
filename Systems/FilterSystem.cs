@@ -44,9 +44,9 @@ namespace RRBot.Systems
                 if (Uri.TryCreate(epicEmbed.Url, UriKind.Absolute, out Uri uri))
                 {
                     string host = uri.Host.Replace("www.", "").ToLower();
-                    if ((epicEmbed.Title.StartsWith("Trade offer") && host != "steamcommunity.com")
-                        || (epicEmbed.Title.StartsWith("Steam Community") && host != "steamcommunity.com")
-                        || (epicEmbed.Title.StartsWith("You've been gifted") && host != "discord.gift"))
+                    if ((epicEmbed.Title?.StartsWith("Trade offer") == true && host != "steamcommunity.com")
+                        || (epicEmbed.Title?.StartsWith("Steam Community") == true && host != "steamcommunity.com")
+                        || (epicEmbed.Title?.StartsWith("You've been gifted") == true && host != "discord.gift"))
                     {
                         await message.DeleteAsync();
                     }

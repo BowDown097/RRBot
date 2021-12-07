@@ -19,7 +19,7 @@
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithTitle(user == null ? "Achievements" : $"{user}'s Achievements")
+                .WithTitle(user == null ? "Achievements" : $"{user.Sanitize()}'s Achievements")
                 .WithDescription(description.Length > 0 ? description.ToString() : "None");
             await ReplyAsync(embed: embed.Build());
         }
@@ -182,7 +182,7 @@
             ulong userId = user == null ? Context.User.Id : user.Id;
             DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
             if (dbUser.Stats.Count == 0)
-                return CommandResult.FromError(user == null ? "You have no available stats!" : $"**{user}** has no available stats!");
+                return CommandResult.FromError(user == null ? "You have no available stats!" : $"**{user.Sanitize()}** has no available stats!");
 
             StringBuilder description = new();
             foreach (string key in dbUser.Stats.Keys.ToList().OrderBy(s => s))
@@ -190,7 +190,7 @@
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithTitle(user == null ? "Stats" : $"{user}'s Stats")
+                .WithTitle(user == null ? "Stats" : $"{user.Sanitize()}'s Stats")
                 .WithDescription(description.ToString());
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();

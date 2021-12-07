@@ -78,7 +78,7 @@ namespace Discord.Commands
             }
             else if (results.Count > 1)
             {
-                return TypeReaderResult.FromError(CommandError.Unsuccessful, "Your user input is ambiguous. " +
+                return TypeReaderResult.FromError((CommandError)9, "Your user input is ambiguous. " +
                     $"Run the command again, but this time with the user being one of these {results.Values.Count} results:\n" +
                     string.Join(", ", results.Values.Select(trv => "**" + trv.ToString() + "**")));
             }

@@ -114,7 +114,7 @@ namespace RRBot.Modules
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle(title)
-                .WithDescription($"{user} is {gay}% gay.");
+                .WithDescription($"{user.Sanitize()} is {gay}% gay.");
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -135,7 +135,7 @@ namespace RRBot.Modules
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle(title)
-                .WithDescription($"{user}'s penis: {"8" + new string('=', equals) + "D"}");
+                .WithDescription($"{user.Sanitize()}'s penis: {"8" + new string('=', equals) + "D"}");
             await ReplyAsync(embed: embed.Build());
         }
 

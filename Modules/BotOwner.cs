@@ -23,8 +23,25 @@ namespace RRBot.Modules
 
             DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
             globalConfig.BannedUsers.Add(user.Id);
-            await Context.User.NotifyAsync(Context.Channel, $"Blacklisted {user}.");
+            await Context.User.NotifyAsync(Context.Channel, $"Blacklisted {user.Sanitize()}.");
             return CommandResult.FromSuccess();
+        }
+
+        [Command("cleartextchannel")]
+        [Summary("Deletes and recreates a text channel, effectively wiping its messages.")]
+        [Remarks("$cleartextchannel [channel]")]
+        public async Task ClearTextChannel(ITextChannel channel)
+        {
+            await channel.DeleteAsync();
+            await Context.Guild.CreateTextChannelAsync(channel.Name, properties => {
+                properties.CategoryId = channel.CategoryId;
+                properties.IsNsfw = channel.IsNsfw;
+                properties.Name = channel.Name;
+                properties.PermissionOverwrites = new Optional<IEnumerable<Overwrite>>(channel.PermissionOverwrites.AsEnumerable());
+                properties.Position = channel.Position;
+                properties.SlowModeInterval = channel.SlowModeInterval;
+                properties.Topic = channel.Topic;
+            });
         }
 
         [Command("disablecmd")]
@@ -101,7 +118,7 @@ namespace RRBot.Modules
 
             DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
             globalConfig.BannedUsers.Remove(user.Id);
-            await Context.User.NotifyAsync(Context.Channel, $"Unblacklisted {user}.");
+            await Context.User.NotifyAsync(Context.Channel, $"Unblacklisted {user.Sanitize()}.");
             return CommandResult.FromSuccess();
         }
     }

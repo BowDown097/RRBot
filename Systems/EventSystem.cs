@@ -216,7 +216,7 @@ namespace RRBot.Systems
             foreach (SocketGuild guild in client.Guilds)
             {
                 QuerySnapshot usingQuery = await Program.database.Collection($"servers/{guild.Id}/users")
-                    .WhereEqualTo("usingSlots", true).GetSnapshotAsync();
+                    .WhereEqualTo("UsingSlots", true).GetSnapshotAsync();
                 foreach (DocumentSnapshot user in usingQuery.Documents)
                     await user.Reference.SetAsync(new { usingSlots = FieldValue.Delete }, SetOptions.MergeAll);
             }
@@ -258,38 +258,44 @@ namespace RRBot.Systems
 
         private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
-            string reason = result.ErrorReason.Replace("@everyone", "").Replace("@here", "").Replace("`", "");
-            if (FilterSystem.ContainsNWord(reason))
-                return;
-
-            switch (result.Error)
+            try
             {
-                case CommandError.BadArgCount:
-                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                        $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``");
-                    break;
-                case CommandError.ObjectNotFound:
-                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                        "Couldn't resolve a user from your input!");
-                    break;
-                case CommandError.ParseFailed:
-                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
-                        $"Couldn't understand something you passed into the command.\nThis error info might help: ``{reason}``" +
-                        $"\nOr maybe the command usage will: ``{command.Value.Remarks}``");
-                    break;
-                case CommandError.UnmetPrecondition:
-                    await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, reason);
-                    break;
-                case CommandError.Unsuccessful:
-                    if (reason.StartsWith("Your user input") || reason.StartsWith("You have no"))
-                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, reason);
-                    if (result is CommandResult rwm)
-                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, reason);
-                    break;
-            }
+                string reason = RRFormat.BasicSanitize(result.ErrorReason);
+                if (FilterSystem.ContainsNWord(reason))
+                    return;
 
-            if (!result.IsSuccess)
-                Console.WriteLine(reason);
+                switch (result.Error)
+                {
+                    case CommandError.BadArgCount:
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                            $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``");
+                        break;
+                    case CommandError.ObjectNotFound:
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                            "Couldn't resolve a user from your input!");
+                        break;
+                    case CommandError.ParseFailed:
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel,
+                            $"Couldn't understand something you passed into the command.\nThis error info might help: ``{reason}``" +
+                            $"\nOr maybe the command usage will: ``{command.Value.Remarks}``");
+                        break;
+                    case CommandError.UnmetPrecondition:
+                    case (CommandError)9:
+                        await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, reason);
+                        break;
+                    case CommandError.Unsuccessful:
+                        if (result is CommandResult rwm)
+                            await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, reason);
+                        break;
+                    default:
+                        Console.WriteLine(reason);
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
+            }
         }
     }
 }
