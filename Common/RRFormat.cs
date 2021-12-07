@@ -1,20 +1,18 @@
 #nullable enable
-namespace RRBot.Common
+namespace RRBot.Common;
+public static class RRFormat
 {
-    public static class RRFormat
+    public static string BasicSanitize(object? value)
     {
-        public static string BasicSanitize(object? value)
-        {
-            string? valueStr = value?.ToString();
-            if (string.IsNullOrEmpty(valueStr)) return "";
-            return valueStr.Replace("@everyone", "").Replace("@here", "").Replace("`", "");
-        }
+        string? valueStr = value?.ToString();
+        if (string.IsNullOrEmpty(valueStr)) return "";
+        return valueStr.Replace("@everyone", "").Replace("@here", "").Replace("`", "");
+    }
 
-        public static string Sanitize(object? value)
-        {
-            string? valueStr = value?.ToString();
-            if (string.IsNullOrEmpty(valueStr)) return "";
-            return valueStr.Replace("`", "").Replace("@", "").Replace("*", "");
-        }
+    public static string Sanitize(object? value)
+    {
+        string? valueStr = value?.ToString();
+        if (string.IsNullOrEmpty(valueStr)) return "";
+        return valueStr.Replace("`", "").Replace("@", "").Replace("*", "");
     }
 }

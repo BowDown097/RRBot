@@ -1,22 +1,20 @@
-namespace RRBot.Extensions
+namespace RRBot.Extensions;
+public static class MemoryCacheExt
 {
-    public static class MemoryCacheExt
+    public static void CacheDatabaseObject(this MemoryCache cache, string key, DbObject value)
     {
-        public static void CacheDatabaseObject(this MemoryCache cache, string key, DbObject value)
+        CacheItemPolicy policy = new()
         {
-            CacheItemPolicy policy = new()
-            {
-                AbsoluteExpiration = DateTime.Now.AddMinutes(10.0),
-                RemovedCallback = new CacheEntryRemovedCallback(CacheRemovedCallback)
-            };
+            AbsoluteExpiration = DateTime.Now.AddMinutes(10.0),
+            RemovedCallback = new CacheEntryRemovedCallback(CacheRemovedCallback)
+        };
 
-            cache.Add(key, value, policy);
-        }
+        cache.Add(key, value, policy);
+    }
 
-        public static void CacheRemovedCallback(CacheEntryRemovedArguments args)
-        {
-            DbObject item = (DbObject)args.CacheItem.Value;
-            item.Reference.SetAsync(item);
-        }
+    public static void CacheRemovedCallback(CacheEntryRemovedArguments args)
+    {
+        DbObject item = (DbObject)args.CacheItem.Value;
+        item.Reference.SetAsync(item);
     }
 }

@@ -1,14 +1,12 @@
-﻿namespace RRBot.Preconditions
+﻿namespace RRBot.Preconditions;
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
+public class RequireDJAttribute : PreconditionAttribute
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-    public class RequireDJAttribute : PreconditionAttribute
+    public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
-        public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
-        {
-            DbConfigRoles roles = await DbConfigRoles.GetById(context.Guild.Id);
-            return (context.User as IGuildUser)?.RoleIds.Contains(roles.DJRole) == true
-                ? PreconditionResult.FromSuccess()
-                : PreconditionResult.FromError("You must be a DJ!");
-        }
+        DbConfigRoles roles = await DbConfigRoles.GetById(context.Guild.Id);
+        return (context.User as IGuildUser)?.RoleIds.Contains(roles.DJRole) == true
+            ? PreconditionResult.FromSuccess()
+            : PreconditionResult.FromError("You must be a DJ!");
     }
 }

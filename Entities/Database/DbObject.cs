@@ -1,8 +1,6 @@
-namespace RRBot.Entities.Database
+namespace RRBot.Entities.Database;
+public abstract class DbObject
 {
-    public abstract class DbObject
-    {
-        [FirestoreDocumentId]
-        public abstract DocumentReference Reference { get; set; }
-    }
+    [FirestoreDocumentId]
+    public abstract DocumentReference Reference { get; set; }
 }

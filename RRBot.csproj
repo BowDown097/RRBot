@@ -6,7 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Discord.Net.Labs" Version="3.4.8"/>
+		<PackageReference Include="Discord.Net.Labs" Version="3.4.9"/>
 		<PackageReference Include="Google.Cloud.Firestore" Version="2.4.0"/>
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.0.1"/>
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0"/>

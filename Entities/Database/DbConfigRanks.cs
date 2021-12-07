@@ -1,31 +1,29 @@
-namespace RRBot.Entities.Database
+namespace RRBot.Entities.Database;
+[FirestoreData]
+public class DbConfigRanks : DbObject
 {
-    [FirestoreData]
-    public class DbConfigRanks : DbObject
+    [FirestoreDocumentId]
+    public override DocumentReference Reference { get; set; }
+    [FirestoreProperty]
+    public Dictionary<string, double> Costs { get; set; } = new();
+    [FirestoreProperty]
+    public Dictionary<string, ulong> Ids { get; set; } = new();
+
+    public static async Task<DbConfigRanks> GetById(ulong guildId)
     {
-        [FirestoreDocumentId]
-        public override DocumentReference Reference { get; set; }
-        [FirestoreProperty]
-        public Dictionary<string, double> Costs { get; set; } = new();
-        [FirestoreProperty]
-        public Dictionary<string, ulong> Ids { get; set; } = new();
+        if (MemoryCache.Default.Contains($"rankconf-{guildId}"))
+            return (DbConfigRanks)MemoryCache.Default.Get($"rankconf-{guildId}");
 
-        public static async Task<DbConfigRanks> GetById(ulong guildId)
+        DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("ranks");
+        DocumentSnapshot snap = await doc.GetSnapshotAsync();
+        if (!snap.Exists)
         {
-            if (MemoryCache.Default.Contains($"rankconf-{guildId}"))
-                return (DbConfigRanks)MemoryCache.Default.Get($"rankconf-{guildId}");
-
-            DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("ranks");
-            DocumentSnapshot snap = await doc.GetSnapshotAsync();
-            if (!snap.Exists)
-            {
-                await doc.CreateAsync(new { Costs = new Dictionary<string, double>() });
-                return await GetById(guildId);
-            }
-
-            DbConfigRanks config = snap.ConvertTo<DbConfigRanks>();
-            MemoryCache.Default.CacheDatabaseObject($"rankconf-{guildId}", config);
-            return config;
+            await doc.CreateAsync(new { Costs = new Dictionary<string, double>() });
+            return await GetById(guildId);
         }
+
+        DbConfigRanks config = snap.ConvertTo<DbConfigRanks>();
+        MemoryCache.Default.CacheDatabaseObject($"rankconf-{guildId}", config);
+        return config;
     }
 }

@@ -1,14 +1,12 @@
-﻿namespace RRBot.Preconditions
+﻿namespace RRBot.Preconditions;
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
+public class RequireNsfwEnabledAttribute : PreconditionAttribute
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-    public class RequireNsfwEnabledAttribute : PreconditionAttribute
+    public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
-        public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
-        {
-            DbConfigModules modules = await DbConfigModules.GetById(context.Guild.Id);
-            return modules.NSFWEnabled
-                ? PreconditionResult.FromSuccess()
-                : PreconditionResult.FromError("NSFW commands are disabled!");
-        }
+        DbConfigModules modules = await DbConfigModules.GetById(context.Guild.Id);
+        return modules.NSFWEnabled
+            ? PreconditionResult.FromSuccess()
+            : PreconditionResult.FromError("NSFW commands are disabled!");
     }
 }
