@@ -135,7 +135,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Alias("dilate")]
+    [Alias("1984")]
     [Command("mute")]
     [Summary("Mute any member for any amount of time with any reason.")]
     [Remarks("$mute [user] [duration] <reason>")]
@@ -180,7 +180,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
         return CommandResult.FromError("This server's staff and/or muted role(s) have yet to be set.");
     }
 
-    [Alias("clear", "1984")]
+    [Alias("clear")]
     [Command("purge")]
     [Summary("Purge any amount of messages (Note: messages that are two weeks old or older will fail to delete).")]
     [Remarks("$purge [count] <user>")]
@@ -236,6 +236,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Alias("1985")]
     [Command("unmute")]
     [Summary("Unmute any member.")]
     [Remarks("$unmute [user]")]
