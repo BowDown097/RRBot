@@ -1,13 +1,11 @@
 # RR Bot
-The bot for the Rush Reborn Discord server, heavily inspired by the [DEA Discord bot](https://github.com/Asshley/DEA).
+The bot for the [Rush Reborn Discord server](https://discord.gg/USpJnaaNap), heavily inspired by the [DEA Discord bot](https://github.com/Asshley/DEA).
 
 <p align="center">
     <a href="https://discord.gg/USpJnaaNap" alt="Discord">
         <img src="https://img.shields.io/discord/809485099238031420" />
     </a>
 </p>
-
-[Join the official Discord!](https://discord.gg/USpJnaaNap)
 
 ## Features
 RR is a Discord bot that can do many, many things. It's got a cash system, it's got music playing support, it's got various moderation commands, and tons of other stuff. Oh, and it's highly configurable.
