@@ -6,15 +6,15 @@ public static class MemoryCacheExt
         CacheItemPolicy policy = new()
         {
             AbsoluteExpiration = DateTime.Now.AddMinutes(10.0),
-            RemovedCallback = new CacheEntryRemovedCallback(CacheRemovedCallback)
+            UpdateCallback = new CacheEntryUpdateCallback(CacheUpdateCallback)
         };
 
-        cache.Add(key, value, policy);
+        cache.Set(key, value, policy);
     }
 
-    public static void CacheRemovedCallback(CacheEntryRemovedArguments args)
+    public static void CacheUpdateCallback(CacheEntryUpdateArguments args)
     {
-        DbObject item = (DbObject)args.CacheItem.Value;
+        DbObject item = (DbObject)MemoryCache.Default.Get(args.Key);
         item.Reference.SetAsync(item);
     }
 }
