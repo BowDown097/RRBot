@@ -11,8 +11,12 @@ public static class FilterSystem
         return NWORD_REGEX.IsMatch(cleaned.ToLower());
     }
 
-    public static async Task DoInviteCheckAsync(SocketUserMessage message, DiscordSocketClient client)
+    public static async Task DoInviteCheckAsync(SocketUserMessage message, SocketGuild guild, DiscordSocketClient client)
     {
+        DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
+        if (!optionals.InviteFilterEnabled || optionals.NoFilterChannels.Contains(message.Channel.Id))
+            return;
+
         foreach (Match match in INVITE_REGEX.Matches(message.Content))
         {
             string inviteCode = match.Groups[1].Value;
@@ -28,8 +32,12 @@ public static class FilterSystem
             await message.DeleteAsync();
     }
 
-    public static async Task DoScamCheckAsync(SocketUserMessage message)
+    public static async Task DoScamCheckAsync(SocketUserMessage message, SocketGuild guild)
     {
+        DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
+        if (!optionals.ScamFilterEnabled || optionals.NoFilterChannels.Contains(message.Channel.Id))
+            return;
+
         string content = message.Content.ToLower();
         if ((content.Contains("skins") && content.Contains("imgur"))
             || (content.Contains("nitro") && content.Contains("free") && content.Contains("http")))

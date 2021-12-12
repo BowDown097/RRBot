@@ -75,7 +75,7 @@ public class Config : ModuleBase<SocketCommandContext>
                     description.AppendLine($"Polls Channel: #{pollsChannel?.ToString() ?? "deleted-channel"}");
                     break;
                 case "modules":
-                    DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
+                    DbConfigOptionals modules = await DbConfigOptionals.GetById(Context.Guild.Id);
                     description.AppendLine($"NSFW Enabled: {modules.NSFWEnabled}");
                     break;
                 case "ranks":
@@ -118,6 +118,16 @@ public class Config : ModuleBase<SocketCommandContext>
             .WithTitle("Current Configuration")
             .WithDescription(description.ToString());
         await ReplyAsync(embed: embed.Build());
+    }
+
+    [Command("disablefiltersinchannel")]
+    [Summary("Disable filters for a specific channel.")]
+    [Remarks("$disablefiltersinchannel [channel]")]
+    public async Task DisableFiltersInChannel(IChannel channel)
+    {
+        DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
+        optionals.NoFilterChannels.Add(channel.Id);
+        await Context.User.NotifyAsync(Context.Channel, $"Disabled filters in {MentionUtils.MentionChannel(channel.Id)}.");
     }
 
     [Command("setdjrole")]
@@ -196,13 +206,33 @@ public class Config : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"Set second level Staff role to {role}.");
     }
 
+    [Command("toggleinvitefilter")]
+    [Summary("Toggle the invite filter.")]
+    [Remarks("$toggleinvitefilter")]
+    public async Task ToggleInviteFilter()
+    {
+        DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
+        optionals.InviteFilterEnabled = !optionals.InviteFilterEnabled;
+        await Context.User.NotifyAsync(Context.Channel, $"Toggled invite filter {(optionals.InviteFilterEnabled ? "ON" : "OFF")}.");
+    }
+
     [Command("togglensfw")]
     [Summary("Toggle the NSFW module.")]
     [Remarks("$togglensfw")]
     public async Task ToggleNSFW()
     {
-        DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
-        modules.NSFWEnabled = !modules.NSFWEnabled;
-        await ReplyAsync($"Toggled NSFW enabled to {modules.NSFWEnabled}.");
+        DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
+        optionals.NSFWEnabled = !optionals.NSFWEnabled;
+        await Context.User.NotifyAsync(Context.Channel, $"Toggled NSFW enabled {(optionals.NSFWEnabled ? "ON" : "OFF")}.");
+    }
+
+    [Command("togglescamfilter")]
+    [Summary("Toggle the scam filter.")]
+    [Remarks("$togglescamfilter")]
+    public async Task ToggleScamFilter()
+    {
+        DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
+        optionals.ScamFilterEnabled = !optionals.ScamFilterEnabled;
+        await Context.User.NotifyAsync(Context.Channel, $"Toggled scam filter {(optionals.ScamFilterEnabled ? "ON" : "OFF")}.");
     }
 }

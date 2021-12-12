@@ -35,7 +35,7 @@ public class General : ModuleBase<SocketCommandContext>
         CommandInfo commandInfo = search.Commands[0].Command;
         if (commandInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
         {
-            DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
+            DbConfigOptionals modules = await DbConfigOptionals.GetById(Context.Guild.Id);
             if (!modules.NSFWEnabled)
                 return CommandResult.FromError("NSFW commands are disabled!");
         }
@@ -94,7 +94,7 @@ public class General : ModuleBase<SocketCommandContext>
 
         if (moduleInfo.Name == "NSFW")
         {
-            DbConfigModules modules = await DbConfigModules.GetById(Context.Guild.Id);
+            DbConfigOptionals modules = await DbConfigOptionals.GetById(Context.Guild.Id);
             if (!modules.NSFWEnabled)
                 return CommandResult.FromError("NSFW commands are disabled!");
         }

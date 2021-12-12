@@ -139,9 +139,9 @@ public class EventSystem
         if (context.User.IsBot)
             return;
 
-        await FilterSystem.DoInviteCheckAsync(userMsg, client);
+        await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, client);
         await FilterSystem.DoNWordCheckAsync(userMsg, context.Channel);
-        await FilterSystem.DoScamCheckAsync(userMsg);
+        await FilterSystem.DoScamCheckAsync(userMsg, context.Guild);
 
         int argPos = 0;
         if (userMsg.HasCharPrefix('$', ref argPos))
@@ -198,9 +198,10 @@ public class EventSystem
     private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
     {
         SocketUserMessage userMsgAfter = msgAfter as SocketUserMessage;
-        await FilterSystem.DoInviteCheckAsync(userMsgAfter, client);
+        SocketGuild guild = (userMsgAfter.Author as SocketGuildUser)?.Guild;
+        await FilterSystem.DoInviteCheckAsync(userMsgAfter, guild, client);
         await FilterSystem.DoNWordCheckAsync(userMsgAfter, channel);
-        await FilterSystem.DoScamCheckAsync(userMsgAfter);
+        await FilterSystem.DoScamCheckAsync(userMsgAfter, guild);
     }
 
     private static async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, Cacheable<IMessageChannel, ulong> channel,
