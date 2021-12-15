@@ -20,7 +20,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
         culture.NumberFormat.CurrencyNegativePattern = 2;
         if (success)
         {
-            user.AddToStats(new Dictionary<string, string>
+            user.AddToStats(new()
             {
                 { "Gambles Won", "1" },
                 { "Money Gained from Gambling", gain.ToString("C2", culture) },
@@ -29,7 +29,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
         }
         else
         {
-            user.AddToStats(new Dictionary<string, string>
+            user.AddToStats(new()
             {
                 { "Gambles Lost", "1" },
                 { "Money Lost to Gambling", gain.ToString("C2", culture) },

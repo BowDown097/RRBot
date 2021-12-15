@@ -57,7 +57,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         culture.NumberFormat.CurrencyNegativePattern = 2;
         if (success)
         {
-            user.AddToStats(new Dictionary<string, string>
+            user.AddToStats(new()
             {
                 { "Crimes Succeeded", "1" },
                 { "Money Gained from Crimes", gain.ToString("C2", culture) },
@@ -66,7 +66,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         }
         else
         {
-            user.AddToStats(new Dictionary<string, string>
+            user.AddToStats(new()
             {
                 { "Crimes Failed", "1" },
                 { "Money Lost to Crimes", gain.ToString("C2", culture) },

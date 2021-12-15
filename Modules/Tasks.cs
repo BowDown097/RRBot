@@ -37,7 +37,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
             $"\nBalance: {totalCash:C2}");
 
         await user.SetCash(Context.User, totalCash);
-        user.AddToStats(new Dictionary<string, string>
+        user.AddToStats(new()
         {
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }
@@ -102,7 +102,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
             await ReplyAsync("What's this? The fish came with a coconut! You sold it to some dude for **$3.00**.");
         }
 
-        user.AddToStats(new Dictionary<string, string>
+        user.AddToStats(new()
         {
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }
@@ -168,7 +168,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
             await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
         }
 
-        user.AddToStats(new Dictionary<string, string>
+        user.AddToStats(new()
         {
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }

@@ -3,6 +3,7 @@ public class MonitorSystem
 {
     private readonly DiscordSocketClient client;
     private readonly FirestoreDb database;
+    private static readonly Dictionary<string, long> emptySL = new();
 
     public MonitorSystem(DiscordSocketClient client, FirestoreDb database)
     {
@@ -26,10 +27,10 @@ public class MonitorSystem
             foreach (SocketGuild guild in client.Guilds)
             {
                 QuerySnapshot bans = await database.Collection($"servers/{guild.Id}/bans").GetSnapshotAsync();
-                foreach (DocumentSnapshot ban in bans.Documents)
+                foreach (DocumentSnapshot banDoc in bans.Documents)
                 {
-                    long timestamp = ban.GetValue<long>("Time");
-                    ulong userId = Convert.ToUInt64(ban.Id);
+                    ulong userId = Convert.ToUInt64(banDoc.Id);
+                    DbBan ban = await DbBan.GetById(guild.Id, userId);
 
                     if (!(await guild.GetBansAsync()).Any(ban => ban.User.Id == userId))
                     {
@@ -37,7 +38,7 @@ public class MonitorSystem
                         continue;
                     }
 
-                    if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                    if (ban.Time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                     {
                         await guild.RemoveBanAsync(userId);
                         await ban.Reference.DeleteAsync();
@@ -55,10 +56,11 @@ public class MonitorSystem
             foreach (SocketGuild guild in client.Guilds)
             {
                 QuerySnapshot chills = await database.Collection($"servers/{guild.Id}/chills").GetSnapshotAsync();
-                foreach (DocumentSnapshot chill in chills.Documents)
+                foreach (DocumentSnapshot chillDoc in chills.Documents)
                 {
-                    long timestamp = chill.GetValue<long>("Time");
-                    SocketTextChannel channel = guild.GetTextChannel(Convert.ToUInt64(chill.Id));
+                    ulong channelId = Convert.ToUInt64(chillDoc.Id);
+                    DbChill chill = await DbChill.GetById(guild.Id, channelId);
+                    SocketTextChannel channel = guild.GetTextChannel(channelId);
                     OverwritePermissions perms = channel.GetPermissionOverwrite(guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
 
                     if (perms.SendMessages != PermValue.Deny)
@@ -67,7 +69,7 @@ public class MonitorSystem
                         continue;
                     }
 
-                    if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                    if (chill.Time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                     {
                         await channel.AddPermissionOverwriteAsync(guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Inherit));
                         await channel.SendMessageAsync("This channel has thawed out! Continue the chaos!");
@@ -86,19 +88,18 @@ public class MonitorSystem
             foreach (SocketGuild guild in client.Guilds)
             {
                 QuerySnapshot mutes = await database.Collection($"servers/{guild.Id}/mutes").GetSnapshotAsync();
-                if (mutes.Count > 0)
+                foreach (DocumentSnapshot muteDoc in mutes.Documents)
                 {
                     DbConfigRoles roles = await DbConfigRoles.GetById(guild.Id);
-                    foreach (DocumentSnapshot mute in mutes.Documents)
-                    {
-                        long timestamp = mute.GetValue<long>("Time");
-                        SocketGuildUser user = guild.GetUser(Convert.ToUInt64(mute.Id));
+                    ulong userId = Convert.ToUInt64(muteDoc.Id);
+                    DbMute mute = await DbMute.GetById(guild.Id, userId);
+                    SocketGuildUser user = guild.GetUser(userId);
 
-                        if (timestamp <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                        {
-                            if (user != null) await user.RemoveRoleAsync(roles.MutedRole);
-                            await mute.Reference.DeleteAsync();
-                        }
+                    if (mute.Time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                    {
+                        if (user != null)
+                            await user.RemoveRoleAsync(roles.MutedRole);
+                        await mute.Reference.DeleteAsync();
                     }
                 }
             }
@@ -112,8 +113,7 @@ public class MonitorSystem
             await Task.Delay(TimeSpan.FromSeconds(30));
             foreach (SocketGuild guild in client.Guilds)
             {
-                QuerySnapshot usersWPerks = await database.Collection($"servers/{guild.Id}/users")
-                    .WhereNotEqualTo("Perks", null).WhereNotEqualTo("Perks", new Dictionary<string, long>()).GetSnapshotAsync();
+                QuerySnapshot usersWPerks = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("Perks", emptySL).GetSnapshotAsync();
                 foreach (DocumentSnapshot snap in usersWPerks.Documents)
                 {
                     ulong userId = Convert.ToUInt64(snap.Id);

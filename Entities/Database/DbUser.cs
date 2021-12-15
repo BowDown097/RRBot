@@ -104,6 +104,8 @@ public class DbUser : DbObject
         return user;
     }
 
+    public void AddToStat(string stat, string value) => AddToStats(new() {{ stat, value }});
+
     public void AddToStats(Dictionary<string, string> statsToAddTo)
     {
         CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");

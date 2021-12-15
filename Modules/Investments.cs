@@ -53,7 +53,7 @@ public class Investments : ModuleBase<SocketCommandContext>
         culture.NumberFormat.CurrencyNegativePattern = 2;
         await user.SetCash(Context.User, user.Cash - amount);
         user[abbreviation] = (double)user[abbreviation] + Math.Round(cryptoAmount, 4);
-        user.AddToStats(new Dictionary<string, string>
+        user.AddToStats(new()
         {
             { $"Money Put Into {abbreviation}", amount.ToString("C2", culture) },
             { $"{abbreviation} Purchased", cryptoAmount.ToString("0.####") }
@@ -147,10 +147,7 @@ public class Investments : ModuleBase<SocketCommandContext>
 
         await user.SetCash(Context.User, user.Cash + finalValue);
         user[abbreviation] = (double)user[abbreviation] - Math.Round(amount, 4);
-        user.AddToStats(new Dictionary<string, string>
-        {
-            { $"Money Gained From {abbreviation}", finalValue.ToString("C2", culture) }
-        });
+        user.AddToStat($"Money Gained From {abbreviation}", finalValue.ToString("C2", culture));
 
         await Context.User.NotifyAsync(Context.Channel, $"You withdrew **{amount:0.####}** {abbreviation}, currently valued at **{cryptoValue:C2}**.\n" +
             $"A {Constants.INVESTMENT_FEE_PERCENT}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
