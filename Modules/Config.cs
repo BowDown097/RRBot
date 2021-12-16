@@ -74,9 +74,15 @@ public class Config : ModuleBase<SocketCommandContext>
                     description.AppendLine($"Logs Channel: #{logsChannel?.ToString() ?? "deleted-channel"}");
                     description.AppendLine($"Polls Channel: #{pollsChannel?.ToString() ?? "deleted-channel"}");
                     break;
-                case "modules":
-                    DbConfigOptionals modules = await DbConfigOptionals.GetById(Context.Guild.Id);
-                    description.AppendLine($"NSFW Enabled: {modules.NSFWEnabled}");
+                case "optionals":
+                    DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
+                    List<string> noFilterMentions = new();
+                    optionals.NoFilterChannels.ForEach(c => noFilterMentions.Add(MentionUtils.MentionChannel(c)));
+                    description.AppendLine($"Filtered Words: {string.Join(", ", optionals.FilteredWords)}");
+                    description.AppendLine($"Invite Filter Enabled: {optionals.InviteFilterEnabled}");
+                    description.AppendLine($"No Filter Channels: {string.Join(", ", noFilterMentions)}");
+                    description.AppendLine($"NSFW Enabled: {optionals.NSFWEnabled}");
+                    description.AppendLine($"Scam Filter Enabled: {optionals.ScamFilterEnabled}");
                     break;
                 case "ranks":
                     DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
@@ -128,6 +134,27 @@ public class Config : ModuleBase<SocketCommandContext>
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
         optionals.NoFilterChannels.Add(channel.Id);
         await Context.User.NotifyAsync(Context.Channel, $"Disabled filters in {MentionUtils.MentionChannel(channel.Id)}.");
+    }
+
+    [Command("filterword")]
+    [Summary("Add a word to filter using the filter system. Word must only contain the characters abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.")]
+    [Remarks("$filterword [word]")]
+    public async Task<RuntimeResult> FilterWord(string word)
+    {
+        StringBuilder regexString = new();
+        foreach (char c in word)
+        {
+            string cStr = c.ToString();
+            if (!FilterSystem.HOMOGLYPHS.ContainsKey(cStr))
+                return CommandResult.FromError($"Invalid character found in input: '{cStr}'.");
+            regexString.Append($"[{cStr}{string.Concat(FilterSystem.HOMOGLYPHS[cStr])}]");
+        }
+
+        DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
+        optionals.FilterRegexes.Add(regexString.ToString());
+        optionals.FilteredWords.Add(word);
+        await Context.User.NotifyAsync(Context.Channel, $"Added \"{word}\" as a filtered word.");
+        return CommandResult.FromSuccess();
     }
 
     [Command("setdjrole")]

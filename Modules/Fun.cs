@@ -23,7 +23,7 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Remarks("$define [term]")]
     public async Task<RuntimeResult> Define([Remainder] string term)
     {
-        if (FilterSystem.ContainsNWord(term))
+        if (await FilterSystem.ContainsFilteredWord(Context.Guild, term))
             return CommandResult.FromError("Nope.");
 
         using HttpClient client = new();

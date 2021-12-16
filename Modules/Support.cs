@@ -49,7 +49,7 @@ public class Support : ModuleBase<SocketCommandContext>
     [RequireCooldown("SupportCooldown", "You cannot request support again for {0}. This is done to prevent spam.")]
     public async Task<RuntimeResult> GetSupport([Remainder] string request)
     {
-        if (FilterSystem.ContainsNWord(request))
+        if (await FilterSystem.ContainsFilteredWord(Context.Guild, request))
             return CommandResult.FromError("Nope.");
 
         DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, Context.User.Id);

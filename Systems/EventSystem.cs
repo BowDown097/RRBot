@@ -122,7 +122,7 @@ public class EventSystem
         if (userBefore.Nickname == userAfter.Nickname)
             return;
 
-        if (FilterSystem.ContainsNWord(userAfter.Nickname))
+        if (await FilterSystem.ContainsFilteredWord(userAfter.Guild, userAfter.Nickname))
             await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
     }
 
@@ -140,7 +140,7 @@ public class EventSystem
             return;
 
         await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, client);
-        await FilterSystem.DoNWordCheckAsync(userMsg, context.Channel);
+        await FilterSystem.DoFilteredWordCheckAsync(userMsg, context.Guild, context.Channel);
         await FilterSystem.DoScamCheckAsync(userMsg, context.Guild);
 
         int argPos = 0;
@@ -192,7 +192,7 @@ public class EventSystem
         SocketUserMessage userMsgAfter = msgAfter as SocketUserMessage;
         SocketGuild guild = (userMsgAfter.Author as SocketGuildUser)?.Guild;
         await FilterSystem.DoInviteCheckAsync(userMsgAfter, guild, client);
-        await FilterSystem.DoNWordCheckAsync(userMsgAfter, channel);
+        await FilterSystem.DoFilteredWordCheckAsync(userMsgAfter, guild, channel);
         await FilterSystem.DoScamCheckAsync(userMsgAfter, guild);
     }
 
@@ -222,13 +222,13 @@ public class EventSystem
     private static async Task Client_ThreadCreated(SocketThreadChannel thread)
     {
         await thread.JoinAsync();
-        if (FilterSystem.ContainsNWord(thread.Name))
+        if (await FilterSystem.ContainsFilteredWord(thread.Guild, thread.Name))
             await thread.DeleteAsync();
     }
 
     private static async Task Client_ThreadUpdated(Cacheable<SocketThreadChannel, ulong> threadBefore, SocketThreadChannel threadAfter)
     {
-        if (FilterSystem.ContainsNWord(threadAfter.Name))
+        if (await FilterSystem.ContainsFilteredWord(threadAfter.Guild, threadAfter.Name))
             await threadAfter.DeleteAsync();
     }
 
@@ -251,7 +251,7 @@ public class EventSystem
     private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
     {
         string reason = RRFormat.Sanitize(result.ErrorReason);
-        if (FilterSystem.ContainsNWord(reason))
+        if (await FilterSystem.ContainsFilteredWord(context.Guild as SocketGuild, reason))
             return;
 
         string response = result.Error switch {

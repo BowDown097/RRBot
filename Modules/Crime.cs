@@ -81,7 +81,7 @@ public class Crime : ModuleBase<SocketCommandContext>
     [RequireCooldown("BullyCooldown", "You cannot bully anyone for {0}.")]
     public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
     {
-        if (FilterSystem.ContainsNWord(nickname))
+        if (await FilterSystem.ContainsFilteredWord(Context.Guild, nickname))
             return CommandResult.FromError("You cannot bully someone to the funny word.");
         if (nickname.Length > 32)
             return CommandResult.FromError("The nickname you put is longer than the maximum accepted length (32).");

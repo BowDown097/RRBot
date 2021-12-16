@@ -5,6 +5,10 @@ public class DbConfigOptionals : DbObject
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
+    public List<string> FilterRegexes { get; set; } = new();
+    [FirestoreProperty]
+    public List<string> FilteredWords { get; set; } = new();
+    [FirestoreProperty]
     public bool InviteFilterEnabled { get; set; }
     [FirestoreProperty]
     public List<ulong> NoFilterChannels { get; set; } = new();
