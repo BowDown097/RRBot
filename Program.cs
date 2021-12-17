@@ -17,9 +17,8 @@ internal static class Program
         ServiceProvider serviceProvider = new ServiceCollection()
             .AddSingleton(client)
             .AddSingleton<CommandService>()
-            .AddSingleton<LavaRestClient>()
-            .AddSingleton<LavaSocketClient>()
             .AddSingleton<AudioSystem>()
+            .AddLavaNode()
             .BuildServiceProvider();
 
         CommandService commands = serviceProvider.GetRequiredService<CommandService>();

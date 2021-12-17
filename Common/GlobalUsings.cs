@@ -29,5 +29,6 @@ global using System.Text;
 global using System.Text.RegularExpressions;
 global using System.Web;
 global using Victoria;
-global using Victoria.Entities;
-global using Victoria.Queue;
+global using Victoria.Enums;
+global using Victoria.EventArgs;
+global using Victoria.Responses.Search;

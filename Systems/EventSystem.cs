@@ -4,7 +4,7 @@ public class EventSystem
     private readonly AudioSystem audioSystem;
     private readonly CommandService commands;
     private readonly DiscordSocketClient client;
-    private readonly LavaSocketClient lavaSocketClient;
+    private readonly LavaNode lavaNode;
     private readonly ServiceProvider serviceProvider;
 
     public EventSystem(ServiceProvider serviceProvider)
@@ -13,7 +13,7 @@ public class EventSystem
         audioSystem = serviceProvider.GetRequiredService<AudioSystem>();
         commands = serviceProvider.GetRequiredService<CommandService>();
         client = serviceProvider.GetRequiredService<DiscordSocketClient>();
-        lavaSocketClient = serviceProvider.GetRequiredService<LavaSocketClient>();
+        lavaNode = serviceProvider.GetRequiredService<LavaNode>();
     }
 
     public void SubscribeEvents()
@@ -214,9 +214,11 @@ public class EventSystem
         }
 
         await new MonitorSystem(client, Program.database).Initialise();
-        await lavaSocketClient.StartAsync(client);
-        lavaSocketClient.OnPlayerUpdated += audioSystem.OnPlayerUpdated;
-        lavaSocketClient.OnTrackFinished += audioSystem.OnTrackFinished;
+        if (!lavaNode.IsConnected)
+            await lavaNode.ConnectAsync();
+
+        client.UserVoiceStateUpdated += audioSystem.LeaveOnDisconnect;
+        lavaNode.OnTrackEnded += audioSystem.OnTrackEnded;
     }
 
     private static async Task Client_ThreadCreated(SocketThreadChannel thread)

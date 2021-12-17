@@ -520,7 +520,7 @@ public static class LoggingSystem
         await WriteToLogs(guild, embed);
     }
 
-    public static async Task Custom_TrackStarted(SocketGuildUser user, Uri url)
+    public static async Task Custom_TrackStarted(SocketGuildUser user, string url)
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(user)
