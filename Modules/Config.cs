@@ -69,10 +69,8 @@ public class Config : ModuleBase<SocketCommandContext>
             {
                 case "channels":
                     DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
-                    SocketGuildChannel logsChannel = Context.Guild.GetChannel(channels.LogsChannel);
-                    SocketGuildChannel pollsChannel = Context.Guild.GetChannel(channels.PollsChannel);
-                    description.AppendLine($"Logs Channel: #{logsChannel?.ToString() ?? "deleted-channel"}");
-                    description.AppendLine($"Polls Channel: #{pollsChannel?.ToString() ?? "deleted-channel"}");
+                    description.AppendLine($"Logs Channel: {MentionUtils.MentionChannel(channels.LogsChannel)}");
+                    description.AppendLine($"Polls Channel: {MentionUtils.MentionChannel(channels.PollsChannel)}");
                     break;
                 case "optionals":
                     DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
@@ -174,7 +172,7 @@ public class Config : ModuleBase<SocketCommandContext>
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         channels.LogsChannel = channel.Id;
-        await Context.User.NotifyAsync(Context.Channel, $"Set logs channel to #{channel}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Set logs channel to {MentionUtils.MentionChannel(channel.Id)}.");
     }
 
     [Command("setmutedrole")]
@@ -194,7 +192,7 @@ public class Config : ModuleBase<SocketCommandContext>
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         channels.PollsChannel = channel.Id;
-        await Context.User.NotifyAsync(Context.Channel, $"Set polls channel to #{channel}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Set polls channel to {MentionUtils.MentionChannel(channel.Id)}.");
     }
 
     [Command("setselfrolesmsg")]

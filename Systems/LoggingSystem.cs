@@ -471,34 +471,34 @@ public static class LoggingSystem
                 ? $"{user}\nIn: {voiceStateOrig.VoiceChannel}"
                 : $"{user}\nIn: {voiceState.VoiceChannel}");
 
-        if (voiceStateOrig.VoiceChannel.Id != voiceState.VoiceChannel.Id)
-        {
-            embed.Title = "User Moved Voice Channels";
-            embed.Description = $"{user}\nOriginal: {voiceStateOrig.VoiceChannel}\nCurrent: {voiceState.VoiceChannel}";
-        }
-
         if (voiceStateOrig.VoiceChannel == null)
-            embed.Title = "User Joined Voice Channel";
+            embed.WithTitle("User Joined Voice Channel");
         else if (voiceState.VoiceChannel == null)
-            embed.Title = "User Left Voice Channel";
+            embed.WithTitle("User Left Voice Channel");
         else if (!voiceStateOrig.IsDeafened && voiceState.IsDeafened)
-            embed.Title = "User Server Deafened";
+            embed.WithTitle("User Server Deafened");
         else if (voiceStateOrig.IsDeafened && !voiceState.IsDeafened)
-            embed.Title = "User Server Undeafened";
+            embed.WithTitle("User Server Undeafened");
         else if (!voiceStateOrig.IsMuted && voiceState.IsMuted)
-            embed.Title = "User Server Muted";
+            embed.WithTitle("User Server Muted");
         else if (voiceStateOrig.IsMuted && !voiceState.IsMuted)
-            embed.Title = "User Server Unmuted";
+            embed.WithTitle("User Server Unmuted");
         else if (!voiceStateOrig.IsSelfDeafened && voiceState.IsSelfDeafened)
-            embed.Title = "User Self Deafened";
+            embed.WithTitle("User Self Deafened");
         else if (voiceStateOrig.IsSelfDeafened && !voiceState.IsSelfDeafened)
-            embed.Title = "User Self Undeafened";
+            embed.WithTitle("User Self Undeafened");
         else if (!voiceStateOrig.IsSelfMuted && voiceState.IsSelfMuted)
-            embed.Title = "User Self Muted";
+            embed.WithTitle("User Self Muted");
         else if (voiceStateOrig.IsSelfMuted && !voiceState.IsSelfMuted)
-            embed.Title = "User Self Unmuted";
+            embed.WithTitle("User Self Unmuted");
+        else if (!voiceStateOrig.IsStreaming && voiceState.IsStreaming)
+            embed.WithTitle("User Started Streaming");
+        else if (voiceStateOrig.IsStreaming && !voiceState.IsStreaming)
+            embed.WithTitle("User Stopped Streaming");
+        else if (voiceStateOrig.VoiceChannel.Id != voiceState.VoiceChannel.Id)
+            embed.WithTitle("User Moved Voice Channels").WithDescription($"{user}\nOriginal: {voiceStateOrig.VoiceChannel}\nCurrent: {voiceState.VoiceChannel}");
         else
-            embed.Title = "User Voice Status Changed";
+            embed.WithTitle("User Voice Status Changed");
 
         await WriteToLogs((user as SocketGuildUser)?.Guild, embed);
     }

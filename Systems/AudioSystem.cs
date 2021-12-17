@@ -72,23 +72,20 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> ListAsync(SocketCommandContext context)
     {
-        LavaPlayer player = lavaNode.GetPlayer(context.Guild);
-        if (player?.PlayerState != PlayerState.Playing)
+        if (!lavaNode.TryGetPlayer(context.Guild, out LavaPlayer player) || player.Track is null)
             return CommandResult.FromError("There are no tracks to list.");
 
-        if (player.Queue.Count < 1 && player.Track != null)
+        if (player.Queue.Count < 1)
         {
             await context.Channel.SendMessageAsync($"Now playing: \"{player.Track.Title}\". Nothing else is queued.");
             return CommandResult.FromSuccess();
         }
 
-        StringBuilder playlist = new();
+        StringBuilder playlist = new($"**1**: \"{player.Track.Title}\" by {player.Track.Author} {(!player.Track.IsStream ? $"({player.Track.Duration})\n" : "\n")}");
         for (int i = 0; i < player.Queue.Count; i++)
         {
             LavaTrack track = player.Queue.ElementAt(i);
-            playlist.AppendLine($"**{i + 1}**: \"{track.Title}\" by {track.Author}");
-            if (!track.IsStream)
-                playlist.AppendLine($" ({track.Duration})");
+            playlist.AppendLine($"**{i + 2}**: \"{track.Title}\" by {track.Author} {(!track.IsStream ? $"({track.Duration})" : "")}");
         }
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -104,8 +101,8 @@ public sealed class AudioSystem
         if (!lavaNode.TryGetPlayer(context.Guild, out LavaPlayer player) || player.Track is null)
             return CommandResult.FromError("There are no tracks to skip.");
 
-        await player.StopAsync();
         await context.Channel.SendMessageAsync($"Skipped \"{player.Track.Title}\".");
+        await player.StopAsync();
         return CommandResult.FromSuccess();
     }
 
@@ -142,13 +139,9 @@ public sealed class AudioSystem
 
     public async Task OnTrackEnded(TrackEndedEventArgs args)
     {
-        if (args.Player.Queue is null)
-            return;
-
-        if (args.Player.Queue.TryDequeue(out LavaTrack item))
-        {
+        if (args.Player.Queue?.TryDequeue(out LavaTrack item) == true)
             await args.Player.PlayAsync(item);
-            await args.Player.SeekAsync(TimeSpan.FromSeconds(0));
-        }
+        else
+            await lavaNode.LeaveAsync(args.Player.VoiceChannel);
     }
 }
