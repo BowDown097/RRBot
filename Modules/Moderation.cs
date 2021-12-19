@@ -153,7 +153,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
                 DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
                 dbUser.AddToStat("Mutes", "1");
-                await dbUser.UnlockAchievement("Literally 1984", "Get muted.", user as SocketUser, Context.Channel);
+                await dbUser.UnlockAchievement("Literally 1984", "Get muted.", user, Context.Channel);
 
                 string response = resolved.Item2;
                 response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";

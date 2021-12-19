@@ -44,7 +44,7 @@ public class Administration : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("Nope.");
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-        await dbUser.SetCash(user as SocketUser, amount);
+        await dbUser.SetCash(user, amount);
         await ReplyAsync($"Set **{user.Sanitize()}**'s cash to **{amount:C2}**.");
         return CommandResult.FromSuccess();
     }
@@ -72,6 +72,6 @@ public class Administration : ModuleBase<SocketCommandContext>
     public async Task UnlockAchievement(IGuildUser user, string name, string desc, double reward = 0)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        await dbUser.UnlockAchievement(name, desc, user as SocketUser, Context.Channel, reward);
+        await dbUser.UnlockAchievement(name, desc, user, Context.Channel, reward);
     }
 }

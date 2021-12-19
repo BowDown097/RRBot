@@ -134,7 +134,7 @@ public class DbUser : DbObject
         }
     }
 
-    public async Task SetCash(SocketUser user, double amount)
+    public async Task SetCash(IUser user, double amount)
     {
         if (user.IsBot)
             return;
@@ -157,7 +157,7 @@ public class DbUser : DbObject
         }
     }
 
-    public async Task UnlockAchievement(string name, string desc, SocketUser user, ISocketMessageChannel channel, double reward = 0)
+    public async Task UnlockAchievement(string name, string desc, IUser user, IMessageChannel channel, double reward = 0)
     {
         if (Achievements.ContainsKey(name))
             return;

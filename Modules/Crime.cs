@@ -232,7 +232,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         {
             double repairs = target.Cash / 100.0 * rapePercent;
             StatUpdate(target, false, repairs);
-            await target.SetCash(user as SocketUser, target.Cash - repairs);
+            await target.SetCash(user, target.Cash - repairs);
             await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user.Sanitize()}**'s asshole! They just paid **{repairs:C2}** in asshole repairs.");
         }
         else
@@ -276,7 +276,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         int roll = RandomUtil.Next(1, 101);
         if (roll < Constants.ROB_ODDS)
         {
-            await target.SetCash(user as SocketUser, target.Cash - amount);
+            await target.SetCash(user, target.Cash - amount);
             await author.SetCash(Context.User, author.Cash + amount);
             StatUpdate(author, true, amount);
             StatUpdate(target, false, amount);

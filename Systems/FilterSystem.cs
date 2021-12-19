@@ -70,7 +70,7 @@ public static class FilterSystem
     };
     private static readonly Regex INVITE_REGEX = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
 
-    public static async Task<bool> ContainsFilteredWord(SocketGuild guild, string input)
+    public static async Task<bool> ContainsFilteredWord(IGuild guild, string input)
     {
         string cleaned = new(input.Where(c => !char.IsWhiteSpace(c)).ToArray());
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
@@ -84,7 +84,7 @@ public static class FilterSystem
         return false;
     }
 
-    public static async Task DoInviteCheckAsync(SocketUserMessage message, SocketGuild guild, DiscordSocketClient client)
+    public static async Task DoInviteCheckAsync(SocketUserMessage message, IGuild guild, DiscordSocketClient client)
     {
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
         if (!optionals.InviteFilterEnabled || optionals.NoFilterChannels.Contains(message.Channel.Id))
@@ -99,13 +99,13 @@ public static class FilterSystem
         }
     }
 
-    public static async Task DoFilteredWordCheckAsync(SocketUserMessage message, SocketGuild guild, IMessageChannel channel)
+    public static async Task DoFilteredWordCheckAsync(SocketUserMessage message, IGuild guild, IMessageChannel channel)
     {
         if (!channel.Name.In("extremely-funny", "bot-commands-for-retards", "private-godfather") && await ContainsFilteredWord(guild, message.Content))
             await message.DeleteAsync();
     }
 
-    public static async Task DoScamCheckAsync(SocketUserMessage message, SocketGuild guild)
+    public static async Task DoScamCheckAsync(SocketUserMessage message, IGuild guild)
     {
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
         if (!optionals.ScamFilterEnabled || optionals.NoFilterChannels.Contains(message.Channel.Id))

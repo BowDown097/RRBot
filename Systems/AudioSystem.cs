@@ -40,7 +40,7 @@ public sealed class AudioSystem
             return CommandResult.FromError("You must be in a voice channel.");
 
         if (!lavaNode.HasPlayer(context.Guild))
-            await lavaNode.JoinAsync(user.VoiceChannel, context.Channel as ITextChannel);
+            await lavaNode.JoinAsync(user.VoiceChannel);
 
         SearchResponse search = await lavaNode.SearchYouTubeAsync(query);
         if (search.Status == SearchStatus.NoMatches || search.Status == SearchStatus.LoadFailed)

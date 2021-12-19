@@ -17,7 +17,7 @@ public class RequireRankLevelAttribute : PreconditionAttribute
         if (role == null)
             return PreconditionResult.FromError($"A rank is configured at level {RankLevel}, but its role no longer exists.");
 
-        return (context.User as IGuildUser).RoleIds.Contains(roleId)
+        return context.User.GetRoleIds().Contains(roleId)
             ? PreconditionResult.FromSuccess()
             : PreconditionResult.FromError($"You must have the {role.Name} role.");
     }

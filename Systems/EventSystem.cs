@@ -79,8 +79,7 @@ public class EventSystem
             return;
 
         // selfroles check
-        IGuild guild = (channel as ITextChannel)?.Guild;
-        DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(guild.Id);
+        DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(channel.GetGuild().Id);
         if (reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(reaction.Emote.ToString()))
             return;
 
@@ -190,10 +189,9 @@ public class EventSystem
     private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
     {
         SocketUserMessage userMsgAfter = msgAfter as SocketUserMessage;
-        SocketGuild guild = (userMsgAfter.Author as SocketGuildUser)?.Guild;
-        await FilterSystem.DoInviteCheckAsync(userMsgAfter, guild, client);
-        await FilterSystem.DoFilteredWordCheckAsync(userMsgAfter, guild, channel);
-        await FilterSystem.DoScamCheckAsync(userMsgAfter, guild);
+        await FilterSystem.DoInviteCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild(), client);
+        await FilterSystem.DoFilteredWordCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild(), channel);
+        await FilterSystem.DoScamCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
     }
 
     private static async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, Cacheable<IMessageChannel, ulong> channel,
@@ -253,18 +251,18 @@ public class EventSystem
     private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
     {
         string reason = RRFormat.Sanitize(result.ErrorReason);
-        if (await FilterSystem.ContainsFilteredWord(context.Guild as SocketGuild, reason))
+        if (await FilterSystem.ContainsFilteredWord(context.Guild, reason))
             return;
 
         string response = result.Error switch {
             CommandError.BadArgCount => $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``",
             CommandError.ParseFailed => $"Couldn't understand something you passed into the command.\nThis error info might help: ``{reason}``\nOr maybe the command usage will: ``{command.Value.Remarks}``",
             CommandError.ObjectNotFound or CommandError.UnmetPrecondition or (CommandError)9 => reason,
-            _ => ""
+            _ => !result.IsSuccess && result is CommandResult ? reason : ""
         };
 
-        if (response != "" || (!result.IsSuccess && result is CommandResult))
-            await (context.User as SocketUser).NotifyAsync(context.Channel as ISocketMessageChannel, reason);
+        if (response != "")
+            await context.User.NotifyAsync(context.Channel, response);
         else if (!result.IsSuccess)
             Console.WriteLine(reason);
     }

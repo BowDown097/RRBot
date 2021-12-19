@@ -4,7 +4,7 @@ public static class LeaderboardInteractions
     public static async Task GetNext(SocketMessageComponent component, ulong executorId, string currency, int start, int end, int failedUsers, bool back)
     {
         Embed embed = component.Message.Embeds.FirstOrDefault();
-        SocketGuild guild = (component.User as SocketGuildUser)?.Guild;
+        IGuild guild = component.User.GetGuild();
 
         double cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
         QuerySnapshot users = await Program.database.Collection($"servers/{guild.Id}/users")
@@ -16,7 +16,7 @@ public static class LeaderboardInteractions
             if (processedUsers == 10)
                 break;
 
-            SocketGuildUser guildUser = guild.GetUser(Convert.ToUInt64(doc.Id));
+            IGuildUser guildUser = await guild.GetUserAsync(Convert.ToUInt64(doc.Id));
             if (guildUser == null)
             {
                 if (!back) failedUsers++;

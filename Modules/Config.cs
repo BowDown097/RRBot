@@ -24,7 +24,7 @@ public class Config : ModuleBase<SocketCommandContext>
         if (selfRoles.Channel == 0UL)
             return CommandResult.FromError("The self roles message has not been set. Please set it using ``$setselfrolesmsg``.");
 
-        SocketTextChannel channel = Context.Guild.GetChannel(selfRoles.Channel) as SocketTextChannel;
+        SocketTextChannel channel = Context.Guild.GetTextChannel(selfRoles.Channel);
         IMessage message = await channel.GetMessageAsync(selfRoles.Message);
         await message.AddReactionAsync(emote);
 
@@ -198,9 +198,9 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("setselfrolesmsg")]
     [Summary("Register the ID for the message that users can react to to receive roles.")]
     [Remarks("$setselfrolesmsg [channel] [msg-id]")]
-    public async Task<RuntimeResult> SetSelfRolesMsg(IChannel channel, ulong msgId)
+    public async Task<RuntimeResult> SetSelfRolesMsg(ITextChannel channel, ulong msgId)
     {
-        IMessage msg = await (channel as ITextChannel)?.GetMessageAsync(msgId);
+        IMessage msg = await channel.GetMessageAsync(msgId);
         if (msg == null)
             return CommandResult.FromError("You specified an invalid message!");
 

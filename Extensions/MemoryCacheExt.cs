@@ -12,7 +12,7 @@ public static class MemoryCacheExt
         cache.Set(key, value, policy);
     }
 
-    public static void CacheUpdateCallback(CacheEntryUpdateArguments args)
+    private static void CacheUpdateCallback(CacheEntryUpdateArguments args)
     {
         DbObject item = (DbObject)MemoryCache.Default.Get(args.Key);
         item.Reference.SetAsync(item);

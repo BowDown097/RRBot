@@ -4,7 +4,6 @@ global using Discord.Rest;
 global using Discord.WebSocket;
 global using Google.Cloud.Firestore;
 global using Google.Cloud.Firestore.V1;
-global using Grpc.Core;
 global using Microsoft.CodeAnalysis.CSharp.Scripting;
 global using Microsoft.CodeAnalysis.Scripting;
 global using Microsoft.Extensions.DependencyInjection;

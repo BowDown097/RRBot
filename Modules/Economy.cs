@@ -268,7 +268,7 @@ public class Economy : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You do not have that much money!");
 
         await author.SetCash(Context.User, author.Cash - amount);
-        await target.SetCash(user as SocketUser, target.Cash + amount);
+        await target.SetCash(user, target.Cash + amount);
 
         await Context.User.NotifyAsync(Context.Channel, $"You sauced **{user.Sanitize()}** {amount:C2}.");
         return CommandResult.FromSuccess();

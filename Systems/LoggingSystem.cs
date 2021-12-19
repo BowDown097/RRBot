@@ -2,7 +2,7 @@
 namespace RRBot.Systems;
 public static class LoggingSystem
 {
-    private static async Task WriteToLogs(SocketGuild guild, EmbedBuilder embed)
+    private static async Task WriteToLogs(IGuild guild, EmbedBuilder embed)
     {
         embed.Color = Color.Blue;
         embed.Timestamp = DateTime.Now;
@@ -10,8 +10,9 @@ public static class LoggingSystem
             embed.Fields.RemoveAt(embed.Fields.Count - 1);
 
         DbConfigChannels channels = await DbConfigChannels.GetById(guild.Id);
-        if (guild.TextChannels.Any(channel => channel.Id == channels.LogsChannel))
-            await guild.GetTextChannel(channels.LogsChannel).SendMessageAsync(embed: embed.Build());
+        ITextChannel textChannel = await guild.GetTextChannelAsync(channels.LogsChannel);
+        if (textChannel != null)
+            await textChannel.SendMessageAsync(embed: embed.Build());
     }
 
     public static async Task Client_ChannelCreated(SocketChannel channel)
@@ -19,7 +20,7 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription($"**Channel Created**\n{MentionUtils.MentionChannel(channel.Id)}");
 
-        await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
+        await WriteToLogs(channel.GetGuild(), embed);
     }
 
     public static async Task Client_ChannelDestroyed(SocketChannel channel)
@@ -27,7 +28,7 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription($"**Channel Deleted**\n{MentionUtils.MentionChannel(channel.Id)}");
 
-        await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
+        await WriteToLogs(channel.GetGuild(), embed);
     }
 
     public static async Task Client_ChannelUpdated(SocketChannel before, SocketChannel after)
@@ -213,7 +214,7 @@ public static class LoggingSystem
     public static async Task Client_MessageDeleted(Cacheable<IMessage, ulong> msgCached, Cacheable<IMessageChannel, ulong> channelCached)
     {
         IMessage msg = await msgCached.GetOrDownloadAsync();
-        SocketGuildChannel channel = await channelCached.GetOrDownloadAsync() as SocketGuildChannel;
+        IMessageChannel channel = await channelCached.GetOrDownloadAsync();
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(msg.Author)
             .WithDescription($"**Message Deleted in {MentionUtils.MentionChannel(channel.Id)}**\n{msg.Content}")
@@ -225,7 +226,7 @@ public static class LoggingSystem
                 .RRAddField("Embed Description", msgEmbed.Description);
         }
 
-        await WriteToLogs(channel.Guild, embed);
+        await WriteToLogs(channel.GetGuild(), embed);
     }
 
     public static async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
@@ -252,7 +253,7 @@ public static class LoggingSystem
                 .RRAddField("Embed Description", msgEmbed.Description);
         }
 
-        await WriteToLogs((channel as SocketGuildChannel)?.Guild, embed);
+        await WriteToLogs(channel.GetGuild(), embed);
     }
 
     public static async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msgCached,
@@ -269,7 +270,7 @@ public static class LoggingSystem
         if (reaction.Emote is Emote emote)
             embed.WithImageUrl(emote.Url + "?size=40");
 
-        await WriteToLogs((reaction.Channel as SocketGuildChannel)?.Guild, embed);
+        await WriteToLogs(reaction.Channel.GetGuild(), embed);
     }
 
     public static async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msgCached,
@@ -286,7 +287,7 @@ public static class LoggingSystem
         if (reaction.Emote is Emote emote)
             embed.WithImageUrl(emote.Url + "?size=40");
 
-        await WriteToLogs((reaction.Channel as SocketGuildChannel)?.Guild, embed);
+        await WriteToLogs(reaction.Channel.GetGuild(), embed);
     }
 
     public static async Task Client_RoleCreated(SocketRole role)
@@ -500,7 +501,7 @@ public static class LoggingSystem
         else
             embed.WithTitle("User Voice Status Changed");
 
-        await WriteToLogs((user as SocketGuildUser)?.Guild, embed);
+        await WriteToLogs(user.GetGuild(), embed);
     }
 
     public static async Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
@@ -535,7 +536,7 @@ public static class LoggingSystem
             .WithAuthor(target)
             .WithDescription($"**User Bullied**\n{actor.Mention} bullied {target.Mention} to \"{nickname}\"");
 
-        await WriteToLogs(target.Guild as SocketGuild, embed);
+        await WriteToLogs(target.Guild, embed);
     }
 
     public static async Task Custom_UserMuted(IGuildUser target, SocketUser actor, string duration, string reason)
@@ -547,7 +548,7 @@ public static class LoggingSystem
             .RRAddField("Muter", actor)
             .RRAddField("Reason", reason);
 
-        await WriteToLogs(target.Guild as SocketGuild, embed);
+        await WriteToLogs(target.Guild, embed);
     }
 
     public static async Task Custom_UserUnmuted(IGuildUser target, SocketUser actor)
@@ -556,6 +557,6 @@ public static class LoggingSystem
             .WithAuthor(target)
             .WithDescription($"**User Unmuted**\nby {actor.Mention}");
 
-        await WriteToLogs(target.Guild as SocketGuild, embed);
+        await WriteToLogs(target.Guild, embed);
     }
 }
