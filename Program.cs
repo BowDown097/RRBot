@@ -1,4 +1,6 @@
-﻿namespace RRBot;
+﻿using Discord.Interactions;
+
+namespace RRBot;
 internal static class Program
 {
     public static FirestoreDb database = FirestoreDb.Create("rushrebornbot",
@@ -17,6 +19,7 @@ internal static class Program
         ServiceProvider serviceProvider = new ServiceCollection()
             .AddSingleton(client)
             .AddSingleton<CommandService>()
+            .AddSingleton<InteractionService>()
             .AddSingleton<AudioSystem>()
             .AddLavaNode()
             .BuildServiceProvider();
@@ -27,8 +30,12 @@ internal static class Program
         commands.AddTypeReader<IGuildUser>(new RRGuildUserTypeReader());
         commands.AddTypeReader<SocketGuildUser>(new RRGuildUserTypeReader());
         commands.AddTypeReader<string>(new SanitizedStringTypeReader());
-        new EventSystem(serviceProvider).SubscribeEvents();
         await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
+        InteractionService interactions = serviceProvider.GetRequiredService<InteractionService>();
+        await interactions.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
+
+        new EventSystem(serviceProvider).SubscribeEvents();
+
         await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
         await client.SetGameAsync(Constants.ACTIVITY, type: Constants.ACTIVITY_TYPE);
         await client.StartAsync();

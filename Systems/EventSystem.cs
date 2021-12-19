@@ -1,9 +1,12 @@
+using Discord.Interactions;
+
 namespace RRBot.Systems;
 public class EventSystem
 {
     private readonly AudioSystem audioSystem;
     private readonly CommandService commands;
     private readonly DiscordSocketClient client;
+    private readonly InteractionService interactions;
     private readonly LavaNode lavaNode;
     private readonly ServiceProvider serviceProvider;
 
@@ -13,6 +16,7 @@ public class EventSystem
         audioSystem = serviceProvider.GetRequiredService<AudioSystem>();
         commands = serviceProvider.GetRequiredService<CommandService>();
         client = serviceProvider.GetRequiredService<DiscordSocketClient>();
+        interactions = serviceProvider.GetRequiredService<InteractionService>();
         lavaNode = serviceProvider.GetRequiredService<LavaNode>();
     }
 
@@ -90,28 +94,13 @@ public class EventSystem
             await user.RemoveRoleAsync(roleId);
     }
 
-    private async Task Client_ButtonExecuted(SocketMessageComponent component)
+    private async Task Client_ButtonExecuted(SocketMessageComponent interaction)
     {
-        if (component.Message.Author.Id != client.CurrentUser.Id) // don't wanna interfere with other bots' stuff
+        if (interaction.Message.Author.Id != client.CurrentUser.Id) // don't wanna interfere with other bots' stuff
             return;
 
-        string[] split = component.Data.CustomId.Split('-');
-        switch (split[0])
-        {
-            case "lbnext":
-                ulong executorId = Convert.ToUInt64(split[1]);
-                if (component.User.Id != executorId)
-                {
-                    await component.RespondAsync("Action not permitted: You did not execute the original command.", ephemeral: true);
-                    return;
-                }
-
-                await LeaderboardInteractions.GetNext(component, executorId, split[2], int.Parse(split[3]), int.Parse(split[4]), int.Parse(split[5]), bool.Parse(split[6]));
-                break;
-            case "trivia":
-                await TriviaInteractions.Respond(component, split[2], bool.Parse(split[3]));
-                break;
-        }
+        SocketInteractionContext<SocketMessageComponent> context = new(client, interaction);
+        await interactions.ExecuteCommandAsync(context, serviceProvider);
     }
 
     private static async Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> userBeforeCached,
@@ -248,7 +237,7 @@ public class EventSystem
         }
     }
 
-    private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
+    private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, Discord.Commands.IResult result)
     {
         string reason = RRFormat.Sanitize(result.ErrorReason);
         if (await FilterSystem.ContainsFilteredWord(context.Guild, reason))

@@ -1,10 +1,25 @@
+using Discord.Interactions;
+
 namespace RRBot.Interactions;
-public static class LeaderboardInteractions
+public class Leaderboard : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
 {
-    public static async Task GetNext(SocketMessageComponent component, ulong executorId, string currency, int start, int end, int failedUsers, bool back)
+    [ComponentInteraction("lbnext-*-*-*-*-*-*")]
+    public async Task GetNext(string executorIdStr, string currency, string startStr, string endStr, string failedUsersStr, string backStr)
     {
-        Embed embed = component.Message.Embeds.FirstOrDefault();
-        IGuild guild = component.User.GetGuild();
+        ulong executorId = Convert.ToUInt64(executorIdStr);
+        int start = Convert.ToInt32(startStr);
+        int end = Convert.ToInt32(endStr);
+        int failedUsers = Convert.ToInt32(failedUsersStr);
+        bool back = Convert.ToBoolean(backStr);
+
+        if (Context.Interaction.User.Id != executorId)
+        {
+            await Context.Interaction.RespondAsync("Action not permitted: You did not execute the original command.", ephemeral: true);
+            return;
+        }
+
+        Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault();
+        IGuild guild = Context.Interaction.User.GetGuild();
 
         double cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
         QuerySnapshot users = await Program.database.Collection($"servers/{guild.Id}/users")
@@ -47,7 +62,7 @@ public static class LeaderboardInteractions
         ComponentBuilder componentBuilder = new ComponentBuilder()
             .WithButton("Back", $"lbnext-{executorId}-{currency}-{start-10}-{end-10}-0-True", disabled: end <= 10)
             .WithButton("Next", $"lbnext-{executorId}-{currency}-{end+1}-{end+10}-{failedUsers}-False", disabled: processedUsers != 10 || users.Documents.Count < end + 1);
-        await component.UpdateAsync(resp => {
+        await Context.Interaction.UpdateAsync(resp => {
             resp.Embed = embedBuilder.Build();
             resp.Components = componentBuilder.Build();
         });
