@@ -20,7 +20,6 @@ public static class Constants
     public const double MESSAGE_CASH = 30;
     public const double MESSAGE_CASH_COOLDOWN = 60;
     public const double TRANSACTION_MIN = 100;
-
     // ********************
     //        CRIME
     // ********************
@@ -45,7 +44,12 @@ public static class Constants
     public const double ROB_MIN_CASH = 100;
     public const double SLAVERY_COOLDOWN = 3600;
     public const double WHORE_COOLDOWN = 3600;
-
+    // ********************
+    //        ECONOMY
+    // ********************
+    public const double DAILY_COOLDOWN = 86400;
+    public const double DAILY_MIN = 1000;
+    public const double DAILY_MAX = 2500;
     // ********************
     //         FUN
     // ********************
@@ -93,7 +97,6 @@ public static class Constants
         { "Zero Two", "https://cdn.discordapp.com/attachments/804898294873456701/817269546024042547/c4c54c906261b82f9401b60daf0e5be2.png" },
         { "Zimbabwe", "https://cdn.discordapp.com/attachments/802654650040844380/817273008821108736/unknown.png" }
     };
-
     // ********************
     //       GAMBLING
     // ********************
@@ -101,19 +104,16 @@ public static class Constants
     public const double SLOTS_MULT_THREEINAROW = 4;
     public const double SLOTS_MULT_THREESEVENS = 21;
     public const double SLOTS_MULT_TWOINAROW = 1.75;
-
     // ********************
     //     INVESTMENTS
     // ********************
     public const double INVESTMENT_FEE_PERCENT = 1.5;
     public const double INVESTMENT_MIN_AMOUNT = 0.01;
-
     // ********************
     //      MODERATION
     // ********************
     public const int CHILL_MAX_SECONDS = 21600;
     public const int CHILL_MIN_SECONDS = 10;
-
     // ********************
     //        POLLS
     // ********************
@@ -130,7 +130,6 @@ public static class Constants
         { 8, "8️⃣" },
         { 9, "9️⃣" },
     };
-
     // ********************
     //        TASKS
     // ********************

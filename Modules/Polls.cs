@@ -6,7 +6,7 @@ public class Polls : ModuleBase<SocketCommandContext>
     [Command("createpoll")]
     [Summary("Create a poll.")]
     [Remarks("$createpoll [title] [choice1|choice2|choice3|...|choice9]")]
-    public async Task<RuntimeResult> CreatePoll(string title, string choices)
+    public async Task<RuntimeResult> CreatePoll(string title, [Remainder] string choices)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         if (Context.Guild.TextChannels.Any(channel => channel.Id == channels.PollsChannel))
@@ -30,6 +30,7 @@ public class Polls : ModuleBase<SocketCommandContext>
             for (int i = 1; i <= pollChoices.Length; i++)
                 await pollMsg.AddReactionAsync(new Emoji(Constants.POLL_EMOTES[i]));
 
+            await Context.User.NotifyAsync(Context.Channel, $"Created a poll [here]({pollMsg.GetJumpUrl()}).");
             return CommandResult.FromSuccess();
         }
 

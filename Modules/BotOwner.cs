@@ -106,6 +106,25 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         }
     }
 
+    [Alias("setuserproperty")]
+    [Command("setuserproperty")]
+    [Summary("Set a property for a specific user in the database.")]
+    [Remarks("$setuserproperty [user] [property] [value]")]
+    public async Task<RuntimeResult> SetUserProperty(IGuildUser user, string property, [Remainder] string value)
+    {
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        try
+        {
+            dbUser[property] = Convert.ChangeType(value, dbUser[property].GetType());
+            await Context.User.NotifyAsync(Context.Channel, $"Set {property} to ``{value}`` for {user.Sanitize()}.");
+            return CommandResult.FromSuccess();
+        }
+        catch (Exception e)
+        {
+            return CommandResult.FromError($"Couldn't set property: {e.Message}");
+        }
+    }
+
     [Alias("unbotban")]
     [Command("unblacklist")]
     [Summary("Unban a user from using the bot.")]

@@ -4,7 +4,6 @@ public static class RandomUtil
     public static int Next(int max) => RandomNumberGenerator.GetInt32(max);
     public static int Next(int min, int max) => RandomNumberGenerator.GetInt32(min, max);
 
-    public static double NextDouble(double max) => NextDouble(0, max);
     public static double NextDouble(double min, double max)
     {
         byte[] buf = RandomNumberGenerator.GetBytes(8);

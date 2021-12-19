@@ -3,12 +3,12 @@
 public class Economy : ModuleBase<SocketCommandContext>
 {
     public static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Slavery", "Whore", "Bully",
-        "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack" };
+        "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack", "Daily" };
 
-    private void AddBackUserSettings(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
-        bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long whoreCd,
-        long slaveryCd, long rapeCd, long lootCd, long dealCd, long bullyCd, long mineCd, long huntCd, long farmCd,
-        long digCd, long chopCd, long supportCd)
+    private void RestoreUserData(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
+        bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long dealCd, long lootCd,
+        long rapeCd, long robCd, long slaveryCd, long whoreCd, long bullyCd, long chopCd, long digCd,
+        long farmCd, long fishCd, long huntCd, long mineCd, long supportCd, long hackCd, long dailyCd)
     {
         user.BTC = btc;
         user.DOGE = doge;
@@ -18,18 +18,22 @@ public class Economy : ModuleBase<SocketCommandContext>
         user.DMNotifs = dmNotifs;
         user.NoReplyPings = noReplyPings;
         user.Stats = stats;
-        user.WhoreCooldown = whoreCd;
-        user.SlaveryCooldown = slaveryCd;
-        user.RapeCooldown = rapeCd;
-        user.LootCooldown = lootCd;
         user.DealCooldown = dealCd;
+        user.LootCooldown = lootCd;
+        user.RapeCooldown = rapeCd;
+        user.RobCooldown = robCd;
+        user.SlaveryCooldown = slaveryCd;
+        user.WhoreCooldown = whoreCd;
         user.BullyCooldown = bullyCd;
-        user.MineCooldown = mineCd;
-        user.HuntCooldown = huntCd;
-        user.FarmCooldown = farmCd;
-        user.DigCooldown = digCd;
         user.ChopCooldown = chopCd;
+        user.DigCooldown = digCd;
+        user.FarmCooldown = farmCd;
+        user.FishCooldown = fishCd;
+        user.HuntCooldown = huntCd;
+        user.MineCooldown = mineCd;
         user.SupportCooldown = supportCd;
+        user.HackCooldown = hackCd;
+        user.DailyCooldown = dailyCd;
     }
 
     [Alias("bal", "cash")]
@@ -92,6 +96,35 @@ public class Economy : ModuleBase<SocketCommandContext>
             .WithTitle(user == null ? "Cooldowns" : $"{user.Sanitize()}'s Cooldowns")
             .WithDescription(description.Length > 0 ? description.ToString() : "None");
         await ReplyAsync(embed: embed.Build());
+    }
+
+    [Command("daily")]
+    [Summary("Get a daily reward.")]
+    [Remarks("$daily")]
+    [RequireCooldown("DailyCooldown", "Slow down there, turbo! It hasn't been a day yet. You've still got {0} left.")]
+    [RequireRankLevel("3")]
+    public async Task<RuntimeResult> Daily()
+    {
+        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        if (user.UsingSlots)
+            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+
+        double moneyEarned = RandomUtil.NextDouble(Constants.DAILY_MIN, Constants.DAILY_MAX);
+        double totalCash = user.Cash + moneyEarned;
+        string message = RandomUtil.Next(5) switch
+        {
+            0 => $"Your job at Pierce & Pierce is paying exceptionally well, and business is looking fantastic. **{moneyEarned:C2}** for a pretty mild day of work. That's what I'm talkin' bout.\nBalance: {totalCash:C2}",
+            1 => $"Quite a long day of disabling evil right-wingers' Discord accounts, but hey, you got yourself **{moneyEarned:C2}**. Least it's paying better than the furry shoots you were doing for quite a while.\nBalance: {totalCash:C2}",
+            2 => $"The OnlyFans money is pouring in! **{moneyEarned:C2}** from some lonely suckers just today! Thank God for giving you such a big ass.\nBalance: {totalCash:C2}",
+            3 => $"Another day of slouching on the couch and leeching off taxpayer money has gotten you **{moneyEarned:C2}**.\nBalance: {totalCash:C2}",
+            4 => $"Hot dayum! **{moneyEarned:C2}** from simp donations on your hot tub stream tonight! Your (also simp) boyfriend is gonna be ecstatic.\nBalance: {totalCash:C2}",
+            _ => ""
+        };
+
+        await user.SetCash(Context.User, totalCash);
+        user.DailyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.DAILY_COOLDOWN);
+        await Context.User.NotifyAsync(Context.Channel, message);
+        return CommandResult.FromSuccess();
     }
 
     [Alias("sell")]
@@ -342,19 +375,23 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await Context.User.NotifyAsync(Context.Channel, "​DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                 await user.Reference.DeleteAsync();
                 await user.SetCash(Context.User, 0);
-                AddBackUserSettings(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
-                    temp.NoReplyPings, temp.Stats, temp.WhoreCooldown, temp.SlaveryCooldown, temp.RapeCooldown,
-                    temp.LootCooldown, temp.DealCooldown, temp.BullyCooldown, temp.MineCooldown, temp.HuntCooldown,
-                    temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown, temp.SupportCooldown);
+                RestoreUserData(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
+                    temp.NoReplyPings, temp.Stats, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
+                    temp.RobCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
+                    temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
+                    temp.HuntCooldown, temp.MineCooldown, temp.SupportCooldown, temp.HackCooldown,
+                    temp.DailyCooldown);
                 break;
             case 3:
                 await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                 await user.Reference.DeleteAsync();
                 await user.SetCash(Context.User, 0);
-                AddBackUserSettings(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
-                    temp.NoReplyPings, temp.Stats, temp.WhoreCooldown, temp.SlaveryCooldown, temp.RapeCooldown,
-                    temp.LootCooldown, temp.DealCooldown, temp.BullyCooldown, temp.MineCooldown, temp.HuntCooldown,
-                    temp.FarmCooldown, temp.DigCooldown, temp.ChopCooldown, temp.SupportCooldown);
+                RestoreUserData(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
+                    temp.NoReplyPings, temp.Stats, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
+                    temp.RobCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
+                    temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
+                    temp.HuntCooldown, temp.MineCooldown, temp.SupportCooldown, temp.HackCooldown,
+                    temp.DailyCooldown);
                 break;
         }
 
