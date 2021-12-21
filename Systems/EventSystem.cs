@@ -1,23 +1,26 @@
+#pragma warning disable RCS1163, IDE0060 // both warnings fire for events, which they shouldn't
 using Discord.Interactions;
 
 namespace RRBot.Systems;
 public class EventSystem
 {
+    private readonly IAudioService audioService;
     private readonly AudioSystem audioSystem;
     private readonly CommandService commands;
     private readonly DiscordSocketClient client;
+    private readonly InactivityTrackingService inactivityTracking;
     private readonly InteractionService interactions;
-    private readonly LavaNode lavaNode;
     private readonly ServiceProvider serviceProvider;
 
     public EventSystem(ServiceProvider serviceProvider)
     {
         this.serviceProvider = serviceProvider;
+        audioService = serviceProvider.GetRequiredService<IAudioService>();
         audioSystem = serviceProvider.GetRequiredService<AudioSystem>();
         commands = serviceProvider.GetRequiredService<CommandService>();
         client = serviceProvider.GetRequiredService<DiscordSocketClient>();
+        inactivityTracking = serviceProvider.GetRequiredService<InactivityTrackingService>();
         interactions = serviceProvider.GetRequiredService<InteractionService>();
-        lavaNode = serviceProvider.GetRequiredService<LavaNode>();
     }
 
     public void SubscribeEvents()
@@ -201,11 +204,7 @@ public class EventSystem
         }
 
         await new MonitorSystem(client, Program.database).Initialise();
-        if (!lavaNode.IsConnected)
-            await lavaNode.ConnectAsync();
-
-        client.UserVoiceStateUpdated += audioSystem.LeaveOnDisconnect;
-        lavaNode.OnTrackEnded += audioSystem.OnTrackEnded;
+        await audioService.InitializeAsync();
     }
 
     private static async Task Client_ThreadCreated(SocketThreadChannel thread)

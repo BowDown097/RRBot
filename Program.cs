@@ -20,8 +20,29 @@ internal static class Program
             .AddSingleton(client)
             .AddSingleton<CommandService>()
             .AddSingleton<InteractionService>()
+            .AddSingleton<IAudioService, LavalinkCluster>()
+            .AddSingleton<IDiscordClientWrapper, DiscordClientWrapper>()
+            .AddSingleton(new LavalinkClusterOptions
+            {
+                Nodes = new[]
+                {
+                    new LavalinkNodeOptions
+                    {
+                        RestUri = "http://127.0.0.1:2333",
+                        WebSocketUri = "ws://127.0.0.1:2333",
+                        Password = "youshallnotpass",
+                    },
+                },
+                StayOnline = true
+            })
+            .AddSingleton<InactivityTrackingService>()
+            .AddSingleton(new InactivityTrackingOptions
+            {
+                DisconnectDelay = TimeSpan.Zero,
+                PollInterval = TimeSpan.FromSeconds(Constants.POLL_INTERVAL_SECS),
+                TrackInactivity = true
+            })
             .AddSingleton<AudioSystem>()
-            .AddLavaNode()
             .BuildServiceProvider();
 
         CommandService commands = serviceProvider.GetRequiredService<CommandService>();

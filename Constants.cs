@@ -6,8 +6,9 @@ public static class Constants
     // ********************
     //     AUDIO SYSTEM
     // ********************
-    public const int MAX_VOLUME = 200;
-    public const int MIN_VOLUME = 5;
+    public const float MAX_VOLUME = 200;
+    public const float MIN_VOLUME = 5;
+    public const double POLL_INTERVAL_SECS = 30;
     // ********************
     //         BOT
     // ********************

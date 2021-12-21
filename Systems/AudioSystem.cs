@@ -1,29 +1,38 @@
-﻿#pragma warning disable RCS1163, IDE0060 // both warnings fire for events, which they shouldn't
-
-namespace RRBot.Systems;
+﻿namespace RRBot.Systems;
 public sealed class AudioSystem
 {
+    private readonly IAudioService audioService;
     private readonly DiscordSocketClient client;
-    private readonly LavaNode lavaNode;
 
-    public AudioSystem(DiscordSocketClient client, LavaNode lavaNode)
+    public AudioSystem(IAudioService audioService, DiscordSocketClient client)
     {
+        this.audioService = audioService;
         this.client = client;
-        this.lavaNode = lavaNode;
+    }
+
+    public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, float volume)
+    {
+        if (volume < Constants.MIN_VOLUME || volume > Constants.MAX_VOLUME)
+            return CommandResult.FromError($"Volume must be between {Constants.MIN_VOLUME}% and {Constants.MAX_VOLUME}%.");
+        if (!audioService.HasPlayer(context.Guild))
+            return CommandResult.FromError("The bot is not currently being used.");
+
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        await player.SetVolumeAsync(volume / 100f, true);
+        await context.Channel.SendMessageAsync($"Set volume to {volume}%.");
+        return CommandResult.FromSuccess();
     }
 
     public async Task<RuntimeResult> GetCurrentlyPlayingAsync(SocketCommandContext context)
     {
-        if (!lavaNode.TryGetPlayer(context.Guild, out LavaPlayer player))
-            return CommandResult.FromError("There is no currently playing track.");
+        if (!audioService.HasPlayer(context.Guild))
+            return CommandResult.FromError("The bot is not currently being used.");
 
-        LavaTrack track = player.Track;
-        StringBuilder builder = new($"By: {track.Author}\n");
-        if (!track.IsStream)
-        {
-            TimeSpan pos = new(track.Position.Hours, track.Position.Minutes, track.Position.Seconds);
-            builder.AppendLine($"Duration: {track.Duration}\nPosition: {pos}");
-        }
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        LavalinkTrack track = player.CurrentTrack;
+        StringBuilder builder = new($"By: {RRFormat.Sanitize(track.Author)}\n");
+        if (!track.IsLiveStream)
+            builder.AppendLine($"Duration: {track.Duration}");
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -33,59 +42,44 @@ public sealed class AudioSystem
         return CommandResult.FromSuccess();
     }
 
-    public async Task<RuntimeResult> PlayAsync(SocketCommandContext context, string query)
+    public async Task<RuntimeResult> GetLyricsAsync(SocketCommandContext context)
     {
-        SocketGuildUser user = context.User as SocketGuildUser;
-        if (user.VoiceChannel is null)
-            return CommandResult.FromError("You must be in a voice channel.");
+        if (!audioService.HasPlayer(context.Guild))
+            return CommandResult.FromError("The bot is not currently being used.");
 
-        if (!lavaNode.HasPlayer(context.Guild))
-            await lavaNode.JoinAsync(user.VoiceChannel);
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
 
-        SearchResponse search = await lavaNode.SearchYouTubeAsync(query);
-        if (search.Status == SearchStatus.NoMatches || search.Status == SearchStatus.LoadFailed)
-            return CommandResult.FromError("No results were found for your query.");
-        LavaTrack track = search.Tracks.FirstOrDefault();
+        using LyricsService lyricsService = new(new());
+        string lyrics = await lyricsService.RequestLyricsAsync(player.CurrentTrack.Author, player.CurrentTrack.Title);
+        if (string.IsNullOrWhiteSpace(lyrics))
+            return CommandResult.FromError("No lyrics found!");
 
-        if (!track.IsStream && track.Duration.TotalSeconds > 7200)
-            return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
-
-        LavaPlayer player = lavaNode.GetPlayer(context.Guild);
-        if (player.Track != null && player.PlayerState == PlayerState.Playing)
-        {
-            await context.Channel.SendMessageAsync($"**{track.Title}** has been added to the queue.");
-            player.Queue.Enqueue(track);
-            return CommandResult.FromSuccess();
-        }
-
-        await player.PlayAsync(track);
-
-        StringBuilder message = new($"Now playing: \"{track.Title}\"\nBy: {track.Author}\n");
-        if (!track.IsStream)
-            message.AppendLine($"Length: {track.Duration}");
-        message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
-
-        await context.Channel.SendMessageAsync(message.ToString());
-        await LoggingSystem.Custom_TrackStarted(user, track.Url);
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Red)
+            .WithTitle($"{player.CurrentTrack.Title} Lyrics")
+            .WithDescription(RRFormat.Sanitize(lyrics));
+        await context.Channel.SendMessageAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
     }
 
     public async Task<RuntimeResult> ListAsync(SocketCommandContext context)
     {
-        if (!lavaNode.TryGetPlayer(context.Guild, out LavaPlayer player) || player.Track is null)
-            return CommandResult.FromError("There are no tracks to list.");
+        if (!audioService.HasPlayer(context.Guild))
+            return CommandResult.FromError("The bot is not currently being used.");
 
-        if (player.Queue.Count < 1)
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+
+        if (player.Queue.IsEmpty)
         {
-            await context.Channel.SendMessageAsync($"Now playing: \"{player.Track.Title}\". Nothing else is queued.");
+            await context.Channel.SendMessageAsync($"Now playing: \"{RRFormat.Sanitize(player.CurrentTrack.Title)}\". Nothing else is queued.");
             return CommandResult.FromSuccess();
         }
 
-        StringBuilder playlist = new($"**1**: \"{player.Track.Title}\" by {player.Track.Author} {(!player.Track.IsStream ? $"({player.Track.Duration})\n" : "\n")}");
+        StringBuilder playlist = new($"**1**: \"{RRFormat.Sanitize(player.CurrentTrack.Title)}\" by {RRFormat.Sanitize(player.CurrentTrack.Author)} {(!player.CurrentTrack.IsLiveStream ? $"({player.CurrentTrack.Duration})\n" : "\n")}");
         for (int i = 0; i < player.Queue.Count; i++)
         {
-            LavaTrack track = player.Queue.ElementAt(i);
-            playlist.AppendLine($"**{i + 2}**: \"{track.Title}\" by {track.Author} {(!track.IsStream ? $"({track.Duration})" : "")}");
+            LavalinkTrack track = player.Queue[i];
+            playlist.AppendLine($"**{i + 2}**: \"{RRFormat.Sanitize(track.Title)}\" by {RRFormat.Sanitize(track.Author)} {(!track.IsLiveStream ? $"({track.Duration})" : "")}");
         }
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -96,52 +90,116 @@ public sealed class AudioSystem
         return CommandResult.FromSuccess();
     }
 
+    public async Task<RuntimeResult> LoopAsync(SocketCommandContext context)
+    {
+        if (!audioService.HasPlayer(context.Guild))
+            return CommandResult.FromError("The bot is not currently being used.");
+
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        player.IsLooping = !player.IsLooping;
+        await context.Channel.SendMessageAsync($"Looping turned {(player.IsLooping ? "ON" : "OFF")}.");
+        return CommandResult.FromSuccess();
+    }
+
+    public async Task<RuntimeResult> PlayAsync(SocketCommandContext context, string query)
+    {
+        SocketGuildUser user = context.User as SocketGuildUser;
+        if (user.VoiceChannel is null)
+            return CommandResult.FromError("You must be in a voice channel.");
+
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild.Id)
+            ?? await audioService.JoinAsync<VoteLavalinkPlayer>(context.Guild.Id, user.VoiceChannel.Id, true);
+
+        LavalinkTrack track = await audioService.GetTrackAsync(query, SearchMode.YouTube);
+        if (track is null)
+            return CommandResult.FromError("No results were found for your query.");
+        if (!track.IsLiveStream && track.Duration.TotalSeconds > 7200)
+            return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
+
+        int position = await player.PlayAsync(track, enqueue: true);
+        if (position == 0)
+        {
+            StringBuilder message = new($"Now playing: \"{RRFormat.Sanitize(track.Title)}\"\nBy: {RRFormat.Sanitize(track.Author)}\n");
+            if (!track.IsLiveStream)
+                message.AppendLine($"Length: {track.Duration}");
+            message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
+            await context.Channel.SendMessageAsync(message.ToString());
+        }
+        else
+        {
+            await context.Channel.SendMessageAsync($"**{RRFormat.Sanitize(track.Title)}** has been added to the queue.");
+        }
+
+        await LoggingSystem.Custom_TrackStarted(user, track.Source);
+        return CommandResult.FromSuccess();
+    }
+
+    public async Task<RuntimeResult> ShuffleAsync(SocketCommandContext context)
+    {
+        if (!audioService.HasPlayer(context.Guild))
+            return CommandResult.FromError("The bot is not currently being used.");
+
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        if (player.Queue.Count <= 1)
+            return CommandResult.FromError("There must be at least 2 tracks in the queue to shuffle.");
+
+        player.Queue.Shuffle();
+        await context.Channel.SendMessageAsync("Shuffled the queue.");
+        return CommandResult.FromSuccess();
+    }
+
     public async Task<RuntimeResult> SkipTrackAsync(SocketCommandContext context)
     {
-        if (!lavaNode.TryGetPlayer(context.Guild, out LavaPlayer player) || player.Track is null)
-            return CommandResult.FromError("There are no tracks to skip.");
+        if (!audioService.HasPlayer(context.Guild))
+            return CommandResult.FromError("The bot is not currently being used.");
 
-        await context.Channel.SendMessageAsync($"Skipped \"{player.Track.Title}\".");
-        await player.StopAsync();
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        await context.Channel.SendMessageAsync($"Skipped \"{RRFormat.Sanitize(player.CurrentTrack.Title)}\".");
+        if (!player.Queue.TryDequeue(out LavalinkTrack track))
+        {
+            await player.StopAsync(true);
+        }
+        else
+        {
+            await player.SkipAsync();
+            await player.PlayAsync(track);
+        }
+
         return CommandResult.FromSuccess();
     }
 
     public async Task<RuntimeResult> StopAsync(SocketCommandContext context)
     {
-        if (!lavaNode.TryGetPlayer(context.Guild, out LavaPlayer player))
+        if (!audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        await lavaNode.LeaveAsync(player.VoiceChannel);
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        await player.StopAsync(true);
         await context.Channel.SendMessageAsync("Stopped playing the current track and removed any existing tracks in the queue.");
         return CommandResult.FromSuccess();
     }
 
-    public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, ushort volume)
+    public async Task<RuntimeResult> VoteSkipTrackAsync(SocketCommandContext context)
     {
-        if (volume < Constants.MIN_VOLUME || volume > Constants.MAX_VOLUME)
-            return CommandResult.FromError($"Volume must be between {Constants.MIN_VOLUME}% and {Constants.MAX_VOLUME}%.");
-        if (!lavaNode.TryGetPlayer(context.Guild, out LavaPlayer player))
+        if (!audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        await player.UpdateVolumeAsync(volume);
-        await context.Channel.SendMessageAsync($"Set volume to {volume}%.");
-        return CommandResult.FromSuccess();
-    }
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        string track = RRFormat.Sanitize(player.CurrentTrack.Title);
+        UserVoteSkipInfo info = await player.VoteAsync(context.User.Id);
+        if (!info.WasAdded)
+            return CommandResult.FromError("You already voted to skip!");
 
-    // this is a fix for the player breaking if the bot is manually disconnected
-    public async Task LeaveOnDisconnect(SocketUser user, SocketVoiceState voiceStateOrig, SocketVoiceState voiceState)
-    {
-        if (user.Id != client.CurrentUser.Id || voiceState.VoiceChannel != null)
-            return;
-
-        await lavaNode.LeaveAsync(voiceStateOrig.VoiceChannel ?? voiceState.VoiceChannel);
-    }
-
-    public async Task OnTrackEnded(TrackEndedEventArgs args)
-    {
-        if (args.Player.Queue?.TryDequeue(out LavaTrack item) == true)
-            await args.Player.PlayAsync(item);
+        int votesNeeded = (int)Math.Ceiling((double)info.TotalUsers / 2) - info.Votes.Count;
+        if (votesNeeded > 0)
+        {
+            await context.Channel.SendMessageAsync($"Vote received! **{votesNeeded}** more votes are needed.");
+        }
         else
-            await lavaNode.LeaveAsync(args.Player.VoiceChannel);
+        {
+            await context.Channel.SendMessageAsync($"Skipped \"{track}\".");
+        }
+
+        return CommandResult.FromSuccess();
     }
 }
