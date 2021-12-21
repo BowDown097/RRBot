@@ -4,6 +4,7 @@ The bot for the [Rush Reborn Discord server](https://discord.gg/USpJnaaNap), hea
 <p align="center">
     <a href="https://discord.gg/USpJnaaNap" alt="Discord">
         <img src="https://img.shields.io/discord/809485099238031420" />
+        <img src="https://img.shields.io/codefactor/grade/github/BowDown097/RRBot" />
     </a>
 </p>
 
