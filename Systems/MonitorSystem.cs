@@ -15,7 +15,6 @@ public class MonitorSystem
     {
         await Task.Factory.StartNew(async () => await StartBanMonitorAsync());
         await Task.Factory.StartNew(async () => await StartChillMonitorAsync());
-        await Task.Factory.StartNew(async () => await StartMuteMonitorAsync());
         await Task.Factory.StartNew(async () => await StartPerkMonitorAsync());
     }
 
@@ -74,32 +73,6 @@ public class MonitorSystem
                         await channel.AddPermissionOverwriteAsync(guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Inherit));
                         await channel.SendMessageAsync("This channel has thawed out! Continue the chaos!");
                         await chill.Reference.DeleteAsync();
-                    }
-                }
-            }
-        }
-    }
-
-    private async Task StartMuteMonitorAsync()
-    {
-        while (true)
-        {
-            await Task.Delay(TimeSpan.FromSeconds(30));
-            foreach (SocketGuild guild in client.Guilds)
-            {
-                QuerySnapshot mutes = await database.Collection($"servers/{guild.Id}/mutes").GetSnapshotAsync();
-                foreach (DocumentSnapshot muteDoc in mutes.Documents)
-                {
-                    DbConfigRoles roles = await DbConfigRoles.GetById(guild.Id);
-                    ulong userId = Convert.ToUInt64(muteDoc.Id);
-                    DbMute mute = await DbMute.GetById(guild.Id, userId);
-                    SocketGuildUser user = guild.GetUser(userId);
-
-                    if (mute.Time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                    {
-                        if (user != null)
-                            await user.RemoveRoleAsync(roles.MutedRole);
-                        await mute.Reference.DeleteAsync();
                     }
                 }
             }

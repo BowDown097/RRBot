@@ -35,7 +35,6 @@ public class EventSystem
         client.Ready += Client_Ready;
         client.ThreadCreated += Client_ThreadCreated;
         client.ThreadUpdated += Client_ThreadUpdated;
-        client.UserJoined += Client_UserJoined;
         commands.CommandExecuted += Commands_CommandExecuted;
 
         client.ChannelCreated += LoggingSystem.Client_ChannelCreated;
@@ -218,22 +217,6 @@ public class EventSystem
     {
         if (await FilterSystem.ContainsFilteredWord(threadAfter.Guild, threadAfter.Name))
             await threadAfter.DeleteAsync();
-    }
-
-    private static async Task Client_UserJoined(SocketGuildUser user)
-    {
-        // circumvent mute bypasses
-        DbConfigRoles roles = await DbConfigRoles.GetById(user.Guild.Id);
-        if (user.Guild.Roles.Any(role => role.Id == roles.MutedRole))
-        {
-            QuerySnapshot mutes = await Program.database.Collection($"servers/{user.Guild.Id}/mutes").GetSnapshotAsync();
-            if (mutes.Any(doc => doc.Id == user.Id.ToString()))
-            {
-                DbMute mute = await DbMute.GetById(user.Guild.Id, user.Id);
-                if (mute.Time >= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                    await user.AddRoleAsync(roles.MutedRole);
-            }
-        }
     }
 
     private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, Discord.Commands.IResult result)

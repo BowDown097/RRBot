@@ -5,7 +5,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     public static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Slavery", "Whore", "Bully",
         "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack", "Daily" };
 
-    private void RestoreUserData(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
+    private static void RestoreUserData(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
         bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long dealCd, long lootCd,
         long rapeCd, long robCd, long slaveryCd, long whoreCd, long bullyCd, long chopCd, long digCd,
         long farmCd, long fishCd, long huntCd, long mineCd, long supportCd, long hackCd, long dailyCd)
@@ -229,7 +229,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         ComponentBuilder component = new ComponentBuilder()
             .WithButton("Back", "dddd", disabled: true)
             .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20-{failedUsers}-False", disabled: processedUsers != 10 || users.Documents.Count < 11);
-        await ReplyAsync(embed: embed.Build(), component: component.Build());
+        await ReplyAsync(embed: embed.Build(), components: component.Build());
         return CommandResult.FromSuccess();
     }
 

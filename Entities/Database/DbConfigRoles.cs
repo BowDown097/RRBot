@@ -7,8 +7,6 @@ public class DbConfigRoles : DbObject
     [FirestoreProperty]
     public ulong DJRole { get; set; }
     [FirestoreProperty]
-    public ulong MutedRole { get; set; }
-    [FirestoreProperty]
     public ulong StaffLvl1Role { get; set; }
     [FirestoreProperty]
     public ulong StaffLvl2Role { get; set; }

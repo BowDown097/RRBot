@@ -446,13 +446,13 @@ public static class LoggingSystem
         await WriteToLogs(user.Guild, embed);
     }
 
-    public static async Task Client_UserLeft(SocketGuildUser user)
+    public static async Task Client_UserLeft(SocketGuild guild, SocketUser user)
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(user)
             .WithDescription("**User Left**");
 
-        await WriteToLogs(user.Guild, embed);
+        await WriteToLogs(guild, embed);
     }
 
     public static async Task Client_UserUnbanned(SocketUser user, SocketGuild guild)

@@ -3,17 +3,23 @@
 [RequireStaff]
 public class Moderation : ModuleBase<SocketCommandContext>
 {
-    private Tuple<TimeSpan, string> ResolveDuration(string duration, int time, string action)
+    private Tuple<TimeSpan, string> ResolveDuration(string duration, int time, string action, string reason)
     {
-        char suffix = char.ToLowerInvariant(duration[^1]);
-        return suffix switch
+        TimeSpan ts = char.ToLower(duration[^1]) switch
         {
-            's' => new(TimeSpan.FromSeconds(time), $"**{Context.User}** has {action} for {time} second(s)"),
-            'm' => new(TimeSpan.FromMinutes(time), $"**{Context.User}** has {action} for {time} minute(s)"),
-            'h' => new(TimeSpan.FromHours(time), $"**{Context.User}** has {action} for {time} hour(s)"),
-            'd' => new(TimeSpan.FromDays(time), $"**{Context.User}** has {action} for {time} day(s)"),
-            _ => new(TimeSpan.Zero, null),
+            's' => TimeSpan.FromSeconds(time),
+            'm' => TimeSpan.FromMinutes(time),
+            'h' => TimeSpan.FromHours(time),
+            'd' => TimeSpan.FromDays(time),
+            _ => TimeSpan.Zero
         };
+
+        string response = $"{action} for {ts.FormatCompound()}";
+        if (!string.IsNullOrWhiteSpace(reason))
+            response += $"for \"{reason}\"";
+        response += ".";
+
+        return new(ts, response);
     }
 
     [Alias("seethe")]
@@ -22,40 +28,30 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Remarks("$ban [user] <duration> <reason>")]
     public async Task<RuntimeResult> Ban(IGuildUser user, string duration = "", [Remainder] string reason = "")
     {
-        if (user.IsBot)
-            return CommandResult.FromError("Nope.");
-
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
+        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role) || user.IsBot)
             return CommandResult.FromError($"You cannot ban **{user.Sanitize()}** because they are a staff member.");
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
         {
-            Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"banned **{user.Sanitize()}**");
+            Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"Banned **{user.Sanitize()}**", reason);
             if (resolved.Item1 == TimeSpan.Zero)
                 return CommandResult.FromError("You specified an invalid amount of time!");
 
             DbBan ban = await DbBan.GetById(Context.Guild.Id, user.Id);
             ban.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds);
-            await LoggingSystem.Client_UserBanned(user as SocketUser, user.Guild as SocketGuild);
             await user.BanAsync(reason: reason);
-            dbUser.AddToStat("Bans", "1");
-
-            string response = resolved.Item2;
-            response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
-            await ReplyAsync(response);
-            return CommandResult.FromSuccess();
+            await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
         }
-
-        if (string.IsNullOrWhiteSpace(reason))
+        else
         {
-            await user.BanAsync(reason: reason);
-            dbUser.AddToStat("Bans", "1");
-            return CommandResult.FromSuccess();
+            await user.BanAsync();
+            await Context.User.NotifyAsync(Context.Channel, $"Banned **{user.Sanitize()}**.");
         }
 
-        return CommandResult.FromError("You specified an invalid amount of time!");
+        dbUser.AddToStat("Bans", "1");
+        return CommandResult.FromSuccess();
     }
 
     [Command("cancelticket")]
@@ -76,30 +72,28 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Remarks("$chill [duration]")]
     public async Task<RuntimeResult> Chill(string duration)
     {
-        if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
-        {
-            Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, "chilled the chat");
-            if (resolved.Item1 == TimeSpan.Zero)
-                return CommandResult.FromError("You specified an invalid amount of time!");
-            if (resolved.Item1.TotalSeconds < Constants.CHILL_MIN_SECONDS)
-                return CommandResult.FromError($"You cannot chill the chat for less than {Constants.CHILL_MIN_SECONDS} seconds.");
-            if (resolved.Item1.TotalSeconds > Constants.CHILL_MAX_SECONDS)
-                return CommandResult.FromError($"You cannot chill the chat for more than {Constants.CHILL_MAX_SECONDS} seconds.");
+        if (!int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
+            return CommandResult.FromError("You specified an invalid amount of time!");
 
-            SocketTextChannel channel = Context.Channel as SocketTextChannel;
-            OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
-            if (perms.SendMessages == PermValue.Deny)
-                return CommandResult.FromError("This chat is already chilled.");
+        Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, "Chilled the chat", "");
+        if (resolved.Item1 == TimeSpan.Zero)
+            return CommandResult.FromError("You specified an invalid amount of time!");
+        if (resolved.Item1.TotalSeconds < Constants.CHILL_MIN_SECONDS)
+            return CommandResult.FromError($"You cannot chill the chat for less than {Constants.CHILL_MIN_SECONDS} seconds.");
+        if (resolved.Item1.TotalSeconds > Constants.CHILL_MAX_SECONDS)
+            return CommandResult.FromError($"You cannot chill the chat for more than {Constants.CHILL_MAX_SECONDS} seconds.");
 
-            await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
-            DbChill chill = await DbChill.GetById(Context.Guild.Id, Context.Channel.Id);
-            chill.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds);
+        SocketTextChannel channel = Context.Channel as SocketTextChannel;
+        OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
+        if (perms.SendMessages == PermValue.Deny)
+            return CommandResult.FromError("This chat is already chilled.");
 
-            await ReplyAsync(resolved.Item2 + ".");
-            return CommandResult.FromSuccess();
-        }
+        await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
+        DbChill chill = await DbChill.GetById(Context.Guild.Id, Context.Channel.Id);
+        chill.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds);
 
-        return CommandResult.FromError("You specified an invalid amount of time!");
+        await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
+        return CommandResult.FromSuccess();
     }
 
     [Alias("cope")]
@@ -119,9 +113,10 @@ public class Moderation : ModuleBase<SocketCommandContext>
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         dbUser.AddToStat("Kicks", "1");
 
-        string response = $"**{Context.User}** has kicked **{user.Sanitize()}**";
-        response += string.IsNullOrWhiteSpace(reason) ? "." : $"for '{reason}'";
-        await ReplyAsync(response);
+        string response = $"Kicked **{user.Sanitize()}**";
+        if (!string.IsNullOrWhiteSpace(reason))
+            response += $"for \"{reason}\"";
+        await Context.User.NotifyAsync(Context.Channel, response + ".");
         return CommandResult.FromSuccess();
     }
 
@@ -131,80 +126,65 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Remarks("$mute [user] [duration] <reason>")]
     public async Task<RuntimeResult> Mute(IGuildUser user, string duration, [Remainder] string reason = "")
     {
+        if (!int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
+            return CommandResult.FromError("You specified an invalid amount of time!");
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
 
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-        if (roles.MutedRole != 0 && roles.StaffLvl1Role != 0 && roles.StaffLvl2Role != 0)
-        {
-            if (user.RoleIds.Contains(roles.MutedRole) || user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
-                return CommandResult.FromError($"You cannot mute **{user.Sanitize()}** because they are either already muted or a staff member.");
+        if (user.TimedOutUntil.GetValueOrDefault() > DateTimeOffset.UtcNow || user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
+            return CommandResult.FromError($"You cannot mute **{user.Sanitize()}** because they are either already muted or a staff member.");
 
-            if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
-            {
-                Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"muted **{user.Sanitize()}**");
-                if (resolved.Item1 == TimeSpan.Zero)
-                    return CommandResult.FromError("You specified an invalid amount of time!");
-
-                DbMute mute = await DbMute.GetById(Context.Guild.Id, user.Id);
-                mute.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds);
-                await LoggingSystem.Custom_UserMuted(user, Context.User, duration, reason);
-                await user.AddRoleAsync(roles.MutedRole);
-
-                DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-                dbUser.AddToStat("Mutes", "1");
-                await dbUser.UnlockAchievement("Literally 1984", "Get muted.", user, Context.Channel);
-
-                string response = resolved.Item2;
-                response += string.IsNullOrWhiteSpace(reason) ? "." : $" for '{reason}'";
-                await ReplyAsync(response);
-                return CommandResult.FromSuccess();
-            }
-
+        Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"Muted **{user.Sanitize()}**", reason);
+        if (resolved.Item1 == TimeSpan.Zero)
             return CommandResult.FromError("You specified an invalid amount of time!");
-        }
+        if (resolved.Item1 > TimeSpan.FromDays(28))
+            return CommandResult.FromError("You cannot mute for more than 28 days!");
 
-        return CommandResult.FromError("This server's staff and/or muted role(s) have yet to be set.");
+        await user.SetTimeOutAsync(resolved.Item1);
+        await LoggingSystem.Custom_UserMuted(user, Context.User, duration, reason);
+
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        dbUser.AddToStat("Mutes", "1");
+        await dbUser.UnlockAchievement("Literally 1984", "Get muted.", user, Context.Channel);
+
+        await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
+        return CommandResult.FromSuccess();
     }
 
     [Alias("clear")]
-    [Command("purge")]
+    [Command("purge", RunMode = RunMode.Async)]
     [Summary("Purge any amount of messages (Note: messages that are two weeks old or older will fail to delete).")]
     [Remarks("$purge [count] <user>")]
     public async Task<RuntimeResult> Purge(int count, IGuildUser user = null)
     {
         if (count <= 0)
-            return CommandResult.FromError("Count must be more than zero.");
+            return CommandResult.FromError("You want me to delete NO messages? Are you dense?");
 
         IEnumerable<IMessage> messages = await Context.Channel.GetMessagesAsync(count + 1).FlattenAsync();
-        messages = messages.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
-        if (user != null)
-            messages = messages.Where(msg => msg.Author.Id == user.Id);
+        messages = user == null
+            ? messages.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14)
+            : messages.Where(msg => msg.Author.Id == user.Id && (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
 
         if (!messages.Any())
-            return CommandResult.FromError("No messages were deleted.");
+            return CommandResult.FromError("There are no messages to delete given your input.");
 
         await (Context.Channel as SocketTextChannel)?.DeleteMessagesAsync(messages);
         await LoggingSystem.Custom_MessagesPurged(messages, Context.Guild);
-
-        if (messages.Any(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays > 14))
-            await Context.User.NotifyAsync(Context.Channel, "Warning: Some messages were found to be older than 2 weeks and can't be deleted.");
         return CommandResult.FromSuccess();
     }
 
     [Command("unban")]
     [Summary("Unban any currently banned member.")]
-    [Remarks("$unban [user]")]
-    public async Task<RuntimeResult> Unban(IUser user)
+    [Remarks("$unban [userId]")]
+    public async Task<RuntimeResult> Unban(ulong userId)
     {
-        IReadOnlyCollection<RestBan> bans = await Context.Guild.GetBansAsync();
-        if (!bans.Any(ban => ban.User.Id == user.Id))
+        RestBan ban = await Context.Guild.GetBanAsync(userId);
+        if (ban == null)
             return CommandResult.FromError("That user is not currently banned.");
 
-        string userString = bans.FirstOrDefault(ban => ban.User.Id == user.Id).User.ToString();
-        await ReplyAsync($"**{Context.User}** has unbanned **{userString}**.");
-
-        await Context.Guild.RemoveBanAsync(user.Id);
+        await Context.Guild.RemoveBanAsync(ban.User);
+        await Context.User.NotifyAsync(Context.Channel, $"Unbanned **{ban.User.Sanitize()}**.");
         return CommandResult.FromSuccess();
     }
 
@@ -220,7 +200,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("This chat is not chilled.");
 
         await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Inherit));
-        await ReplyAsync($"**{Context.User}** took one for the team and unchilled early.");
+        await Context.User.NotifyAsync(Context.Channel, "Unchilled the chat early.");
         return CommandResult.FromSuccess();
     }
 
@@ -230,18 +210,12 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Remarks("$unmute [user]")]
     public async Task<RuntimeResult> Unmute(IGuildUser user)
     {
-        if (user.IsBot)
-            return CommandResult.FromError("Nope.");
+        if (user.TimedOutUntil.GetValueOrDefault() < DateTimeOffset.UtcNow)
+            return CommandResult.FromError($"**{user.Sanitize()}** is not muted.");
 
-        DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-        if (user.RoleIds.Contains(roles.MutedRole))
-        {
-            await LoggingSystem.Custom_UserUnmuted(user, Context.User);
-            await user.RemoveRoleAsync(roles.MutedRole);
-            await ReplyAsync($"**{Context.User}** has unmuted **{user.Sanitize()}**.");
-            return CommandResult.FromSuccess();
-        }
-
-        return CommandResult.FromError("That user is not muted or the server's muted role has yet to be set.");
+        await user.RemoveTimeOutAsync();
+        await LoggingSystem.Custom_UserUnmuted(user, Context.User);
+        await Context.User.NotifyAsync(Context.Channel, $"Unmuted **{user.Sanitize()}**.");
+        return CommandResult.FromSuccess();
     }
 }

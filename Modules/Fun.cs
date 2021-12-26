@@ -177,7 +177,7 @@ public class Fun : ModuleBase<SocketCommandContext>
             .WithColor(Color.Red)
             .WithTitle("Trivia!")
             .WithDescription(description.ToString());
-        await ReplyAsync(embed: embed.Build(), component: components.Build());
+        await ReplyAsync(embed: embed.Build(), components: components.Build());
     }
 
     [Command("verse")]

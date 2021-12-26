@@ -94,11 +94,9 @@ public class Config : ModuleBase<SocketCommandContext>
                 case "roles":
                     DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
                     SocketRole djRole = Context.Guild.GetRole(roles.DJRole);
-                    SocketRole mutedRole = Context.Guild.GetRole(roles.MutedRole);
                     SocketRole staffLvl1Role = Context.Guild.GetRole(roles.StaffLvl1Role);
                     SocketRole staffLvl2Role = Context.Guild.GetRole(roles.StaffLvl2Role);
                     description.AppendLine($"DJ Role: {djRole?.ToString() ?? "(deleted role)"}");
-                    description.AppendLine($"Muted Role: {mutedRole?.ToString() ?? "(deleted role)"}");
                     description.AppendLine($"Staff Level 1 Role: {staffLvl1Role?.ToString() ?? "(deleted role)"}");
                     description.AppendLine($"Staff Level 2 Role: {staffLvl2Role?.ToString() ?? "(deleted role)"}");
                     break;
@@ -173,16 +171,6 @@ public class Config : ModuleBase<SocketCommandContext>
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         channels.LogsChannel = channel.Id;
         await Context.User.NotifyAsync(Context.Channel, $"Set logs channel to {MentionUtils.MentionChannel(channel.Id)}.");
-    }
-
-    [Command("setmutedrole")]
-    [Summary("Register the ID for the Muted role in your server so that mutes work properly with the bot.")]
-    [Remarks("$setmutedrole [role]")]
-    public async Task SetMutedRole(IRole role)
-    {
-        DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-        roles.MutedRole = role.Id;
-        await Context.User.NotifyAsync(Context.Channel, $"Set muted role to {role}.");
     }
 
     [Command("setpollschannel")]
