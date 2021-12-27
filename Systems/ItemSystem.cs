@@ -59,9 +59,9 @@ public static class ItemSystem
 
         if (dbUser.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError("You have the Pacifist perk and cannot buy another.");
-        if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && !perkName.In("Pacifist", "Multiperk"))
+        if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && perkName is not "Pacifist" or "Multiperk")
             return CommandResult.FromError("You already have a perk.");
-        if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 3 && !perkName.In("Pacifist", "Multiperk"))
+        if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 3 && perkName is not "Pacicist" or "Multiperk")
             return CommandResult.FromError("You already have 2 perks.");
 
         if (!dbUser.Perks.ContainsKey(perkName))

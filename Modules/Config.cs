@@ -69,8 +69,11 @@ public class Config : ModuleBase<SocketCommandContext>
             {
                 case "channels":
                     DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+                    List<string> whitelist = new();
+                    channels.WhitelistedChannels.ForEach(c => whitelist.Add(MentionUtils.MentionChannel(c)));
                     description.AppendLine($"Logs Channel: {MentionUtils.MentionChannel(channels.LogsChannel)}");
                     description.AppendLine($"Polls Channel: {MentionUtils.MentionChannel(channels.PollsChannel)}");
+                    description.AppendLine($"Whitelisted Channels: {string.Join(", ", whitelist)}");
                     break;
                 case "optionals":
                     DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
@@ -247,5 +250,15 @@ public class Config : ModuleBase<SocketCommandContext>
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
         optionals.ScamFilterEnabled = !optionals.ScamFilterEnabled;
         await Context.User.NotifyAsync(Context.Channel, $"Toggled scam filter {(optionals.ScamFilterEnabled ? "ON" : "OFF")}.");
+    }
+
+    [Command("whitelistchannel")]
+    [Summary("Adds a channel to a list of whitelisted channels for bot commands. All moderation and music commands will still work in every channel.")]
+    [Remarks("$whitelistchannel [channel]")]
+    public async Task WhitelistChannel(ITextChannel channel)
+    {
+        DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+        channels.WhitelistedChannels.Add(channel.Id);
+        await Context.User.NotifyAsync(Context.Channel, $"Whitelisted {MentionUtils.MentionChannel(channel.Id)}.");
     }
 }

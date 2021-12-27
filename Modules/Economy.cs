@@ -183,7 +183,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Leaderboard(string currency = "cash")
     {
         string cUp = currency.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : currency.ToUpper();
-        if (!cUp.In("Cash", "BTC", "DOGE", "ETH", "LTC", "XRP"))
+        if (cUp is not "Cash" or "BTC" or "DOGE" or "ETH" or "LTC" or "XRP")
             return CommandResult.FromError($"**{currency}** is not a currently accepted currency!");
 
         double cryptoValue = cUp != "Cash" ? await Investments.QueryCryptoValue(cUp) : 0;

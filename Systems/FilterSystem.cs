@@ -73,9 +73,9 @@ public static class FilterSystem
         }
     }
 
-    public static async Task DoFilteredWordCheckAsync(SocketUserMessage message, IGuild guild, IMessageChannel channel)
+    public static async Task DoFilteredWordCheckAsync(SocketUserMessage message, IGuild guild)
     {
-        if (!channel.Name.In("extremely-funny", "bot-commands-for-retards", "private-godfather") && await ContainsFilteredWord(guild, message.Content))
+        if (await ContainsFilteredWord(guild, message.Content))
             await message.DeleteAsync();
     }
 

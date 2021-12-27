@@ -539,6 +539,16 @@ public static class LoggingSystem
         await WriteToLogs(target.Guild, embed);
     }
 
+    public static async Task Custom_UserMemeBanned(IGuildUser target, SocketUser actor)
+    {
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithAuthor(target)
+            .WithDescription("**User Meme Banned**\nL rip bozo")
+            .RRAddField("Banner", actor);
+
+        await WriteToLogs(target.Guild, embed);
+    }
+
     public static async Task Custom_UserMuted(IGuildUser target, SocketUser actor, string duration, string reason)
     {
         EmbedBuilder embed = new EmbedBuilder()

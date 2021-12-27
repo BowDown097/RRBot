@@ -116,10 +116,18 @@ public class EventSystem
             await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
     }
 
-    private static Task Client_Log(LogMessage arg)
+    private static async Task Client_Log(LogMessage msg)
     {
-        Console.WriteLine(arg);
-        return Task.CompletedTask;
+        if (msg.Exception != null)
+        {
+            Console.WriteLine($"{msg.Exception.Message}\n{msg.Exception.StackTrace}");
+            if (msg.Exception is CommandException ex)
+                await ex.HandleDiscordErrors();
+        }
+        else
+        {
+            Console.WriteLine(msg);
+        }
     }
 
     private async Task Client_MessageReceived(SocketMessage msg)
@@ -130,7 +138,7 @@ public class EventSystem
             return;
 
         await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, client);
-        await FilterSystem.DoFilteredWordCheckAsync(userMsg, context.Guild, context.Channel);
+        await FilterSystem.DoFilteredWordCheckAsync(userMsg, context.Guild);
         await FilterSystem.DoScamCheckAsync(userMsg, context.Guild);
 
         int argPos = 0;
@@ -140,10 +148,12 @@ public class EventSystem
             if (search.Error == CommandError.UnknownCommand)
                 return;
 
+            DbConfigChannels channelsConfig = await DbConfigChannels.GetById(context.Guild.Id);
             CommandInfo command = search.Commands[0].Command;
-            if ((client.CurrentUser as IGuildUser)?.GetPermissions(context.Channel as IGuildChannel).Has(ChannelPermission.SendMessages) == false
-                && command.Module.Name != "Moderation")
+            if (command.Module.Name is not "Administration" or "BotOwner" or "Moderation" or "Music"
+                && channelsConfig.WhitelistedChannels.Count > 0 && !channelsConfig.WhitelistedChannels.Contains(context.Channel.Id))
             {
+                await context.User.NotifyAsync(context.Channel, "Commands are disabled in this channel!");
                 return;
             }
 
@@ -181,7 +191,7 @@ public class EventSystem
     {
         SocketUserMessage userMsgAfter = msgAfter as SocketUserMessage;
         await FilterSystem.DoInviteCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild(), client);
-        await FilterSystem.DoFilteredWordCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild(), channel);
+        await FilterSystem.DoFilteredWordCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
         await FilterSystem.DoScamCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
     }
 

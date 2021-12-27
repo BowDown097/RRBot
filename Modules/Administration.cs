@@ -57,7 +57,7 @@ public class Administration : ModuleBase<SocketCommandContext>
         string cUp = crypto.ToUpper();
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-        if (!cUp.In("BTC", "DOGE", "ETH", "LTC", "XRP"))
+        if (cUp is not "BTC" or "DOGE" or "ETH" or "LTC" or "XRP")
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);

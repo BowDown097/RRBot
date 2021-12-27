@@ -120,6 +120,41 @@ public class Moderation : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Command("memeban", RunMode = RunMode.Async)]
+    [Summary("Meme bans a member and DMs an invite back to the server.")]
+    [Remarks("$memeban [user]")]
+    public async Task<RuntimeResult> MemeBan(IGuildUser user)
+    {
+        if (user.IsBot)
+            return CommandResult.FromError("Nope.");
+
+        DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
+        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
+            return CommandResult.FromError($"You cannot meme ban **{user.Sanitize()}** because they are a staff member.");
+
+        IInviteMetadata invite = await Context.Guild.DefaultChannel.CreateInviteAsync(null, 1);
+        try
+        {
+            IDMChannel dm = await user.CreateDMChannelAsync();
+            await dm.SendMessageAsync($"You got meme banned by {Context.User} LMAO! Here's an invite back to the server: {invite.Url}");
+            await dm.SendMessageAsync("https://tenor.com/view/rip-pack-bozo-dead-gif-20309754");
+        }
+        catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
+        {
+            await user.NotifyAsync(Context.Channel, $"I couldn't DM you, so I hope this reaches you! You're getting MEME BANNED in 30 seconds lmao. If you aren't able to snag an invite, here's one: {invite.Url}");
+            await Task.Delay(TimeSpan.FromSeconds(30));
+        }
+
+        await user.KickAsync();
+        await LoggingSystem.Custom_UserMemeBanned(user, Context.User);
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        dbUser.AddToStat("Meme Bans", "1");
+
+        await Context.User.NotifyAsync(Context.Channel, $"Meme banned **{user.Sanitize()}**!");
+        await ReplyAsync("https://tenor.com/view/rip-pack-bozo-dead-gif-20309754");
+        return CommandResult.FromSuccess();
+    }
+
     [Alias("1984")]
     [Command("mute")]
     [Summary("Mute any member for any amount of time with any reason.")]
