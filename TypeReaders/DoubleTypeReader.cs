@@ -3,35 +3,27 @@ public class DoubleTypeReader : TypeReader
 {
     public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
     {
-        DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
-        if (context.Message.Content.StartsWith("$withdraw"))
+        if (input.Equals("all", StringComparison.OrdinalIgnoreCase))
         {
-            double @double;
-            if (input.Equals("all", StringComparison.OrdinalIgnoreCase))
+            DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
+            string[] components = context.Message.Content.Split(' ');
+            string command = components[0].Replace(Constants.PREFIX, "").ToLower();
+            switch (command)
             {
-                string crypto = context.Message.Content.ToLower().Replace("$withdraw ", "").Replace(" all", "");
-                string abbreviation = Investments.ResolveAbbreviation(crypto);
-                if (abbreviation is null)
-                    return TypeReaderResult.FromError(CommandError.ParseFailed, $"**{crypto}** is not a currently accepted currency!");
-
-                @double = (double)user[abbreviation];
-                if (@double < Constants.INVESTMENT_MIN_AMOUNT)
-                    return TypeReaderResult.FromError((CommandError)9, $"You have no {crypto.ToUpper()}!");
+                case "hack":
+                case "withdraw":
+                    string crypto = command == "hack" ? components[2] : components[1];
+                    string abbreviation = Investments.ResolveAbbreviation(crypto);
+                    if (abbreviation is null)
+                        return TypeReaderResult.FromError(CommandError.ParseFailed, $"**{crypto}** is not a currently accepted currency!");
+                    return TypeReaderResult.FromSuccess((double)user[abbreviation]);
+                default:
+                    return TypeReaderResult.FromSuccess(user.Cash);
             }
-            else if (!double.TryParse(input, out @double))
-            {
-                return TypeReaderResult.FromError(CommandError.ParseFailed, $"\"{input}\" is not a double value.");
-            }
-
-            return TypeReaderResult.FromSuccess(@double);
         }
 
-        double cash;
-        if (input.Equals("all", StringComparison.OrdinalIgnoreCase))
-            cash = user.Cash;
-        else if (!double.TryParse(input, out cash))
+        if (!double.TryParse(input, out double cash))
             return TypeReaderResult.FromError(CommandError.ParseFailed, $"\"{input}\" is not a double value.");
-
         return TypeReaderResult.FromSuccess(cash);
     }
 }

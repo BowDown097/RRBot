@@ -5,8 +5,8 @@ public class Investments : ModuleBase<SocketCommandContext>
     public static async Task<double> QueryCryptoValue(string crypto)
     {
         using HttpClient client = new();
-        string current = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
-        string today = DateTime.Now.ToString("yyyy-MM-dd") + "T00:00";
+        string current = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm");
+        string today = DateTime.UtcNow.ToString("yyyy-MM-dd") + "T00:00";
         string data = await client.GetStringAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
         dynamic obj = JsonConvert.DeserializeObject(data);
         JToken latestEntry = JArray.FromObject(obj.data.entries).Last;

@@ -40,8 +40,7 @@ public class General : ModuleBase<SocketCommandContext>
                 return CommandResult.FromError("NSFW commands are disabled!");
         }
         if (commandInfo.TryGetPrecondition<RequireRushRebornAttribute>()
-            && Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN
-            && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+            && !(Context.Guild.Id is RequireRushRebornAttribute.RR_MAIN or RequireRushRebornAttribute.RR_TEST))
         {
             return CommandResult.FromError("You have specified a nonexistent command!");
         }
@@ -118,8 +117,7 @@ public class General : ModuleBase<SocketCommandContext>
     public async Task Modules()
     {
         List<string> modulesList = Commands.Modules.Select(x => x.Name).ToList();
-        if (Context.Guild.Id != RequireRushRebornAttribute.RR_MAIN
-            && Context.Guild.Id != RequireRushRebornAttribute.RR_TEST)
+        if (!(Context.Guild.Id is RequireRushRebornAttribute.RR_MAIN or RequireRushRebornAttribute.RR_TEST))
         {
             modulesList.Remove("Support");
         }

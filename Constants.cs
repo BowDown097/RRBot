@@ -12,8 +12,9 @@ public static class Constants
     // ********************
     //         BOT
     // ********************
-    public const string ACTIVITY = "Pokimane fart compilations";
+    public const string ACTIVITY = "your mom shower";
     public const ActivityType ACTIVITY_TYPE = ActivityType.Watching;
+    public const string PREFIX = "$";
     // ********************
     //     CASH SYSTEM
     // ********************

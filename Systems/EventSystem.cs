@@ -134,7 +134,7 @@ public class EventSystem
     {
         SocketUserMessage userMsg = msg as SocketUserMessage;
         SocketCommandContext context = new(client, userMsg);
-        if (context.User.IsBot)
+        if (context.User.IsBot || string.IsNullOrWhiteSpace(userMsg.Content))
             return;
 
         await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, client);
@@ -142,7 +142,7 @@ public class EventSystem
         await FilterSystem.DoScamCheckAsync(userMsg, context.Guild);
 
         int argPos = 0;
-        if (userMsg.HasCharPrefix('$', ref argPos))
+        if (userMsg.HasStringPrefix(Constants.PREFIX, ref argPos))
         {
             Discord.Commands.SearchResult search = commands.Search(msg.Content[argPos..]);
             if (search.Error == CommandError.UnknownCommand)
