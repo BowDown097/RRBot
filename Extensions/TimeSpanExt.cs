@@ -13,4 +13,6 @@ public static class TimeSpanExt
 
         return formatted.ToString()[1..];
     }
+
+    public static TimeSpan Round(this TimeSpan ts) => TimeSpan.FromSeconds(Math.Round(ts.TotalSeconds));
 }

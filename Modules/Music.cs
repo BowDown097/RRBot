@@ -39,6 +39,12 @@ public class Music : ModuleBase<SocketCommandContext>
     [Remarks("$queue")]
     public async Task<RuntimeResult> Queue() => await AudioSystem.ListAsync(Context);
 
+    [Command("seek")]
+    [Summary("Seek to a position in the currently playing track.")]
+    [Remarks("$seek [position]")]
+    [RequireDJ]
+    public async Task<RuntimeResult> Seek(string pos) => await AudioSystem.SeekAsync(Context, pos);
+
     [Command("shuffle")]
     [Summary("Shuffle the queue.")]
     [Remarks("$shuffle")]

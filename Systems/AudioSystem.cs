@@ -32,7 +32,7 @@ public sealed class AudioSystem
         LavalinkTrack track = player.CurrentTrack;
         StringBuilder builder = new($"By: {RRFormat.Sanitize(track.Author)}\n");
         if (!track.IsLiveStream)
-            builder.AppendLine($"Duration: {track.Duration}");
+            builder.AppendLine($"Duration: {track.Duration.Round()}\nPosition: {player.Position.Position.Round()}");
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -75,11 +75,11 @@ public sealed class AudioSystem
             return CommandResult.FromSuccess();
         }
 
-        StringBuilder playlist = new($"**1**: \"{RRFormat.Sanitize(player.CurrentTrack.Title)}\" by {RRFormat.Sanitize(player.CurrentTrack.Author)} {(!player.CurrentTrack.IsLiveStream ? $"({player.CurrentTrack.Duration})\n" : "\n")}");
+        StringBuilder playlist = new($"**1**: \"{RRFormat.Sanitize(player.CurrentTrack.Title)}\" by {RRFormat.Sanitize(player.CurrentTrack.Author)} {(!player.CurrentTrack.IsLiveStream ? $"({player.CurrentTrack.Duration.Round()})\n" : "\n")}");
         for (int i = 0; i < player.Queue.Count; i++)
         {
             LavalinkTrack track = player.Queue[i];
-            playlist.AppendLine($"**{i + 2}**: \"{RRFormat.Sanitize(track.Title)}\" by {RRFormat.Sanitize(track.Author)} {(!track.IsLiveStream ? $"({track.Duration})" : "")}");
+            playlist.AppendLine($"**{i + 2}**: \"{RRFormat.Sanitize(track.Title)}\" by {RRFormat.Sanitize(track.Author)} {(!track.IsLiveStream ? $"({track.Duration.Round()})" : "")}");
         }
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -110,10 +110,12 @@ public sealed class AudioSystem
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild.Id)
             ?? await audioService.JoinAsync<VoteLavalinkPlayer>(context.Guild.Id, user.VoiceChannel.Id, true);
 
-        LavalinkTrack track = await audioService.GetTrackAsync(query, SearchMode.YouTube);
+        SearchMode searchMode = Uri.TryCreate(query, UriKind.Absolute, out Uri uri) && uri.Host == "soundcloud.com"
+            ? SearchMode.SoundCloud : SearchMode.YouTube;
+        LavalinkTrack track = await audioService.GetTrackAsync(query, searchMode);
         if (track is null)
             return CommandResult.FromError("No results were found for your query.");
-        if (!track.IsLiveStream && track.Duration.TotalSeconds > 7200)
+        if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && !track.IsLiveStream && track.Duration.TotalSeconds > 7200)
             return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
 
         int position = await player.PlayAsync(track, enqueue: true);
@@ -121,7 +123,7 @@ public sealed class AudioSystem
         {
             StringBuilder message = new($"Now playing: \"{RRFormat.Sanitize(track.Title)}\"\nBy: {RRFormat.Sanitize(track.Author)}\n");
             if (!track.IsLiveStream)
-                message.AppendLine($"Length: {track.Duration}");
+                message.AppendLine($"Length: {track.Duration.Round()}");
             message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
             await context.Channel.SendMessageAsync(message.ToString());
         }
@@ -131,6 +133,22 @@ public sealed class AudioSystem
         }
 
         await LoggingSystem.Custom_TrackStarted(user, track.Source);
+        return CommandResult.FromSuccess();
+    }
+
+    public async Task<RuntimeResult> SeekAsync(SocketCommandContext context, string pos)
+    {
+        if (!TimeSpan.TryParse(pos, out TimeSpan ts))
+            return CommandResult.FromError("Not a valid seek position!\nExample valid seek position: 00:13:08");
+        if (!audioService.HasPlayer(context.Guild))
+            return CommandResult.FromError("The bot is not currently being used.");
+
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        if (ts < TimeSpan.Zero || ts > player.CurrentTrack.Duration)
+            return CommandResult.FromError($"You can't seek to a negative position or a position longer than the track duration ({player.CurrentTrack.Duration.Round()}).");
+
+        await player.SeekPositionAsync(ts);
+        await context.Channel.SendMessageAsync($"Seeked to **{ts.Round()}**.");
         return CommandResult.FromSuccess();
     }
 
