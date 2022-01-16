@@ -45,7 +45,7 @@ public class Administration : ModuleBase<SocketCommandContext>
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         await dbUser.SetCash(user, amount);
-        await ReplyAsync($"Set **{user.Sanitize()}**'s cash to **{amount:C2}**.");
+        await ReplyAsync($"Set **{user.Sanitize()}**'s cash to **{amount:C2}**.", allowedMentions: Constants.MENTIONS);
         return CommandResult.FromSuccess();
     }
 

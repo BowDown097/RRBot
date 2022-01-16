@@ -100,7 +100,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 
         await user.ModifyAsync(props => props.Nickname = nickname);
         await LoggingSystem.Custom_UserBullied(user, Context.User, nickname);
-        await ReplyAsync($"**{Context.User}** has BULLIED **{user.Sanitize()}** to ``{nickname}``!");
+        await Context.User.NotifyAsync(Context.Channel, $"You BULLIED **{user.Sanitize()}** to ``{nickname}``!");
 
         DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         author.BullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN);

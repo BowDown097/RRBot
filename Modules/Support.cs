@@ -72,7 +72,7 @@ public class Support : ModuleBase<SocketCommandContext>
             .RRAddField("Helper", helperUser.Mention)
             .RRAddField("Request", request);
 
-        IUserMessage userMessage = await ReplyAsync($"{helperUser.Mention}, someone needs some help!", embed: embed.Build());
+        IUserMessage userMessage = await ReplyAsync($"{helperUser.Mention}, someone needs some help!", embed: embed.Build(), allowedMentions: Constants.MENTIONS);
         ticket.Helper = helperUser.Id;
         ticket.Issuer = Context.User.Id;
         ticket.Message = userMessage.Id;

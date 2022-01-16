@@ -14,6 +14,7 @@ public static class Constants
     // ********************
     public const string ACTIVITY = "your mom shower";
     public const ActivityType ACTIVITY_TYPE = ActivityType.Watching;
+    public static readonly AllowedMentions MENTIONS = new(AllowedMentionTypes.Users);
     public const string PREFIX = "$";
     // ********************
     //     CASH SYSTEM

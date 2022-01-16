@@ -30,7 +30,7 @@ public sealed class AudioSystem
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         LavalinkTrack track = player.CurrentTrack;
-        StringBuilder builder = new($"By: {RRFormat.Sanitize(track.Author)}\n");
+        StringBuilder builder = new($"By: {Format.Sanitize(track.Author)}\n");
         if (!track.IsLiveStream)
             builder.AppendLine($"Duration: {track.Duration.Round()}\nPosition: {player.Position.Position.Round()}");
 
@@ -57,7 +57,7 @@ public sealed class AudioSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle($"{player.CurrentTrack.Title} Lyrics")
-            .WithDescription(RRFormat.Sanitize(lyrics));
+            .WithDescription(Format.Sanitize(lyrics));
         await context.Channel.SendMessageAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
     }
@@ -71,15 +71,15 @@ public sealed class AudioSystem
 
         if (player.Queue.IsEmpty)
         {
-            await context.Channel.SendMessageAsync($"Now playing: \"{RRFormat.Sanitize(player.CurrentTrack.Title)}\". Nothing else is queued.");
+            await context.Channel.SendMessageAsync($"Now playing: \"{Format.Sanitize(player.CurrentTrack.Title)}\". Nothing else is queued.", allowedMentions: Constants.MENTIONS);
             return CommandResult.FromSuccess();
         }
 
-        StringBuilder playlist = new($"**1**: \"{RRFormat.Sanitize(player.CurrentTrack.Title)}\" by {RRFormat.Sanitize(player.CurrentTrack.Author)} {(!player.CurrentTrack.IsLiveStream ? $"({player.CurrentTrack.Duration.Round()})\n" : "\n")}");
+        StringBuilder playlist = new($"**1**: \"{Format.Sanitize(player.CurrentTrack.Title)}\" by {Format.Sanitize(player.CurrentTrack.Author)} {(!player.CurrentTrack.IsLiveStream ? $"({player.CurrentTrack.Duration.Round()})\n" : "\n")}");
         for (int i = 0; i < player.Queue.Count; i++)
         {
             LavalinkTrack track = player.Queue[i];
-            playlist.AppendLine($"**{i + 2}**: \"{RRFormat.Sanitize(track.Title)}\" by {RRFormat.Sanitize(track.Author)} {(!track.IsLiveStream ? $"({track.Duration.Round()})" : "")}");
+            playlist.AppendLine($"**{i + 2}**: \"{Format.Sanitize(track.Title)}\" by {Format.Sanitize(track.Author)} {(!track.IsLiveStream ? $"({track.Duration.Round()})" : "")}");
         }
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -121,15 +121,15 @@ public sealed class AudioSystem
         int position = await player.PlayAsync(track, enqueue: true);
         if (position == 0)
         {
-            StringBuilder message = new($"Now playing: \"{RRFormat.Sanitize(track.Title)}\"\nBy: {RRFormat.Sanitize(track.Author)}\n");
+            StringBuilder message = new($"Now playing: \"{Format.Sanitize(track.Title)}\"\nBy: {Format.Sanitize(track.Author)}\n");
             if (!track.IsLiveStream)
                 message.AppendLine($"Length: {track.Duration.Round()}");
             message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
-            await context.Channel.SendMessageAsync(message.ToString());
+            await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: Constants.MENTIONS);
         }
         else
         {
-            await context.Channel.SendMessageAsync($"**{RRFormat.Sanitize(track.Title)}** has been added to the queue.");
+            await context.Channel.SendMessageAsync($"**{Format.Sanitize(track.Title)}** has been added to the queue.", allowedMentions: Constants.MENTIONS);
         }
 
         await LoggingSystem.Custom_TrackStarted(user, track.Source);
@@ -172,7 +172,7 @@ public sealed class AudioSystem
             return CommandResult.FromError("The bot is not currently being used.");
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
-        await context.Channel.SendMessageAsync($"Skipped \"{RRFormat.Sanitize(player.CurrentTrack.Title)}\".");
+        await context.Channel.SendMessageAsync($"Skipped \"{Format.Sanitize(player.CurrentTrack.Title)}\".", allowedMentions: Constants.MENTIONS);
         if (!player.Queue.TryDequeue(out LavalinkTrack track))
         {
             await player.StopAsync(true);
@@ -203,7 +203,7 @@ public sealed class AudioSystem
             return CommandResult.FromError("The bot is not currently being used.");
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
-        string track = RRFormat.Sanitize(player.CurrentTrack.Title);
+        string track = Format.Sanitize(player.CurrentTrack.Title);
         UserVoteSkipInfo info = await player.VoteAsync(context.User.Id);
         if (!info.WasAdded)
             return CommandResult.FromError("You already voted to skip!");
@@ -215,7 +215,7 @@ public sealed class AudioSystem
         }
         else
         {
-            await context.Channel.SendMessageAsync($"Skipped \"{track}\".");
+            await context.Channel.SendMessageAsync($"Skipped \"{Format.Sanitize(track)}\".", allowedMentions: Constants.MENTIONS);
         }
 
         return CommandResult.FromSuccess();

@@ -87,7 +87,8 @@ public static class FilterSystem
 
         string content = message.Content.ToLower();
         if ((content.Contains("skins") && content.Contains("imgur"))
-            || (content.Contains("nitro") && content.Contains("free") && content.Contains("http")))
+            || (content.Contains("nitro") && content.Contains("free") && content.Contains("http"))
+            || (content.Contains("nitro") && content.Contains("steam")))
         {
             await message.DeleteAsync();
             return;
@@ -98,9 +99,11 @@ public static class FilterSystem
             if (Uri.TryCreate(epicEmbed.Url, UriKind.Absolute, out Uri uri))
             {
                 string host = uri.Host.Replace("www.", "").ToLower();
-                if ((epicEmbed.Title?.StartsWith("Trade offer") == true && host != "steamcommunity.com")
-                    || (epicEmbed.Title?.StartsWith("Steam Community") == true && host != "steamcommunity.com")
-                    || (epicEmbed.Title?.StartsWith("You've been gifted") == true && host != "discord.gift"))
+                string title = epicEmbed.Title?.ToLower();
+                if ((title.Contains("Trade offer") && host != "steamcommunity.com")
+                    || (title.Contains("Steam Community") && host != "steamcommunity.com")
+                    || (title.Contains("You've been gifted") && host != "discord.gift")
+                    || (title.Contains("nitro") && title.Contains("steam")))
                 {
                     await message.DeleteAsync();
                 }

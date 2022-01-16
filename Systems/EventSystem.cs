@@ -231,7 +231,7 @@ public class EventSystem
 
     private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, Discord.Commands.IResult result)
     {
-        string reason = RRFormat.Sanitize(result.ErrorReason);
+        string reason = Format.Sanitize(result.ErrorReason);
         if (await FilterSystem.ContainsFilteredWord(context.Guild, reason))
             return;
 

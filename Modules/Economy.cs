@@ -53,7 +53,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         if (user == null)
             await Context.User.NotifyAsync(Context.Channel, $"You have **{dbUser.Cash:C2}**.");
         else
-            await ReplyAsync($"**{user.Sanitize()}** has **{dbUser.Cash:C2}**.");
+            await ReplyAsync($"**{user.Sanitize()}** has **{dbUser.Cash:C2}**.", allowedMentions: Constants.MENTIONS);
 
         return CommandResult.FromSuccess();
     }
@@ -348,7 +348,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         }
         else
         {
-            await ReplyAsync($"{Context.User.Mention}, **{category}** is not a valid category!");
+            await Context.User.NotifyAsync(Context.Channel, $"**{category}** is not a valid category!");
         }
     }
 
