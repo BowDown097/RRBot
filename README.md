@@ -4,8 +4,8 @@ The bot for the [Rush Reborn Discord server](https://discord.gg/USpJnaaNap), hea
 <p align="center">
     <a href="https://discord.gg/USpJnaaNap" alt="Discord">
         <img src="https://img.shields.io/discord/809485099238031420" />
-        <img src="https://img.shields.io/codefactor/grade/github/BowDown097/RRBot" />
     </a>
+    <img src="https://img.shields.io/codefactor/grade/github/BowDown097/RRBot" />
 </p>
 
 ## Features
@@ -19,13 +19,11 @@ If you know what you're doing, it is encouraged that you create a pull request. 
 ## Running your own instance of the bot
 In order to build the bot, you will need to create a file named Credentials.cs in the bot's main directory. The code will need to look exactly like this:
 ```cs
-namespace RRBot
+namespace RRBot;
+public static class Credentials
 {
-    public static class Credentials
-    {
-        public static readonly string TOKEN = "[DISCORD BOT TOKEN]";
-        public static readonly string CREDENTIALS_PATH = "[PATH TO FIRESTORE CREDENTIALS]";
-    }
+    public const string CREDENTIALS_PATH = "[PATH TO FIRESTORE CREDENTIALS]";
+    public const string TOKEN = "[DISCORD BOT TOKEN]";
 }
 ```
 You can get the bot token from your instance of the bot's application at https://discord.com/developers, under the "Bot" tab. 
