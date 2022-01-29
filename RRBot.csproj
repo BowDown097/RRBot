@@ -4,6 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<NoWarn>RCS1197</NoWarn>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Discord.Net.Labs" Version="3.6.1"/>

@@ -1,4 +1,4 @@
-﻿#pragma warning disable IDE0060 // this warning fires for "this" parameters, which it shouldn't
+﻿#pragma warning disable IDE0060, RCS1175 // why does these fire for "this" parameters?
 namespace RRBot.Extensions;
 public static class DateTimeOffsetExt
 {

@@ -15,8 +15,15 @@ public class RequireCooldownAttribute : PreconditionAttribute
     {
         DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
         long cooldown = (long)user[CooldownNode] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        // speed demon cooldown reducer
         if (user.Perks.ContainsKey("Speed Demon"))
             cooldown = (long)(cooldown * 0.85);
+        // 4th rank cooldown reducer
+        DbConfigRanks ranks = await DbConfigRanks.GetById(context.Guild.Id);
+        ulong rank4Id = ranks.Ids["4"];
+        if (context.User.GetRoleIds().Contains(rank4Id))
+            cooldown = (long)(cooldown * 0.75);
 
         long newCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(cooldown);
         if (newCooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())

@@ -26,8 +26,14 @@ public class General : ModuleBase<SocketCommandContext>
     [Command("help")]
     [Summary("View info about a command.")]
     [Remarks("$help [command]")]
-    public async Task<RuntimeResult> Help(string command)
+    public async Task<RuntimeResult> Help(string command = "")
     {
+        if (string.IsNullOrWhiteSpace(command))
+        {
+            await ReplyAsync("Use $modules to see all of this bot's modules and use $module to view the commands in a module.");
+            return CommandResult.FromSuccess();
+        }
+
         Discord.Commands.SearchResult search = Commands.Search(command);
         if (!search.IsSuccess)
             return CommandResult.FromError("You have specified a nonexistent command!");
