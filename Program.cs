@@ -20,20 +20,14 @@ internal static class Program
             .AddSingleton(client)
             .AddSingleton<CommandService>()
             .AddSingleton<InteractionService>()
-            .AddSingleton<IAudioService, LavalinkCluster>()
+            .AddSingleton<InteractiveService>()
             .AddSingleton<IDiscordClientWrapper, DiscordClientWrapper>()
-            .AddSingleton(new LavalinkClusterOptions
+            .AddSingleton<IAudioService, LavalinkNode>()
+            .AddSingleton(new LavalinkNodeOptions
             {
-                Nodes = new[]
-                {
-                    new LavalinkNodeOptions
-                    {
-                        RestUri = "http://127.0.0.1:2333",
-                        WebSocketUri = "ws://127.0.0.1:2333",
-                        Password = "youshallnotpass",
-                    },
-                },
-                StayOnline = true
+                RestUri = "http://localhost:2333/",
+                WebSocketUri = "ws://localhost:2333/",
+                Password = "youshallnotpass",
             })
             .AddSingleton<InactivityTrackingService>()
             .AddSingleton(new InactivityTrackingOptions
@@ -54,7 +48,6 @@ internal static class Program
         await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
         InteractionService interactions = serviceProvider.GetRequiredService<InteractionService>();
         await interactions.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
-
         new EventSystem(serviceProvider).SubscribeEvents();
 
         await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);

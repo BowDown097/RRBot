@@ -21,8 +21,7 @@ public class RequireCooldownAttribute : PreconditionAttribute
             cooldown = (long)(cooldown * 0.85);
         // 4th rank cooldown reducer
         DbConfigRanks ranks = await DbConfigRanks.GetById(context.Guild.Id);
-        ulong rank4Id = ranks.Ids["4"];
-        if (context.User.GetRoleIds().Contains(rank4Id))
+        if (ranks.Ids.TryGetValue("4", out ulong rank4Id) && context.User.GetRoleIds().Contains(rank4Id))
             cooldown = (long)(cooldown * 0.75);
 
         long newCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(cooldown);

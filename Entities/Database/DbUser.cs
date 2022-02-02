@@ -55,6 +55,8 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long RobCooldown { get; set; }
     [FirestoreProperty]
+    public long ScavengeCooldown { get; set; }
+    [FirestoreProperty]
     public Dictionary<string, string> Stats { get; set; } = new();
     [FirestoreProperty]
     public long SlaveryCooldown { get; set; }

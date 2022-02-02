@@ -3,25 +3,6 @@
 [RequireStaff]
 public class Moderation : ModuleBase<SocketCommandContext>
 {
-    private Tuple<TimeSpan, string> ResolveDuration(string duration, int time, string action, string reason)
-    {
-        TimeSpan ts = char.ToLower(duration[^1]) switch
-        {
-            's' => TimeSpan.FromSeconds(time),
-            'm' => TimeSpan.FromMinutes(time),
-            'h' => TimeSpan.FromHours(time),
-            'd' => TimeSpan.FromDays(time),
-            _ => TimeSpan.Zero
-        };
-
-        string response = $"{action} for {ts.FormatCompound()}";
-        if (!string.IsNullOrWhiteSpace(reason))
-            response += $"for \"{reason}\"";
-        response += ".";
-
-        return new(ts, response);
-    }
-
     [Alias("seethe")]
     [Command("ban")]
     [Summary("Ban any member.")]
@@ -252,5 +233,24 @@ public class Moderation : ModuleBase<SocketCommandContext>
         await LoggingSystem.Custom_UserUnmuted(user, Context.User);
         await Context.User.NotifyAsync(Context.Channel, $"Unmuted **{user.Sanitize()}**.");
         return CommandResult.FromSuccess();
+    }
+
+    private Tuple<TimeSpan, string> ResolveDuration(string duration, int time, string action, string reason)
+    {
+        TimeSpan ts = char.ToLower(duration[^1]) switch
+        {
+            's' => TimeSpan.FromSeconds(time),
+            'm' => TimeSpan.FromMinutes(time),
+            'h' => TimeSpan.FromHours(time),
+            'd' => TimeSpan.FromDays(time),
+            _ => TimeSpan.Zero
+        };
+
+        string response = $"{action} for {ts.FormatCompound()}";
+        if (!string.IsNullOrWhiteSpace(reason))
+            response += $"for \"{reason}\"";
+        response += ".";
+
+        return new(ts, response);
     }
 }

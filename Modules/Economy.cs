@@ -2,39 +2,9 @@
 [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
 public class Economy : ModuleBase<SocketCommandContext>
 {
-    public static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Slavery", "Whore", "Bully",
-        "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack", "Daily" };
-
-    private static void RestoreUserData(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
-        bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long dealCd, long lootCd,
-        long rapeCd, long robCd, long slaveryCd, long whoreCd, long bullyCd, long chopCd, long digCd,
-        long farmCd, long fishCd, long huntCd, long mineCd, long supportCd, long hackCd, long dailyCd)
-    {
-        user.BTC = btc;
-        user.DOGE = doge;
-        user.ETH = eth;
-        user.LTC = ltc;
-        user.XRP = xrp;
-        user.DMNotifs = dmNotifs;
-        user.NoReplyPings = noReplyPings;
-        user.Stats = stats;
-        user.DealCooldown = dealCd;
-        user.LootCooldown = lootCd;
-        user.RapeCooldown = rapeCd;
-        user.RobCooldown = robCd;
-        user.SlaveryCooldown = slaveryCd;
-        user.WhoreCooldown = whoreCd;
-        user.BullyCooldown = bullyCd;
-        user.ChopCooldown = chopCd;
-        user.DigCooldown = digCd;
-        user.FarmCooldown = farmCd;
-        user.FishCooldown = fishCd;
-        user.HuntCooldown = huntCd;
-        user.MineCooldown = mineCd;
-        user.SupportCooldown = supportCd;
-        user.HackCooldown = hackCd;
-        user.DailyCooldown = dailyCd;
-    }
+    public static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Scavenge",
+        "Slavery", "Whore", "Bully",  "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack",
+        "Daily" };
 
     [Alias("bal", "cash")]
     [Command("balance")]
@@ -384,7 +354,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await user.SetCash(Context.User, 0);
                 RestoreUserData(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
                     temp.NoReplyPings, temp.Stats, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
-                    temp.RobCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
+                    temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
                     temp.HuntCooldown, temp.MineCooldown, temp.SupportCooldown, temp.HackCooldown,
                     temp.DailyCooldown);
@@ -395,7 +365,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await user.SetCash(Context.User, 0);
                 RestoreUserData(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
                     temp.NoReplyPings, temp.Stats, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
-                    temp.RobCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
+                    temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
                     temp.HuntCooldown, temp.MineCooldown, temp.SupportCooldown, temp.HackCooldown,
                     temp.DailyCooldown);
@@ -403,5 +373,37 @@ public class Economy : ModuleBase<SocketCommandContext>
         }
 
         return CommandResult.FromSuccess();
+    }
+
+    private static void RestoreUserData(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
+        bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long dealCd, long lootCd,
+        long rapeCd, long robCd, long scavengeCd, long slaveryCd, long whoreCd, long bullyCd, long chopCd, long digCd,
+        long farmCd, long fishCd, long huntCd, long mineCd, long supportCd, long hackCd, long dailyCd)
+    {
+        user.BTC = btc;
+        user.DOGE = doge;
+        user.ETH = eth;
+        user.LTC = ltc;
+        user.XRP = xrp;
+        user.DMNotifs = dmNotifs;
+        user.NoReplyPings = noReplyPings;
+        user.Stats = stats;
+        user.DealCooldown = dealCd;
+        user.LootCooldown = lootCd;
+        user.RapeCooldown = rapeCd;
+        user.RobCooldown = robCd;
+        user.ScavengeCooldown = scavengeCd;
+        user.SlaveryCooldown = slaveryCd;
+        user.WhoreCooldown = whoreCd;
+        user.BullyCooldown = bullyCd;
+        user.ChopCooldown = chopCd;
+        user.DigCooldown = digCd;
+        user.FarmCooldown = farmCd;
+        user.FishCooldown = fishCd;
+        user.HuntCooldown = huntCd;
+        user.MineCooldown = mineCd;
+        user.SupportCooldown = supportCd;
+        user.HackCooldown = hackCd;
+        user.DailyCooldown = dailyCd;
     }
 }

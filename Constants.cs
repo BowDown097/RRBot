@@ -26,7 +26,7 @@ public static class Constants
     // ********************
     //        CRIME
     // ********************
-    public const double BULLY_COOLDOWN = 1800;
+    public const double BULLY_COOLDOWN = 900;
     public const double DEAL_COOLDOWN = 3600;
     public const double GENERIC_CRIME_ITEM_ODDS = 4;
     public const double GENERIC_CRIME_WIN_ODDS = 80;
@@ -34,17 +34,21 @@ public static class Constants
     public const double GENERIC_CRIME_LOSS_MIN = 69;
     public const double GENERIC_CRIME_WIN_MAX = 691;
     public const double GENERIC_CRIME_WIN_MIN = 69;
-    public const double HACK_COOLDOWN = 10800;
+    public const double HACK_COOLDOWN = 7200;
     public const double HACK_ODDS = 10;
     public const double LOOT_COOLDOWN = 3600;
     public const double RAPE_COOLDOWN = 7200;
     public const double RAPE_ODDS = 50;
     public const double RAPE_MAX_PERCENT = 9;
     public const double RAPE_MIN_PERCENT = 5;
-    public const double ROB_COOLDOWN = 10800;
+    public const double ROB_COOLDOWN = 7200;
     public const double ROB_ODDS = 40;
     public const double ROB_MAX_PERCENT = 20;
     public const double ROB_MIN_CASH = 100;
+    public const double SCAVENGE_COOLDOWN = 60;
+    public const double SCAVENGE_MIN_CASH = 50;
+    public const double SCAVENGE_MAX_CASH = 100;
+    public const double SCAVENGE_TIMEOUT = 15;
     public const double SLAVERY_COOLDOWN = 3600;
     public const double WHORE_COOLDOWN = 3600;
     // ********************
@@ -81,6 +85,7 @@ public static class Constants
         { "Kizuna Ai", "https://thicc.mywaifulist.moe/waifus/1608/105790f902e38da70c7ac59da446586c86eb19c7a9afc063b974d74b8870c4cc_thumb.png" },
         { "Linus", "https://i.ytimg.com/vi/hAsZCTL__lo/mqdefault.jpg" },
         { "Luke Smith", "https://i.ytimg.com/vi/UWpf4ZSAHBo/maxresdefault.jpg" },
+        { "maria", "https://i.imgur.com/4Rj8HRs.png" },
         { "Midnight", "https://cdn.discordapp.com/attachments/804898294873456701/817268857374375986/653c4c631795ba90acefabb745ba3aa4.png" },
         { "Nagisa", "https://cdn.discordapp.com/attachments/804898294873456701/817270514401280010/3f244bab8ef7beafa5167ef0f7cdfe46.png" },
         { "pablo", "https://cdn.discordapp.com/attachments/804898294873456701/817271690391715850/unknown.png" },

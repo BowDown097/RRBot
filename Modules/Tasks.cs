@@ -2,49 +2,6 @@
 [Summary("The best way to earn money by far, at least for those lucky or rich enough to get themselves an item.")]
 public class Tasks : ModuleBase<SocketCommandContext>
 {
-    private async Task GenericTask(string itemType, string activity, string thing, string cooldown, double duration)
-    {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        string item = ItemSystem.GetBestItem(user.Items, itemType);
-        int numMined = 0;
-
-        if (item.StartsWith("Wooden"))
-            numMined = RandomUtil.Next(Constants.GENERIC_TASK_WOOD_MIN, Constants.GENERIC_TASK_WOOD_MAX); // default for wooden
-        else if (item.StartsWith("Stone"))
-            numMined = RandomUtil.Next(Constants.GENERIC_TASK_STONE_MIN, Constants.GENERIC_TASK_STONE_MAX);
-        else if (item.StartsWith("Iron"))
-            numMined = RandomUtil.Next(Constants.GENERIC_TASK_IRON_MIN, Constants.GENERIC_TASK_IRON_MAX);
-        else if (item.StartsWith("Diamond"))
-            numMined = RandomUtil.Next(Constants.GENERIC_TASK_DIAMOND_MIN, Constants.GENERIC_TASK_DIAMOND_MAX);
-
-        if (user.Perks.ContainsKey("Enchanter"))
-        {
-            int randNum = RandomUtil.Next(100);
-            if (randNum == 1 || randNum == 2)
-            {
-                user.Items.Remove(item);
-                await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
-                return;
-            }
-
-            numMined = (int)(numMined * 1.2);
-        }
-
-        double cashGained = numMined * 2.5;
-        double totalCash = user.Cash + cashGained;
-
-        await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained:C2}**." +
-            $"\nBalance: {totalCash:C2}");
-
-        await user.SetCash(Context.User, totalCash);
-        user.AddToStats(new()
-        {
-            { "Tasks Done", "1" },
-            { "Money Gained from Tasks", cashGained.ToString("C2") }
-        });
-        user[cooldown] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
-    }
-
     [Command("chop")]
     [Summary("Go chop some wood.")]
     [Remarks("$chop")]
@@ -175,5 +132,48 @@ public class Tasks : ModuleBase<SocketCommandContext>
         });
         await user.SetCash(Context.User, totalCash);
         user.MineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN);
+    }
+
+    private async Task GenericTask(string itemType, string activity, string thing, string cooldown, double duration)
+    {
+        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        string item = ItemSystem.GetBestItem(user.Items, itemType);
+        int numMined = 0;
+
+        if (item.StartsWith("Wooden"))
+            numMined = RandomUtil.Next(Constants.GENERIC_TASK_WOOD_MIN, Constants.GENERIC_TASK_WOOD_MAX); // default for wooden
+        else if (item.StartsWith("Stone"))
+            numMined = RandomUtil.Next(Constants.GENERIC_TASK_STONE_MIN, Constants.GENERIC_TASK_STONE_MAX);
+        else if (item.StartsWith("Iron"))
+            numMined = RandomUtil.Next(Constants.GENERIC_TASK_IRON_MIN, Constants.GENERIC_TASK_IRON_MAX);
+        else if (item.StartsWith("Diamond"))
+            numMined = RandomUtil.Next(Constants.GENERIC_TASK_DIAMOND_MIN, Constants.GENERIC_TASK_DIAMOND_MAX);
+
+        if (user.Perks.ContainsKey("Enchanter"))
+        {
+            int randNum = RandomUtil.Next(100);
+            if (randNum == 1 || randNum == 2)
+            {
+                user.Items.Remove(item);
+                await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
+                return;
+            }
+
+            numMined = (int)(numMined * 1.2);
+        }
+
+        double cashGained = numMined * 2.5;
+        double totalCash = user.Cash + cashGained;
+
+        await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained:C2}**." +
+            $"\nBalance: {totalCash:C2}");
+
+        await user.SetCash(Context.User, totalCash);
+        user.AddToStats(new()
+        {
+            { "Tasks Done", "1" },
+            { "Money Gained from Tasks", cashGained.ToString("C2") }
+        });
+        user[cooldown] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
     }
 }

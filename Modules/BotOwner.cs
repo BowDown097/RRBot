@@ -139,4 +139,26 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"Unblacklisted {user.Sanitize()}.");
         return CommandResult.FromSuccess();
     }
+
+    [Command("updatedb")]
+    [Summary("Pushes all cached data to the database.")]
+    [Remarks("$updatedb")]
+    public async Task UpdateDB()
+    {
+        long count = MemoryCache.Default.GetCount();
+        foreach (string key in MemoryCache.Default.Select(kvp => kvp.Key))
+        {
+            try
+            {
+                if (MemoryCache.Default.Get(key) is not DbObject item)
+                    continue;
+
+                await item.Reference.SetAsync(item);
+                MemoryCache.Default.Remove(key);
+            }
+            catch (NullReferenceException) {}
+        }
+
+        await Context.User.NotifyAsync(Context.Channel, $"Pushed all **{count}** items in the cache to the database.");
+    }
 }

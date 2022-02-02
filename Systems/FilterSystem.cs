@@ -60,6 +60,9 @@ public static class FilterSystem
 
     public static async Task DoInviteCheckAsync(SocketUserMessage message, IGuild guild, DiscordSocketClient client)
     {
+        if (string.IsNullOrWhiteSpace(message.Content))
+            return;
+
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
         if (!optionals.InviteFilterEnabled || optionals.NoFilterChannels.Contains(message.Channel.Id))
             return;
@@ -75,12 +78,17 @@ public static class FilterSystem
 
     public static async Task DoFilteredWordCheckAsync(SocketUserMessage message, IGuild guild)
     {
+        if (string.IsNullOrWhiteSpace(message.Content))
+            return;
         if (await ContainsFilteredWord(guild, message.Content))
             await message.DeleteAsync();
     }
 
     public static async Task DoScamCheckAsync(SocketUserMessage message, IGuild guild)
     {
+        if (string.IsNullOrWhiteSpace(message.Content))
+            return;
+
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
         if (!optionals.ScamFilterEnabled || optionals.NoFilterChannels.Contains(message.Channel.Id))
             return;
@@ -94,12 +102,12 @@ public static class FilterSystem
             return;
         }
 
-        foreach (Embed epicEmbed in message.Embeds)
+        foreach (Embed epicEmbed in message.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title)))
         {
-            if (Uri.TryCreate(epicEmbed.Url, UriKind.Absolute, out Uri uri))
+            if (Uri.TryCreate(epicEmbed.Url, UriKind.Absolute, out Uri uri) && !string.IsNullOrWhiteSpace(uri.Host))
             {
                 string host = uri.Host.Replace("www.", "").ToLower();
-                string title = epicEmbed.Title?.ToLower();
+                string title = epicEmbed.Title.ToLower();
                 if ((title.Contains("Trade offer") && host != "steamcommunity.com")
                     || (title.Contains("Steam Community") && host != "steamcommunity.com")
                     || (title.Contains("You've been gifted") && host != "discord.gift")

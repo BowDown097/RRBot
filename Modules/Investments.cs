@@ -2,27 +2,6 @@
 [Summary("Invest in our selection of coins, Bit or Shit. The prices here are updated in REAL TIME with the REAL LIFE values. Experience the fast, entrepreneural life without going broke, having your house repossessed, and having your girlfriend leave you.")]
 public class Investments : ModuleBase<SocketCommandContext>
 {
-    public static async Task<double> QueryCryptoValue(string crypto)
-    {
-        using HttpClient client = new();
-        string current = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm");
-        string today = DateTime.UtcNow.ToString("yyyy-MM-dd") + "T00:00";
-        string data = await client.GetStringAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
-        dynamic obj = JsonConvert.DeserializeObject(data);
-        JToken latestEntry = JArray.FromObject(obj.data.entries).Last;
-        return Math.Round(latestEntry[1].Value<double>(), 2);
-    }
-
-    public static string ResolveAbbreviation(string crypto) => crypto.ToLower() switch
-    {
-        "bitcoin" or "btc" => "BTC",
-        "dogecoin" or "doge" => "DOGE",
-        "ethereum" or "eth" => "ETH",
-        "litecoin" or "ltc" => "LTC",
-        "xrp" => "XRP",
-        _ => null,
-    };
-
     [Command("invest")]
     [Summary("Invest in a cryptocurrency. Currently accepted currencies are BTC, DOGE, ETH, LTC, and XRP. Here, the amount you put in should be RR Cash.")]
     [Remarks("$invest [crypto] [amount]")]
@@ -153,4 +132,25 @@ public class Investments : ModuleBase<SocketCommandContext>
             $"A {Constants.INVESTMENT_FEE_PERCENT}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
         return CommandResult.FromSuccess();
     }
+
+    public static async Task<double> QueryCryptoValue(string crypto)
+    {
+        using HttpClient client = new();
+        string current = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm");
+        string today = DateTime.UtcNow.ToString("yyyy-MM-dd") + "T00:00";
+        string data = await client.GetStringAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
+        dynamic obj = JsonConvert.DeserializeObject(data);
+        JToken latestEntry = JArray.FromObject(obj.data.entries).Last;
+        return Math.Round(latestEntry[1].Value<double>(), 2);
+    }
+
+    public static string ResolveAbbreviation(string crypto) => crypto.ToLower() switch
+    {
+        "bitcoin" or "btc" => "BTC",
+        "dogecoin" or "doge" => "DOGE",
+        "ethereum" or "eth" => "ETH",
+        "litecoin" or "ltc" => "LTC",
+        "xrp" => "XRP",
+        _ => null,
+    };
 }

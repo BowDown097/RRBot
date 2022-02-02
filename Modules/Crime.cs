@@ -3,77 +3,7 @@
 [CheckPacifist]
 public class Crime : ModuleBase<SocketCommandContext>
 {
-    private async Task<RuntimeResult> GenericCrime(string[] successOutcomes, string[] failOutcomes, string cdKey,
-        double duration, bool hasMehOutcome = false)
-    {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-
-        double winOdds = user.Perks.ContainsKey("Speed Demon") ? Constants.GENERIC_CRIME_WIN_ODDS * 0.95 : Constants.GENERIC_CRIME_WIN_ODDS;
-        if (RandomUtil.NextDouble(1, 101) < winOdds)
-        {
-            int outcomeNum = RandomUtil.Next(successOutcomes.Length);
-            string outcome = successOutcomes[outcomeNum];
-            double moneyEarned = RandomUtil.NextDouble(Constants.GENERIC_CRIME_WIN_MIN, Constants.GENERIC_CRIME_WIN_MAX);
-            if (hasMehOutcome && outcomeNum == successOutcomes.Length - 1)
-                moneyEarned /= 5;
-            double totalCash = user.Cash + moneyEarned;
-
-            StatUpdate(user, true, moneyEarned);
-            await user.SetCash(Context.User, totalCash);
-            await Context.User.NotifyAsync(Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
-        }
-        else
-        {
-            string outcome = failOutcomes[RandomUtil.Next(failOutcomes.Length)];
-            double lostCash = RandomUtil.NextDouble(Constants.GENERIC_CRIME_LOSS_MIN, Constants.GENERIC_CRIME_LOSS_MAX);
-            lostCash = (user.Cash - lostCash) < 0 ? lostCash - Math.Abs(user.Cash - lostCash) : lostCash;
-            double totalCash = (user.Cash - lostCash) > 0 ? user.Cash - lostCash : 0;
-
-            StatUpdate(user, false, lostCash);
-            await user.SetCash(Context.User, totalCash);
-            await Context.User.NotifyAsync(Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", lostCash.ToString("C2")));
-        }
-
-        if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
-        {
-            string[] availableItems = ItemSystem.items.Where(i => !user.Items.Contains(i)).ToArray();
-            if (availableItems.Length > 0)
-            {
-                string item = availableItems[RandomUtil.Next(availableItems.Length)];
-                user.Items.Add(item);
-                await ReplyAsync($"Well I'll be damned! You also got yourself a(n) {item}! Check out ``$module tasks`` to see how you can use it.");
-            }
-        }
-
-        user[cdKey] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
-        return CommandResult.FromSuccess();
-    }
-
-    private static void StatUpdate(DbUser user, bool success, double gain)
-    {
-        CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
-        culture.NumberFormat.CurrencyNegativePattern = 2;
-        if (success)
-        {
-            user.AddToStats(new()
-            {
-                { "Crimes Succeeded", "1" },
-                { "Money Gained from Crimes", gain.ToString("C2", culture) },
-                { "Net Gain/Loss from Crimes", gain.ToString("C2", culture) }
-            });
-        }
-        else
-        {
-            user.AddToStats(new()
-            {
-                { "Crimes Failed", "1" },
-                { "Money Lost to Crimes", gain.ToString("C2", culture) },
-                { "Net Gain/Loss from Crimes", (-gain).ToString("C2", culture) }
-            });
-        }
-    }
+    public InteractiveService Interactive { get; set; }
 
     [Command("bully")]
     [Summary("Change the nickname of any victim you wish!")]
@@ -313,7 +243,59 @@ public class Crime : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Alias("slavelabor", "labor")]
+    [Command("scavenge", RunMode = RunMode.Async)]
+    [Summary("Scavenge around the street for some goods.")]
+    [Remarks("$scavenge")]
+    [RequireCooldown("ScavengeCooldown", "You're out of prowling energy for now. You should wait {0}.")]
+    public async Task Scavenge()
+    {
+        using HttpClient client = new();
+        string response = await client.GetStringAsync("https://www.thegamegal.com/wordgenerator/generator.php?game=2&category=6");
+        JToken[] words = JObject.Parse(response)["words"].ToArray();
+        string originalWord = words[RandomUtil.Next(words.Length - 1)].ToString();
+        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+
+        switch (RandomUtil.Next(2))
+        {
+            case 0:
+                ZalgoString zalgo = new(originalWord, FuckUpMode.Max, FuckUpPosition.All);
+                EmbedBuilder zalgoEmbed = new EmbedBuilder()
+                    .WithColor(Color.Red)
+                    .WithTitle("Zalgo!")
+                    .WithDescription($"**What does this say?**\n{zalgo}\n*Type your response in the chat. You have {Constants.SCAVENGE_TIMEOUT} seconds!*");
+                IUserMessage zalgoMsg = await ReplyAsync(embed: zalgoEmbed.Build());
+
+                InteractiveResult<SocketMessage> zalgoResult = await Interactive.NextMessageAsync(
+                    x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
+                    timeout: TimeSpan.FromSeconds(Constants.SCAVENGE_TIMEOUT)
+                );
+                await HandleScavenge(zalgoMsg, zalgoResult, user, zalgoResult.Value.Content.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
+                    $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
+                    $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{originalWord}**.",
+                    $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{originalWord}**.");
+                break;
+            case 1:
+                string scrambled = Regex.Replace(originalWord, @"\w+", new MatchEvaluator(ScrambleWord), RegexOptions.IgnorePatternWhitespace);
+                EmbedBuilder scrambleEmbed = new EmbedBuilder()
+                    .WithColor(Color.Red)
+                    .WithTitle("Scramble!")
+                    .WithDescription($"**Unscramble this word:**\n{scrambled}\n*Type your response in the chat. You have {Constants.SCAVENGE_TIMEOUT} seconds!*");
+                IUserMessage scrambleMsg = await ReplyAsync(embed: scrambleEmbed.Build());
+
+                InteractiveResult<SocketMessage> scrambleResult = await Interactive.NextMessageAsync(
+                    x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
+                    timeout: TimeSpan.FromSeconds(Constants.SCAVENGE_TIMEOUT)
+                );
+                await HandleScavenge(scrambleMsg, scrambleResult, user, scrambleResult.Value.Content.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
+                    $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
+                    $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{originalWord}**.",
+                    $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{originalWord}**.");
+                break;
+        }
+
+        user.ScavengeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.SCAVENGE_COOLDOWN);
+    }
+
     [Command("slavery")]
     [Summary("Get some slave labor goin'.")]
     [Remarks("$slavery")]
@@ -342,5 +324,121 @@ public class Crime : ModuleBase<SocketCommandContext>
         string[] fails = { "You were too ugly and nobody wanted you. You lost **{0}** buying clothes for the night.",
             "You didn't give good enough head to the cop! You had to pay **{0}** in fines." };
         return await GenericCrime(successes, fails, "WhoreCooldown", Constants.WHORE_COOLDOWN);
+    }
+
+    private async Task<RuntimeResult> GenericCrime(string[] successOutcomes, string[] failOutcomes, string cdKey,
+        double duration, bool hasMehOutcome = false)
+    {
+        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        if (user.UsingSlots)
+            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+
+        double winOdds = user.Perks.ContainsKey("Speed Demon") ? Constants.GENERIC_CRIME_WIN_ODDS * 0.95 : Constants.GENERIC_CRIME_WIN_ODDS;
+        if (RandomUtil.NextDouble(1, 101) < winOdds)
+        {
+            int outcomeNum = RandomUtil.Next(successOutcomes.Length);
+            string outcome = successOutcomes[outcomeNum];
+            double moneyEarned = RandomUtil.NextDouble(Constants.GENERIC_CRIME_WIN_MIN, Constants.GENERIC_CRIME_WIN_MAX);
+            if (hasMehOutcome && outcomeNum == successOutcomes.Length - 1)
+                moneyEarned /= 5;
+            double totalCash = user.Cash + moneyEarned;
+
+            StatUpdate(user, true, moneyEarned);
+            await user.SetCash(Context.User, totalCash);
+            await Context.User.NotifyAsync(Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
+        }
+        else
+        {
+            string outcome = failOutcomes[RandomUtil.Next(failOutcomes.Length)];
+            double lostCash = RandomUtil.NextDouble(Constants.GENERIC_CRIME_LOSS_MIN, Constants.GENERIC_CRIME_LOSS_MAX);
+            lostCash = (user.Cash - lostCash) < 0 ? lostCash - Math.Abs(user.Cash - lostCash) : lostCash;
+            double totalCash = (user.Cash - lostCash) > 0 ? user.Cash - lostCash : 0;
+
+            StatUpdate(user, false, lostCash);
+            await user.SetCash(Context.User, totalCash);
+            await Context.User.NotifyAsync(Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", lostCash.ToString("C2")));
+        }
+
+        if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
+        {
+            string[] availableItems = ItemSystem.items.Where(i => !user.Items.Contains(i)).ToArray();
+            if (availableItems.Length > 0)
+            {
+                string item = availableItems[RandomUtil.Next(availableItems.Length)];
+                user.Items.Add(item);
+                await ReplyAsync($"Well I'll be damned! You also got yourself a(n) {item}! Check out ``$module tasks`` to see how you can use it.");
+            }
+        }
+
+        user[cdKey] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
+        return CommandResult.FromSuccess();
+    }
+
+    private async Task HandleScavenge(IUserMessage msg, InteractiveResult<SocketMessage> result, DbUser user, bool successCondition, string successResponse, string timeoutResponse, string failureResponse)
+    {
+        if (result.IsTimeout)
+        {
+            EmbedBuilder timeoutEmbed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(msg.Embeds.First().Title)
+                .WithDescription(timeoutResponse);
+            await msg.ModifyAsync(x => x.Embed = timeoutEmbed.Build());
+        }
+        else if (successCondition)
+        {
+            double rewardCash = RandomUtil.NextDouble(Constants.SCAVENGE_MIN_CASH, Constants.SCAVENGE_MAX_CASH);
+            double totalCash = user.Cash + rewardCash;
+            EmbedBuilder successEmbed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(msg.Embeds.First().Title)
+                .WithDescription(successResponse + $" Here's {rewardCash:C2}.\nBalance: {totalCash:C2}");
+            await msg.ModifyAsync(x => x.Embed = successEmbed.Build());
+            await user.SetCash(Context.User, totalCash);
+        }
+        else
+        {
+            EmbedBuilder failureEmbed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(msg.Embeds.First().Title)
+                .WithDescription(failureResponse);
+            await msg.ModifyAsync(x => x.Embed = failureEmbed.Build());
+        }
+    }
+
+    private static string ScrambleWord(Match match)
+    {
+        double[] keys = new double[match.Value.Length];
+        char[] letters = new char[match.Value.Length];
+        for (int ctr = 0; ctr < match.Value.Length; ctr++)
+        {
+            keys[ctr] = RandomUtil.NextDouble(0, 2);
+            letters[ctr] = match.Value[ctr];
+        }
+        Array.Sort(keys, letters, 0, match.Value.Length);
+        return new(letters);
+    }
+
+    private static void StatUpdate(DbUser user, bool success, double gain)
+    {
+        CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+        culture.NumberFormat.CurrencyNegativePattern = 2;
+        if (success)
+        {
+            user.AddToStats(new()
+            {
+                { "Crimes Succeeded", "1" },
+                { "Money Gained from Crimes", gain.ToString("C2", culture) },
+                { "Net Gain/Loss from Crimes", gain.ToString("C2", culture) }
+            });
+        }
+        else
+        {
+            user.AddToStats(new()
+            {
+                { "Crimes Failed", "1" },
+                { "Money Lost to Crimes", gain.ToString("C2", culture) },
+                { "Net Gain/Loss from Crimes", (-gain).ToString("C2", culture) }
+            });
+        }
     }
 }

@@ -2,12 +2,6 @@
 [Summary("Choose how you want me to bug you. I can do it in DM, I can do it when you rank up, and I can even ping you, too.")]
 public class UserSettings : ModuleBase<SocketCommandContext>
 {
-    private async Task GenericSet(string property, bool status)
-    {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        user[property] = status;
-    }
-
     [Command("mysettings")]
     [Summary("List your user settings.")]
     [Remarks("$mysettings")]
@@ -39,5 +33,11 @@ public class UserSettings : ModuleBase<SocketCommandContext>
     {
         await GenericSet("NoReplyPings", status);
         await Context.User.NotifyAsync(Context.Channel, $"You will {(status ? "no longer be" : "now be")} pinged in command responses.");
+    }
+
+    private async Task GenericSet(string property, bool status)
+    {
+        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        user[property] = status;
     }
 }

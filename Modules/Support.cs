@@ -4,22 +4,6 @@
 [RequireRushReborn]
 public class Support : ModuleBase<SocketCommandContext>
 {
-    public static async Task<RuntimeResult> CloseTicket(SocketCommandContext context, SocketUser user,
-        DbSupportTicket ticket, string response)
-    {
-        IUserMessage message = await context.Channel.GetMessageAsync(ticket.Message) as IUserMessage;
-        EmbedBuilder embed = message.Embeds.FirstOrDefault().ToEmbedBuilder();
-        embed.Description += "\nStatus: Closed";
-        await message.ModifyAsync(msg => msg.Embed = embed.Build());
-
-        DbUser dbUser = await DbUser.GetById(context.Guild.Id, user.Id);
-        dbUser.SupportCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(600);
-        await ticket.Reference.DeleteAsync();
-
-        await user.NotifyAsync(context.Channel, response);
-        return CommandResult.FromSuccess();
-    }
-
     [Command("close")]
     [Summary("Close your currently active support ticket or a support ticket that you have been assigned to (if there is one).")]
     [Remarks("$close <user>")]
@@ -109,6 +93,22 @@ public class Support : ModuleBase<SocketCommandContext>
             .RRAddField("Helper", helper.Mention)
             .RRAddField("Request", ticket.Request);
         await ReplyAsync(embed: embed.Build());
+        return CommandResult.FromSuccess();
+    }
+
+    public static async Task<RuntimeResult> CloseTicket(SocketCommandContext context, SocketUser user,
+        DbSupportTicket ticket, string response)
+    {
+        IUserMessage message = await context.Channel.GetMessageAsync(ticket.Message) as IUserMessage;
+        EmbedBuilder embed = message.Embeds.FirstOrDefault().ToEmbedBuilder();
+        embed.Description += "\nStatus: Closed";
+        await message.ModifyAsync(msg => msg.Embed = embed.Build());
+
+        DbUser dbUser = await DbUser.GetById(context.Guild.Id, user.Id);
+        dbUser.SupportCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(600);
+        await ticket.Reference.DeleteAsync();
+
+        await user.NotifyAsync(context.Channel, response);
         return CommandResult.FromSuccess();
     }
 }

@@ -4,6 +4,31 @@ public class Games : ModuleBase<SocketCommandContext>
 {
     private static readonly BoardPos[] adjacents = { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
 
+    [Command("minesweeper")]
+    [Summary("Play a game of Minesweeper. Choose between difficulty 1-3.")]
+    [Remarks("$minesweeper <difficulty>")]
+    public async Task<RuntimeResult> Minesweeper(int difficulty = 1)
+    {
+        if (difficulty < 1 || difficulty > 3)
+            return CommandResult.FromError($"**{difficulty}** is not a valid difficulty!");
+
+        int[,] board = GenerateBoard(difficulty);
+        StringBuilder boardBuilder = new();
+        for (int x = 0; x < board.GetLength(0); x++)
+        {
+            for (int y = 0; y < board.GetLength(1); y++)
+            {
+                string tile = board[x, y] == -1 ? "💥" : Constants.POLL_EMOTES[board[x, y]];
+                boardBuilder.Append($"||{tile}||");
+            }
+
+            boardBuilder.Append('\n');
+        }
+
+        await ReplyAsync(boardBuilder.ToString());
+        return CommandResult.FromSuccess();
+    }
+
     private static int[,] GenerateBoard(int difficulty)
     {
         double density = difficulty switch
@@ -38,30 +63,5 @@ public class Games : ModuleBase<SocketCommandContext>
         }
 
         return board;
-    }
-
-    [Command("minesweeper")]
-    [Summary("Play a game of Minesweeper. Choose between difficulty 1-3.")]
-    [Remarks("$minesweeper <difficulty>")]
-    public async Task<RuntimeResult> Minesweeper(int difficulty = 1)
-    {
-        if (difficulty < 1 || difficulty > 3)
-            return CommandResult.FromError($"**{difficulty}** is not a valid difficulty!");
-
-        int[,] board = GenerateBoard(difficulty);
-        StringBuilder boardBuilder = new();
-        for (int x = 0; x < board.GetLength(0); x++)
-        {
-            for (int y = 0; y < board.GetLength(1); y++)
-            {
-                string tile = board[x, y] == -1 ? "💥" : Constants.POLL_EMOTES[board[x, y]];
-                boardBuilder.Append($"||{tile}||");
-            }
-
-            boardBuilder.Append('\n');
-        }
-
-        await ReplyAsync(boardBuilder.ToString());
-        return CommandResult.FromSuccess();
     }
 }
