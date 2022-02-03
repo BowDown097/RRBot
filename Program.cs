@@ -3,8 +3,6 @@
 namespace RRBot;
 internal static class Program
 {
-    public static FirestoreDb database = FirestoreDb.Create("rushrebornbot",
-        new FirestoreClientBuilder { CredentialsPath = Credentials.CREDENTIALS_PATH }.Build());
 
     private static async Task Main()
     {
@@ -27,7 +25,7 @@ internal static class Program
             {
                 RestUri = "http://localhost:2333/",
                 WebSocketUri = "ws://localhost:2333/",
-                Password = "youshallnotpass",
+                Password = "hey stop reading this source code because you can easily guess this password and thats bad for security so making it as hard to guess as possible is a very good idea which is what im doing right now, without using the bee movie script just for filler because im too lazy to download it, put it into atom, and use regex to remove all newlines and then do some weird shit, uh i think this is enough, if its not someone make a pr and make it even longer and harder to guess please and thanks",
             })
             .AddSingleton<InactivityTrackingService>()
             .AddSingleton(new InactivityTrackingOptions
