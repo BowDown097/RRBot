@@ -7,6 +7,6 @@ public class RequireCashAttribute : PreconditionAttribute
         DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
         return user.Cash >= 0.01
             ? PreconditionResult.FromSuccess()
-            : PreconditionResult.FromError("You're broke!");
+            : PreconditionResult.FromError("!");
     }
 }
