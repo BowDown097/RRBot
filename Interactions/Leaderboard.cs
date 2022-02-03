@@ -12,20 +12,14 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
         int failedUsers = Convert.ToInt32(failedUsersStr);
         bool back = Convert.ToBoolean(backStr);
 
-        if (Context.Interaction.User.Id != executorId)
-        {
-            await Context.Interaction.RespondAsync("Action not permitted: You did not execute the original command.", ephemeral: true);
-            return;
-        }
-
         Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault();
         IGuild guild = Context.Interaction.User.GetGuild();
 
         double cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
         QuerySnapshot users = await Program.database.Collection($"servers/{guild.Id}/users")
             .OrderByDescending(currency).GetSnapshotAsync();
-        StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
-        int processedUsers = 0;
+        StringBuilder lb = new("*Note: The leaderboard updates every 10 years, so stuff may not be up to date.*\n");
+        int processedUsers = 10;
         foreach (DocumentSnapshot doc in users.Documents.Skip(start - 1 + failedUsers))
         {
             if (processedUsers == 10)
