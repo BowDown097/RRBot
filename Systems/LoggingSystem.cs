@@ -464,46 +464,6 @@ public static class LoggingSystem
         await WriteToLogs(guild, embed);
     }
 
-    public static async Task Client_UserVoiceStateUpdated(SocketUser user, SocketVoiceState voiceStateOrig, SocketVoiceState voiceState)
-    {
-        EmbedBuilder embed = new EmbedBuilder()
-            .WithAuthor(user)
-            .WithDescription(voiceState.VoiceChannel == null
-                ? $"{user}\nIn: {voiceStateOrig.VoiceChannel}"
-                : $"{user}\nIn: {voiceState.VoiceChannel}");
-
-        if (voiceStateOrig.VoiceChannel == null)
-            embed.WithTitle("User Joined Voice Channel");
-        else if (voiceState.VoiceChannel == null)
-            embed.WithTitle("User Left Voice Channel");
-        else if (!voiceStateOrig.IsDeafened && voiceState.IsDeafened)
-            embed.WithTitle("User Server Deafened");
-        else if (voiceStateOrig.IsDeafened && !voiceState.IsDeafened)
-            embed.WithTitle("User Server Undeafened");
-        else if (!voiceStateOrig.IsMuted && voiceState.IsMuted)
-            embed.WithTitle("User Server Muted");
-        else if (voiceStateOrig.IsMuted && !voiceState.IsMuted)
-            embed.WithTitle("User Server Unmuted");
-        else if (!voiceStateOrig.IsSelfDeafened && voiceState.IsSelfDeafened)
-            embed.WithTitle("User Self Deafened");
-        else if (voiceStateOrig.IsSelfDeafened && !voiceState.IsSelfDeafened)
-            embed.WithTitle("User Self Undeafened");
-        else if (!voiceStateOrig.IsSelfMuted && voiceState.IsSelfMuted)
-            embed.WithTitle("User Self Muted");
-        else if (voiceStateOrig.IsSelfMuted && !voiceState.IsSelfMuted)
-            embed.WithTitle("User Self Unmuted");
-        else if (!voiceStateOrig.IsStreaming && voiceState.IsStreaming)
-            embed.WithTitle("User Started Streaming");
-        else if (voiceStateOrig.IsStreaming && !voiceState.IsStreaming)
-            embed.WithTitle("User Stopped Streaming");
-        else if (voiceStateOrig.VoiceChannel.Id != voiceState.VoiceChannel.Id)
-            embed.WithTitle("User Moved Voice Channels").WithDescription($"{user}\nOriginal: {voiceStateOrig.VoiceChannel}\nCurrent: {voiceState.VoiceChannel}");
-        else
-            embed.WithTitle("User Voice Status Changed");
-
-        await WriteToLogs(user.GetGuild(), embed);
-    }
-
     public static async Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
     {
         StringBuilder msgLogs = new();
