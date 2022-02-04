@@ -4,6 +4,7 @@ global using Discord.Net;
 global using Discord.Rest;
 global using Discord.WebSocket;
 global using Fergun.Interactive;
+global using Fergun.Interactive.Pagination;
 global using Lavalink4NET;
 global using Lavalink4NET.DiscordNet;
 global using Lavalink4NET.Lyrics;

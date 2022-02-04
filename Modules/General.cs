@@ -72,8 +72,8 @@ public class General : ModuleBase<SocketCommandContext>
             preconditions.AppendLine("Requires Staff");
         if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC))
             preconditions.AppendLine($"Must be in #{rBIC.Name}");
-        if (commandInfo.TryGetPrecondition(out RequireItemAttribute ri))
-            preconditions.AppendLine(string.IsNullOrEmpty(ri.ItemType) ? "Requires an item" : $"Requires {ri.ItemType}");
+        if (commandInfo.TryGetPrecondition(out RequireToolAttribute ri))
+            preconditions.AppendLine(string.IsNullOrEmpty(ri.ToolType) ? "Requires a tool" : $"Requires {ri.ToolType}");
         if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP))
             preconditions.AppendLine($"Requires {Enum.GetName(rUP.GuildPermission.GetType(), rUP.GuildPermission)} permission");
 

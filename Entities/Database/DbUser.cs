@@ -23,8 +23,6 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public bool DMNotifs { get; set; }
     [FirestoreProperty]
-    public double DOGE { get; set; }
-    [FirestoreProperty]
     public double ETH { get; set; }
     [FirestoreProperty]
     public long FarmCooldown { get; set; }
@@ -34,8 +32,6 @@ public class DbUser : DbObject
     public long HackCooldown { get; set; }
     [FirestoreProperty]
     public long HuntCooldown { get; set; }
-    [FirestoreProperty]
-    public List<string> Items { get; set; } = new();
     [FirestoreProperty]
     public long LootCooldown { get; set; }
     [FirestoreProperty]
@@ -64,6 +60,8 @@ public class DbUser : DbObject
     public long SupportCooldown { get; set; }
     [FirestoreProperty]
     public long TimeTillCash { get; set; }
+    [FirestoreProperty]
+    public List<string> Tools { get; set; } = new();
     [FirestoreProperty]
     public bool UsingSlots { get; set; }
     [FirestoreProperty]

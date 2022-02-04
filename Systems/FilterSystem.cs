@@ -44,10 +44,10 @@ public static class FilterSystem
     };
     private static readonly Regex INVITE_REGEX = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
 
-    public static async Task<bool> ContainsFilteredWord(IGuild guild, string input)
+    public static async Task<bool> ContainsFilteredWord(IGuild guild, string input, DbConfigOptionals opt = null)
     {
         string cleaned = new string(input.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToLower();
-        DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
+        DbConfigOptionals optionals = opt ?? await DbConfigOptionals.GetById(guild.Id);
         foreach (string regexStr in optionals.FilterRegexes)
         {
             Regex regex = new(regexStr);
@@ -80,7 +80,12 @@ public static class FilterSystem
     {
         if (string.IsNullOrWhiteSpace(message.Content))
             return;
-        if (await ContainsFilteredWord(guild, message.Content))
+
+        DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
+        if (optionals.NoFilterChannels.Contains(message.Channel.Id))
+            return;
+
+        if (await ContainsFilteredWord(guild, message.Content, optionals))
             await message.DeleteAsync();
     }
 

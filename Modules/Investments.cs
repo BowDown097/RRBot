@@ -3,7 +3,7 @@
 public class Investments : ModuleBase<SocketCommandContext>
 {
     [Command("invest")]
-    [Summary("Invest in a cryptocurrency. Currently accepted currencies are BTC, DOGE, ETH, LTC, and XRP. Here, the amount you put in should be RR Cash.")]
+    [Summary("Invest in a cryptocurrency. Currently accepted currencies are BTC, ETH, LTC, and XRP. Here, the amount you put in should be RR Cash.")]
     [Remarks("$invest [crypto] [amount]")]
     [RequireCash]
     public async Task<RuntimeResult> Invest(string crypto, double amount)
@@ -56,8 +56,6 @@ public class Investments : ModuleBase<SocketCommandContext>
         StringBuilder investments = new();
         if (dbUser.BTC >= Constants.INVESTMENT_MIN_AMOUNT)
             investments.AppendLine($"**Bitcoin (BTC)**: {dbUser.BTC:0.####} ({await QueryCryptoValue("BTC") * dbUser.BTC:C2})");
-        if (dbUser.DOGE >= Constants.INVESTMENT_MIN_AMOUNT)
-            investments.AppendLine($"**Dogecoin (DOGE)**: {dbUser.DOGE:0.####} ({await QueryCryptoValue("DOGE") * dbUser.DOGE:C2})");
         if (dbUser.ETH >= Constants.INVESTMENT_MIN_AMOUNT)
             investments.AppendLine($"**Ethereum (ETH)**: {dbUser.ETH:0.####} ({await QueryCryptoValue("ETH") * dbUser.ETH:C2})");
         if (dbUser.LTC >= Constants.INVESTMENT_MIN_AMOUNT)
@@ -80,7 +78,6 @@ public class Investments : ModuleBase<SocketCommandContext>
     public async Task Prices()
     {
         double btc = await QueryCryptoValue("BTC");
-        double doge = await QueryCryptoValue("DOGE");
         double eth = await QueryCryptoValue("ETH");
         double ltc = await QueryCryptoValue("LTC");
         double xrp = await QueryCryptoValue("XRP");
@@ -89,7 +86,6 @@ public class Investments : ModuleBase<SocketCommandContext>
             .WithColor(Color.Red)
             .WithTitle("Cryptocurrency Values")
             .RRAddField("Bitcoin (BTC)", btc.ToString("C2"))
-            .RRAddField("Dogecoin (DOGE)", doge.ToString("C2"))
             .RRAddField("Ethereum (ETH)", eth.ToString("C2"))
             .RRAddField("Litecoin (LTC)", ltc.ToString("C2"))
             .RRAddField("XRP", xrp.ToString("C2"));
@@ -147,7 +143,6 @@ public class Investments : ModuleBase<SocketCommandContext>
     public static string ResolveAbbreviation(string crypto) => crypto.ToLower() switch
     {
         "bitcoin" or "btc" => "BTC",
-        "dogecoin" or "doge" => "DOGE",
         "ethereum" or "eth" => "ETH",
         "litecoin" or "ltc" => "LTC",
         "xrp" => "XRP",

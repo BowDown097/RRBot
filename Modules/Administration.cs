@@ -3,21 +3,22 @@
 [Summary("Commands for admin stuff. Whether you wanna screw with the economy or fuck someone over, I'm sure you'll have fun. However, you'll need to have a very high role to have all this fun. Sorry!")]
 public class Administration : ModuleBase<SocketCommandContext>
 {
-    [Command("giveitem")]
-    [Summary("Give a user an item.")]
-    [Remarks("$giveitem [user] [item]")]
-    public async Task<RuntimeResult> GiveItem(IGuildUser user, [Remainder] string item)
+    [Command("givetool")]
+    [Summary("Give a user a tool.")]
+    [Remarks("$givetool [user] [tool]")]
+    public async Task<RuntimeResult> GiveTool(IGuildUser user, [Remainder] string tool)
     {
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-        if (!ItemSystem.items.Contains(item))
-            return CommandResult.FromError($"**{item}** is not a valid item!");
+        if (!ItemSystem.tools.Any(t => t.Name.Equals(tool, StringComparison.OrdinalIgnoreCase)))
+            return CommandResult.FromError($"**{tool}** is not a valid tool!");
 
+        Item item = ItemSystem.GetItem(tool);
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-        if (dbUser.Items.Contains(item))
+        if (dbUser.Tools.Contains(item.Name))
             return CommandResult.FromError($"**{user.Sanitize()}** already has a(n) {item}.");
 
-        dbUser.Items.Add(item);
+        dbUser.Tools.Add(item.Name);
         await Context.User.NotifyAsync(Context.Channel, $"Gave **{user.Sanitize()}** a(n) {item}.");
         return CommandResult.FromSuccess();
     }
@@ -57,12 +58,12 @@ public class Administration : ModuleBase<SocketCommandContext>
         string cUp = crypto.ToUpper();
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-        if (!(cUp is "BTC" or "DOGE" or "ETH" or "LTC" or "XRP"))
+        if (!(cUp is "BTC" or "ETH" or "LTC" or "XRP"))
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         dbUser[cUp] = Math.Round(amount, 4);
-        await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user.Sanitize()}**'s {cUp} balance.");
+        await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s {cUp} to **{amount:0.####}**.");
         return CommandResult.FromSuccess();
     }
 
