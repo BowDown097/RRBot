@@ -1,16 +1,14 @@
 namespace RRBot.Entities.Commands;
-public class Perk
+public class Perk : Item
 {
-    public string name;
-    public string description;
-    public double price;
-    public long duration;
+    public string Description { get; set; }
+    public long Duration { get; set; }
+    public override string Name { get; set; }
+    public override double Price { get; set; }
 
-    public Perk(string name, string description, double price, long duration)
+    public Perk(string name, string description, double price, long duration) : base(name, price)
     {
-        this.name = name;
-        this.description = description;
-        this.price = price;
-        this.duration = duration;
+        Description = description;
+        Duration = duration;
     }
 }
