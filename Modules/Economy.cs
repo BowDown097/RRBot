@@ -31,16 +31,16 @@ public class Economy : ModuleBase<SocketCommandContext>
 
     [Alias("purchase")]
     [Command("buy")]
-    [Summary("Buy an item or perk from the shop.")]
+    [Summary("Buy an item from the shop.")]
     [Remarks("$buy [item]")]
     public async Task<RuntimeResult> Buy([Remainder] string item)
     {
         if (ItemSystem.tools.Any(t => t.Name == item))
-            return await ItemSystem.BuyItem(item, Context.User, Context.Guild, Context.Channel);
+            return await ItemSystem.BuyTool(item, Context.User, Context.Guild, Context.Channel);
         else if (ItemSystem.perks.Any(perk => perk.Name == item))
             return await ItemSystem.BuyPerk(item, Context.User, Context.Guild, Context.Channel);
         else
-            return CommandResult.FromError($"**{item}** is not a valid item or perk!\n*Tip: This command is case sensitive.*");
+            return CommandResult.FromError($"**{item}** is not a valid item!\n*Tip: This command is case sensitive.*");
     }
 
     [Alias("cd")]
@@ -107,7 +107,7 @@ public class Economy : ModuleBase<SocketCommandContext>
 
     [Alias("sell")]
     [Command("discard")]
-    [Summary("Discard an item or the Pacifist perk.")]
+    [Summary("Discard a tool or the Pacifist perk.")]
     [Remarks("$discard [item]")]
     public async Task<RuntimeResult> Discard([Remainder] string item)
     {
@@ -124,7 +124,7 @@ public class Economy : ModuleBase<SocketCommandContext>
             user.PacifistCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(259200);
             await Context.User.NotifyAsync(Context.Channel, "You discarded your Pacifist perk. If you wish to buy it again, you will have to wait 3 days.");
         }
-        else if (user.Items.Remove(item))
+        else if (user.Tools.Remove(item))
         {
             double price = ItemSystem.GetItem(item).Price;
             await user.SetCash(Context.User, user.Cash + price);
@@ -150,6 +150,7 @@ public class Economy : ModuleBase<SocketCommandContext>
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle(tool.Name)
+                .AddField("Type", "Tool")
                 .AddField("Price", tool.Price.ToString("C2"))
                 .AddField("Cash Range", tool.Name.EndsWith("Pickaxe")
                     ? $"{128 * tool.Mult:C2} - {256 * tool.Mult:C2}"
@@ -162,6 +163,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 .WithColor(Color.Red)
                 .WithTitle(perk.Name)
                 .WithDescription(perk.Description)
+                .AddField("Type", "Perk")
                 .AddField("Price", perk.Price.ToString("C2"))
                 .AddField("Duration", TimeSpan.FromSeconds(perk.Duration).FormatCompound());
             await ReplyAsync(embed: embed.Build());
@@ -172,20 +174,6 @@ public class Economy : ModuleBase<SocketCommandContext>
         }
 
         return CommandResult.FromSuccess();
-    }
-
-    [Command("items")]
-    [Summary("Check your own or someone else's items.")]
-    [Remarks("$items <user>")]
-    public async Task GetItems(IGuildUser user = null)
-    {
-        ulong userId = user == null ? Context.User.Id : user.Id;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
-        EmbedBuilder embed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle(user == null ? "Items" : $"{user.Sanitize()}'s Items")
-            .WithDescription(dbUser.Items.Count > 0 ? string.Join(", ", dbUser.Items) : "None");
-        await ReplyAsync(embed: embed.Build());
     }
 
     [Alias("lb")]
@@ -324,17 +312,17 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Remarks("$shop")]
     public async Task Shop()
     {
-        StringBuilder items = new();
+        StringBuilder tools = new();
         StringBuilder perks = new();
 
         foreach (Tool tool in ItemSystem.tools)
-            items.AppendLine($"**{tool}**: {tool.Price:C2}");
+            tools.AppendLine($"**{tool}**: {tool.Price:C2}");
         foreach (Perk perk in ItemSystem.perks)
             perks.AppendLine($"**{perk.Name}**: {perk.Description}\nDuration: {TimeSpan.FromSeconds(perk.Duration).FormatCompound()}\nPrice: {perk.Price:C2}");
 
         PageBuilder[] pages = new[]
         {
-            new PageBuilder().WithColor(Color.Red).WithTitle("Items").WithDescription(items.ToString()),
+            new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools.ToString()),
             new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(perks.ToString())
         };
 
@@ -390,6 +378,20 @@ public class Economy : ModuleBase<SocketCommandContext>
         }
 
         return CommandResult.FromSuccess();
+    }
+
+    [Command("tools")]
+    [Summary("Check your own or someone else's tools.")]
+    [Remarks("$tools <user>")]
+    public async Task Tools(IGuildUser user = null)
+    {
+        ulong userId = user == null ? Context.User.Id : user.Id;
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Red)
+            .WithTitle(user == null ? "Tools" : $"{user.Sanitize()}'s Tools")
+            .WithDescription(dbUser.Tools.Count > 0 ? string.Join(", ", dbUser.Tools) : "None");
+        await ReplyAsync(embed: embed.Build());
     }
 
     private static void RestoreUserData(DbUser user, double btc, double doge, double eth, double ltc, double xrp,

@@ -28,10 +28,10 @@ public static class Constants
     // ********************
     public const double BULLY_COOLDOWN = 900;
     public const double DEAL_COOLDOWN = 3600;
-    public const double GENERIC_CRIME_ITEM_ODDS = 4;
     public const double GENERIC_CRIME_WIN_ODDS = 80;
     public const double GENERIC_CRIME_LOSS_MAX = 461;
     public const double GENERIC_CRIME_LOSS_MIN = 69;
+    public const double GENERIC_CRIME_TOOL_ODDS = 4;
     public const double GENERIC_CRIME_WIN_MAX = 691;
     public const double GENERIC_CRIME_WIN_MIN = 69;
     public const double HACK_COOLDOWN = 7200;

@@ -3,22 +3,22 @@
 [Summary("Commands for admin stuff. Whether you wanna screw with the economy or fuck someone over, I'm sure you'll have fun. However, you'll need to have a very high role to have all this fun. Sorry!")]
 public class Administration : ModuleBase<SocketCommandContext>
 {
-    [Command("giveitem")]
-    [Summary("Give a user an item.")]
-    [Remarks("$giveitem [user] [item]")]
-    public async Task<RuntimeResult> GiveItem(IGuildUser user, [Remainder] string item)
+    [Command("givetool")]
+    [Summary("Give a user a tool.")]
+    [Remarks("$givetool [user] [tool]")]
+    public async Task<RuntimeResult> GiveTool(IGuildUser user, [Remainder] string tool)
     {
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-        if (!ItemSystem.tools.Any(t => t.Name == item))
-            return CommandResult.FromError($"**{item}** is not a valid item!");
+        if (!ItemSystem.tools.Any(t => t.Name == tool))
+            return CommandResult.FromError($"**{tool}** is not a valid tool!");
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-        if (dbUser.Items.Contains(item))
-            return CommandResult.FromError($"**{user.Sanitize()}** already has a(n) {item}.");
+        if (dbUser.Tools.Contains(tool))
+            return CommandResult.FromError($"**{user.Sanitize()}** already has a(n) {tool}.");
 
-        dbUser.Items.Add(item);
-        await Context.User.NotifyAsync(Context.Channel, $"Gave **{user.Sanitize()}** a(n) {item}.");
+        dbUser.Tools.Add(tool);
+        await Context.User.NotifyAsync(Context.Channel, $"Gave **{user.Sanitize()}** a(n) {tool}.");
         return CommandResult.FromSuccess();
     }
 

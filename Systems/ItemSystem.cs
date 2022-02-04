@@ -4,7 +4,7 @@ public static class ItemSystem
     // name, description, price, duration (secs)
     public static readonly Perk[] perks =
     {
-        new("Enchanter", "Tasks are 20% more effective, but your items have a 2% chance of breaking after use.", 5000, 172800),
+        new("Enchanter", "Tasks are 20% more effective, but your tools have a 2% chance of breaking after use.", 5000, 172800),
         new("Speed Demon", "Cooldowns are 15% shorter, but you have a 5% higher chance of failing any command that can fail.", 5000, 172800),
         new("Multiperk", "Grants the ability to equip 2 perks, not including this one.", 10000, 604800),
         new("Pacifist", "You are immune to all crimes, but you cannot use any crime commands and you also cannot appear on the leaderboard. Cannot be stacked with other perks, even if you have the Multiperk. Can be discarded, but cannot be used again for 3 days.", 0, -1)
@@ -36,29 +36,6 @@ public static class ItemSystem
     };
 
     public static Item GetItem(string name) => Array.Find((perks as Item[]).Concat(tools).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-
-    public static async Task<RuntimeResult> BuyItem(string item, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
-    {
-        DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
-        if (dbUser.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-
-        if (!dbUser.Items.Contains(item))
-        {
-            double price = GetItem(item).Price;
-            if (price <= dbUser.Cash)
-            {
-                dbUser.Items.Add(item);
-                await dbUser.SetCash(user, dbUser.Cash - price);
-                await user.NotifyAsync(channel, $"You got yourself a fresh {item} for **{price:C2}**!");
-                return CommandResult.FromSuccess();
-            }
-
-            return CommandResult.FromError($"You do not have enough to buy a {item}!");
-        }
-
-        return CommandResult.FromError($"You already have a {item}!");
-    }
 
     public static async Task<RuntimeResult> BuyPerk(string perkName, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
     {
@@ -115,9 +92,32 @@ public static class ItemSystem
         return CommandResult.FromError($"You already have {perkName}!");
     }
 
-    public static string GetBestItem(List<string> itemsList, string type)
+    public static async Task<RuntimeResult> BuyTool(string tool, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
     {
-        IEnumerable<string> itemsOfType = itemsList.Where(item => item.EndsWith(type));
-        return itemsOfType.OrderByDescending(item => GetItem(item).Price).First();
+        DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
+        if (dbUser.UsingSlots)
+            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+
+        if (!dbUser.Tools.Contains(tool))
+        {
+            double price = GetItem(tool).Price;
+            if (price <= dbUser.Cash)
+            {
+                dbUser.Tools.Add(tool);
+                await dbUser.SetCash(user, dbUser.Cash - price);
+                await user.NotifyAsync(channel, $"You got yourself a fresh {tool} for **{price:C2}**!");
+                return CommandResult.FromSuccess();
+            }
+
+            return CommandResult.FromError($"You do not have enough to buy a {tool}!");
+        }
+
+        return CommandResult.FromError($"You already have a {tool}!");
+    }
+
+    public static string GetBestTool(List<string> tools, string type)
+    {
+        IEnumerable<string> toolsOfType = tools.Where(tool => tool.EndsWith(type));
+        return toolsOfType.OrderByDescending(tool => GetItem(tool).Price).First();
     }
 }

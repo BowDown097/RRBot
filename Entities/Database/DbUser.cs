@@ -35,8 +35,6 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long HuntCooldown { get; set; }
     [FirestoreProperty]
-    public List<string> Items { get; set; } = new();
-    [FirestoreProperty]
     public long LootCooldown { get; set; }
     [FirestoreProperty]
     public double LTC { get; set; }
@@ -64,6 +62,8 @@ public class DbUser : DbObject
     public long SupportCooldown { get; set; }
     [FirestoreProperty]
     public long TimeTillCash { get; set; }
+    [FirestoreProperty]
+    public List<string> Tools { get; set; } = new();
     [FirestoreProperty]
     public bool UsingSlots { get; set; }
     [FirestoreProperty]

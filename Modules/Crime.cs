@@ -1,5 +1,5 @@
 ﻿namespace RRBot.Modules;
-[Summary("Hell yeah! Crime! Reject the ways of being a law-abiding citizen for some cold hard cash and maybe even an item. Or, maybe not. Depends how good you are at being a criminal.")]
+[Summary("Hell yeah! Crime! Reject the ways of being a law-abiding citizen for some cold hard cash and maybe even a tool. Or, maybe not. Depends how good you are at being a criminal.")]
 [CheckPacifist]
 public class Crime : ModuleBase<SocketCommandContext>
 {
@@ -364,14 +364,14 @@ public class Crime : ModuleBase<SocketCommandContext>
             await Context.User.NotifyAsync(Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", lostCash.ToString("C2")));
         }
 
-        if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
+        if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_TOOL_ODDS)
         {
-            string[] availableItems = ItemSystem.tools.Where(t => !user.Items.Contains(t.Name)).Select(t => t.Name).ToArray();
-            if (availableItems.Length > 0)
+            string[] availableTools = ItemSystem.tools.Where(t => !user.Tools.Contains(t.Name)).Select(t => t.Name).ToArray();
+            if (availableTools.Length > 0)
             {
-                string item = availableItems[RandomUtil.Next(availableItems.Length)];
-                user.Items.Add(item);
-                await ReplyAsync($"Well I'll be damned! You also got yourself a(n) {item}! Check out ``$module tasks`` to see how you can use it.");
+                string tool = availableTools[RandomUtil.Next(availableTools.Length)];
+                user.Tools.Add(tool);
+                await ReplyAsync($"Well I'll be damned! You also got yourself a(n) {tool}! Check out ``$module tasks`` to see how you can use it.");
             }
         }
 
