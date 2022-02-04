@@ -281,6 +281,11 @@ public class Crime : ModuleBase<SocketCommandContext>
                     .WithTitle("Scramble!")
                     .WithDescription($"**Unscramble this word:**\n{scrambled}\n*Type your response in the chat. You have {Constants.SCAVENGE_TIMEOUT} seconds!*");
                 IUserMessage scrambleMsg = await ReplyAsync(embed: scrambleEmbed.Build());
+                if (scrambled == "egg")
+                {
+                    await ReplyAsync("This egg is hard boiled, not scrambled. https://cdn.discordapp.com/attachments/661812833771847703/926190266904346725/video0.mov");
+                    await user.UnlockAchievement("Hard Boiled Egg", "Find a hard boiled egg.", Context.User, Context.Channel, 1337);
+                }
 
                 InteractiveResult<SocketMessage> scrambleResult = await Interactive.NextMessageAsync(
                     x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
