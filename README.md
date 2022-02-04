@@ -11,6 +11,7 @@ RR is a Discord bot that does nothing.
 The bot is abandoned.
 
 Pull requests will not be accepted.
+Citation is needed for the above statement.
 
 ## Running your own instance of the bot
 idk this doesnt run
