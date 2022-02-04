@@ -49,8 +49,8 @@ public static class Constants
     //        ECONOMY
     // ********************
     public const double DAILY_COOLDOWN = 24; // There are 24 hours in a day, so it should be 24
-    public const double DAILY_MIN = 1;
-    public const double DAILY_MAX = 2;
+    public const double DAILY_MIN = 1000;
+    public const double DAILY_MAX = 2500;
     // ********************
     //         FUN
     // ********************
