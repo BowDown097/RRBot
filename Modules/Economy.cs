@@ -35,12 +35,12 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Remarks("$buy [item]")]
     public async Task<RuntimeResult> Buy([Remainder] string item)
     {
-        if (ItemSystem.tools.Any(t => t.Name == item))
+        if (ItemSystem.tools.Any(t => t.Name.Equals(item, StringComparison.OrdinalIgnoreCase)))
             return await ItemSystem.BuyTool(item, Context.User, Context.Guild, Context.Channel);
-        else if (ItemSystem.perks.Any(perk => perk.Name == item))
+        else if (ItemSystem.perks.Any(perk => perk.Name.Equals(item, StringComparison.OrdinalIgnoreCase)))
             return await ItemSystem.BuyPerk(item, Context.User, Context.Guild, Context.Channel);
         else
-            return CommandResult.FromError($"**{item}** is not a valid item!\n*Tip: This command is case sensitive.*");
+            return CommandResult.FromError($"**{item}** is not a valid item!");
     }
 
     [Alias("cd")]
@@ -62,8 +62,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 cooldown = (long)(cooldown * 0.85);
             // 4th rank cooldown reducer
             DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
-            ulong rank4Id = ranks.Ids["4"];
-            if (Context.User.GetRoleIds().Contains(rank4Id))
+            if (ranks.Ids.TryGetValue("4", out ulong rank4Id) && Context.User.GetRoleIds().Contains(rank4Id))
                 cooldown = (long)(cooldown * 0.75);
             if (cooldown > 0L)
                 description.AppendLine($"**{cmd}**: {TimeSpan.FromSeconds(cooldown).FormatCompound()}");

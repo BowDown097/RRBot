@@ -43,16 +43,17 @@ public static class ItemSystem
         if (dbUser.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
+        Perk perk = GetItem(perkName) as Perk;
         if (dbUser.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError("You have the Pacifist perk and cannot buy another.");
-        if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && !(perkName is "Pacifist" or "Multiperk"))
+        if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && !(perk.Name is "Pacifist" or "Multiperk"))
             return CommandResult.FromError("You already have a perk.");
-        if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 3 && !(perkName is "Pacicist" or "Multiperk"))
+        if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 3 && !(perk.Name is "Pacicist" or "Multiperk"))
             return CommandResult.FromError("You already have 2 perks.");
 
-        if (!dbUser.Perks.ContainsKey(perkName))
+        if (!dbUser.Perks.ContainsKey(perk.Name))
         {
-            if (perkName == "Pacifist")
+            if (perk.Name == "Pacifist")
             {
                 if (dbUser.PacifistCooldown != 0)
                 {
@@ -72,40 +73,39 @@ public static class ItemSystem
                 }
             }
 
-            Perk perk = GetItem(perkName) as Perk;
             if (perk.Price <= dbUser.Cash)
             {
-                dbUser.Perks.Add(perkName, DateTimeOffset.UtcNow.ToUnixTimeSeconds(perk.Duration));
+                dbUser.Perks.Add(perk.Name, DateTimeOffset.UtcNow.ToUnixTimeSeconds(perk.Duration));
                 await dbUser.SetCash(user, dbUser.Cash - perk.Price);
 
-                StringBuilder notification = new($"You got yourself the {perkName} perk for **{perk.Price:C2}**!");
-                if (perkName == "Pacifist")
+                StringBuilder notification = new($"You got yourself the {perk} perk for **{perk.Price:C2}**!");
+                if (perk.Name == "Pacifist")
                     notification.Append(" Additionally, as you bought the Pacifist perk, any perks you previously had have been refunded.");
 
                 await user.NotifyAsync(channel, notification.ToString());
                 return CommandResult.FromSuccess();
             }
 
-            return CommandResult.FromError($"You do not have enough to buy {perkName}!");
+            return CommandResult.FromError($"You do not have enough to buy {perk}!");
         }
 
-        return CommandResult.FromError($"You already have {perkName}!");
+        return CommandResult.FromError($"You already have {perk}!");
     }
 
-    public static async Task<RuntimeResult> BuyTool(string tool, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
+    public static async Task<RuntimeResult> BuyTool(string toolName, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
     {
         DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
         if (dbUser.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-        if (!dbUser.Tools.Contains(tool))
+        Tool tool = GetItem(toolName) as Tool;
+        if (!dbUser.Tools.Contains(tool.Name))
         {
-            double price = GetItem(tool).Price;
-            if (price <= dbUser.Cash)
+            if (tool.Price <= dbUser.Cash)
             {
-                dbUser.Tools.Add(tool);
-                await dbUser.SetCash(user, dbUser.Cash - price);
-                await user.NotifyAsync(channel, $"You got yourself a fresh {tool} for **{price:C2}**!");
+                dbUser.Tools.Add(tool.Name);
+                await dbUser.SetCash(user, dbUser.Cash - tool.Price);
+                await user.NotifyAsync(channel, $"You got yourself a fresh {tool} for **{tool.Price:C2}**!");
                 return CommandResult.FromSuccess();
             }
 
