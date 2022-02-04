@@ -84,6 +84,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         string item = ItemSystem.GetBestItem(user.Items, "Pickaxe");
+        Tool tool = ItemSystem.GetItem(item) as Tool;
 
         int numMined = RandomUtil.Next(32, 65);
         if (user.Perks.ContainsKey("Enchanter"))
@@ -99,32 +100,18 @@ public class Tasks : ModuleBase<SocketCommandContext>
             numMined = (int)(numMined * 1.2);
         }
 
-        double cashGained = numMined * 4;
+        double cashGained = numMined * 4 * tool.Mult;
         double totalCash = user.Cash + cashGained;
+        string response = item switch
+        {
+            "Wooden Pickaxe" => $"You mined {numMined} stone with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
+            "Stone Pickaxe" => $"You mined {numMined} iron with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
+            "Iron Pickaxe" => $"You mined {numMined} diamonds with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
+            "Diamond Pickaxe" => $"You mined {numMined} obsidian with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
+            _ => ""
+        };
 
-        if (item.StartsWith("Wooden"))
-        {
-            await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} stone with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        }
-        else if (item.StartsWith("Stone"))
-        {
-            cashGained *= Constants.MINE_STONE_MULTIPLIER;
-            totalCash = user.Cash + cashGained;
-            await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} iron with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        }
-        else if (item.StartsWith("Iron"))
-        {
-            cashGained *= Constants.MINE_IRON_MULTIPLIER;
-            totalCash = user.Cash + cashGained;
-            await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} diamonds with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        }
-        else if (item.StartsWith("Diamond"))
-        {
-            cashGained *= Constants.MINE_DIAMOND_MULTIPLIER;
-            totalCash = user.Cash + cashGained;
-            await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        }
-
+        await Context.User.NotifyAsync(Context.Channel, response);
         user.AddToStats(new()
         {
             { "Tasks Done", "1" },

@@ -366,7 +366,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 
         if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_ITEM_ODDS)
         {
-            string[] availableItems = ItemSystem.items.Where(i => !user.Items.Contains(i)).ToArray();
+            string[] availableItems = ItemSystem.tools.Where(t => !user.Items.Contains(t.Name)).Select(t => t.Name).ToArray();
             if (availableItems.Length > 0)
             {
                 string item = availableItems[RandomUtil.Next(availableItems.Length)];

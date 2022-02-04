@@ -2,6 +2,7 @@
 [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
 public class Economy : ModuleBase<SocketCommandContext>
 {
+    public InteractiveService Interactive { get; set; }
     public static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Scavenge",
         "Slavery", "Whore", "Bully",  "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack",
         "Daily" };
@@ -34,9 +35,9 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Remarks("$buy [item]")]
     public async Task<RuntimeResult> Buy([Remainder] string item)
     {
-        if (ItemSystem.items.Any(i => i == item))
+        if (ItemSystem.tools.Any(t => t.Name == item))
             return await ItemSystem.BuyItem(item, Context.User, Context.Guild, Context.Channel);
-        else if (ItemSystem.perks.Any(perk => perk.name == item))
+        else if (ItemSystem.perks.Any(perk => perk.Name == item))
             return await ItemSystem.BuyPerk(item, Context.User, Context.Guild, Context.Channel);
         else
             return CommandResult.FromError($"**{item}** is not a valid item or perk!\n*Tip: This command is case sensitive.*");
@@ -125,7 +126,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         }
         else if (user.Items.Remove(item))
         {
-            double price = ItemSystem.ComputeItemPrice(item) / 1.5;
+            double price = ItemSystem.GetItem(item).Price;
             await user.SetCash(Context.User, user.Cash + price);
             await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{price:C2}**.");
         }
@@ -138,10 +139,44 @@ public class Economy : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Command("item")]
+    [Summary("View information on an item.")]
+    [Remarks("$item [item]")]
+    public async Task<RuntimeResult> ItemInfo([Remainder] string itemName)
+    {
+        Item item = ItemSystem.GetItem(itemName);
+        if (item is Tool tool)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(tool.Name)
+                .AddField("Price", tool.Price.ToString("C2"))
+                .AddField("Cash Range", tool.Name.EndsWith("Pickaxe")
+                    ? $"{128 * tool.Mult:C2} - {256 * tool.Mult:C2}"
+                    : $"{tool.GenericMin:C2} - {tool.GenericMax:C2}");
+            await ReplyAsync(embed: embed.Build());
+        }
+        else if (item is Perk perk)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(perk.Name)
+                .WithDescription(perk.Description)
+                .AddField("Price", perk.Price.ToString("C2"))
+                .AddField("Duration", TimeSpan.FromSeconds(perk.Duration).FormatCompound());
+            await ReplyAsync(embed: embed.Build());
+        }
+        else
+        {
+            return CommandResult.FromError($"**{itemName}** is not a valid item!");
+        }
+
+        return CommandResult.FromSuccess();
+    }
+
     [Command("items")]
     [Summary("Check your own or someone else's items.")]
     [Remarks("$items <user>")]
-    [RequireItem]
     public async Task GetItems(IGuildUser user = null)
     {
         ulong userId = user == null ? Context.User.Id : user.Id;
@@ -149,7 +184,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle(user == null ? "Items" : $"{user.Sanitize()}'s Items")
-            .WithDescription(string.Join(", ", dbUser.Items));
+            .WithDescription(dbUser.Items.Count > 0 ? string.Join(", ", dbUser.Items) : "None");
         await ReplyAsync(embed: embed.Build());
     }
 
@@ -223,9 +258,9 @@ public class Economy : ModuleBase<SocketCommandContext>
             if (kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist")
                 return;
 
-            Perk perk = Array.Find(ItemSystem.perks, p => p.name.Equals(kvp.Key, StringComparison.OrdinalIgnoreCase));
-            perksBuilder.AppendLine($"**{perk.name}**: {perk.description}" +
-                $"\nTime Left: {(perk.name != "Pacifist" ? TimeSpan.FromSeconds(kvp.Value - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound() : "Indefinite")}");
+            Perk perk = ItemSystem.GetItem(kvp.Key) as Perk;
+            perksBuilder.AppendLine($"**{perk.Name}**: {perk.Description}" +
+                $"\nTime Left: {(perk.Name != "Pacifist" ? TimeSpan.FromSeconds(kvp.Value - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound() : "Indefinite")}");
         }
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -284,49 +319,31 @@ public class Economy : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Command("shop")]
+    [Command("shop", RunMode = RunMode.Async)]
     [Summary("Check out what's available for purchase in the shop.")]
-    [Remarks("$shop <items|perks>")]
-    public async Task Shop(string category = "")
+    [Remarks("$shop")]
+    public async Task Shop()
     {
         StringBuilder items = new();
         StringBuilder perks = new();
 
-        foreach (string item in ItemSystem.items)
-        {
-            double price = ItemSystem.ComputeItemPrice(item);
-            items.AppendLine($"**{item}**: {price:C2}");
-        }
-
+        foreach (Tool tool in ItemSystem.tools)
+            items.AppendLine($"**{tool}**: {tool.Price:C2}");
         foreach (Perk perk in ItemSystem.perks)
-            perks.AppendLine($"**{perk.name}**: {perk.description}\nDuration: {TimeSpan.FromSeconds(perk.duration).FormatCompound()}\nPrice: {perk.price:C2}");
+            perks.AppendLine($"**{perk.Name}**: {perk.Description}\nDuration: {TimeSpan.FromSeconds(perk.Duration).FormatCompound()}\nPrice: {perk.Price:C2}");
 
-        EmbedBuilder itemsEmbed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle("⛏️Items⛏️️")
-            .WithDescription(items.ToString());
-        EmbedBuilder perksEmbed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle("️️🧪Perks🧪")
-            .WithDescription(perks.ToString());
+        PageBuilder[] pages = new[]
+        {
+            new PageBuilder().WithColor(Color.Red).WithTitle("Items").WithDescription(items.ToString()),
+            new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(perks.ToString())
+        };
 
-        if (string.IsNullOrWhiteSpace(category))
-        {
-            await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: itemsEmbed.Build());
-            await ReplyAsync(embed: perksEmbed.Build());
-        }
-        else if (category.Equals("items", StringComparison.OrdinalIgnoreCase))
-        {
-            await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: itemsEmbed.Build());
-        }
-        else if (category.Equals("perks", StringComparison.OrdinalIgnoreCase))
-        {
-            await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: perksEmbed.Build());
-        }
-        else
-        {
-            await Context.User.NotifyAsync(Context.Channel, $"**{category}** is not a valid category!");
-        }
+        StaticPaginator paginator = new StaticPaginatorBuilder()
+            .AddUser(Context.User)
+            .WithPages(pages)
+            .Build();
+
+        await Interactive.SendPaginatorAsync(paginator, Context.Channel, resetTimeoutOnInput: true);
     }
 
     [Alias("kms", "selfend")]

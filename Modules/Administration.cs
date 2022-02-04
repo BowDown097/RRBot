@@ -10,7 +10,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     {
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-        if (!ItemSystem.items.Contains(item))
+        if (!ItemSystem.tools.Any(t => t.Name == item))
             return CommandResult.FromError($"**{item}** is not a valid item!");
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
