@@ -1,9 +1,8 @@
 # RR Bot
 heavily inspired by the [DEA Discord bot](https://github.com/Asshley/DEA).
 
-<img src="https://img.shields.io/codefactor/grade/github/BowDown097/RRBot" />
-<p>the above codefactor grade is for the original repository</p>
-<p>codefactor complains when i use this repo</p>
+<img src="https://img.shields.io/codefactor/grade/github/Realswitzer/RRBot" />
+<p>very good code as you can tell</p>
 
 ## Features
 RR is a Discord bot that does nothing.
