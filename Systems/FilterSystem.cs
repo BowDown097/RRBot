@@ -84,9 +84,6 @@ public static class FilterSystem
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
         if (optionals.NoFilterChannels.Contains(message.Channel.Id))
             return;
-
-        if (await ContainsFilteredWord(guild, message.Content, optionals))
-            await message.DeleteAsync();
     }
 
     public static async Task DoScamCheckAsync(SocketUserMessage message, IGuild guild)
