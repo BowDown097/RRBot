@@ -23,8 +23,6 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public bool DMNotifs { get; set; }
     [FirestoreProperty]
-    public double DOGE { get; set; }
-    [FirestoreProperty]
     public double ETH { get; set; }
     [FirestoreProperty]
     public long FarmCooldown { get; set; }

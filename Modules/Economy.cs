@@ -182,7 +182,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Leaderboard(string currency = "cash")
     {
         string cUp = currency.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : currency.ToUpper();
-        if (!(cUp is "Cash" or "BTC" or "DOGE" or "ETH" or "LTC" or "XRP"))
+        if (!(cUp is "Cash" or "BTC" or "ETH" or "LTC" or "XRP"))
             return CommandResult.FromError($"**{currency}** is not a currently accepted currency!");
 
         double cryptoValue = cUp != "Cash" ? await Investments.QueryCryptoValue(cUp) : 0;
@@ -356,7 +356,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await Context.User.NotifyAsync(Context.Channel, "​DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                 await user.Reference.DeleteAsync();
                 await user.SetCash(Context.User, 0);
-                RestoreUserData(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
+                RestoreUserData(user, temp.BTC, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
                     temp.NoReplyPings, temp.Stats, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
@@ -367,7 +367,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                 await user.Reference.DeleteAsync();
                 await user.SetCash(Context.User, 0);
-                RestoreUserData(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
+                RestoreUserData(user, temp.BTC, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
                     temp.NoReplyPings, temp.Stats, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
@@ -393,13 +393,12 @@ public class Economy : ModuleBase<SocketCommandContext>
         await ReplyAsync(embed: embed.Build());
     }
 
-    private static void RestoreUserData(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
+    private static void RestoreUserData(DbUser user, double btc, double eth, double ltc, double xrp,
         bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long dealCd, long lootCd,
         long rapeCd, long robCd, long scavengeCd, long slaveryCd, long whoreCd, long bullyCd, long chopCd, long digCd,
         long farmCd, long fishCd, long huntCd, long mineCd, long supportCd, long hackCd, long dailyCd)
     {
         user.BTC = btc;
-        user.DOGE = doge;
         user.ETH = eth;
         user.LTC = ltc;
         user.XRP = xrp;

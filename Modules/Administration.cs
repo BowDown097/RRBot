@@ -10,15 +10,16 @@ public class Administration : ModuleBase<SocketCommandContext>
     {
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-        if (!ItemSystem.tools.Any(t => t.Name == tool))
+        if (!ItemSystem.tools.Any(t => t.Name.Equals(tool, StringComparison.OrdinalIgnoreCase)))
             return CommandResult.FromError($"**{tool}** is not a valid tool!");
 
+        Item item = ItemSystem.GetItem(tool);
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-        if (dbUser.Tools.Contains(tool))
-            return CommandResult.FromError($"**{user.Sanitize()}** already has a(n) {tool}.");
+        if (dbUser.Tools.Contains(item.Name))
+            return CommandResult.FromError($"**{user.Sanitize()}** already has a(n) {item}.");
 
-        dbUser.Tools.Add(tool);
-        await Context.User.NotifyAsync(Context.Channel, $"Gave **{user.Sanitize()}** a(n) {tool}.");
+        dbUser.Tools.Add(item.Name);
+        await Context.User.NotifyAsync(Context.Channel, $"Gave **{user.Sanitize()}** a(n) {item}.");
         return CommandResult.FromSuccess();
     }
 
@@ -57,12 +58,12 @@ public class Administration : ModuleBase<SocketCommandContext>
         string cUp = crypto.ToUpper();
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-        if (!(cUp is "BTC" or "DOGE" or "ETH" or "LTC" or "XRP"))
+        if (!(cUp is "BTC" or "ETH" or "LTC" or "XRP"))
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         dbUser[cUp] = Math.Round(amount, 4);
-        await Context.User.NotifyAsync(Context.Channel, $"Added **{amount}** to **{user.Sanitize()}**'s {cUp} balance.");
+        await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s {cUp} to **{amount:0.####}**.");
         return CommandResult.FromSuccess();
     }
 
