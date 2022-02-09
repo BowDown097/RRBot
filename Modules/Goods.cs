@@ -33,7 +33,11 @@ public class Goods : ModuleBase<SocketCommandContext>
     {
         RuntimeResult result = await ItemSystem.BuyCrate(ItemSystem.GetItem("Daily") as Crate, Context.User, Context.Guild, Context.Channel, false);
         if (result.IsSuccess)
+        {
             await Context.User.NotifyAsync(Context.Channel, "Here's a Daily crate, my good man! Best of luck.");
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            user.DailyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.DAILY_COOLDOWN);
+        }
         return result;
     }
 
