@@ -15,8 +15,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
 
-        ulong userId = user == null ? Context.User.Id : user.Id;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
         if (dbUser.Cash < 0.01)
             return CommandResult.FromError(user == null ? "You're broke!" : $"**{user.Sanitize()}** is broke!");
 
@@ -34,10 +33,10 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Remarks("$cooldowns <user>")]
     public async Task Cooldowns(IGuildUser user = null)
     {
-        ulong userId = user == null ? Context.User.Id : user.Id;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
         StringBuilder description = new();
         double mult = dbUser.Perks.ContainsKey("Speed Demon") ? 0.85 : 1;
+        DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
 
         foreach (string cmd in CMDS_WITH_COOLDOWN)
         {
@@ -46,7 +45,6 @@ public class Economy : ModuleBase<SocketCommandContext>
             if (dbUser.Perks.ContainsKey("Speed Demon"))
                 cooldown = (long)(cooldown * 0.85);
             // 4th rank cooldown reducer
-            DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
             if (ranks.Ids.TryGetValue("4", out ulong rank4Id) && Context.User.GetRoleIds().Contains(rank4Id))
                 cooldown = (long)(cooldown * 0.75);
             if (cooldown > 0L)
@@ -55,7 +53,7 @@ public class Economy : ModuleBase<SocketCommandContext>
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle(user == null ? "Cooldowns" : $"{user.Sanitize()}'s Cooldowns")
+            .WithTitle("Cooldowns")
             .WithDescription(description.Length > 0 ? description.ToString() : "None");
         await ReplyAsync(embed: embed.Build());
     }

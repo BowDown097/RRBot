@@ -39,7 +39,7 @@ public static class ItemSystem
         new("Fishing Rod", 7500, Constants.FISH.First().Value * 7, Constants.FISH.Last().Value * 15)
     };
 
-    public static Item GetItem(string name) => Array.Find((consumables as Item[]).Concat(perks).Concat(tools).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+    public static Item GetItem(string name) => Array.Find(consumables.Cast<Item>().Concat(perks).Concat(tools).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 
     public static async Task<RuntimeResult> BuyPerk(Perk perk, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
     {

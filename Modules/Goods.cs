@@ -11,8 +11,6 @@ public class Goods : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Buy([Remainder] string itemName)
     {
         Item item = ItemSystem.GetItem(itemName);
-        //if (item is Consumable consumable)
-            //return await ItemSystem.BuyConsumable(consumable.Name, Context.User, Context.Guild, Context.Channel);
         if (item is Perk perk)
             return await ItemSystem.BuyPerk(perk, Context.User, Context.Guild, Context.Channel);
         else if (item is Tool tool)
@@ -136,29 +134,32 @@ public class Goods : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Command("perks")]
-    [Summary("View info about your currently active perks.")]
-    [Remarks("$perks")]
-    [RequirePerk]
-    public async Task Perks()
+    [Command("items", RunMode = RunMode.Async)]
+    [Summary("View your own or someone else's tools, active perks, and consumables.")]
+    [Remarks("$items <user>")]
+    public async Task<RuntimeResult> Items(IGuildUser user = null)
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        StringBuilder perksBuilder = new();
-        foreach (KeyValuePair<string, long> kvp in user.Perks.OrderBy(p => p.Key))
-        {
-            if (kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist")
-                return;
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
 
-            Perk perk = ItemSystem.GetItem(kvp.Key) as Perk;
-            perksBuilder.AppendLine($"**{perk.Name}**: {perk.Description}" +
-                $"\nTime Left: {(perk.Name != "Pacifist" ? TimeSpan.FromSeconds(kvp.Value - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound() : "Indefinite")}");
-        }
+        IEnumerable<string> sortedPerks = dbUser.Perks.Where(k => k.Value > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(p => p.Key);
+        List<PageBuilder> pages = new();
+        if (dbUser.Tools.Count > 0)
+            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(string.Join(", ", dbUser.Tools)));
+        if (sortedPerks.Any())
+            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(string.Join(", ", sortedPerks)));
+        if (dbUser.Consumables.Count > 0)
+            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Consumables").WithDescription(string.Join(", ", dbUser.Consumables)));
 
-        EmbedBuilder embed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle("Perks")
-            .WithDescription(perksBuilder.Length > 0 ? perksBuilder.ToString() : "None");
-        await ReplyAsync(embed: embed.Build());
+        if (pages.Count == 0)
+            return CommandResult.FromError(user == null ? "You've got nothing!" : $"**{user.Sanitize()}**'s got nothing!");
+
+        StaticPaginator paginator = new StaticPaginatorBuilder()
+            .AddUser(Context.User)
+            .WithPages(pages)
+            .Build();
+
+        await Interactive.SendPaginatorAsync(paginator, Context.Channel, resetTimeoutOnInput: true);
+        return CommandResult.FromSuccess();
     }
 
     [Command("shop", RunMode = RunMode.Async)]
@@ -186,19 +187,5 @@ public class Goods : ModuleBase<SocketCommandContext>
             .Build();
 
         await Interactive.SendPaginatorAsync(paginator, Context.Channel, resetTimeoutOnInput: true);
-    }
-
-    [Command("tools")]
-    [Summary("Check your own or someone else's tools.")]
-    [Remarks("$tools <user>")]
-    public async Task Tools(IGuildUser user = null)
-    {
-        ulong userId = user == null ? Context.User.Id : user.Id;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
-        EmbedBuilder embed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle(user == null ? "Tools" : $"{user.Sanitize()}'s Tools")
-            .WithDescription(dbUser.Tools.Count > 0 ? string.Join(", ", dbUser.Tools) : "None");
-        await ReplyAsync(embed: embed.Build());
     }
 }
