@@ -45,7 +45,7 @@ public class Economy : ModuleBase<SocketCommandContext>
             if (dbUser.Perks.ContainsKey("Speed Demon"))
                 cooldown = (long)(cooldown * 0.85);
             // 4th rank cooldown reducer
-            if (ranks.Ids.TryGetValue("4", out ulong rank4Id) && Context.User.GetRoleIds().Contains(rank4Id))
+            if (Context.User.GetRoleIds().Contains(ranks.Ids.Select(k => k.Value).LastOrDefault()))
                 cooldown = (long)(cooldown * 0.75);
             if (cooldown > 0L)
                 description.AppendLine($"**{cmd}**: {TimeSpan.FromSeconds(cooldown).FormatCompound()}");
