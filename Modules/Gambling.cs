@@ -180,7 +180,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
         double roll = Math.Round(RandomUtil.NextDouble(1, 101), 2);
         if (user.Perks.ContainsKey("Speed Demon"))
-            odds *= 0.95;
+            odds *= 1.05;
         bool success = !exactRoll ? roll >= odds : roll.CompareTo(odds) == 0;
         if (success)
         {

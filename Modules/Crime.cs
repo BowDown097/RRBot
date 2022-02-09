@@ -252,7 +252,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         using HttpClient client = new();
         string response = await client.GetStringAsync("https://www.thegamegal.com/wordgenerator/generator.php?game=2&category=6");
         JToken[] words = JObject.Parse(response)["words"].ToArray();
-        string originalWord = words[RandomUtil.Next(words.Length - 1)].ToString();
+        string originalWord = words[RandomUtil.Next(words.Length)].ToString();
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
 
         switch (RandomUtil.Next(2))
