@@ -15,6 +15,10 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long ChopCooldown { get; set; }
     [FirestoreProperty]
+    public Dictionary<string, int> Consumables { get; set; } = new();
+    [FirestoreProperty]
+    public List<string> Crates { get; set; } = new();
+    [FirestoreProperty]
     public long DailyCooldown { get; set; }
     [FirestoreProperty]
     public long DealCooldown { get; set; }

@@ -9,7 +9,7 @@ public class Support : ModuleBase<SocketCommandContext>
     [Remarks("$close <user>")]
     public async Task<RuntimeResult> Close(IGuildUser user = null)
     {
-        DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, user == null ? Context.User.Id : user.Id);
+        DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
         if (string.IsNullOrWhiteSpace(ticket.Request))
         {
             return CommandResult.FromError(user == null

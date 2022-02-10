@@ -1,7 +1,21 @@
 ﻿namespace RRBot.Systems;
 public static class ItemSystem
 {
-    // name, description, price, duration (secs)
+    public static readonly Crate[] crates =
+    {
+        new("Daily", 0, 1, cash: 1500),
+        new("Bronze", 5000, 2 ),
+        new("Silver", 10000, 3, 1),
+        new("Gold", 15000, 5, 2),
+        new("Diamond", 25000, 10, 3)
+    };
+
+    public static readonly Consumable[] consumables =
+    {
+        new("Cocaine", "Snorting a line of this funny sugar makes you HYPER and has some crazy effects. It wears off after 1 hour.", "You have a chance of overdosing, which will make you lose all your remaining cocaine and money, as well as not be able to use economy commands for a certain amount of time. The chance of overdosing and how long you can't use economy commands depends on how many lines you have in your system.", "Cooldowns are reduced by 10% for each line snorted.", 0, 3600),
+        new("Romanian Flag", "A neat little good luck charm for $rob. Your Romanian pride makes stealing wallets much easier! Wears off after 1 hour. Can only carry one at a time.", "A Romanian might notice you and take some of your money.", "$rob chance increased by 10%.", 0, 3600)
+    };
+
     public static readonly Perk[] perks =
     {
         new("Enchanter", "Tasks are 20% more effective, but your tools have a 2% chance of breaking after use.", 5000, 172800),
@@ -35,15 +49,30 @@ public static class ItemSystem
         new("Fishing Rod", 7500, Constants.FISH.First().Value * 7, Constants.FISH.Last().Value * 15)
     };
 
-    public static Item GetItem(string name) => Array.Find((perks as Item[]).Concat(tools).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+    public static Item GetItem(string name) => Array.Find(crates.Cast<Item>().Concat(consumables).Concat(perks).Concat(tools).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 
-    public static async Task<RuntimeResult> BuyPerk(string perkName, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
+    public static async Task<RuntimeResult> BuyCrate(Crate crate, SocketUser user, SocketGuild guild, ISocketMessageChannel channel, bool notify = true)
     {
         DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
         if (dbUser.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+        if (dbUser.Crates.Count(s => s == crate.Name) == 10)
+            return CommandResult.FromError($"You already have the maximum amount of {crate} crates (10).");
+        if (crate.Price > dbUser.Cash)
+            return CommandResult.FromError($"You do not have enough to buy a {crate} crate!");
 
-        Perk perk = GetItem(perkName) as Perk;
+        dbUser.Crates.Add(crate.Name);
+        await dbUser.SetCash(user, dbUser.Cash - crate.Price);
+        if (notify)
+            await user.NotifyAsync(channel, $"You got yourself a {crate} crate for **{crate.Price:C2}**!");
+        return CommandResult.FromSuccess();
+    }
+
+    public static async Task<RuntimeResult> BuyPerk(Perk perk, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
+    {
+        DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
+        if (dbUser.UsingSlots)
+            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (dbUser.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError("You have the Pacifist perk and cannot buy another.");
         if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && !(perk.Name is "Pacifist" or "Multiperk"))
@@ -92,13 +121,12 @@ public static class ItemSystem
         return CommandResult.FromError($"You already have {perk}!");
     }
 
-    public static async Task<RuntimeResult> BuyTool(string toolName, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
+    public static async Task<RuntimeResult> BuyTool(Tool tool, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
     {
         DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
         if (dbUser.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-        Tool tool = GetItem(toolName) as Tool;
         if (!dbUser.Tools.Contains(tool.Name))
         {
             if (tool.Price <= dbUser.Cash)
