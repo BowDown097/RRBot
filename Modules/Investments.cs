@@ -50,8 +50,7 @@ public class Investments : ModuleBase<SocketCommandContext>
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
 
-        ulong userId = user == null ? Context.User.Id : user.Id;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
 
         StringBuilder investments = new();
         if (dbUser.BTC >= Constants.INVESTMENT_MIN_AMOUNT)
@@ -65,7 +64,7 @@ public class Investments : ModuleBase<SocketCommandContext>
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle(user == null ? "Your Investments" : $"{user.Sanitize()}'s Investments")
+            .WithTitle("Investments")
             .WithDescription(investments.Length > 0 ? investments.ToString() : "None");
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
