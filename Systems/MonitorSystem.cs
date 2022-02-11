@@ -99,9 +99,9 @@ public class MonitorSystem
                             if (kvp.Key == "Multiperk" && user.Perks.Count >= 2)
                             {
                                 string lastPerk = user.Perks.Last().Key;
-                                Perk perk = Array.Find(ItemSystem.perks, p => p.name == lastPerk);
+                                Perk perk = ItemSystem.GetItem(lastPerk) as Perk;
                                 SocketUser socketUser = guild.GetUser(userId);
-                                await user.SetCash(socketUser, user.Cash + perk.price);
+                                await user.SetCash(socketUser, user.Cash + perk.Price);
                                 user.Perks.Remove(lastPerk);
                             }
                         }

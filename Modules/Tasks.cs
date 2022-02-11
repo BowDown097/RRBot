@@ -1,33 +1,33 @@
 ﻿namespace RRBot.Modules;
-[Summary("The best way to earn money by far, at least for those lucky or rich enough to get themselves an item.")]
+[Summary("The best way to earn money by far, at least for those lucky or rich enough to get themselves a tool.")]
 public class Tasks : ModuleBase<SocketCommandContext>
 {
     [Command("chop")]
     [Summary("Go chop some wood.")]
     [Remarks("$chop")]
     [RequireCooldown("ChopCooldown", "You cannot chop wood for {0}.")]
-    [RequireItem("Axe")]
+    [RequireTool("Axe")]
     public async Task Chop() => await GenericTask("Axe", "chopped down", "trees", "ChopCooldown", Constants.CHOP_COOLDOWN);
 
     [Command("dig")]
     [Summary("Go digging.")]
     [Remarks("$dig")]
     [RequireCooldown("DigCooldown", "You cannot go digging for {0}.")]
-    [RequireItem("Shovel")]
+    [RequireTool("Shovel")]
     public async Task Dig() => await GenericTask("Shovel", "mined", "dirt", "DigCooldown", Constants.DIG_COOLDOWN);
 
     [Command("farm")]
     [Summary("Go farming.")]
     [Remarks("$farm")]
     [RequireCooldown("FarmCooldown", "You cannot farm for {0}.")]
-    [RequireItem("Hoe")]
+    [RequireTool("Hoe")]
     public async Task Farm() => await GenericTask("Hoe", "farmed", "crops", "FarmCooldown", Constants.FARM_COOLDOWN);
 
     [Command("fish")]
     [Summary("Go fishing.")]
     [Remarks("$fish")]
     [RequireCooldown("FishCooldown", "You cannot fish for {0}.")]
-    [RequireItem("Fishing Rod")]
+    [RequireTool("Fishing Rod")]
     public async Task Fish()
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
@@ -39,7 +39,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
             int randNum = RandomUtil.Next(100);
             if (randNum == 1 || randNum == 2)
             {
-                user.Items.Remove("Fishing Rod");
+                user.Tools.Remove("Fishing Rod");
                 await Context.User.NotifyAsync(Context.Channel, "Your Fishing Rod broke into pieces as soon as you tried to use it. You made no money.");
                 return;
             }
@@ -72,18 +72,19 @@ public class Tasks : ModuleBase<SocketCommandContext>
     [Summary("Go hunting.")]
     [Remarks("$hunt")]
     [RequireCooldown("HuntCooldown", "You cannot go hunting for {0}.")]
-    [RequireItem("Sword")]
+    [RequireTool("Sword")]
     public async Task Hunt() => await GenericTask("Sword", "hunted", "mobs", "HuntCooldown", Constants.HUNT_COOLDOWN);
 
     [Command("mine")]
     [Summary("Go mining.")]
     [Remarks("$mine")]
     [RequireCooldown("MineCooldown", "You cannot go mining for {0}.")]
-    [RequireItem("Pickaxe")]
+    [RequireTool("Pickaxe")]
     public async Task Mine()
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        string item = ItemSystem.GetBestItem(user.Items, "Pickaxe");
+        string toolName = ItemSystem.GetBestTool(user.Tools, "Pickaxe");
+        Tool tool = ItemSystem.GetItem(toolName) as Tool;
 
         int numMined = RandomUtil.Next(32, 65);
         if (user.Perks.ContainsKey("Enchanter"))
@@ -91,40 +92,26 @@ public class Tasks : ModuleBase<SocketCommandContext>
             int randNum = RandomUtil.Next(100);
             if (randNum == 1 || randNum == 2)
             {
-                user.Items.Remove(item);
-                await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
+                user.Tools.Remove(toolName);
+                await Context.User.NotifyAsync(Context.Channel, $"Your {toolName} broke into pieces as soon as you tried to use it. You made no money.");
                 return;
             }
 
             numMined = (int)(numMined * 1.2);
         }
 
-        double cashGained = numMined * 4;
+        double cashGained = numMined * 4 * tool.Mult;
         double totalCash = user.Cash + cashGained;
+        string response = toolName switch
+        {
+            "Wooden Pickaxe" => $"You mined {numMined} stone with your {toolName} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
+            "Stone Pickaxe" => $"You mined {numMined} iron with your {toolName} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
+            "Iron Pickaxe" => $"You mined {numMined} diamonds with your {toolName} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
+            "Diamond Pickaxe" => $"You mined {numMined} obsidian with your {toolName} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
+            _ => ""
+        };
 
-        if (item.StartsWith("Wooden"))
-        {
-            await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} stone with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        }
-        else if (item.StartsWith("Stone"))
-        {
-            cashGained *= Constants.MINE_STONE_MULTIPLIER;
-            totalCash = user.Cash + cashGained;
-            await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} iron with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        }
-        else if (item.StartsWith("Iron"))
-        {
-            cashGained *= Constants.MINE_IRON_MULTIPLIER;
-            totalCash = user.Cash + cashGained;
-            await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} diamonds with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        }
-        else if (item.StartsWith("Diamond"))
-        {
-            cashGained *= Constants.MINE_DIAMOND_MULTIPLIER;
-            totalCash = user.Cash + cashGained;
-            await Context.User.NotifyAsync(Context.Channel, $"You mined {numMined} obsidian with your {item} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        }
-
+        await Context.User.NotifyAsync(Context.Channel, response);
         user.AddToStats(new()
         {
             { "Tasks Done", "1" },
@@ -134,19 +121,19 @@ public class Tasks : ModuleBase<SocketCommandContext>
         user.MineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN);
     }
 
-    private async Task GenericTask(string itemType, string activity, string thing, string cooldown, double duration)
+    private async Task GenericTask(string toolType, string activity, string thing, string cooldown, double duration)
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        string item = ItemSystem.GetBestItem(user.Items, itemType);
+        string tool = ItemSystem.GetBestTool(user.Tools, toolType);
         int numMined = 0;
 
-        if (item.StartsWith("Wooden"))
+        if (tool.StartsWith("Wooden"))
             numMined = RandomUtil.Next(Constants.GENERIC_TASK_WOOD_MIN, Constants.GENERIC_TASK_WOOD_MAX); // default for wooden
-        else if (item.StartsWith("Stone"))
+        else if (tool.StartsWith("Stone"))
             numMined = RandomUtil.Next(Constants.GENERIC_TASK_STONE_MIN, Constants.GENERIC_TASK_STONE_MAX);
-        else if (item.StartsWith("Iron"))
+        else if (tool.StartsWith("Iron"))
             numMined = RandomUtil.Next(Constants.GENERIC_TASK_IRON_MIN, Constants.GENERIC_TASK_IRON_MAX);
-        else if (item.StartsWith("Diamond"))
+        else if (tool.StartsWith("Diamond"))
             numMined = RandomUtil.Next(Constants.GENERIC_TASK_DIAMOND_MIN, Constants.GENERIC_TASK_DIAMOND_MAX);
 
         if (user.Perks.ContainsKey("Enchanter"))
@@ -154,8 +141,8 @@ public class Tasks : ModuleBase<SocketCommandContext>
             int randNum = RandomUtil.Next(100);
             if (randNum == 1 || randNum == 2)
             {
-                user.Items.Remove(item);
-                await Context.User.NotifyAsync(Context.Channel, $"Your {item} broke into pieces as soon as you tried to use it. You made no money.");
+                user.Tools.Remove(tool);
+                await Context.User.NotifyAsync(Context.Channel, $"Your {tool} broke into pieces as soon as you tried to use it. You made no money.");
                 return;
             }
 
@@ -165,7 +152,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
         double cashGained = numMined * 2.5;
         double totalCash = user.Cash + cashGained;
 
-        await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {item} and earned **{cashGained:C2}**." +
+        await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {tool} and earned **{cashGained:C2}**." +
             $"\nBalance: {totalCash:C2}");
 
         await user.SetCash(Context.User, totalCash);
