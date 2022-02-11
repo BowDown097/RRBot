@@ -15,8 +15,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
 
-        ulong userId = user == null ? Context.User.Id : user.Id;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
         if (dbUser.Cash < 0.01)
             return CommandResult.FromError(user == null ? "You're broke!" : $"**{user.Sanitize()}** is broke!");
 
@@ -28,30 +27,16 @@ public class Economy : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Alias("purchase")]
-    [Command("buy")]
-    [Summary("Buy an item or perk from the shop.")]
-    [Remarks("$buy [item]")]
-    public async Task<RuntimeResult> Buy([Remainder] string item)
-    {
-        if (ItemSystem.items.Any(i => i == item))
-            return await ItemSystem.BuyItem(item, Context.User, Context.Guild, Context.Channel);
-        else if (ItemSystem.perks.Any(perk => perk.name == item))
-            return await ItemSystem.BuyPerk(item, Context.User, Context.Guild, Context.Channel);
-        else
-            return CommandResult.FromError($"**{item}** is not a valid item or perk!\n*Tip: This command is case sensitive.*");
-    }
-
     [Alias("cd")]
     [Command("cooldowns")]
     [Summary("Check your own or someone else's crime cooldowns.")]
     [Remarks("$cooldowns <user>")]
     public async Task Cooldowns(IGuildUser user = null)
     {
-        ulong userId = user == null ? Context.User.Id : user.Id;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
         StringBuilder description = new();
         double mult = dbUser.Perks.ContainsKey("Speed Demon") ? 0.85 : 1;
+        DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
 
         foreach (string cmd in CMDS_WITH_COOLDOWN)
         {
@@ -60,9 +45,7 @@ public class Economy : ModuleBase<SocketCommandContext>
             if (dbUser.Perks.ContainsKey("Speed Demon"))
                 cooldown = (long)(cooldown * 0.85);
             // 4th rank cooldown reducer
-            DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
-            ulong rank4Id = ranks.Ids["4"];
-            if (Context.User.GetRoleIds().Contains(rank4Id))
+            if (Context.User.GetRoleIds().Contains(ranks.Ids.Select(k => k.Value).LastOrDefault()))
                 cooldown = (long)(cooldown * 0.75);
             if (cooldown > 0L)
                 description.AppendLine($"**{cmd}**: {TimeSpan.FromSeconds(cooldown).FormatCompound()}");
@@ -70,86 +53,8 @@ public class Economy : ModuleBase<SocketCommandContext>
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle(user == null ? "Cooldowns" : $"{user.Sanitize()}'s Cooldowns")
+            .WithTitle("Cooldowns")
             .WithDescription(description.Length > 0 ? description.ToString() : "None");
-        await ReplyAsync(embed: embed.Build());
-    }
-
-    [Command("daily")]
-    [Summary("Get a daily reward.")]
-    [Remarks("$daily")]
-    [RequireCooldown("DailyCooldown", "Slow down there, turbo! It hasn't been a day yet. You've still got {0} left.")]
-    [RequireRankLevel("3")]
-    public async Task<RuntimeResult> Daily()
-    {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-
-        double moneyEarned = RandomUtil.NextDouble(Constants.DAILY_MIN, Constants.DAILY_MAX);
-        double totalCash = user.Cash + moneyEarned;
-        string message = RandomUtil.Next(5) switch
-        {
-            0 => $"Your job at Pierce & Pierce is paying exceptionally well, and business is looking fantastic. **{moneyEarned:C2}** for a pretty mild day of work. That's what I'm talkin' bout.\nBalance: {totalCash:C2}",
-            1 => $"Quite a long day of disabling evil right-wingers' Discord accounts, but hey, you got yourself **{moneyEarned:C2}**. Least it's paying better than the furry shoots you were doing for quite a while.\nBalance: {totalCash:C2}",
-            2 => $"The OnlyFans money is pouring in! **{moneyEarned:C2}** from some lonely suckers just today! Thank God for giving you such a big ass.\nBalance: {totalCash:C2}",
-            3 => $"Another day of slouching on the couch and leeching off taxpayer money has gotten you **{moneyEarned:C2}**.\nBalance: {totalCash:C2}",
-            4 => $"Hot dayum! **{moneyEarned:C2}** from simp donations on your hot tub stream tonight! Your (also simp) boyfriend is gonna be ecstatic.\nBalance: {totalCash:C2}",
-            _ => ""
-        };
-
-        await user.SetCash(Context.User, totalCash);
-        user.DailyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.DAILY_COOLDOWN);
-        await Context.User.NotifyAsync(Context.Channel, message);
-        return CommandResult.FromSuccess();
-    }
-
-    [Alias("sell")]
-    [Command("discard")]
-    [Summary("Discard an item or the Pacifist perk.")]
-    [Remarks("$discard [item]")]
-    public async Task<RuntimeResult> Discard([Remainder] string item)
-    {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-
-        if (item == "Pacifist")
-        {
-            if (!user.Perks.ContainsKey("Pacifist"))
-                return CommandResult.FromError("You do not have the Pacifist perk!");
-
-            user.Perks.Remove("Pacifist");
-            user.PacifistCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(259200);
-            await Context.User.NotifyAsync(Context.Channel, "You discarded your Pacifist perk. If you wish to buy it again, you will have to wait 3 days.");
-        }
-        else if (user.Items.Remove(item))
-        {
-            double price = ItemSystem.ComputeItemPrice(item) / 1.5;
-            await user.SetCash(Context.User, user.Cash + price);
-            await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{price:C2}**.");
-        }
-        else
-        {
-            return CommandResult.FromError($"You do not have a(n) {item}!" +
-                "\n*Tip: This command is case sensitive and does not accept perks other than Pacifist.*");
-        }
-
-        return CommandResult.FromSuccess();
-    }
-
-    [Command("items")]
-    [Summary("Check your own or someone else's items.")]
-    [Remarks("$items <user>")]
-    [RequireItem]
-    public async Task GetItems(IGuildUser user = null)
-    {
-        ulong userId = user == null ? Context.User.Id : user.Id;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
-        EmbedBuilder embed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle(user == null ? "Items" : $"{user.Sanitize()}'s Items")
-            .WithDescription(string.Join(", ", dbUser.Items));
         await ReplyAsync(embed: embed.Build());
     }
 
@@ -160,7 +65,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Leaderboard(string currency = "cash")
     {
         string cUp = currency.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : currency.ToUpper();
-        if (!(cUp is "Cash" or "BTC" or "DOGE" or "ETH" or "LTC" or "XRP"))
+        if (!(cUp is "Cash" or "BTC" or "ETH" or "LTC" or "XRP"))
             return CommandResult.FromError($"**{currency}** is not a currently accepted currency!");
 
         double cryptoValue = cUp != "Cash" ? await Investments.QueryCryptoValue(cUp) : 0;
@@ -208,31 +113,6 @@ public class Economy : ModuleBase<SocketCommandContext>
             .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20-{failedUsers}-False", disabled: processedUsers != 10 || users.Documents.Count < 11);
         await ReplyAsync(embed: embed.Build(), components: component.Build());
         return CommandResult.FromSuccess();
-    }
-
-    [Command("perks")]
-    [Summary("View info about your currently active perks.")]
-    [Remarks("$perks")]
-    [RequirePerk]
-    public async Task Perks()
-    {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        StringBuilder perksBuilder = new();
-        foreach (KeyValuePair<string, long> kvp in user.Perks.OrderBy(p => p.Key))
-        {
-            if (kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist")
-                return;
-
-            Perk perk = Array.Find(ItemSystem.perks, p => p.name.Equals(kvp.Key, StringComparison.OrdinalIgnoreCase));
-            perksBuilder.AppendLine($"**{perk.name}**: {perk.description}" +
-                $"\nTime Left: {(perk.name != "Pacifist" ? TimeSpan.FromSeconds(kvp.Value - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound() : "Indefinite")}");
-        }
-
-        EmbedBuilder embed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle("Perks")
-            .WithDescription(perksBuilder.Length > 0 ? perksBuilder.ToString() : "None");
-        await ReplyAsync(embed: embed.Build());
     }
 
     [Alias("roles")]
@@ -284,51 +164,6 @@ public class Economy : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Command("shop")]
-    [Summary("Check out what's available for purchase in the shop.")]
-    [Remarks("$shop <items|perks>")]
-    public async Task Shop(string category = "")
-    {
-        StringBuilder items = new();
-        StringBuilder perks = new();
-
-        foreach (string item in ItemSystem.items)
-        {
-            double price = ItemSystem.ComputeItemPrice(item);
-            items.AppendLine($"**{item}**: {price:C2}");
-        }
-
-        foreach (Perk perk in ItemSystem.perks)
-            perks.AppendLine($"**{perk.name}**: {perk.description}\nDuration: {TimeSpan.FromSeconds(perk.duration).FormatCompound()}\nPrice: {perk.price:C2}");
-
-        EmbedBuilder itemsEmbed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle("⛏️Items⛏️️")
-            .WithDescription(items.ToString());
-        EmbedBuilder perksEmbed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle("️️🧪Perks🧪")
-            .WithDescription(perks.ToString());
-
-        if (string.IsNullOrWhiteSpace(category))
-        {
-            await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: itemsEmbed.Build());
-            await ReplyAsync(embed: perksEmbed.Build());
-        }
-        else if (category.Equals("items", StringComparison.OrdinalIgnoreCase))
-        {
-            await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: itemsEmbed.Build());
-        }
-        else if (category.Equals("perks", StringComparison.OrdinalIgnoreCase))
-        {
-            await ReplyAsync("Welcome to the shop! Here's what I've got: ", embed: perksEmbed.Build());
-        }
-        else
-        {
-            await Context.User.NotifyAsync(Context.Channel, $"**{category}** is not a valid category!");
-        }
-    }
-
     [Alias("kms", "selfend")]
     [Command("suicide")]
     [Summary("Kill yourself.")]
@@ -352,7 +187,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await Context.User.NotifyAsync(Context.Channel, "​DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                 await user.Reference.DeleteAsync();
                 await user.SetCash(Context.User, 0);
-                RestoreUserData(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
+                RestoreUserData(user, temp.BTC, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
                     temp.NoReplyPings, temp.Stats, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
@@ -363,7 +198,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                 await user.Reference.DeleteAsync();
                 await user.SetCash(Context.User, 0);
-                RestoreUserData(user, temp.BTC, temp.DOGE, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
+                RestoreUserData(user, temp.BTC, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
                     temp.NoReplyPings, temp.Stats, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
@@ -375,13 +210,12 @@ public class Economy : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    private static void RestoreUserData(DbUser user, double btc, double doge, double eth, double ltc, double xrp,
+    private static void RestoreUserData(DbUser user, double btc, double eth, double ltc, double xrp,
         bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long dealCd, long lootCd,
         long rapeCd, long robCd, long scavengeCd, long slaveryCd, long whoreCd, long bullyCd, long chopCd, long digCd,
         long farmCd, long fishCd, long huntCd, long mineCd, long supportCd, long hackCd, long dailyCd)
     {
         user.BTC = btc;
-        user.DOGE = doge;
         user.ETH = eth;
         user.LTC = ltc;
         user.XRP = xrp;

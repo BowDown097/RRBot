@@ -18,7 +18,7 @@ public class General : ModuleBase<SocketCommandContext>
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle(user == null ? "Achievements" : $"{user.Sanitize()}'s Achievements")
+            .WithTitle("Achievements")
             .WithDescription(description.Length > 0 ? description.ToString() : "None");
         await ReplyAsync(embed: embed.Build());
     }
@@ -72,8 +72,8 @@ public class General : ModuleBase<SocketCommandContext>
             preconditions.AppendLine("Requires Staff");
         if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC))
             preconditions.AppendLine($"Must be in #{rBIC.Name}");
-        if (commandInfo.TryGetPrecondition(out RequireItemAttribute ri))
-            preconditions.AppendLine(string.IsNullOrEmpty(ri.ItemType) ? "Requires an item" : $"Requires {ri.ItemType}");
+        if (commandInfo.TryGetPrecondition(out RequireToolAttribute ri))
+            preconditions.AppendLine(string.IsNullOrEmpty(ri.ToolType) ? "Requires a tool" : $"Requires {ri.ToolType}");
         if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP))
             preconditions.AppendLine($"Requires {Enum.GetName(rUP.GuildPermission.GetType(), rUP.GuildPermission)} permission");
 
@@ -182,8 +182,7 @@ public class General : ModuleBase<SocketCommandContext>
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
 
-        ulong userId = user == null ? Context.User.Id : user.Id;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
         if (dbUser.Stats.Count == 0)
             return CommandResult.FromError(user == null ? "You have no available stats!" : $"**{user.Sanitize()}** has no available stats!");
 
@@ -193,7 +192,7 @@ public class General : ModuleBase<SocketCommandContext>
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle(user == null ? "Stats" : $"{user.Sanitize()}'s Stats")
+            .WithTitle("Stats")
             .WithDescription(description.ToString());
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();

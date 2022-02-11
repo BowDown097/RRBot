@@ -2,6 +2,14 @@
 namespace RRBot.Extensions;
 public static class EmbedBuilderExt
 {
+    public static EmbedBuilder AddField(this EmbedBuilder builder, string name, object value, bool condition,
+        bool inline = false)
+    {
+        if (condition)
+            builder.AddField(name, value, inline);
+        return builder;
+    }
+
     public static EmbedBuilder AddSeparatorField(this EmbedBuilder builder)
         => builder.AddField("\u200b", "\u200b");
 

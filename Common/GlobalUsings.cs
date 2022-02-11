@@ -4,6 +4,7 @@ global using Discord.Net;
 global using Discord.Rest;
 global using Discord.WebSocket;
 global using Fergun.Interactive;
+global using Fergun.Interactive.Pagination;
 global using Google.Cloud.Firestore;
 global using Google.Cloud.Firestore.V1;
 global using Lavalink4NET;

@@ -206,10 +206,10 @@ public class EventSystem
         // reset usingSlots if someone happened to be using slots during bot restart
         foreach (SocketGuild guild in client.Guilds)
         {
-            QuerySnapshot usingQuery = await Program.database.Collection($"servers/{guild.Id}/users")
+            QuerySnapshot slotsQuery = await Program.database.Collection($"servers/{guild.Id}/users")
                 .WhereEqualTo("UsingSlots", true).GetSnapshotAsync();
-            foreach (DocumentSnapshot user in usingQuery.Documents)
-                await user.Reference.SetAsync(new { usingSlots = FieldValue.Delete }, SetOptions.MergeAll);
+            foreach (DocumentSnapshot user in slotsQuery.Documents)
+                await user.Reference.SetAsync(new { UsingSlots = FieldValue.Delete }, SetOptions.MergeAll);
         }
 
         await new MonitorSystem(client, Program.database).Initialise();
