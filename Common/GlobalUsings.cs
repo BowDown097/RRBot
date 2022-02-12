@@ -8,6 +8,8 @@ global using Fergun.Interactive.Pagination;
 global using Google.Cloud.Firestore;
 global using Google.Cloud.Firestore.V1;
 global using Lavalink4NET;
+global using Lavalink4NET.Artwork;
+global using Lavalink4NET.Decoding;
 global using Lavalink4NET.DiscordNet;
 global using Lavalink4NET.Lyrics;
 global using Lavalink4NET.Player;

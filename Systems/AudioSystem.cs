@@ -29,14 +29,17 @@ public sealed class AudioSystem
             return CommandResult.FromError("The bot is not currently being used.");
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
-        LavalinkTrack track = player.CurrentTrack;
-        StringBuilder builder = new($"By: {Format.Sanitize(track.Author)}\n");
-        if (!track.IsLiveStream)
-            builder.AppendLine($"Duration: {track.Duration.Round()}\nPosition: {player.Position.Position.Round()}");
+        StringBuilder builder = new($"By: {Format.Sanitize(player.CurrentTrack.Author)}\n");
+        if (!player.CurrentTrack.IsLiveStream)
+            builder.AppendLine($"Duration: {player.CurrentTrack.Duration.Round()}\nPosition: {player.Position.Position.Round()}");
+
+        using ArtworkService artworkService = new();
+        Uri artwork = await artworkService.ResolveAsync(player.CurrentTrack);
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle(track.Title)
+            .WithTitle(player.CurrentTrack.Title)
+            .WithThumbnailUrl(artwork?.ToString())
             .WithDescription(builder.ToString());
         await context.Channel.SendMessageAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
@@ -49,8 +52,8 @@ public sealed class AudioSystem
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
 
-        using LyricsService lyricsService = new(new());
-        string lyrics = await lyricsService.RequestLyricsAsync(player.CurrentTrack.Author, player.CurrentTrack.Title);
+        using LyricsService lyricsService = new(new LyricsOptions());
+        string lyrics = await lyricsService.RequestLyricsAsync(TrackDecoder.DecodeTrackInfo(player.CurrentTrack.Identifier));
         if (string.IsNullOrWhiteSpace(lyrics))
             return CommandResult.FromError("No lyrics found!");
 

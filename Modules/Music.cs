@@ -24,13 +24,13 @@ public class Music : ModuleBase<SocketCommandContext>
 
     [Alias("np", "playing")]
     [Command("nowplaying")]
-    [Summary("Gives details on the currently playing track, if there is one.")]
+    [Summary("Get details on the currently playing track, if there is one.")]
     [Remarks("$nowplaying")]
     public async Task<RuntimeResult> NowPlaying() => await AudioSystem.GetCurrentlyPlayingAsync(Context);
 
     [Command("play")]
-    [Summary("Plays something from YouTube.")]
-    [Remarks("$play [url]")]
+    [Summary("Play something from YouTube or SoundCloud.")]
+    [Remarks("$play [query]")]
     public async Task<RuntimeResult> Play([Remainder] string url) => await AudioSystem.PlayAsync(Context, url);
 
     [Alias("list")]
@@ -58,13 +58,13 @@ public class Music : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Skip() => await AudioSystem.VoteSkipTrackAsync(Context);
 
     [Command("stop")]
-    [Summary("Stops playing entirely.")]
+    [Summary("Stop playing entirely.")]
     [Remarks("$stop")]
     [RequireDJ]
     public async Task<RuntimeResult> Stop() => await AudioSystem.StopAsync(Context);
 
     [Command("volume")]
-    [Summary("Changes the volume of the currently playing track (must be between 5% and 200%).")]
+    [Summary("Change the volume of the currently playing track (must be between 5% and 200%).")]
     [Remarks("$volume [volume]")]
     [RequireDJ]
     public async Task<RuntimeResult> Volume(float volume) => await AudioSystem.ChangeVolumeAsync(Context, volume);

@@ -75,7 +75,7 @@ public class General : ModuleBase<SocketCommandContext>
         if (commandInfo.TryGetPrecondition(out RequireToolAttribute ri))
             preconditions.AppendLine(string.IsNullOrEmpty(ri.ToolType) ? "Requires a tool" : $"Requires {ri.ToolType}");
         if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP))
-            preconditions.AppendLine($"Requires {Enum.GetName(rUP.GuildPermission.GetType(), rUP.GuildPermission)} permission");
+            preconditions.AppendLine($"Requires {Enum.GetName(rUP.GuildPermission.GetValueOrDefault())} permission");
 
         EmbedBuilder commandEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -204,8 +204,7 @@ public class General : ModuleBase<SocketCommandContext>
     [Remarks("$userinfo [user]")]
     public async Task UserInfo(SocketGuildUser user)
     {
-        IEnumerable<string> perms = user.GuildPermissions.ToList()
-            .Select(p => Enum.GetName(p.GetType(), p).SplitPascalCase());
+        IEnumerable<string> perms = user.GuildPermissions.ToList().Select(p => Enum.GetName(p).SplitPascalCase());
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(user)
