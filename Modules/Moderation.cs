@@ -248,7 +248,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
         string response = $"{action} for {ts.FormatCompound()}";
         if (!string.IsNullOrWhiteSpace(reason))
-            response += $"for \"{reason}\"";
+            response += $" for \"{reason}\"";
         response += ".";
 
         return new(ts, response);
