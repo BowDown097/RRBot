@@ -1,15 +1,28 @@
-# RR Bot
-The bot for the [Rush Reborn Discord server](https://discord.gg/USpJnaaNap), heavily inspired by the [DEA Discord bot](https://github.com/Asshley/DEA).
-
+<a href="https://github.com/BowDown097/RRBot">
+	<img src="https://i.imgur.com/qAz3zEk.png"/>
+</a>
 <p align="center">
     <a href="https://discord.gg/USpJnaaNap" alt="Discord">
         <img src="https://img.shields.io/discord/809485099238031420" />
     </a>
     <img src="https://img.shields.io/codefactor/grade/github/BowDown097/RRBot" />
 </p>
+<p align="center">The bot for the <a href="https://discord.gg/USpJnaaNap">Rush Reborn Discord server</a>, heavily inspired by the <a href="https://github.com/Asshley/DEA">DEA Discord bot</a>.</p>
 
 ## Features
-RR is a Discord bot that can do many, many things. It's got a cash system, it's got music playing support, it's got various moderation commands, and tons of other stuff. Oh, and it's highly configurable.
+This bot offers a lot of things:
+- 💵 **Cash system**
+    - 🕵🏻‍♂️ Crime
+    - 🎲 Gambling
+    - ⛏️ Items
+    - 🪙 Supplementary cryptocurrency system, modeled after **REAL WORLD PRICES**
+- 🎮 **Games**
+- 🧹 **Moderation**
+- 📻 **Music**
+- 🔞 **NSFW** (optional of course)
+- 🗳️ **Polls**
+
+and best of all, it's **HIGHLY** customizable.
 
 ## Issues?
 The bot is constantly in development, and issues are bound to come up (especially because I suck at testing features). If you've run into an issue, it is greatly preferred that it is reported in the #bug-reports channel of the official Discord server. If you absolutely don't want to, then the Issues section of the repository is fine.
