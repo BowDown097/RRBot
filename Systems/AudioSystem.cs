@@ -2,12 +2,10 @@
 public sealed class AudioSystem
 {
     private readonly IAudioService audioService;
-    private readonly DiscordSocketClient client;
 
-    public AudioSystem(IAudioService audioService, DiscordSocketClient client)
+    public AudioSystem(IAudioService audioService)
     {
         this.audioService = audioService;
-        this.client = client;
     }
 
     public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, float volume)

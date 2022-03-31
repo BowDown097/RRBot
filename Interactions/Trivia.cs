@@ -4,10 +4,8 @@ namespace RRBot.Interactions;
 public class Trivia : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
 {
     [ComponentInteraction("trivia-*-*")]
-    public async Task Respond(string num, string correctStr)
+    public async Task Respond(string num, bool correct)
     {
-        bool correct = Convert.ToBoolean(correctStr);
-
         Embed embed = Context.Interaction.Message.Embeds.First();
         string answer = Array.Find(embed.Description.Split('\n'), l => l.StartsWith(num))[3..];
 

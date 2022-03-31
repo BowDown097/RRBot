@@ -151,7 +151,7 @@ public class Fun : ModuleBase<SocketCommandContext>
         // get all the stuff we need
         using HttpClient client = new();
         string response = await client.GetStringAsync("https://opentdb.com/api.php?amount=1");
-        TriviaQuestion trivia = JsonConvert.DeserializeObject<Entities.Commands.Trivia>(response).Results[0];
+        TriviaQuestion trivia = JsonConvert.DeserializeObject<Trivia>(response).Results[0];
         trivia.DecodeMembers();
         string[] answers = trivia.IncorrectAnswers.Append(trivia.CorrectAnswer).ToArray();
 
@@ -159,9 +159,7 @@ public class Fun : ModuleBase<SocketCommandContext>
         for (int i = 0; i < answers.Length - 1; i++)
         {
             int j = RandomUtil.Next(i, answers.Length);
-            string temp = answers[i];
-            answers[i] = answers[j];
-            answers[j] = temp;
+            (answers[i], answers[j]) = (answers[j], answers[i]);
         }
 
         ComponentBuilder components = new();

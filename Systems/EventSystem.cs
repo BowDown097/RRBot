@@ -5,10 +5,8 @@ namespace RRBot.Systems;
 public class EventSystem
 {
     private readonly IAudioService audioService;
-    private readonly AudioSystem audioSystem;
     private readonly CommandService commands;
     private readonly DiscordSocketClient client;
-    private readonly InactivityTrackingService inactivityTracking;
     private readonly InteractionService interactions;
     private readonly ServiceProvider serviceProvider;
 
@@ -16,10 +14,8 @@ public class EventSystem
     {
         this.serviceProvider = serviceProvider;
         audioService = serviceProvider.GetRequiredService<IAudioService>();
-        audioSystem = serviceProvider.GetRequiredService<AudioSystem>();
         commands = serviceProvider.GetRequiredService<CommandService>();
         client = serviceProvider.GetRequiredService<DiscordSocketClient>();
-        inactivityTracking = serviceProvider.GetRequiredService<InactivityTrackingService>();
         interactions = serviceProvider.GetRequiredService<InteractionService>();
     }
 

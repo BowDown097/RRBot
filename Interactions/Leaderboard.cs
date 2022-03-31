@@ -4,14 +4,8 @@ namespace RRBot.Interactions;
 public class Leaderboard : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
 {
     [ComponentInteraction("lbnext-*-*-*-*-*-*")]
-    public async Task GetNext(string executorIdStr, string currency, string startStr, string endStr, string failedUsersStr, string backStr)
+    public async Task GetNext(ulong executorId, string currency, int start, int end, int failedUsers, bool back)
     {
-        ulong executorId = Convert.ToUInt64(executorIdStr);
-        int start = Convert.ToInt32(startStr);
-        int end = Convert.ToInt32(endStr);
-        int failedUsers = Convert.ToInt32(failedUsersStr);
-        bool back = Convert.ToBoolean(backStr);
-
         if (Context.Interaction.User.Id != executorId)
         {
             await Context.Interaction.RespondAsync("Action not permitted: You did not execute the original command.", ephemeral: true);

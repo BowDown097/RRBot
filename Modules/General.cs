@@ -135,6 +135,7 @@ public class General : ModuleBase<SocketCommandContext>
         await ReplyAsync(embed: modulesEmbed.Build());
     }
 
+    [Alias("guildinfo")]
     [Command("serverinfo")]
     [Summary("View info about this server.")]
     [Remarks("$serverinfo")]
@@ -163,6 +164,7 @@ public class General : ModuleBase<SocketCommandContext>
             .RRAddField("Members", Context.Guild.MemberCount, true)
             .RRAddField("Roles", Context.Guild.Roles.Count, true)
             .RRAddField("Stickers", Context.Guild.Stickers.Count, true)
+            .RRAddField("Upload Limit", $"{Context.Guild.MaxUploadLimit/1000000} MB", true)
             .AddSeparatorField()
             .RRAddField("Created At", Context.Guild.CreatedAt)
             .RRAddField("Description", Context.Guild.Description)
@@ -198,7 +200,7 @@ public class General : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Alias("whois")]
+    [Alias("whois", "profile", "memberinfo")]
     [Command("userinfo")]
     [Summary("View info about a user.")]
     [Remarks("$userinfo [user]")]
