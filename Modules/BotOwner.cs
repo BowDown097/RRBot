@@ -77,7 +77,6 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Alias("evaluate")]
     [Command("eval")]
     [Summary("Execute C# code.")]
     [Remarks("$eval [code]")]
@@ -104,6 +103,17 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         {
             return CommandResult.FromError($"Other error: ``{e.Message}``");
         }
+    }
+
+    [Command("evalsilent")]
+    [Summary("Evaluate C# code with no output.")]
+    [Remarks("$evalsilent [code]")]
+    public async Task EvalSilent([Remainder] string code)
+    {
+        await Context.Message.DeleteAsync();
+        code = code.Replace("```cs", "").Trim('`');
+        string[] imports = { "System", "System.Collections.Generic", "System.Text" };
+        await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context));
     }
 
     [Alias("setuserproperty")]
