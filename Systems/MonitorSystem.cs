@@ -31,7 +31,7 @@ public class MonitorSystem
                     ulong userId = Convert.ToUInt64(banDoc.Id);
                     DbBan ban = await DbBan.GetById(guild.Id, userId);
 
-                    if (!(await guild.GetBansAsync()).Any(ban => ban.User.Id == userId))
+                    if (await guild.GetBanAsync(userId) is null)
                     {
                         await ban.Reference.DeleteAsync();
                         continue;

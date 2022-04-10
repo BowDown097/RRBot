@@ -235,7 +235,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    private Tuple<TimeSpan, string> ResolveDuration(string duration, int time, string action, string reason)
+    private static Tuple<TimeSpan, string> ResolveDuration(string duration, int time, string action, string reason)
     {
         TimeSpan ts = char.ToLower(duration[^1]) switch
         {
