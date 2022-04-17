@@ -255,26 +255,9 @@ public class Crime : ModuleBase<SocketCommandContext>
         string originalWord = words[RandomUtil.Next(words.Length)].ToString();
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
 
-        switch (RandomUtil.Next(3))
+        switch (RandomUtil.Next(2))
         {
             case 0:
-                ZalgoString zalgo = new(originalWord, FuckUpMode.Max, FuckUpPosition.All);
-                EmbedBuilder zalgoEmbed = new EmbedBuilder()
-                    .WithColor(Color.Red)
-                    .WithTitle("Zalgo!")
-                    .WithDescription($"**What does this say?**\n{zalgo}\n*Type your response in the chat. You have {Constants.SCAVENGE_TIMEOUT} seconds!*");
-                IUserMessage zalgoMsg = await ReplyAsync(embed: zalgoEmbed.Build());
-
-                InteractiveResult<SocketMessage> zalgoResult = await Interactive.NextMessageAsync(
-                    x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
-                    timeout: TimeSpan.FromSeconds(Constants.SCAVENGE_TIMEOUT)
-                );
-                await HandleScavenge(zalgoMsg, zalgoResult, user, zalgoResult.Value.Content.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
-                    $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
-                    $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{originalWord}**.",
-                    $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{originalWord}**.");
-                break;
-            case 1:
                 string scrambled = Regex.Replace(originalWord, @"\w+", new MatchEvaluator(ScrambleWord), RegexOptions.IgnorePatternWhitespace);
                 EmbedBuilder scrambleEmbed = new EmbedBuilder()
                     .WithColor(Color.Red)
@@ -296,7 +279,7 @@ public class Crime : ModuleBase<SocketCommandContext>
                     $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{originalWord}**.",
                     $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{originalWord}**.");
                 break;
-            case 2:
+            case 1:
                 FormUrlEncodedContent content = new(new Dictionary<string, string>()
                 {
                     { "q", originalWord },
