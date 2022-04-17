@@ -5,7 +5,7 @@ public class Polls : ModuleBase<SocketCommandContext>
 {
     [Command("createpoll")]
     [Summary("Create a poll.")]
-    [Remarks("$createpoll [title] [choice1|choice2|choice3|...|choice9]")]
+    [Remarks("$createpoll \"Is John gay?\" yes|yes|yes|yes|yes|yes|for sure|100%|confident")]
     public async Task<RuntimeResult> CreatePoll(string title, [Remainder] string choices)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);

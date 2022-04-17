@@ -5,7 +5,7 @@ public class Administration : ModuleBase<SocketCommandContext>
 {
     [Command("givetool")]
     [Summary("Give a user a tool.")]
-    [Remarks("$givetool [user] [tool]")]
+    [Remarks("$givetool \"Lenny McLennington\" Diamond Pickaxe")]
     public async Task<RuntimeResult> GiveTool(IGuildUser user, [Remainder] string tool)
     {
         if (user.IsBot)
@@ -25,7 +25,7 @@ public class Administration : ModuleBase<SocketCommandContext>
 
     [Command("resetcd")]
     [Summary("Reset a user's crime cooldowns.")]
-    [Remarks("$resetcd [user]")]
+    [Remarks("$resetcd \"\\*Jazzy Hands\\*\"")]
     public async Task ResetCooldowns(IGuildUser user)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
@@ -36,7 +36,7 @@ public class Administration : ModuleBase<SocketCommandContext>
 
     [Command("setcash")]
     [Summary("Set a user's cash.")]
-    [Remarks("$setcash [user] [amount]")]
+    [Remarks("$setcash BowDown097 0.01")]
     public async Task<RuntimeResult> SetCash(IGuildUser user, double amount)
     {
         if (double.IsNaN(amount) || amount < 0)
@@ -52,7 +52,7 @@ public class Administration : ModuleBase<SocketCommandContext>
 
     [Command("setcrypto")]
     [Summary("Set a user's cryptocurrency amount. See $invest's help info for currently accepted currencies.")]
-    [Remarks("$setcrypto [user] [crypto] [amount]")]
+    [Remarks("$setcrypto Shrimp BTC 69000")]
     public async Task<RuntimeResult> SetCrypto(IGuildUser user, string crypto, double amount)
     {
         string cUp = crypto.ToUpper();
@@ -69,7 +69,7 @@ public class Administration : ModuleBase<SocketCommandContext>
 
     [Command("unlockachievement")]
     [Summary("Unlock an achievement for a user.")]
-    [Remarks("$unlockachievement [user] [name] [desc] <reward>")]
+    [Remarks("$unlockachievement AceOfSevens \"Top Loser\" \"absolute loser lmao\" 5")]
     public async Task UnlockAchievement(IGuildUser user, string name, string desc, double reward = 0)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, Context.User.Id);

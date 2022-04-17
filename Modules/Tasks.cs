@@ -4,28 +4,24 @@ public class Tasks : ModuleBase<SocketCommandContext>
 {
     [Command("chop")]
     [Summary("Go chop some wood.")]
-    [Remarks("$chop")]
     [RequireCooldown("ChopCooldown", "You cannot chop wood for {0}.")]
     [RequireTool("Axe")]
     public async Task Chop() => await GenericTask("Axe", "chopped down", "trees", "ChopCooldown", Constants.CHOP_COOLDOWN);
 
     [Command("dig")]
     [Summary("Go digging.")]
-    [Remarks("$dig")]
     [RequireCooldown("DigCooldown", "You cannot go digging for {0}.")]
     [RequireTool("Shovel")]
     public async Task Dig() => await GenericTask("Shovel", "mined", "dirt", "DigCooldown", Constants.DIG_COOLDOWN);
 
     [Command("farm")]
     [Summary("Go farming.")]
-    [Remarks("$farm")]
     [RequireCooldown("FarmCooldown", "You cannot farm for {0}.")]
     [RequireTool("Hoe")]
     public async Task Farm() => await GenericTask("Hoe", "farmed", "crops", "FarmCooldown", Constants.FARM_COOLDOWN);
 
     [Command("fish")]
     [Summary("Go fishing.")]
-    [Remarks("$fish")]
     [RequireCooldown("FishCooldown", "You cannot fish for {0}.")]
     [RequireTool("Fishing Rod")]
     public async Task Fish()
@@ -70,14 +66,12 @@ public class Tasks : ModuleBase<SocketCommandContext>
 
     [Command("hunt")]
     [Summary("Go hunting.")]
-    [Remarks("$hunt")]
     [RequireCooldown("HuntCooldown", "You cannot go hunting for {0}.")]
     [RequireTool("Sword")]
     public async Task Hunt() => await GenericTask("Sword", "hunted", "mobs", "HuntCooldown", Constants.HUNT_COOLDOWN);
 
     [Command("mine")]
     [Summary("Go mining.")]
-    [Remarks("$mine")]
     [RequireCooldown("MineCooldown", "You cannot go mining for {0}.")]
     [RequireTool("Pickaxe")]
     public async Task Mine()

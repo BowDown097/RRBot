@@ -6,7 +6,6 @@ public class Support : ModuleBase<SocketCommandContext>
 {
     [Command("close")]
     [Summary("Close your currently active support ticket or a support ticket that you have been assigned to (if there is one).")]
-    [Remarks("$close <user>")]
     public async Task<RuntimeResult> Close(IGuildUser user = null)
     {
         DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
@@ -29,7 +28,7 @@ public class Support : ModuleBase<SocketCommandContext>
     [Alias("askforhelp")]
     [Command("support")]
     [Summary("Ask for help from a Helper.")]
-    [Remarks("$support [request]")]
+    [Remarks("$support I dropped the toaster in the bath, what was that lightning stuff?")]
     [RequireCooldown("SupportCooldown", "You cannot request support again for {0}. This is done to prevent spam.")]
     public async Task<RuntimeResult> GetSupport([Remainder] string request)
     {
@@ -66,7 +65,6 @@ public class Support : ModuleBase<SocketCommandContext>
 
     [Command("tickets")]
     [Summary("Check the amount of currently open support tickets.")]
-    [Remarks("$tickets")]
     public async Task Tickets()
     {
         QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();
@@ -77,7 +75,7 @@ public class Support : ModuleBase<SocketCommandContext>
 
     [Command("viewticket")]
     [Summary("View a user's support ticket, if they have one that is opened.")]
-    [Remarks("$viewticket [user]")]
+    [Remarks("$viewticket Sylent")]
     public async Task<RuntimeResult> ViewTicket(IGuildUser user)
     {
         DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, user.Id);

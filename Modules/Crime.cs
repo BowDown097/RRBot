@@ -7,7 +7,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 
     [Command("bully")]
     [Summary("Change the nickname of any victim you wish!")]
-    [Remarks("$bully [user] [nickname]")]
+    [Remarks("$bully \"John Boyer#2168\" gay lol")]
     [RequireCooldown("BullyCooldown", "You cannot bully anyone for {0}.")]
     public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
     {
@@ -39,7 +39,6 @@ public class Crime : ModuleBase<SocketCommandContext>
 
     [Command("deal")]
     [Summary("Deal some drugs.")]
-    [Remarks("$deal")]
     [RequireCooldown("DealCooldown", "You don't have any more drugs to deal! Your next shipment comes in {0}.")]
     public async Task<RuntimeResult> Deal()
     {
@@ -53,7 +52,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 
     [Command("hack")]
     [Summary("Hack into someone's crypto wallet.")]
-    [Remarks("$hack [user] [crypto] [amount]")]
+    [Remarks("$hack LYNESTAR XRP 10000")]
     [RequireCooldown("HackCooldown", "You exhausted all your brain power bro, you're gonna have to wait {0}.")]
     public async Task<RuntimeResult> Hack(IGuildUser user, string crypto, double amount)
     {
@@ -122,7 +121,6 @@ public class Crime : ModuleBase<SocketCommandContext>
 
     [Command("loot")]
     [Summary("Loot some locations.")]
-    [Remarks("$loot")]
     [RequireCooldown("LootCooldown", "You cannot loot for {0}.")]
     public async Task<RuntimeResult> Loot()
     {
@@ -137,7 +135,7 @@ public class Crime : ModuleBase<SocketCommandContext>
     [Alias("strugglesnuggle")]
     [Command("rape")]
     [Summary("Go out on the prowl for some ass!")]
-    [Remarks("$rape [user]")]
+    [Remarks("$rape \"BowDown's Kitten\"")]
     [RequireCash]
     [RequireCooldown("RapeCooldown", "You cannot rape for {0}.")]
     public async Task<RuntimeResult> Rape(IGuildUser user)
@@ -179,7 +177,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 
     [Command("rob")]
     [Summary("Yoink money from a user.")]
-    [Remarks("$rob [user] [amount]")]
+    [Remarks("$rob Romanian 160")]
     [RequireCooldown("RobCooldown", "It's best to avoid getting caught if you don't go out for {0}.")]
     public async Task<RuntimeResult> Rob(IGuildUser user, double amount)
     {
@@ -245,7 +243,6 @@ public class Crime : ModuleBase<SocketCommandContext>
 
     [Command("scavenge", RunMode = RunMode.Async)]
     [Summary("Scavenge around the street for some goods.")]
-    [Remarks("$scavenge")]
     [RequireCooldown("ScavengeCooldown", "You're out of prowling energy for now. You should wait {0}.")]
     public async Task Scavenge()
     {
@@ -312,7 +309,6 @@ public class Crime : ModuleBase<SocketCommandContext>
 
     [Command("slavery")]
     [Summary("Get some slave labor goin'.")]
-    [Remarks("$slavery")]
     [RequireCooldown("SlaveryCooldown", "The slaves will die if you keep going like this! You should wait {0}.")]
     [RequireRankLevel("2")]
     public async Task<RuntimeResult> Slavery()
@@ -327,7 +323,6 @@ public class Crime : ModuleBase<SocketCommandContext>
 
     [Command("whore")]
     [Summary("Sell your body for quick cash.")]
-    [Remarks("$whore")]
     [RequireCooldown("WhoreCooldown", "You cannot whore yourself out for {0}.")]
     [RequireRankLevel("1")]
     public async Task<RuntimeResult> Whore()

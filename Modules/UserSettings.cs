@@ -4,7 +4,6 @@ public class UserSettings : ModuleBase<SocketCommandContext>
 {
     [Command("mysettings")]
     [Summary("List your user settings.")]
-    [Remarks("$mysettings")]
     public async Task MySettings()
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
@@ -19,7 +18,7 @@ public class UserSettings : ModuleBase<SocketCommandContext>
     [Alias("setdmnotifs")]
     [Command("setdmnotifications")]
     [Summary("Set whether or not you will be DM'd by commands/general notifications that support it. *(default: false)*")]
-    [Remarks("$setdmnotifications [true/false]")]
+    [Remarks("$setdmnotifications true")]
     public async Task SetDMNotifications(bool status)
     {
         await GenericSet("DMNotifs", status);
@@ -28,7 +27,7 @@ public class UserSettings : ModuleBase<SocketCommandContext>
 
     [Command("setnoreplypings")]
     [Summary("Set whether or not you will be pinged in command responses. *(default: false)*")]
-    [Remarks("$setnoreplypings [true/false]")]
+    [Remarks("$setnoreplypings false")]
     public async Task SetNoReplyPings(bool status)
     {
         await GenericSet("NoReplyPings", status);

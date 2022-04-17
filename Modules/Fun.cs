@@ -5,7 +5,6 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Alias("gato", "kitty")]
     [Command("cat")]
     [Summary("Random cat picture!")]
-    [Remarks("$cat")]
     public async Task Cat()
     {
         using HttpClient client = new();
@@ -20,7 +19,7 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Alias("definition")]
     [Command("define")]
     [Summary("Define a term.")]
-    [Remarks("$define [term]")]
+    [Remarks("$define penis")]
     public async Task<RuntimeResult> Define([Remainder] string term)
     {
         if (await FilterSystem.ContainsFilteredWord(Context.Guild, term))
@@ -61,7 +60,6 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Alias("doggo", "heckingchonker")]
     [Command("dog")]
     [Summary("Random dog picture!")]
-    [Remarks("$dog")]
     public async Task Dog()
     {
         using HttpClient client = new();
@@ -75,7 +73,6 @@ public class Fun : ModuleBase<SocketCommandContext>
 
     [Command("flip")]
     [Summary("Flip a coin.")]
-    [Remarks("$flip")]
     public async Task Flip()
     {
         EmbedBuilder embed = new EmbedBuilder()
@@ -98,7 +95,7 @@ public class Fun : ModuleBase<SocketCommandContext>
 
     [Command("gay")]
     [Summary("See how gay a user is.")]
-    [Remarks("$gay [user]")]
+    [Remarks("$gay luner")]
     public async Task Gay(IGuildUser user)
     {
         int gay = !user.IsBot ? RandomUtil.Next(1, 101) : 0;
@@ -119,7 +116,7 @@ public class Fun : ModuleBase<SocketCommandContext>
 
     [Command("penis")]
     [Summary("See how big a user's penis is.")]
-    [Remarks("$penis [user]")]
+    [Remarks("$penis \"Arctic Hawk\"")]
     public async Task Penis(IGuildUser user)
     {
         int equals = !user.IsBot ? RandomUtil.Next(1, 16) : 20;
@@ -140,12 +137,10 @@ public class Fun : ModuleBase<SocketCommandContext>
 
     [Command("sneed")]
     [Summary("Sneed")]
-    [Remarks("$sneed")]
     public async Task Sneed() => await ReplyAsync("https://static.wikia.nocookie.net/simpsons/images/1/14/Al_Sneed.png/revision/latest?cb=20210430000431");
 
     [Command("trivia")]
     [Summary("Generate a random trivia question.")]
-    [Remarks("$trivia")]
     public async Task Trivia()
     {
         // get all the stuff we need
@@ -180,7 +175,6 @@ public class Fun : ModuleBase<SocketCommandContext>
 
     [Command("verse")]
     [Summary("Random bible verse!")]
-    [Remarks("$verse")]
     public async Task Verse()
     {
         using HttpClient client = new();
@@ -196,7 +190,6 @@ public class Fun : ModuleBase<SocketCommandContext>
 
     [Command("waifu")]
     [Summary("Get yourself a random waifu from our vast and sexy collection of scrumptious waifus.")]
-    [Remarks("$waifu")]
     public async Task Waifu()
     {
         string waifu = Constants.WAIFUS.Keys.ElementAt(RandomUtil.Next(Constants.WAIFUS.Count));

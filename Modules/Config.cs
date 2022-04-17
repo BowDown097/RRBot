@@ -5,7 +5,7 @@ public class Config : ModuleBase<SocketCommandContext>
 {
     [Command("addrank")]
     [Summary("Register a rank, its level, and the money required to get it.")]
-    [Remarks("$addrank [role] [level] [cost]")]
+    [Remarks("$addrank 809512753081483294 1 10000")]
     public async Task AddRank(IRole role, int level, double cost)
     {
         DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
@@ -17,7 +17,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("addselfrole")]
     [Summary("Add a self role for the self role message.")]
-    [Remarks("$addselfrole [emoji] [role]")]
+    [Remarks("$addselfrole \\:Sperg\\: 809512856713166918")]
     public async Task<RuntimeResult> AddSelfRole(IEmote emote, IRole role)
     {
         DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
@@ -36,7 +36,6 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("clearconfig")]
     [Summary("Clear all configuration that has been set.")]
-    [Remarks("$clearconfig")]
     public async Task ClearConfig()
     {
         CollectionReference collection = Program.database.Collection($"servers/{Context.Guild.Id}/config");
@@ -47,7 +46,6 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("clearselfroles")]
     [Summary("Clear the self roles that are registered, if any.")]
-    [Remarks("$clearselfroles")]
     public async Task ClearSelfRoles()
     {
         DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
@@ -57,7 +55,6 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("currentconfig")]
     [Summary("List the current configuration that has been set for the bot.")]
-    [Remarks("$currentconfig")]
     public async Task GetCurrentConfig()
     {
         QuerySnapshot config = await Program.database.Collection($"servers/{Context.Guild.Id}/config").GetSnapshotAsync();
@@ -127,7 +124,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("disablefiltersinchannel")]
     [Summary("Disable filters for a specific channel.")]
-    [Remarks("$disablefiltersinchannel [channel]")]
+    [Remarks("$disablefiltersinchannel \\#extremely-funny")]
     public async Task DisableFiltersInChannel(IChannel channel)
     {
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
@@ -137,7 +134,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("filterword")]
     [Summary("Add a word to filter using the filter system. Word must only contain the characters abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.")]
-    [Remarks("$filterword [word]")]
+    [Remarks("$filterword niggardly")]
     public async Task<RuntimeResult> FilterWord(string word)
     {
         StringBuilder regexString = new();
@@ -158,7 +155,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("setdjrole")]
     [Summary("Register the ID for the DJ role in your server so that most of the music commands work properly with the bot.")]
-    [Remarks("$setdjrole [role]")]
+    [Remarks("$setdjrole 850827023982395413")]
     public async Task SetDJRole(IRole role)
     {
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
@@ -168,7 +165,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("setlogschannel")]
     [Summary("Register the ID for the logs channel in your server so that logging works properly with the bot.")]
-    [Remarks("$setlogschannel [channel]")]
+    [Remarks("$setlogschannel \\#logs")]
     public async Task SetLogsChannel(IChannel channel)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
@@ -178,7 +175,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("setpollschannel")]
     [Summary("Register the ID for the polls channel in your server so that polls work properly with the bot.")]
-    [Remarks("$setpollschannel [channel]")]
+    [Remarks("$setpollschannel \\#polls")]
     public async Task SetPollsChannel(IChannel channel)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
@@ -188,7 +185,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("setselfrolesmsg")]
     [Summary("Register the ID for the message that users can react to to receive roles.")]
-    [Remarks("$setselfrolesmsg [channel] [msg-id]")]
+    [Remarks("$setselfrolesmsg \\#self-roles 837416517133271063")]
     public async Task<RuntimeResult> SetSelfRolesMsg(ITextChannel channel, ulong msgId)
     {
         IMessage msg = await channel.GetMessageAsync(msgId);
@@ -204,7 +201,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("setstafflvl1role")]
     [Summary("Register the ID for the first level Staff role in your server so that staff-related operations work properly with the bot.")]
-    [Remarks("$setstafflvl1role [role]")]
+    [Remarks("$setstafflvl1role House")]
     public async Task SetStaffLvl1Role(IRole role)
     {
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
@@ -214,7 +211,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("setstafflvl2role")]
     [Summary("Register the ID for the second level Staff role in your server so that staff-related operations work properly with the bot.")]
-    [Remarks("$setstafflvl2role [role]")]
+    [Remarks("$setstafflvl2role Senate")]
     public async Task SetStaffLvl2Role(IRole role)
     {
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
@@ -224,7 +221,6 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("toggleinvitefilter")]
     [Summary("Toggle the invite filter.")]
-    [Remarks("$toggleinvitefilter")]
     public async Task ToggleInviteFilter()
     {
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
@@ -234,7 +230,6 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("togglensfw")]
     [Summary("Toggle the NSFW module.")]
-    [Remarks("$togglensfw")]
     public async Task ToggleNSFW()
     {
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
@@ -244,7 +239,6 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("togglescamfilter")]
     [Summary("Toggle the scam filter.")]
-    [Remarks("$togglescamfilter")]
     public async Task ToggleScamFilter()
     {
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
@@ -252,9 +246,22 @@ public class Config : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"Toggled scam filter {(optionals.ScamFilterEnabled ? "ON" : "OFF")}.");
     }
 
+    [Alias("blacklistchannel")]
+    [Command("unwhitelistchannel")]
+    [Summary("Removes a channel from the whitelist.")]
+    [Remarks("$unwhitelistchannel \\#general")]
+    public async Task<RuntimeResult> UnwhitelistChannel(ITextChannel channel)
+    {
+        DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+        if (!channels.WhitelistedChannels.Remove(channel.Id))
+            return CommandResult.FromError($"{MentionUtils.MentionChannel(channel.Id)} is not in the whitelist!");
+        await Context.User.NotifyAsync(Context.Channel, $"Removed {MentionUtils.MentionChannel(channel.Id)} from the whitelist.");
+        return CommandResult.FromSuccess();
+    }
+
     [Command("whitelistchannel")]
     [Summary("Adds a channel to a list of whitelisted channels for bot commands. All moderation and music commands will still work in every channel.")]
-    [Remarks("$whitelistchannel [channel]")]
+    [Remarks("$whitelistchannel 837306775987683368")]
     public async Task WhitelistChannel(ITextChannel channel)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);

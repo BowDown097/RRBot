@@ -4,7 +4,7 @@ public class Investments : ModuleBase<SocketCommandContext>
 {
     [Command("invest")]
     [Summary("Invest in a cryptocurrency. Currently accepted currencies are BTC, ETH, LTC, and XRP. Here, the amount you put in should be RR Cash.")]
-    [Remarks("$invest [crypto] [amount]")]
+    [Remarks("$invest ethereum 600")]
     [RequireCash]
     public async Task<RuntimeResult> Invest(string crypto, double amount)
     {
@@ -44,7 +44,7 @@ public class Investments : ModuleBase<SocketCommandContext>
 
     [Command("investments")]
     [Summary("Check your investments, or someone else's, and their value.")]
-    [Remarks("$investments <user>")]
+    [Remarks("$investments gurrenm4")]
     public async Task<RuntimeResult> InvestmentsView(IGuildUser user = null)
     {
         if (user?.IsBot == true)
@@ -73,7 +73,6 @@ public class Investments : ModuleBase<SocketCommandContext>
     [Alias("values")]
     [Command("prices")]
     [Summary("Check the values of currently available cryptocurrencies.")]
-    [Remarks("$prices")]
     public async Task Prices()
     {
         double btc = await QueryCryptoValue("BTC");
@@ -93,7 +92,7 @@ public class Investments : ModuleBase<SocketCommandContext>
 
     [Command("withdraw")]
     [Summary("Withdraw a specified cryptocurrency to RR Cash, with a 2% withdrawal fee. Here, the amount you put in should be in the crypto, not RR Cash. See $invest's help info for currently accepted currencies.")]
-    [Remarks("$withdraw [crypto] [amount]")]
+    [Remarks("$withdraw ltc 10")]
     public async Task<RuntimeResult> Withdraw(string crypto, double amount)
     {
         if (amount < Constants.INVESTMENT_MIN_AMOUNT || double.IsNaN(amount))

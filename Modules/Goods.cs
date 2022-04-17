@@ -7,7 +7,7 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Alias("purchase")]
     [Command("buy")]
     [Summary("Buy an item from the shop.")]
-    [Remarks("$buy [item]")]
+    [Remarks("$buy Fishing Rod")]
     public async Task<RuntimeResult> Buy([Remainder] string itemName)
     {
         Item item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
@@ -26,7 +26,6 @@ public class Goods : ModuleBase<SocketCommandContext>
 
     [Command("daily")]
     [Summary("Get a daily reward.")]
-    [Remarks("$daily")]
     [RequireCooldown("DailyCooldown", "Slow down there, turbo! It hasn't been a day yet. You've still got {0} left.")]
     [RequireRankLevel("3")]
     public async Task<RuntimeResult> Daily()
@@ -44,7 +43,7 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Alias("sell")]
     [Command("discard")]
     [Summary("Discard a tool or the Pacifist perk.")]
-    [Remarks("$discard [item]")]
+    [Remarks("$discard Pacifist")]
     public async Task<RuntimeResult> Discard([Remainder] string itemName)
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
@@ -84,7 +83,7 @@ public class Goods : ModuleBase<SocketCommandContext>
 
     [Command("item")]
     [Summary("View information on an item.")]
-    [Remarks("$item [item]")]
+    [Remarks("$item Cocaine")]
     public async Task<RuntimeResult> ItemInfo([Remainder] string itemName)
     {
         Item item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
@@ -128,7 +127,7 @@ public class Goods : ModuleBase<SocketCommandContext>
 
     [Command("items", RunMode = RunMode.Async)]
     [Summary("View your own or someone else's tools, active perks, and consumables.")]
-    [Remarks("$items <user>")]
+    [Remarks("$items Zurmii#2208")]
     public async Task<RuntimeResult> Items(IGuildUser user = null)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
@@ -165,7 +164,7 @@ public class Goods : ModuleBase<SocketCommandContext>
 
     [Command("opencrate")]
     [Summary("Open a crate.")]
-    [Remarks("$opencrate [crate]")]
+    [Remarks("$opencrate diamond")]
     public async Task<RuntimeResult> OpenCrate(string crateName)
     {
         try
@@ -216,7 +215,6 @@ public class Goods : ModuleBase<SocketCommandContext>
 
     [Command("shop", RunMode = RunMode.Async)]
     [Summary("Check out what's available for purchase in the shop.")]
-    [Remarks("$shop")]
     public async Task Shop()
     {
         StringBuilder tools = new();

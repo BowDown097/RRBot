@@ -6,7 +6,6 @@ public class NSFW : ModuleBase<SocketCommandContext>
 {
     [Command("neko")]
     [Summary("Some good ol' neko hentai (sometimes just saucy lewds too).")]
-    [Remarks("$neko")]
     public async Task Neko()
     {
         using HttpClient client = new();
@@ -25,7 +24,6 @@ public class NSFW : ModuleBase<SocketCommandContext>
 
     [Command("nhentai")]
     [Summary("Search for a doujinshi/manga from NHentai, or go for a completely random one! If you provide multiple keywords for a search, separate them with a comma with no spaces.")]
-    [Remarks("$nhentai")]
     public async Task<RuntimeResult> NHentai([Remainder] string keyword = "")
     {
         GalleryElement gallery;

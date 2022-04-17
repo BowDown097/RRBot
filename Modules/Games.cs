@@ -6,7 +6,7 @@ public class Games : ModuleBase<SocketCommandContext>
 
     [Command("minesweeper")]
     [Summary("Play a game of Minesweeper. Choose between difficulty 1-3.")]
-    [Remarks("$minesweeper <difficulty>")]
+    [Remarks("$minesweeper 2")]
     public async Task<RuntimeResult> Minesweeper(int difficulty = 1)
     {
         if (difficulty < 1 || difficulty > 3)

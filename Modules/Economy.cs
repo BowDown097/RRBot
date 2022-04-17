@@ -9,7 +9,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Alias("bal", "cash")]
     [Command("balance")]
     [Summary("Check your own or someone else's balance.")]
-    [Remarks("$balance <user>")]
+    [Remarks("$bal \"Coalava 🌙#1002\"")]
     public async Task<RuntimeResult> Balance(IGuildUser user = null)
     {
         if (user?.IsBot == true)
@@ -30,7 +30,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Alias("cd")]
     [Command("cooldowns")]
     [Summary("Check your own or someone else's crime cooldowns.")]
-    [Remarks("$cooldowns <user>")]
+    [Remarks("$cd Lilpumpfan1")]
     public async Task Cooldowns(IGuildUser user = null)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
@@ -61,7 +61,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Alias("lb")]
     [Command("leaderboard")]
     [Summary("Check the leaderboard for cash or for a specific currency.")]
-    [Remarks("$leaderboard <currency>")]
+    [Remarks("$lb btc")]
     public async Task<RuntimeResult> Leaderboard(string currency = "cash")
     {
         string cUp = currency.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : currency.ToUpper();
@@ -118,7 +118,6 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Alias("roles")]
     [Command("ranks")]
     [Summary("View all the ranks and their costs.")]
-    [Remarks("$ranks")]
     public async Task Ranks()
     {
         DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
@@ -140,7 +139,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Alias("give", "transfer")]
     [Command("sauce")]
     [Summary("Sauce someone some cash.")]
-    [Remarks("$sauce [user] [amount]")]
+    [Remarks("$sauce Mateo 1000")]
     public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
     {
         if (amount < Constants.TRANSACTION_MIN || double.IsNaN(amount))
@@ -167,7 +166,6 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Alias("kms", "selfend")]
     [Command("suicide")]
     [Summary("Kill yourself.")]
-    [Remarks("$suicide")]
     public async Task<RuntimeResult> Suicide()
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);

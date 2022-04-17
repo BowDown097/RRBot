@@ -6,7 +6,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Alias("seethe")]
     [Command("ban")]
     [Summary("Ban any member.")]
-    [Remarks("$ban [user] <duration> <reason>")]
+    [Remarks("$ban \"Danny Parker\" 5d Spamming the n-word")]
     public async Task<RuntimeResult> Ban(IGuildUser user, string duration = "", [Remainder] string reason = "")
     {
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
@@ -37,7 +37,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
     [Command("cancelticket")]
     [Summary("Pre-emptively cancel a user's support ticket, if they have one that is opened.")]
-    [Remarks("$cancelticket [user]")]
+    [Remarks("$cancelticket JamByte")]
     [RequireBeInChannel("help-requests")]
     [RequireRushReborn]
     public async Task<RuntimeResult> CancelTicket(IGuildUser user)
@@ -50,7 +50,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
     [Command("chill")]
     [Summary("Shut chat the fuck up for a specific amount of time.")]
-    [Remarks("$chill [duration]")]
+    [Remarks("$chill 60s")]
     public async Task<RuntimeResult> Chill(string duration)
     {
         if (!int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
@@ -80,7 +80,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Alias("cope")]
     [Command("kick")]
     [Summary("Kick any member.")]
-    [Remarks("$kick [user] <reason>")]
+    [Remarks("$kick Geeky™ calling me fat")]
     public async Task<RuntimeResult> Kick(IGuildUser user, [Remainder] string reason = "")
     {
         if (user.IsBot)
@@ -103,7 +103,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
     [Command("memeban", RunMode = RunMode.Async)]
     [Summary("Meme bans a member and DMs an invite back to the server.")]
-    [Remarks("$memeban [user]")]
+    [Remarks("$memeban LYNESTAR")]
     public async Task<RuntimeResult> MemeBan(IGuildUser user)
     {
         if (user.IsBot)
@@ -139,7 +139,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Alias("1984")]
     [Command("mute")]
     [Summary("Mute any member for any amount of time with any reason.")]
-    [Remarks("$mute [user] [duration] <reason>")]
+    [Remarks("$mute \"Cashmere a Rolex\" 2h rate limiting")]
     public async Task<RuntimeResult> Mute(IGuildUser user, string duration, [Remainder] string reason = "")
     {
         if (!int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
@@ -171,7 +171,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Alias("clear")]
     [Command("purge", RunMode = RunMode.Async)]
     [Summary("Purge any amount of messages (Note: messages that are two weeks old or older will fail to delete).")]
-    [Remarks("$purge [count] <user>")]
+    [Remarks("$purge 30 Woob#3770")]
     public async Task<RuntimeResult> Purge(int count, IGuildUser user = null)
     {
         if (count <= 0)
@@ -192,7 +192,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
     [Command("unban")]
     [Summary("Unban any currently banned member.")]
-    [Remarks("$unban [userId]")]
+    [Remarks("$unban 472054136251351050")]
     public async Task<RuntimeResult> Unban(ulong userId)
     {
         RestBan ban = await Context.Guild.GetBanAsync(userId);
@@ -207,7 +207,6 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Alias("thaw")]
     [Command("unchill")]
     [Summary("Let chat talk now.")]
-    [Remarks("$unchill")]
     public async Task<RuntimeResult> Unchill()
     {
         SocketTextChannel channel = Context.Channel as SocketTextChannel;
@@ -223,7 +222,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Alias("1985")]
     [Command("unmute")]
     [Summary("Unmute any member.")]
-    [Remarks("$unmute [user]")]
+    [Remarks("$unmute JustinKingPiggy#5000")]
     public async Task<RuntimeResult> Unmute(IGuildUser user)
     {
         if (user.TimedOutUntil.GetValueOrDefault() < DateTimeOffset.UtcNow)

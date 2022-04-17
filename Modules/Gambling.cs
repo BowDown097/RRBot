@@ -7,31 +7,30 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
     [Command("55x2")]
     [Summary("Roll 55 or higher on a 100 sided die, get 2x what you put in.")]
-    [Remarks("$55x2 [bet]")]
+    [Remarks("$55x2 1000")]
     [RequireCash]
     public async Task<RuntimeResult> Roll55(double bet) => await GenericGamble(bet, 55, 1);
 
     [Command("6969")]
     [Summary("Roll 69.69 on a 100 sided die, get 6969x what you put in.")]
-    [Remarks("$6969 [bet]")]
+    [Remarks("$6969 all")]
     [RequireCash]
     public async Task<RuntimeResult> Roll6969(double bet) => await GenericGamble(bet, 69.69, 6968, true);
 
     [Command("75+")]
     [Summary("Roll 75 or higher on a 100 sided die, get 3.6x what you put in.")]
-    [Remarks("$75+ [bet]")]
+    [Remarks("$75+ all")]
     [RequireCash]
     public async Task<RuntimeResult> Roll75(double bet) => await GenericGamble(bet, 75, 2.6);
 
     [Command("99+")]
     [Summary("Roll 99 or higher on a 100 sided die, get 90x whatyou put in.")]
-    [Remarks("$99+ [bet]")]
+    [Remarks("$99+ 120")]
     [RequireCash]
     public async Task<RuntimeResult> Roll99(double bet) => await GenericGamble(bet, 99, 89);
 
     [Command("double")]
     [Summary("Double your cash...?")]
-    [Remarks("$double")]
     [RequireCash]
     public async Task<RuntimeResult> Double()
     {
@@ -56,7 +55,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
     [Command("slots", RunMode = RunMode.Async)]
     [Summary("Take the slot machine for a spin!")]
-    [Remarks("$slots [bet]")]
+    [Remarks("$slots 4391039")]
     [RequireCash]
     public async Task<RuntimeResult> Slots(double bet)
     {

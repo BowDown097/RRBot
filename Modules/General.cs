@@ -7,7 +7,7 @@ public class General : ModuleBase<SocketCommandContext>
     [Alias("ach")]
     [Command("achievements")]
     [Summary("View your own or someone else's achievements.")]
-    [Remarks("$achievements <user>")]
+    [Remarks("$achievements toes69ing")]
     public async Task Achievements(IGuildUser user = null)
     {
         ulong userId = user != null ? user.Id : Context.User.Id;
@@ -25,7 +25,7 @@ public class General : ModuleBase<SocketCommandContext>
 
     [Command("help")]
     [Summary("View info about a command.")]
-    [Remarks("$help [command]")]
+    [Remarks("$help help")]
     public async Task<RuntimeResult> Help(string command = "")
     {
         if (string.IsNullOrWhiteSpace(command))
@@ -77,11 +77,16 @@ public class General : ModuleBase<SocketCommandContext>
         if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP))
             preconditions.AppendLine($"Requires {Enum.GetName(rUP.GuildPermission.GetValueOrDefault())} permission");
 
+        StringBuilder usageText = new($"${command.ToLower()}");
+        foreach (Discord.Commands.ParameterInfo parameter in commandInfo.Parameters)
+            usageText.Append(parameter.IsOptional ? $" <{parameter}>" : $" [{parameter}]");
+
         EmbedBuilder commandEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithDescription("**" + CultureInfo.CurrentCulture.TextInfo.ToTitleCase(command.ToLower()) + "**")
             .RRAddField("Description", commandInfo.Summary)
-            .RRAddField("Usage", commandInfo.Remarks)
+            .RRAddField("Usage", usageText)
+            .RRAddField("Example", commandInfo.Remarks)
             .RRAddField("Aliases", string.Join(", ", commandInfo.Aliases.Where(a => a != commandInfo.Name)))
             .RRAddField("Preconditions", preconditions);
         await ReplyAsync(embed: commandEmbed.Build());
@@ -90,7 +95,7 @@ public class General : ModuleBase<SocketCommandContext>
 
     [Command("module")]
     [Summary("View info about a module.")]
-    [Remarks("$module [module]")]
+    [Remarks("$module administration")]
     public async Task<RuntimeResult> Module(string module)
     {
         ModuleInfo moduleInfo = Commands.Modules.FirstOrDefault(m => m.Name.Equals(module, StringComparison.OrdinalIgnoreCase));
@@ -119,7 +124,6 @@ public class General : ModuleBase<SocketCommandContext>
 
     [Command("modules")]
     [Summary("View info about the bot's modules.")]
-    [Remarks("$modules")]
     public async Task Modules()
     {
         List<string> modulesList = Commands.Modules.Select(x => x.Name).ToList();
@@ -138,7 +142,6 @@ public class General : ModuleBase<SocketCommandContext>
     [Alias("guildinfo")]
     [Command("serverinfo")]
     [Summary("View info about this server.")]
-    [Remarks("$serverinfo")]
     public async Task ServerInfo()
     {
         string banner = Context.Guild.BannerUrl;
@@ -178,7 +181,7 @@ public class General : ModuleBase<SocketCommandContext>
     [Alias("statistics")]
     [Command("stats")]
     [Summary("View various statistics about your own, or another user's, bot usage.")]
-    [Remarks("$stats <user>")]
+    [Remarks("$stats Ross")]
     public async Task<RuntimeResult> Stats(IGuildUser user = null)
     {
         if (user?.IsBot == true)
@@ -203,7 +206,7 @@ public class General : ModuleBase<SocketCommandContext>
     [Alias("whois", "profile", "memberinfo")]
     [Command("userinfo")]
     [Summary("View info about a user.")]
-    [Remarks("$userinfo [user]")]
+    [Remarks("$userinfo Moth")]
     public async Task UserInfo(SocketGuildUser user)
     {
         IEnumerable<string> perms = user.GuildPermissions.ToList().Select(p => Enum.GetName(p).SplitPascalCase());

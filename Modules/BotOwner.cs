@@ -14,7 +14,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
     [Alias("botban")]
     [Command("blacklist")]
     [Summary("Ban a user from using the bot.")]
-    [Remarks("$blacklist [user]")]
+    [Remarks("$blacklist BowDown097")]
     public async Task<RuntimeResult> Blacklist(IGuildUser user)
     {
         if (user.IsBot)
@@ -28,7 +28,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
 
     [Command("cleartextchannel")]
     [Summary("Deletes and recreates a text channel, effectively wiping its messages.")]
-    [Remarks("$cleartextchannel [channel]")]
+    [Remarks("$cleartextchannel \\#furry-rp")]
     public async Task ClearTextChannel(ITextChannel channel)
     {
         await channel.DeleteAsync();
@@ -45,11 +45,11 @@ public class BotOwner : ModuleBase<SocketCommandContext>
 
     [Command("disablecmd")]
     [Summary("Disable a command.")]
-    [Remarks("$disablecmd [cmd]")]
+    [Remarks("$disablecmd eval")]
     public async Task<RuntimeResult> DisableCommand(string cmd)
     {
         string cmdLower = cmd.ToLower();
-        if (cmdLower == "disablecmd")
+        if (cmdLower is "disablecmd" or "enablecmd")
             return CommandResult.FromError("I don't think that's a good idea.");
 
         Discord.Commands.SearchResult search = Commands.Search(cmd);
@@ -64,7 +64,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
 
     [Command("enablecmd")]
     [Summary("Enable a previously disabled command.")]
-    [Remarks("$enablecmd [cmd]")]
+    [Remarks("$enablecmd disablecmd")]
     public async Task<RuntimeResult> EnableCommand(string cmd)
     {
         string cmdLower = cmd.ToLower();
@@ -79,7 +79,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
 
     [Command("eval")]
     [Summary("Execute C# code.")]
-    [Remarks("$eval [code]")]
+    [Remarks("$eval Context.Channel.SendMessageAsync(\"Mods are fat\");")]
     public async Task<RuntimeResult> Eval([Remainder] string code)
     {
         try
@@ -107,7 +107,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
 
     [Command("evalsilent")]
     [Summary("Evaluate C# code with no output.")]
-    [Remarks("$evalsilent [code]")]
+    [Remarks("$evalsilent Context.Channel.SendMessageAsync(\"Mods are obese\");")]
     public async Task EvalSilent([Remainder] string code)
     {
         await Context.Message.DeleteAsync();
@@ -119,7 +119,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
     [Alias("setuserproperty")]
     [Command("setuserproperty")]
     [Summary("Set a property for a specific user in the database.")]
-    [Remarks("$setuserproperty [user] [property] [value]")]
+    [Remarks("$setuserproperty Dragonpreet Cash NaN")]
     public async Task<RuntimeResult> SetUserProperty(IGuildUser user, string property, [Remainder] string value)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
@@ -138,7 +138,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
     [Alias("unbotban")]
     [Command("unblacklist")]
     [Summary("Unban a user from using the bot.")]
-    [Remarks("$unblacklist [user]")]
+    [Remarks("$unblacklist \"El Pirata Basado\"")]
     public async Task<RuntimeResult> Unblacklist(IGuildUser user)
     {
         if (user.IsBot)
@@ -152,7 +152,6 @@ public class BotOwner : ModuleBase<SocketCommandContext>
 
     [Command("updatedb")]
     [Summary("Pushes all cached data to the database.")]
-    [Remarks("$updatedb")]
     public async Task UpdateDB()
     {
         long count = MemoryCache.Default.GetCount();
