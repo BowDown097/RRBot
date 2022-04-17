@@ -1,5 +1,5 @@
 <a href="https://github.com/BowDown097/RRBot">
-	<img src="https://i.imgur.com/qAz3zEk.png"/>
+	<img src="https://i.imgur.com/qAz3zEk.png" />
 </a>
 <p align="center">
     <a href="https://discord.gg/USpJnaaNap" alt="Discord">
@@ -8,6 +8,11 @@
     <img src="https://img.shields.io/codefactor/grade/github/BowDown097/RRBot" />
 </p>
 <p align="center">The bot for the <a href="https://discord.gg/USpJnaaNap">Rush Reborn Discord server</a>, heavily inspired by the <a href="https://github.com/Asshley/DEA">DEA Discord bot</a>.</p>
+<p align="center">
+    <a href="https://discord.com/oauth2/authorize?response_type=code&client_id=817790099823525909&permissions=8&scope=bot">
+        <img src="https://i.imgur.com/5qpaqiQ.png" width="248px" height="63px" />
+    </a>
+</p>
 
 ## Features
 This bot offers a lot of things:
