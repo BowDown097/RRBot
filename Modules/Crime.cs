@@ -255,7 +255,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         string originalWord = words[RandomUtil.Next(words.Length)].ToString();
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
 
-        switch (RandomUtil.Next(2))
+        switch (RandomUtil.Next(3))
         {
             case 0:
                 ZalgoString zalgo = new(originalWord, FuckUpMode.Max, FuckUpPosition.All);
@@ -295,6 +295,32 @@ public class Crime : ModuleBase<SocketCommandContext>
                     $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
                     $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{originalWord}**.",
                     $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{originalWord}**.");
+                break;
+            case 2:
+                FormUrlEncodedContent content = new(new Dictionary<string, string>()
+                {
+                    { "q", originalWord },
+                    { "source", "en" },
+                    { "target", "es" }
+                });
+                HttpResponseMessage message = await client.PostAsync("https://libretranslate.de/translate", content);
+                string translatedText = JObject.Parse(await message.Content.ReadAsStringAsync())["translatedText"].ToString();
+
+                EmbedBuilder translateEmbed = new EmbedBuilder()
+                    .WithColor(Color.Red)
+                    .WithTitle("Translate!")
+                    .WithDescription($"**Translate this Spanish word/phrase to English:**\n{translatedText}\n*Type your response in the chat. You have {Constants.SCAVENGE_TIMEOUT} seconds!*");
+                IUserMessage translateMsg = await ReplyAsync(embed: translateEmbed.Build());
+
+                InteractiveResult<SocketMessage> translateResult = await Interactive.NextMessageAsync(
+                    x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
+                    timeout: TimeSpan.FromSeconds(Constants.SCAVENGE_TIMEOUT)
+                );
+                await HandleScavenge(translateMsg, translateResult, user, translateResult.Value.Content.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
+                    $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
+                    $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{originalWord}**.",
+                    $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{originalWord}**.");
+
                 break;
         }
 
