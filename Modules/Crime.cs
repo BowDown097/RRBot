@@ -256,6 +256,12 @@ public class Crime : ModuleBase<SocketCommandContext>
         {
             case 0:
                 string scrambled = Regex.Replace(originalWord, @"\w+", new MatchEvaluator(ScrambleWord), RegexOptions.IgnorePatternWhitespace);
+                if (scrambled.Equals(originalWord, StringComparison.OrdinalIgnoreCase))
+                {
+                    await Scavenge();
+                    return;
+                }
+
                 EmbedBuilder scrambleEmbed = new EmbedBuilder()
                     .WithColor(Color.Red)
                     .WithTitle("Scramble!")
@@ -285,6 +291,11 @@ public class Crime : ModuleBase<SocketCommandContext>
                 });
                 HttpResponseMessage message = await client.PostAsync("https://libretranslate.de/translate", content);
                 string translatedText = JObject.Parse(await message.Content.ReadAsStringAsync())["translatedText"].ToString();
+                if (translatedText.Equals(originalWord, StringComparison.OrdinalIgnoreCase))
+                {
+                    await Scavenge();
+                    return;
+                }
 
                 EmbedBuilder translateEmbed = new EmbedBuilder()
                     .WithColor(Color.Red)
