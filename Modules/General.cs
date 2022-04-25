@@ -77,15 +77,11 @@ public class General : ModuleBase<SocketCommandContext>
         if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP))
             preconditions.AppendLine($"Requires {Enum.GetName(rUP.GuildPermission.GetValueOrDefault())} permission");
 
-        StringBuilder usageText = new($"${command.ToLower()}");
-        foreach (Discord.Commands.ParameterInfo parameter in commandInfo.Parameters)
-            usageText.Append(parameter.IsOptional ? $" <{parameter}>" : $" [{parameter}]");
-
         EmbedBuilder commandEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithDescription("**" + CultureInfo.CurrentCulture.TextInfo.ToTitleCase(command.ToLower()) + "**")
             .RRAddField("Description", commandInfo.Summary)
-            .RRAddField("Usage", usageText)
+            .RRAddField("Usage", commandInfo.GetUsage())
             .RRAddField("Example", commandInfo.Remarks)
             .RRAddField("Aliases", string.Join(", ", commandInfo.Aliases.Where(a => a != commandInfo.Name)))
             .RRAddField("Preconditions", preconditions);

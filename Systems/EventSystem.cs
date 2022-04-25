@@ -231,9 +231,12 @@ public class EventSystem
         if (await FilterSystem.ContainsFilteredWord(context.Guild, reason))
             return;
 
+        string args = !command.Value.Parameters.Any(p => p.IsOptional)
+            ? command.Value.Parameters.Count.ToString()
+            : $"{command.Value.Parameters.Count(p => !p.IsOptional)}-{command.Value.Parameters.Count}";
         string response = result.Error switch {
-            CommandError.BadArgCount => $"You must specify {command.Value.Parameters.Count(p => !p.IsOptional)} argument(s)!\nCommand usage: ``{command.Value.Remarks}``",
-            CommandError.ParseFailed => $"Couldn't understand something you passed into the command.\nThis error info might help: ``{reason}``\nOr maybe the command usage will: ``{command.Value.Remarks}``",
+            CommandError.BadArgCount => $"You must specify {args} argument(s)!\nCommand usage: ``{command.Value.GetUsage()}``",
+            CommandError.ParseFailed => $"Couldn't understand something you passed into the command.\nThis error info might help: ``{reason}``\nOr maybe the command usage will: ``{command.Value.GetUsage()}``",
             CommandError.ObjectNotFound or CommandError.UnmetPrecondition or (CommandError)9 => reason,
             _ => !result.IsSuccess && result is CommandResult ? reason : ""
         };
