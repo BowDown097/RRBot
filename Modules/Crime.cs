@@ -251,6 +251,11 @@ public class Crime : ModuleBase<SocketCommandContext>
         JToken[] words = JObject.Parse(response)["words"].ToArray();
         string originalWord = words[RandomUtil.Next(words.Length)].ToString();
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        if (originalWord.Any(c => !char.IsLetter(c) && !char.IsWhiteSpace(c)))
+        {
+            await Scavenge();
+            return;
+        }
 
         switch (RandomUtil.Next(2))
         {
