@@ -70,7 +70,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
                 .WithColor(Color.Red)
                 .WithTitle("Pot")
                 .RRAddField("Total Value", pot.Value.ToString("C2"))
-                .RRAddField("Draws At", DateTimeOffset.FromUnixTimeSeconds(pot.EndTime).DateTime.ToString("M/d/yyyy h:mm tt \"GMT\""));
+                .RRAddField("Draws At", $"<t:{pot.EndTime}>");
 
             StringBuilder memberInfo = new();
             foreach (KeyValuePair<string, double> mem in pot.Members)
