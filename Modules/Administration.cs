@@ -3,6 +3,19 @@
 [Summary("Commands for admin stuff. Whether you wanna screw with the economy or fuck someone over, I'm sure you'll have fun. However, you'll need to have a very high role to have all this fun. Sorry!")]
 public class Administration : ModuleBase<SocketCommandContext>
 {
+    [Command("drawpot")]
+    [Summary("Draw the pot before it ends.")]
+    public async Task<RuntimeResult> DrawPot()
+    {
+        DbPot pot = await DbPot.GetById(Context.Guild.Id);
+        if (pot.EndTime < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            return CommandResult.FromError("The pot is currently empty.");
+
+        pot.EndTime = 69;
+        await Context.User.NotifyAsync(Context.Channel, "Done! The pot should be drawn soon.");
+        return CommandResult.FromSuccess();
+    }
+
     [Command("givetool")]
     [Summary("Give a user a tool.")]
     [Remarks("$givetool \"Lenny McLennington\" Diamond Pickaxe")]

@@ -53,6 +53,61 @@ public class Gambling : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Command("pot")]
+    [Summary("View the pot or add money into the pot.")]
+    [Remarks("$pot 2000")]
+    public async Task<RuntimeResult> Pot(double amount = double.NaN)
+    {
+        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbPot pot = await DbPot.GetById(Context.Guild.Id);
+
+        if (double.IsNaN(amount))
+        {
+            if (pot.EndTime < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                return CommandResult.FromError("The pot is currently empty.");
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Pot")
+                .RRAddField("Total Value", pot.Value.ToString("C2"))
+                .RRAddField("Draws At", DateTimeOffset.FromUnixTimeSeconds(pot.EndTime).DateTime.ToString("M/d/yyyy h:mm tt \"GMT\""));
+
+            StringBuilder memberInfo = new();
+            foreach (KeyValuePair<string, double> mem in pot.Members)
+            {
+                SocketGuildUser guildUser = Context.Guild.GetUser(Convert.ToUInt64(mem.Key));
+                memberInfo.AppendLine($"**{guildUser.Sanitize()}**: {mem.Value:C2} ({pot.GetMemberOdds(mem.Key)}%)");
+            }
+
+            embed.RRAddField("Members", memberInfo);
+            await ReplyAsync(embed: embed.Build());
+        }
+        else
+        {
+            if (user.UsingSlots)
+                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+            if (amount < Constants.TRANSACTION_MIN)
+                return CommandResult.FromError($"You need to pitch in at least {Constants.TRANSACTION_MIN:C2}.");
+            if (user.Cash < amount)
+                return CommandResult.FromError($"You don't have {amount:C2}!");
+
+            if (pot.EndTime < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            {
+                pot.EndTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(86400);
+                pot.Members = new();
+                pot.Value = 0;
+            }
+
+            string userId = Context.User.Id.ToString();
+            pot.Members[userId] = pot.Members.TryGetValue(userId, out double value) ? value + amount : amount;
+            pot.Value += amount;
+            await Context.User.NotifyAsync(Context.Channel, $"Added **{amount:C2}** into the pot.");
+            await user.SetCash(Context.User, user.Cash - amount);
+        }
+
+        return CommandResult.FromSuccess();
+    }
+
     [Command("slots", RunMode = RunMode.Async)]
     [Summary("Take the slot machine for a spin!")]
     [Remarks("$slots 4391039")]

@@ -9,6 +9,8 @@ public class DbConfigChannels : DbObject
     [FirestoreProperty]
     public ulong PollsChannel { get; set; }
     [FirestoreProperty]
+    public ulong PotChannel { get; set; }
+    [FirestoreProperty]
     public List<ulong> WhitelistedChannels { get; set; } = new();
 
     public static async Task<DbConfigChannels> GetById(ulong guildId)

@@ -16,6 +16,7 @@ public class MonitorSystem
         await Task.Factory.StartNew(async () => await StartBanMonitorAsync());
         await Task.Factory.StartNew(async () => await StartChillMonitorAsync());
         await Task.Factory.StartNew(async () => await StartPerkMonitorAsync());
+        await Task.Factory.StartNew(async () => await StartPotMonitorAsync());
     }
 
     private async Task StartBanMonitorAsync()
@@ -106,6 +107,38 @@ public class MonitorSystem
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private async Task StartPotMonitorAsync()
+    {
+        while (true)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30));
+            foreach (SocketGuild guild in client.Guilds)
+            {
+                DbPot pot = await DbPot.GetById(guild.Id);
+                if (pot.EndTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && pot.EndTime != -1)
+                {
+                    ulong luckyGuy = pot.DrawMember();
+                    SocketGuildUser luckyUser = guild.GetUser(luckyGuy);
+                    DbUser luckyDbUser = await DbUser.GetById(guild.Id, luckyGuy);
+
+                    double winnings = pot.Value * (1 - Constants.POT_FEE);
+                    await luckyDbUser.SetCash(luckyUser, luckyDbUser.Cash + winnings);
+
+                    DbConfigChannels channelsConfig = await DbConfigChannels.GetById(guild.Id);
+                    if (channelsConfig.PotChannel != default)
+                    {
+                        SocketTextChannel channel = guild.GetTextChannel(channelsConfig.PotChannel);
+                        await channel.SendMessageAsync($"The pot has been drawn, and our LUCKY WINNER is {luckyUser.Mention}!!! After a fee of 5%, they have won {winnings:C2} with a {pot.GetMemberOdds(luckyGuy.ToString())}% chance of winning the pot!");
+                    }
+
+                    pot.EndTime = -1;
+                    pot.Members = new();
+                    pot.Value = 0;
                 }
             }
         }

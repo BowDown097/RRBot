@@ -183,6 +183,16 @@ public class Config : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"Set polls channel to {MentionUtils.MentionChannel(channel.Id)}.");
     }
 
+    [Command("setpotchannel")]
+    [Summary("Register the ID for the pot channel in your server so that pot winnings are announced.")]
+    [Remarks("$setpotchannel \\#bot-commands")]
+    public async Task SetPotChannel(IChannel channel)
+    {
+        DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+        channels.PotChannel = channel.Id;
+        await Context.User.NotifyAsync(Context.Channel, $"Set pot channel to {MentionUtils.MentionChannel(channel.Id)}.");
+    }
+
     [Command("setselfrolesmsg")]
     [Summary("Register the ID for the message that users can react to to receive roles.")]
     [Remarks("$setselfrolesmsg \\#self-roles 837416517133271063")]
