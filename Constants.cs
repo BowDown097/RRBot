@@ -109,7 +109,7 @@ public static class Constants
     //       GAMBLING
     // ********************
     public const double DOUBLE_ODDS = 45;
-    public const double POT_FEE = 0.05;
+    public const double POT_FEE = 3;
     public const double SLOTS_MULT_THREEINAROW = 4;
     public const double SLOTS_MULT_THREESEVENS = 21;
     public const double SLOTS_MULT_TWOINAROW = 1.75;
@@ -138,6 +138,24 @@ public static class Constants
         { 7, "7️⃣" },
         { 8, "8️⃣" },
         { 9, "9️⃣" },
+    };
+    // ********************
+    //      PRESTIGE
+    // ********************
+    public const int MAX_PRESTIGE = 10;
+    public const long PRESTIGE_COOLDOWN = 86400;
+    public static readonly Dictionary<int, string> PRESTIGE_IMAGES = new()
+    {
+        { 1, "https://static.wikia.nocookie.net/callofduty/images/e/e8/Prestige_1_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219030716" },
+        { 2, "https://static.wikia.nocookie.net/callofduty/images/a/a4/Prestige_2_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219031107" },
+        { 3, "https://static.wikia.nocookie.net/callofduty/images/b/b3/Prestige_3_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219031611" },
+        { 4, "https://static.wikia.nocookie.net/callofduty/images/2/2f/Prestige_4_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219032157" },
+        { 5, "https://static.wikia.nocookie.net/callofduty/images/c/c5/Prestige_5_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219054424" },
+        { 6, "https://static.wikia.nocookie.net/callofduty/images/6/6c/Prestige_6_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219060041" },
+        { 7, "https://static.wikia.nocookie.net/callofduty/images/0/00/Prestige_7_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219075022" },
+        { 8, "https://static.wikia.nocookie.net/callofduty/images/d/d8/Prestige_8_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219075347" },
+        { 9, "https://static.wikia.nocookie.net/callofduty/images/8/83/Prestige_9_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219075718" },
+        { 10, "https://static.wikia.nocookie.net/callofduty/images/3/37/Prestige_10_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219075719" }
     };
     // ********************
     //        TASKS

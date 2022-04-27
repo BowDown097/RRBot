@@ -36,6 +36,16 @@ public class Administration : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Command("removecrates")]
+    [Summary("Remove a user's crates.")]
+    [Remarks("$removecrates cashmere")]
+    public async Task RemoveCrates(IGuildUser user)
+    {
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        dbUser.Crates = new();
+        await Context.User.NotifyAsync(Context.Channel, $"Removed **{user.Sanitize()}**'s crates.");
+    }
+
     [Command("resetcd")]
     [Summary("Reset a user's crime cooldowns.")]
     [Remarks("$resetcd \"\\*Jazzy Hands\\*\"")]
@@ -77,6 +87,20 @@ public class Administration : ModuleBase<SocketCommandContext>
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         dbUser[cUp] = Math.Round(amount, 4);
         await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s {cUp} to **{amount:0.####}**.");
+        return CommandResult.FromSuccess();
+    }
+
+    [Command("setprestige")]
+    [Summary("Set a user's prestige level.")]
+    [Remarks("$setprestige Justin 10")]
+    public async Task<RuntimeResult> SetPrestige(IGuildUser user, int level)
+    {
+        if (level < 0 || level > Constants.MAX_PRESTIGE)
+            return CommandResult.FromError("Invalid prestige level!");
+
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        dbUser.Prestige = level;
+        await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s prestige level to **{level}**.");
         return CommandResult.FromSuccess();
     }
 

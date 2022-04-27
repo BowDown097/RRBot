@@ -41,7 +41,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
         if (RandomUtil.Next(1, 101) < Constants.DOUBLE_ODDS)
         {
             StatUpdate(user, true, user.Cash);
-            await user.SetCash(Context.User, user.Cash * 2);
+            await user.SetCash(Context.User, user.Cash * 2, Context.Channel, "I have doubled your cash.", false);
         }
         else
         {
@@ -163,17 +163,16 @@ public class Gambling : ModuleBase<SocketCommandContext>
             double payout = (bet * payoutMult) - bet;
             double totalCash = user.Cash + payout;
             StatUpdate(user, true, payout);
-            await user.SetCash(Context.User, totalCash);
 
             if (payoutMult == Constants.SLOTS_MULT_THREESEVENS)
             {
-                await Context.User.NotifyAsync(Context.Channel, $"​SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
+                await user.SetCash(Context.User, totalCash, Context.Channel, $"​SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!" +
                     $"\nBalance: {totalCash:C2}");
                 await user.UnlockAchievement("Jackpot!", "Get a jackpot with $slots.", Context.User, Context.Channel);
             }
             else
             {
-                await Context.User.NotifyAsync(Context.Channel, $"Nicely done! You won **{payout:C2}**.\nBalance: {totalCash:C2}");
+                await user.SetCash(Context.User, totalCash, Context.Channel, $"Nicely done! You won **{payout:C2}**.\nBalance: {totalCash:C2}");
             }
         }
         else
@@ -181,6 +180,8 @@ public class Gambling : ModuleBase<SocketCommandContext>
             double totalCash = (user.Cash - bet) > 0 ? user.Cash - bet : 0;
             StatUpdate(user, false, bet);
             await user.SetCash(Context.User, totalCash);
+            if (bet >= 1000000)
+                await user.UnlockAchievement("I Just Feel Bad", "Take a million dollar L.", Context.User, Context.Channel);
             await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet:C2}**." +
                 $"\nBalance: {totalCash:C2}");
         }
@@ -241,8 +242,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
             double payout = bet * mult;
             double totalCash = user.Cash + payout;
             StatUpdate(user, true, payout);
-            await user.SetCash(Context.User, totalCash);
-            await Context.User.NotifyAsync(Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout:C2}**!" +
+            await user.SetCash(Context.User, totalCash, Context.Channel, $"Good shit my guy! You rolled a {roll} and got yourself **{payout:C2}**!" +
                 $"\nBalance: {totalCash:C2}");
             if (odds == 99)
                 await user.UnlockAchievement("Pretty Damn Lucky", "Win $99+.", Context.User, Context.Channel);
@@ -254,6 +254,8 @@ public class Gambling : ModuleBase<SocketCommandContext>
             double totalCash = (user.Cash - bet) > 0 ? user.Cash - bet : 0;
             StatUpdate(user, false, bet);
             await user.SetCash(Context.User, totalCash);
+            if (bet >= 1000000)
+                await user.UnlockAchievement("I Just Feel Bad", "Take a million dollar L.", Context.User, Context.Channel);
             await Context.User.NotifyAsync(Context.Channel, $"Well damn, you rolled a {roll}, which wasn't enough. You lost **{bet:C2}**." +
                 $"\nBalance: {totalCash:C2}");
         }

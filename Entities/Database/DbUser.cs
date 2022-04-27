@@ -49,6 +49,10 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public Dictionary<string, long> Perks { get; set; } = new();
     [FirestoreProperty]
+    public int Prestige { get; set; }
+    [FirestoreProperty]
+    public long PrestigeCooldown { get; set; }
+    [FirestoreProperty]
     public bool RankupNotifs { get; set; }
     [FirestoreProperty]
     public long RapeCooldown { get; set; }
@@ -140,7 +144,7 @@ public class DbUser : DbObject
         }
     }
 
-    public async Task SetCash(IUser user, double amount)
+    public async Task SetCash(IUser user, double amount, IMessageChannel channel = null, string message = "", bool showPrestigeMessage = true)
     {
         if (user.IsBot)
             return;
@@ -149,16 +153,29 @@ public class DbUser : DbObject
 
         IGuildUser guildUser = user as IGuildUser;
         amount = Math.Round(amount, 2) * Constants.CASH_MULTIPLIER;
-        Cash = amount;
+
+        double difference = amount - Cash;
+        if (Prestige > 0 && difference > 0)
+        {
+            double prestigeCash = difference * (0.10 * Prestige);
+            difference += prestigeCash;
+            if (showPrestigeMessage)
+                message += $"\n*(+{prestigeCash:C2} from Prestige)*";
+        }
+
+        Cash += difference;
+
+        if (channel != null)
+            await user.NotifyAsync(channel, message);
 
         DbConfigRanks ranks = await DbConfigRanks.GetById(guildUser.GuildId);
         foreach (KeyValuePair<string, double> kvp in ranks.Costs)
         {
-            double neededCash = kvp.Value;
+            double neededCash = kvp.Value * (1 + Prestige);
             ulong roleId = ranks.Ids[kvp.Key];
-            if (amount >= neededCash && !guildUser.RoleIds.Contains(roleId))
+            if (Cash >= neededCash && !guildUser.RoleIds.Contains(roleId))
                 await guildUser.AddRoleAsync(roleId);
-            else if (amount <= neededCash && guildUser.RoleIds.Contains(roleId))
+            else if (Cash <= neededCash && guildUser.RoleIds.Contains(roleId))
                 await guildUser.RemoveRoleAsync(roleId);
         }
     }

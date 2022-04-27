@@ -177,7 +177,7 @@ public class EventSystem
             }
             else if (user.TimeTillCash <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             {
-                await user.SetCash(context.User, user.Cash + Constants.MESSAGE_CASH);
+                await user.SetCash(context.User, user.Cash + Constants.MESSAGE_CASH, null, "", false);
                 user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN);
             }
         }

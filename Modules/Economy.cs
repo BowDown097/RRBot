@@ -4,7 +4,7 @@ public class Economy : ModuleBase<SocketCommandContext>
 {
     public static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Scavenge",
         "Slavery", "Whore", "Bully",  "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack",
-        "Daily" };
+        "Daily", "Prestige" };
 
     [Alias("bal", "cash")]
     [Command("balance")]
@@ -121,12 +121,14 @@ public class Economy : ModuleBase<SocketCommandContext>
     public async Task Ranks()
     {
         DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
+        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         StringBuilder description = new();
         foreach (KeyValuePair<string, double> kvp in ranks.Costs.OrderBy(kvp => int.Parse(kvp.Key)))
         {
             SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
+            double cost = kvp.Value * (1 + user.Prestige);
             if (role == null) continue;
-            description.AppendLine($"**{role.Name}**: {kvp.Value:C2}");
+            description.AppendLine($"**{role.Name}**: {cost:C2}");
         }
 
         EmbedBuilder embed = new EmbedBuilder()

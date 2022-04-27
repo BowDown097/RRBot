@@ -126,14 +126,14 @@ public class MonitorSystem
                     SocketGuildUser luckyUser = guild.GetUser(luckyGuy);
                     DbUser luckyDbUser = await DbUser.GetById(guild.Id, luckyGuy);
 
-                    double winnings = pot.Value * (1 - Constants.POT_FEE);
+                    double winnings = pot.Value * (1 - (Constants.POT_FEE / 100));
                     await luckyDbUser.SetCash(luckyUser, luckyDbUser.Cash + winnings);
 
                     DbConfigChannels channelsConfig = await DbConfigChannels.GetById(guild.Id);
                     if (channelsConfig.PotChannel != default)
                     {
                         SocketTextChannel channel = guild.GetTextChannel(channelsConfig.PotChannel);
-                        await channel.SendMessageAsync($"The pot has been drawn, and our LUCKY WINNER is {luckyUser.Mention}!!! After a fee of 5%, they have won {winnings:C2} with a {pot.GetMemberOdds(luckyGuy.ToString())}% chance of winning the pot!");
+                        await channel.SendMessageAsync($"The pot has been drawn, and our LUCKY WINNER is {luckyUser.Mention}!!! After a fee of {Constants.POT_FEE}%, they have won {winnings:C2} with a {pot.GetMemberOdds(luckyGuy.ToString())}% chance of winning the pot!");
                     }
 
                     pot.EndTime = -1;

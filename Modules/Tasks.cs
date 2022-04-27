@@ -46,8 +46,6 @@ public class Tasks : ModuleBase<SocketCommandContext>
         double cashGained = numCaught * fish.Value;
         double totalCash = user.Cash + cashGained;
 
-        await Context.User.NotifyAsync(Context.Channel, $"You caught {numCaught} {fish.Key} with your rod and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-
         if (RandomUtil.NextDouble(1, 101) < Constants.FISH_COCONUT_ODDS)
         {
             cashGained += 3;
@@ -60,7 +58,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }
         });
-        await user.SetCash(Context.User, totalCash);
+        await user.SetCash(Context.User, totalCash, Context.Channel, $"You caught {numCaught} {fish.Key} with your rod and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
         user.FishCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FISH_COOLDOWN);
     }
 
@@ -105,13 +103,12 @@ public class Tasks : ModuleBase<SocketCommandContext>
             _ => ""
         };
 
-        await Context.User.NotifyAsync(Context.Channel, response);
         user.AddToStats(new()
         {
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }
         });
-        await user.SetCash(Context.User, totalCash);
+        await user.SetCash(Context.User, totalCash, Context.Channel, response);
         user.MineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN);
     }
 
@@ -146,10 +143,8 @@ public class Tasks : ModuleBase<SocketCommandContext>
         double cashGained = numMined * 2.5;
         double totalCash = user.Cash + cashGained;
 
-        await Context.User.NotifyAsync(Context.Channel, $"You {activity} {numMined} {thing} with your {tool} and earned **{cashGained:C2}**." +
+        await user.SetCash(Context.User, totalCash, Context.Channel, $"You {activity} {numMined} {thing} with your {tool} and earned **{cashGained:C2}**." +
             $"\nBalance: {totalCash:C2}");
-
-        await user.SetCash(Context.User, totalCash);
         user.AddToStats(new()
         {
             { "Tasks Done", "1" },

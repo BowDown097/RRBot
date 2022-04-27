@@ -369,8 +369,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             double totalCash = user.Cash + moneyEarned;
 
             StatUpdate(user, true, moneyEarned);
-            await user.SetCash(Context.User, totalCash);
-            await Context.User.NotifyAsync(Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
+            await user.SetCash(Context.User, totalCash, Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
         }
         else
         {
@@ -412,11 +411,12 @@ public class Crime : ModuleBase<SocketCommandContext>
         else if (successCondition)
         {
             double rewardCash = RandomUtil.NextDouble(Constants.SCAVENGE_MIN_CASH, Constants.SCAVENGE_MAX_CASH);
-            double totalCash = user.Cash + rewardCash;
+            double prestigeCash = rewardCash * (0.10 * user.Prestige);
+            double totalCash = user.Cash + rewardCash + prestigeCash;
             EmbedBuilder successEmbed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle(msg.Embeds.First().Title)
-                .WithDescription(successResponse + $" Here's {rewardCash:C2}.\nBalance: {totalCash:C2}");
+                .WithDescription(successResponse + $" Here's {rewardCash:C2}.\nBalance: {totalCash:C2}\n{(prestigeCash != 0 ? $"*(+{prestigeCash:C2} from Prestige)*" : "")}");
             await msg.ModifyAsync(x => x.Embed = successEmbed.Build());
             await user.SetCash(Context.User, totalCash);
         }
