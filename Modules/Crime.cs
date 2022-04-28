@@ -411,7 +411,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         else if (successCondition)
         {
             double rewardCash = RandomUtil.NextDouble(Constants.SCAVENGE_MIN_CASH, Constants.SCAVENGE_MAX_CASH);
-            double prestigeCash = rewardCash * (0.10 * user.Prestige);
+            double prestigeCash = rewardCash * (0.20 * user.Prestige);
             double totalCash = user.Cash + rewardCash + prestigeCash;
             EmbedBuilder successEmbed = new EmbedBuilder()
                 .WithColor(Color.Red)

@@ -155,9 +155,9 @@ public class DbUser : DbObject
         amount = Math.Round(amount, 2) * Constants.CASH_MULTIPLIER;
 
         double difference = amount - Cash;
-        if (Prestige > 0 && difference > 0)
+        if (Prestige > 0 && difference > 0 && channel != null)
         {
-            double prestigeCash = difference * (0.10 * Prestige);
+            double prestigeCash = difference * (0.20 * Prestige);
             difference += prestigeCash;
             if (showPrestigeMessage)
                 message += $"\n*(+{prestigeCash:C2} from Prestige)*";
@@ -171,7 +171,7 @@ public class DbUser : DbObject
         DbConfigRanks ranks = await DbConfigRanks.GetById(guildUser.GuildId);
         foreach (KeyValuePair<string, double> kvp in ranks.Costs)
         {
-            double neededCash = kvp.Value * (1 + Prestige);
+            double neededCash = kvp.Value * (1 + (0.5 * Prestige));
             ulong roleId = ranks.Ids[kvp.Key];
             if (Cash >= neededCash && !guildUser.RoleIds.Contains(roleId))
                 await guildUser.AddRoleAsync(roleId);

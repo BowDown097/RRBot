@@ -126,7 +126,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         foreach (KeyValuePair<string, double> kvp in ranks.Costs.OrderBy(kvp => int.Parse(kvp.Key)))
         {
             SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
-            double cost = kvp.Value * (1 + user.Prestige);
+            double cost = kvp.Value * (1 + (0.5 * user.Prestige));
             if (role == null) continue;
             description.AppendLine($"**{role.Name}**: {cost:C2}");
         }

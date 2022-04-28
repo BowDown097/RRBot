@@ -3,7 +3,7 @@ namespace RRBot.Modules;
 public class Prestige : ModuleBase<SocketCommandContext>
 {
     [Command("prestige")]
-    [Summary("Prestige!\n\nUpon prestige, you will **GET**:\n- +10% cash multiplier\n- +100% rank cost multiplier\n- A shiny, cool new badge on $prestigeinfo\n\nand you will **LOSE**:\n- All money, including in crypto investments\n- All cooldowns\n- All items")]
+    [Summary("Prestige!\n\nUpon prestige, you will **GET**:\n- +20% cash multiplier\n- +50% rank cost multiplier\n- A shiny, cool new badge on $prestigeinfo\n\nand you will **LOSE**:\n- All money, including in crypto investments\n- All cooldowns\n- All items")]
     [RequireCooldown("PrestigeCooldown", "I can't let you go on and prestige so quickly! Wait {0}.")]
     public async Task<RuntimeResult> DoPrestige()
     {
@@ -12,7 +12,7 @@ public class Prestige : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("No ranks are configured.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        double prestigeCost = ranks.Costs.OrderBy(kvp => kvp.Value).Select(a => a.Value).Last() * (1 + user.Prestige);
+        double prestigeCost = ranks.Costs.OrderBy(kvp => kvp.Value).Select(a => a.Value).Last() * (1 + (0.5 * user.Prestige));
         if (user.Cash < prestigeCost)
             return CommandResult.FromError($"You don't have enough to prestige! You need {prestigeCost:C2}.");
         if (user.Prestige == Constants.MAX_PRESTIGE)
@@ -50,8 +50,8 @@ public class Prestige : ModuleBase<SocketCommandContext>
             .WithDescription("**Prestige Perks**")
             .WithThumbnailUrl(Constants.PRESTIGE_IMAGES[user.Prestige])
             .RRAddField("Prestige Level", user.Prestige)
-            .RRAddField("Cash Multiplier", 1 + (0.10 * user.Prestige) + "x")
-            .RRAddField("Rank Cost Multiplier", 1 + user.Prestige + "x");
+            .RRAddField("Cash Multiplier", 1 + (0.20 * user.Prestige) + "x")
+            .RRAddField("Rank Cost Multiplier", 1 + (0.5 * user.Prestige) + "x");
 
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
