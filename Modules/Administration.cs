@@ -36,6 +36,19 @@ public class Administration : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Command("removeachievement")]
+    [Summary("Remove a user's achievement.")]
+    [Remarks("$removeachievement AceOfSevens Top Loser")]
+    public async Task<RuntimeResult> RemoveAchievement(IGuildUser user, [Remainder] string name)
+    {
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        if (!dbUser.Achievements.Remove(name))
+            return CommandResult.FromError($"**{user.Sanitize()}** doesn't have that achievement!");
+
+        await Context.User.NotifyAsync(Context.Channel, $"Successfully removed the achievement from **{user.Sanitize()}**.");
+        return CommandResult.FromSuccess();
+    }
+
     [Command("removecrates")]
     [Summary("Remove a user's crates.")]
     [Remarks("$removecrates cashmere")]
@@ -109,7 +122,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$unlockachievement AceOfSevens \"Top Loser\" \"absolute loser lmao\" 5")]
     public async Task UnlockAchievement(IGuildUser user, string name, string desc, double reward = 0)
     {
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         await dbUser.UnlockAchievement(name, desc, user, Context.Channel, reward);
     }
 }

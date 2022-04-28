@@ -4,7 +4,7 @@ public class Prestige : ModuleBase<SocketCommandContext>
 {
     [Command("prestige")]
     [Summary("Prestige!\n\nUpon prestige, you will **GET**:\n- +20% cash multiplier\n- +50% rank cost multiplier\n- A shiny, cool new badge on $prestigeinfo\n\nand you will **LOSE**:\n- All money, including in crypto investments\n- All cooldowns\n- All items")]
-    [RequireCooldown("PrestigeCooldown", "I can't let you go on and prestige so quickly! Wait {0}.")]
+    [RequireCooldown("PrestigeCooldown", "​I can't let you go on and prestige so quickly! Wait {0}.")]
     public async Task<RuntimeResult> DoPrestige()
     {
         DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
