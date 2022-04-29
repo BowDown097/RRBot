@@ -261,7 +261,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         {
             case 0:
                 string scrambled = Regex.Replace(originalWord, @"\w+", new MatchEvaluator(ScrambleWord), RegexOptions.IgnorePatternWhitespace);
-                if (scrambled.Equals(originalWord, StringComparison.OrdinalIgnoreCase))
+                if (scrambled != "egg" && scrambled.Equals(originalWord, StringComparison.OrdinalIgnoreCase))
                 {
                     await Scavenge();
                     return;

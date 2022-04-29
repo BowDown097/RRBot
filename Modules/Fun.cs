@@ -40,6 +40,8 @@ public class Fun : ModuleBase<SocketCommandContext>
             description.AppendLine($"**{i}:**\n*{definition.PartOfSpeech}*");
             foreach (Sense sense in definition.Senses)
             {
+                if (await FilterSystem.ContainsFilteredWord(Context.Guild, sense.Definition[0]))
+                    return CommandResult.FromError("Nope.");
                 description.AppendLine($"Definition: {sense.Definition[0]}");
                 if (sense.Examples != null)
                     description.AppendLine($"Example: {sense.Examples[0].Text}");

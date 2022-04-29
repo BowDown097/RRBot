@@ -86,7 +86,11 @@ public static class FilterSystem
             return;
 
         if (await ContainsFilteredWord(guild, message.Content, optionals))
+        {
             await message.DeleteAsync();
+            SocketGuildUser guildUser = message.Author as SocketGuildUser;
+            await guildUser.SetTimeOutAsync(TimeSpan.FromMinutes(1));
+        }
     }
 
     public static async Task DoScamCheckAsync(SocketUserMessage message, IGuild guild)
