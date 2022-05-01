@@ -33,6 +33,8 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long FishCooldown { get; set; }
     [FirestoreProperty]
+    public double GamblingMultiplier { get; set; } = 1.0;
+    [FirestoreProperty]
     public long HackCooldown { get; set; }
     [FirestoreProperty]
     public long HuntCooldown { get; set; }
@@ -52,8 +54,6 @@ public class DbUser : DbObject
     public int Prestige { get; set; }
     [FirestoreProperty]
     public long PrestigeCooldown { get; set; }
-    [FirestoreProperty]
-    public bool RankupNotifs { get; set; }
     [FirestoreProperty]
     public long RapeCooldown { get; set; }
     [FirestoreProperty]
@@ -180,17 +180,31 @@ public class DbUser : DbObject
         }
     }
 
-    public async Task UnlockAchievement(string name, string desc, IUser user, IMessageChannel channel, double reward = 0)
+    public async Task SetCooldown(string name, long secs, IGuild guild, IUser user)
     {
-        if (Achievements.ContainsKey(name))
+        // speed demon cooldown reducer
+        if (Perks.ContainsKey("Speed Demon"))
+            secs = (long)(secs * 0.85);
+        // 4th rank cooldown reducer
+        DbConfigRanks ranks = await DbConfigRanks.GetById(guild.Id);
+        if (user.GetRoleIds().Contains(ranks.Ids.Select(k => k.Value).LastOrDefault()))
+            secs = (long)(secs * 0.80);
+
+        this[name] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(secs);
+    }
+
+    public async Task UnlockAchievement(string name, IUser user, IMessageChannel channel)
+    {
+        if (Achievements.Any(kvp => kvp.Key.Equals(name, StringComparison.OrdinalIgnoreCase)))
             return;
 
-        Achievements.Add(name, desc);
-        string description = $"GG {user}, you unlocked an achievement.\n**{name}**: {desc}";
-        if (reward != 0)
+        Achievement ach = Array.Find(Constants.DEFAULT_ACHIEVEMENTS, ach => ach.name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        Achievements.Add(ach.name, ach.description);
+        string description = $"GG {user}, you unlocked an achievement.\n**{ach.name}**: {ach.description}";
+        if (ach.reward > 0)
         {
-            Cash += reward;
-            description += $"\nReward: {reward:C2}";
+            Cash += ach.reward;
+            description += $"\nReward: {ach.reward:C2}";
         }
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -198,5 +212,11 @@ public class DbUser : DbObject
             .WithTitle("Achievement Get!")
             .WithDescription(description);
         await channel.SendMessageAsync(embed: embed.Build());
+
+        if (GamblingMultiplier == 1.0 && Constants.GAMBLING_ACHIEVEMENTS.All(a => Achievements.ContainsKey(a)))
+        {
+            GamblingMultiplier = 1.1;
+            await user.NotifyAsync(channel, "Congratulations! You've acquired every gambling achievement. Enjoy this **1.1x gambling multiplier**!");
+        }
     }
 }

@@ -58,8 +58,9 @@ public class Tasks : ModuleBase<SocketCommandContext>
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }
         });
+
         await user.SetCash(Context.User, totalCash, Context.Channel, $"You caught {numCaught} {fish.Key} with your rod and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        user.FishCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.FISH_COOLDOWN);
+        await user.SetCooldown("FishCooldown", Constants.FISH_COOLDOWN, Context.Guild, Context.User);
     }
 
     [Command("hunt")]
@@ -108,11 +109,12 @@ public class Tasks : ModuleBase<SocketCommandContext>
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }
         });
+
         await user.SetCash(Context.User, totalCash, Context.Channel, response);
-        user.MineCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MINE_COOLDOWN);
+        await user.SetCooldown("MineCooldown", Constants.MINE_COOLDOWN, Context.Guild, Context.User);
     }
 
-    private async Task GenericTask(string toolType, string activity, string thing, string cooldown, double duration)
+    private async Task GenericTask(string toolType, string activity, string thing, string cooldown, long duration)
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         string tool = ItemSystem.GetBestTool(user.Tools, toolType);
@@ -143,13 +145,13 @@ public class Tasks : ModuleBase<SocketCommandContext>
         double cashGained = numMined * 2.5;
         double totalCash = user.Cash + cashGained;
 
-        await user.SetCash(Context.User, totalCash, Context.Channel, $"You {activity} {numMined} {thing} with your {tool} and earned **{cashGained:C2}**." +
-            $"\nBalance: {totalCash:C2}");
         user.AddToStats(new()
         {
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }
         });
-        user[cooldown] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
+
+        await user.SetCash(Context.User, totalCash, Context.Channel, $"You {activity} {numMined} {thing} with your {tool} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
+        await user.SetCooldown(cooldown, duration, Context.Guild, Context.User);
     }
 }

@@ -86,11 +86,9 @@ public static class ItemSystem
             {
                 if (dbUser.PacifistCooldown != 0)
                 {
-                    if (dbUser.PacifistCooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                    {
-                        return CommandResult.FromError("You bought the Pacifist perk later than 3 days ago." +
-                            $" You still have to wait {TimeSpan.FromSeconds(dbUser.PacifistCooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FormatCompound()}.");
-                    }
+                    long cooldownSecs = dbUser.PacifistCooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    if (cooldownSecs > 0)
+                        return CommandResult.FromError("You bought the Pacifist perk later than 3 days ago. You still have to wait {TimeSpan.FromSeconds(cooldownSecs).FormatCompound()}.");
                     dbUser.PacifistCooldown = 0;
                 }
 

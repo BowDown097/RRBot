@@ -38,12 +38,12 @@ public class Prestige : ModuleBase<SocketCommandContext>
         user.Crates = user.Tools = new();
         user.Perks = new();
         user.Prestige++;
-        user.PrestigeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.PRESTIGE_COOLDOWN);
 
+        await user.SetCooldown("PrestigeCooldown", Constants.PRESTIGE_COOLDOWN, Context.Guild, Context.User);
         await Context.User.NotifyAsync(Context.Channel, $"Congratulations, homie! You're now Prestige {user.Prestige}. Check $prestigeinfo for your new prestige perks. Hope you said your goodbyes to all of your stuff, cause it's gone!");
-        await user.UnlockAchievement("Prestiged!", "Get your first prestige.", Context.User, Context.Channel, 1000);
+        await user.UnlockAchievement("Prestiged!", Context.User, Context.Channel);
         if (user.Prestige == Constants.MAX_PRESTIGE)
-            await user.UnlockAchievement("Maxed!", "Reach the max prestige.", Context.User, Context.Channel, 1420);
+            await user.UnlockAchievement("Maxed!", Context.User, Context.Channel);
         return CommandResult.FromSuccess();
     }
 

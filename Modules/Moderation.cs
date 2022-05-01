@@ -21,7 +21,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
                 return CommandResult.FromError("You specified an invalid amount of time!");
 
             DbBan ban = await DbBan.GetById(Context.Guild.Id, user.Id);
-            ban.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds);
+            ban.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)resolved.Item1.TotalSeconds);
             await user.BanAsync(reason: reason);
             await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
         }
@@ -71,7 +71,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
         await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
         DbChill chill = await DbChill.GetById(Context.Guild.Id, Context.Channel.Id);
-        chill.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(resolved.Item1.TotalSeconds);
+        chill.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)resolved.Item1.TotalSeconds);
 
         await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
         return CommandResult.FromSuccess();
@@ -162,7 +162,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         dbUser.AddToStat("Mutes", "1");
-        await dbUser.UnlockAchievement("Literally 1984", "Get muted.", user, Context.Channel);
+        await dbUser.UnlockAchievement("Literally 1984", user, Context.Channel);
 
         await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
         return CommandResult.FromSuccess();

@@ -103,7 +103,7 @@ public class Support : ModuleBase<SocketCommandContext>
         await message.ModifyAsync(msg => msg.Embed = embed.Build());
 
         DbUser dbUser = await DbUser.GetById(context.Guild.Id, user.Id);
-        dbUser.SupportCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(600);
+        await dbUser.SetCooldown("SupportCooldown", 600, context.Guild, user);
         await ticket.Reference.DeleteAsync();
 
         await user.NotifyAsync(context.Channel, response);

@@ -38,7 +38,7 @@ public class Administration : ModuleBase<SocketCommandContext>
 
     [Command("removeachievement")]
     [Summary("Remove a user's achievement.")]
-    [Remarks("$removeachievement AceOfSevens Top Loser")]
+    [Remarks("$removeachievement AceOfSevens I Just Feel Bad")]
     public async Task<RuntimeResult> RemoveAchievement(IGuildUser user, [Remainder] string name)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
@@ -66,7 +66,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         foreach (string cmd in Economy.CMDS_WITH_COOLDOWN)
-            dbUser[$"{cmd}Cooldown"] = 0L;
+            dbUser[$"{cmd}Cooldown"] = 0;
         await Context.User.NotifyAsync(Context.Channel, $"Reset **{user.Sanitize()}**'s cooldowns.");
     }
 
@@ -119,10 +119,10 @@ public class Administration : ModuleBase<SocketCommandContext>
 
     [Command("unlockachievement")]
     [Summary("Unlock an achievement for a user.")]
-    [Remarks("$unlockachievement AceOfSevens \"Top Loser\" \"absolute loser lmao\" 5")]
-    public async Task UnlockAchievement(IGuildUser user, string name, string desc, double reward = 0)
+    [Remarks("$unlockachievement AceOfSevens I Just Feel Bad")]
+    public async Task UnlockAchievement(IGuildUser user, [Remainder] string name)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-        await dbUser.UnlockAchievement(name, desc, user, Context.Channel, reward);
+        await dbUser.UnlockAchievement(name, user, Context.Channel);
     }
 }

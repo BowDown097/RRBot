@@ -4,6 +4,27 @@ namespace RRBot;
 public static class Constants
 {
     // ********************
+    //     ACHIEVEMENTS
+    // ********************
+    public static readonly Achievement[] DEFAULT_ACHIEVEMENTS =
+    {
+        new("Hard Boiled Egg", "Find a hard boiled egg.", 1337),
+        new("I Just Feel Bad", "Take a million dollar L."),
+        new("Jackpot!", "Get a jackpot with $slots."),
+        new("Luckiest Dude Alive", "Win $69.69."),
+        new("Literally 1984", "Get muted."),
+        new("Maxed!", "Reach the max prestige.", 1420),
+        new("Prestiged!", "Get your first prestige.", 1000),
+        new("Pretty Damn Lucky", "Win $99+.")
+    };
+    public static readonly string[] GAMBLING_ACHIEVEMENTS =
+    {
+        "I Just Feel Bad",
+        "Jackpot!",
+        "Luckiest Dude Alive",
+        "Pretty Damn Lucky"
+    };
+    // ********************
     //     AUDIO SYSTEM
     // ********************
     public const float MAX_VOLUME = 200;
@@ -21,42 +42,40 @@ public static class Constants
     // ********************
     public const double CASH_MULTIPLIER = 1.0;
     public const double MESSAGE_CASH = 30;
-    public const double MESSAGE_CASH_COOLDOWN = 60;
+    public const long MESSAGE_CASH_COOLDOWN = 60;
     public const double TRANSACTION_MIN = 100;
     // ********************
     //        CRIME
     // ********************
-    public const double BULLY_COOLDOWN = 900;
-    public const double DEAL_COOLDOWN = 3600;
+    public const long BULLY_COOLDOWN = 900;
+    public const long DEAL_COOLDOWN = 3600;
     public const double GENERIC_CRIME_WIN_ODDS = 80;
     public const double GENERIC_CRIME_LOSS_MAX = 461;
     public const double GENERIC_CRIME_LOSS_MIN = 69;
     public const double GENERIC_CRIME_TOOL_ODDS = 4;
     public const double GENERIC_CRIME_WIN_MAX = 691;
     public const double GENERIC_CRIME_WIN_MIN = 69;
-    public const double HACK_COOLDOWN = 7200;
+    public const long HACK_COOLDOWN = 7200;
     public const double HACK_ODDS = 10;
-    public const double LOOT_COOLDOWN = 3600;
-    public const double RAPE_COOLDOWN = 7200;
+    public const long LOOT_COOLDOWN = 3600;
+    public const long RAPE_COOLDOWN = 7200;
     public const double RAPE_ODDS = 50;
     public const double RAPE_MAX_PERCENT = 9;
     public const double RAPE_MIN_PERCENT = 5;
-    public const double ROB_COOLDOWN = 7200;
+    public const long ROB_COOLDOWN = 7200;
     public const double ROB_ODDS = 40;
     public const double ROB_MAX_PERCENT = 20;
     public const double ROB_MIN_CASH = 100;
-    public const double SCAVENGE_COOLDOWN = 60;
+    public const long SCAVENGE_COOLDOWN = 60;
     public const double SCAVENGE_MIN_CASH = 50;
     public const double SCAVENGE_MAX_CASH = 100;
     public const double SCAVENGE_TIMEOUT = 15;
-    public const double SLAVERY_COOLDOWN = 3600;
-    public const double WHORE_COOLDOWN = 3600;
+    public const long SLAVERY_COOLDOWN = 3600;
+    public const long WHORE_COOLDOWN = 3600;
     // ********************
     //        ECONOMY
     // ********************
-    public const double DAILY_COOLDOWN = 86400;
-    public const double DAILY_MIN = 1000;
-    public const double DAILY_MAX = 2500;
+    public const long DAILY_COOLDOWN = 86400;
     // ********************
     //         FUN
     // ********************
@@ -160,16 +179,16 @@ public static class Constants
     // ********************
     //        TASKS
     // ********************
-    public const double CHOP_COOLDOWN = 3600;
-    public const double DIG_COOLDOWN = 3600;
-    public const double FARM_COOLDOWN = 3600;
+    public const long CHOP_COOLDOWN = 3600;
+    public const long DIG_COOLDOWN = 3600;
+    public const long FARM_COOLDOWN = 3600;
     public static readonly Dictionary<string, double> FISH = new()
     {
         { "carp", 24 },
         { "trout", 27 },
         { "goldfish", 30 }
     };
-    public const double FISH_COOLDOWN = 3600;
+    public const long FISH_COOLDOWN = 3600;
     public const double FISH_COCONUT_ODDS = 20;
     public const int GENERIC_TASK_WOOD_MAX = 65;
     public const int GENERIC_TASK_WOOD_MIN = 32;
@@ -179,8 +198,8 @@ public static class Constants
     public const int GENERIC_TASK_IRON_MIN = 113;
     public const int GENERIC_TASK_DIAMOND_MAX = 209;
     public const int GENERIC_TASK_DIAMOND_MIN = 161;
-    public const double HUNT_COOLDOWN = 3600;
-    public const double MINE_COOLDOWN = 3600;
+    public const long HUNT_COOLDOWN = 3600;
+    public const long MINE_COOLDOWN = 3600;
     public const double MINE_STONE_MULTIPLIER = 1.33;
     public const double MINE_IRON_MULTIPLIER = 1.66;
     public const double MINE_DIAMOND_MULTIPLIER = 2.00;

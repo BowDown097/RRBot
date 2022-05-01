@@ -35,7 +35,7 @@ public class Goods : ModuleBase<SocketCommandContext>
         {
             await Context.User.NotifyAsync(Context.Channel, "Here's a Daily crate, my good man! Best of luck.");
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-            user.DailyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.DAILY_COOLDOWN);
+            await user.SetCooldown("DailyCooldown", Constants.DAILY_COOLDOWN, Context.Guild, Context.User);
         }
         return result;
     }
@@ -62,7 +62,7 @@ public class Goods : ModuleBase<SocketCommandContext>
             if (!user.Perks.Remove("Pacifist"))
                 return CommandResult.FromError("You do not have the Pacifist perk!");
 
-            user.PacifistCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(259200);
+            await user.SetCooldown("PacifistCooldown", 259200, Context.Guild, Context.User);
             await Context.User.NotifyAsync(Context.Channel, "You discarded your Pacifist perk. If you wish to buy it again, you will have to wait 3 days.");
         }
         else if (item is Tool)

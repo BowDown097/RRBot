@@ -33,7 +33,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"You BULLIED **{user.Sanitize()}** to ``{nickname}``!");
 
         DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        author.BullyCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.BULLY_COOLDOWN);
+        await author.SetCooldown("BullyCooldown", Constants.BULLY_COOLDOWN, Context.Guild, Context.User);
         return CommandResult.FromSuccess();
     }
 
@@ -115,7 +115,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             }
         }
 
-        author.HackCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.HACK_COOLDOWN);
+        await author.SetCooldown("HackCooldown", Constants.HACK_COOLDOWN, Context.Guild, Context.User);
         return CommandResult.FromSuccess();
     }
 
@@ -171,7 +171,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user.Sanitize()}**! You just paid **{repairs:C2}** in asshole repairs.");
         }
 
-        author.RapeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.RAPE_COOLDOWN);
+        await author.SetCooldown("RapeCooldown", Constants.RAPE_COOLDOWN, Context.Guild, Context.User);
         return CommandResult.FromSuccess();
     }
 
@@ -237,7 +237,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             }
         }
 
-        author.RobCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.ROB_COOLDOWN);
+        await author.SetCooldown("RobCooldown", Constants.ROB_COOLDOWN, Context.Guild, Context.User);
         return CommandResult.FromSuccess();
     }
 
@@ -275,7 +275,7 @@ public class Crime : ModuleBase<SocketCommandContext>
                 if (scrambled == "egg")
                 {
                     await ReplyAsync("This egg is hard boiled, not scrambled. https://cdn.discordapp.com/attachments/661812833771847703/926190266904346725/video0.mov");
-                    await user.UnlockAchievement("Hard Boiled Egg", "Find a hard boiled egg.", Context.User, Context.Channel, 1337);
+                    await user.UnlockAchievement("Hard Boiled Egg", Context.User, Context.Channel);
                 }
 
                 InteractiveResult<SocketMessage> scrambleResult = await Interactive.NextMessageAsync(
@@ -320,7 +320,7 @@ public class Crime : ModuleBase<SocketCommandContext>
                 break;
         }
 
-        user.ScavengeCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.SCAVENGE_COOLDOWN);
+        await user.SetCooldown("ScavengeCooldown", Constants.SCAVENGE_COOLDOWN, Context.Guild, Context.User);
     }
 
     [Command("slavery")]
@@ -352,7 +352,7 @@ public class Crime : ModuleBase<SocketCommandContext>
     }
 
     private async Task<RuntimeResult> GenericCrime(string[] successOutcomes, string[] failOutcomes, string cdKey,
-        double duration, bool hasMehOutcome = false)
+        long duration, bool hasMehOutcome = false)
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         if (user.UsingSlots)
@@ -394,7 +394,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             }
         }
 
-        user[cdKey] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(duration);
+        await user.SetCooldown(cdKey, duration, Context.Guild, Context.User);
         return CommandResult.FromSuccess();
     }
 

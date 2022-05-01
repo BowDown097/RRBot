@@ -14,22 +14,11 @@ public class RequireCooldownAttribute : PreconditionAttribute
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
         DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
-        long cooldown = (long)user[CooldownNode] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        long cooldown = (long)user[CooldownNode];
+        long cooldownSecs = cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-        // speed demon cooldown reducer
-        if (user.Perks.ContainsKey("Speed Demon"))
-            cooldown = (long)(cooldown * 0.85);
-        // 4th rank cooldown reducer
-        DbConfigRanks ranks = await DbConfigRanks.GetById(context.Guild.Id);
-        if (context.User.GetRoleIds().Contains(ranks.Ids.Select(k => k.Value).LastOrDefault()))
-            cooldown = (long)(cooldown * 0.75);
-
-        long newCooldown = DateTimeOffset.UtcNow.ToUnixTimeSeconds(cooldown);
-        if (newCooldown > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-        {
-            return PreconditionResult.FromError(string.Format($"{Message}",
-                    TimeSpan.FromSeconds(cooldown).FormatCompound()));
-        }
+        if (cooldownSecs > 0)
+            return PreconditionResult.FromError(string.Format(Message, TimeSpan.FromSeconds(cooldownSecs).FormatCompound()));
 
         user[CooldownNode] = 0;
         return PreconditionResult.FromSuccess();

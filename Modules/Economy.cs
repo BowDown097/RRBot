@@ -35,20 +35,13 @@ public class Economy : ModuleBase<SocketCommandContext>
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
         StringBuilder description = new();
-        double mult = dbUser.Perks.ContainsKey("Speed Demon") ? 0.85 : 1;
-        DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
 
         foreach (string cmd in CMDS_WITH_COOLDOWN)
         {
-            long cooldown = (long)dbUser[$"{cmd}Cooldown"] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            // speed demon cooldown reducer
-            if (dbUser.Perks.ContainsKey("Speed Demon"))
-                cooldown = (long)(cooldown * 0.85);
-            // 4th rank cooldown reducer
-            if (Context.User.GetRoleIds().Contains(ranks.Ids.Select(k => k.Value).LastOrDefault()))
-                cooldown = (long)(cooldown * 0.75);
-            if (cooldown > 0L)
-                description.AppendLine($"**{cmd}**: {TimeSpan.FromSeconds(cooldown).FormatCompound()}");
+            long cooldown = (long)dbUser[$"{cmd}Cooldown"];
+            long cooldownSecs = cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (cooldownSecs > 0)
+                description.AppendLine($"**{cmd}**: {TimeSpan.FromSeconds(cooldownSecs).FormatCompound()}");
         }
 
         EmbedBuilder embed = new EmbedBuilder()
