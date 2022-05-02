@@ -117,6 +117,16 @@ public class Administration : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Command("setstat")]
+    [Summary("Set a stat for a user.")]
+    [Remarks("$setstat BowDown097 Mutes 100")]
+    public async Task SetStat(IGuildUser user, string stat, string value)
+    {
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        dbUser.Stats[stat] = value;
+        await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s **{stat}** to **{value}**.");
+    }
+
     [Command("unlockachievement")]
     [Summary("Unlock an achievement for a user.")]
     [Remarks("$unlockachievement AceOfSevens I Just Feel Bad")]

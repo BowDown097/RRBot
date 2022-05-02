@@ -35,8 +35,9 @@ public class Prestige : ModuleBase<SocketCommandContext>
             = user.RapeCooldown = user.RobCooldown = user.ScavengeCooldown = user.SlaveryCooldown
             = user.SupportCooldown = user.TimeTillCash = user.WhoreCooldown = 0;
         user.Consumables = new();
-        user.Crates = user.Tools = new();
+        user.Crates = new();
         user.Perks = new();
+        user.Tools = new();
         user.Prestige++;
 
         await user.SetCooldown("PrestigeCooldown", Constants.PRESTIGE_COOLDOWN, Context.Guild, Context.User);
