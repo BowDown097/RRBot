@@ -1,4 +1,6 @@
-﻿namespace RRBot.Modules;
+﻿using Google.Api;
+
+namespace RRBot.Modules;
 [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
 public class Economy : ModuleBase<SocketCommandContext>
 {
@@ -108,6 +110,41 @@ public class Economy : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Command("profile")]
+    [Summary("View a bunch of economy-related info on yourself or another user.")]
+    [Remarks("$profile zuki")]
+    public async Task<RuntimeResult> Profile(IGuildUser user = null)
+    {
+        if (user?.IsBot == true)
+            return CommandResult.FromError("Nope.");
+
+        user ??= Context.User as IGuildUser;
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Red)
+            .WithAuthor(user)
+            .WithTitle("User Profile")
+            .RRAddField("Currencies", BuildPropsList(dbUser, "Cash", "BTC", "ETH", "LTC", "XRP"))
+            .RRAddField("Items", BuildPropsList(dbUser, "Tools", "Perks", "Consumables", "Crates"));
+
+        StringBuilder counts = new($"**Achievements**: {dbUser.Achievements.Count}");
+        int cooldowns = 0;
+        foreach (string cmd in CMDS_WITH_COOLDOWN)
+        {
+            long cooldown = (long)dbUser[$"{cmd}Cooldown"];
+            long cooldownSecs = cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (cooldownSecs > 0)
+                cooldowns++;
+        }
+        counts.AppendLine($"\n**Commands On Cooldown**: {cooldowns}");
+
+        embed.RRAddField("Counts", counts.ToString());
+        embed.RRAddField("Misc", BuildPropsList(dbUser, "GamblingMultiplier", "Prestige"));
+
+        await ReplyAsync(embed: embed.Build());
+        return CommandResult.FromSuccess();
+    }
+
     [Alias("roles")]
     [Command("ranks")]
     [Summary("View all the ranks and their costs.")]
@@ -201,6 +238,26 @@ public class Economy : ModuleBase<SocketCommandContext>
         }
 
         return CommandResult.FromSuccess();
+    }
+
+    private static string BuildPropsList(DbUser dbUser, params string[] properties)
+    {
+        StringBuilder builder = new();
+        foreach (string prop in properties)
+        {
+            object obj = dbUser[prop];
+            if (obj is null) continue;
+
+            string propS = prop.SplitPascalCase();
+            if (obj is double d && d > 0.01)
+                builder.AppendLine($"**{propS}**: {(prop == "Cash" ? d.ToString("C2") : d.ToString("0.####"))}");
+            else if (obj is System.Collections.ICollection col && col.Count > 0)
+                builder.AppendLine($"**{propS}**: {col.Count}");
+            else if (obj is int i && i > 0)
+                builder.AppendLine($"**{propS}**: {obj}");
+        }
+
+        return builder.ToString();
     }
 
     private static void RestoreUserData(DbUser user, double btc, double eth, double ltc, double xrp,
