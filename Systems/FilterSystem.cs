@@ -87,9 +87,9 @@ public static class FilterSystem
 
         if (await ContainsFilteredWord(guild, message.Content, optionals))
         {
-            await message.DeleteAsync();
             SocketGuildUser guildUser = message.Author as SocketGuildUser;
             await guildUser.SetTimeOutAsync(TimeSpan.FromMinutes(1));
+            await message.DeleteAsync();
         }
     }
 
