@@ -133,6 +133,10 @@ public static class Constants
     public const double SLOTS_MULT_THREESEVENS = 21;
     public const double SLOTS_MULT_TWOINAROW = 1.75;
     // ********************
+    //       GOODS
+    // ********************
+    public const long COCAINE_DURATION = 3600;
+    // ********************
     //     INVESTMENTS
     // ********************
     public const double INVESTMENT_FEE_PERCENT = 1.5;

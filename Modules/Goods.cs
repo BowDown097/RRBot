@@ -242,4 +242,53 @@ public class Goods : ModuleBase<SocketCommandContext>
 
         await Interactive.SendPaginatorAsync(paginator, Context.Channel, resetTimeoutOnInput: true);
     }
+
+    [Command("use")]
+    [Summary("Use a consumable.")]
+    public async Task<RuntimeResult> Use([Remainder] string name)
+    {
+        Item item = ItemSystem.GetItem(name);
+        if (item is null)
+            return CommandResult.FromError($"**{name}** is not an item!");
+        if (item is not Consumable con)
+            return CommandResult.FromError($"**{name}** is not a consumable!");
+
+        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        if (!user.Consumables.TryGetValue(con.Name, out int amount) || amount == 0)
+            return CommandResult.FromError($"You don't have any {con.Name}!");
+
+        switch (con.Name)
+        {
+            case "Cocaine":
+                user.CocaineInSystem++;
+                user.Consumables["Cocaine"]--;
+
+                if (RandomUtil.Next(6 - user.CocaineInSystem) == 1)
+                {
+                    int recoveryHours = 1 * (1 + user.CocaineInSystem);
+                    user.CocaineInSystem = 0;
+                    user.CocaineTime = 0;
+                    user.Consumables["Cocaine"] = 0;
+                    user.RecoveryTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600 * recoveryHours);
+                    await Context.User.NotifyAsync(Context.Channel, $"​OH SHIT, HOMIE! You overdosed! This is why you don't do drugs! You lost all your remaining cocaine and have to go into recovery for {recoveryHours} hours, meaning no economy commands for you!");
+                    break;
+                }
+
+                await Context.User.NotifyAsync(Context.Channel, "​PHEW WEE! That nose candy is already making you feel hyped as FUCK! Your cooldowns have been reduced by a solid 10%.");
+                foreach (string cmd in Economy.CMDS_WITH_COOLDOWN)
+                {
+                    long cooldownSecs = (long)user[$"{cmd}Cooldown"] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    if (cooldownSecs > 0)
+                        user[$"{cmd}Cooldown"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)(cooldownSecs * 0.90));
+                }
+
+                user.CocaineTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.COCAINE_DURATION);
+                break;
+            case "Romanian Flag":
+                await ReplyAsync("Unimplemented");
+                break;
+        }
+
+        return CommandResult.FromSuccess();
+    }
 }

@@ -38,8 +38,7 @@ public class Economy : ModuleBase<SocketCommandContext>
 
         foreach (string cmd in CMDS_WITH_COOLDOWN)
         {
-            long cooldown = (long)dbUser[$"{cmd}Cooldown"];
-            long cooldownSecs = cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long cooldownSecs = (long)dbUser[$"{cmd}Cooldown"] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (cooldownSecs > 0)
                 description.AppendLine($"**{cmd}**: {TimeSpan.FromSeconds(cooldownSecs).FormatCompound()}");
         }

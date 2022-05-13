@@ -15,6 +15,7 @@ public class MonitorSystem
     {
         await Task.Factory.StartNew(async () => await StartBanMonitorAsync());
         await Task.Factory.StartNew(async () => await StartChillMonitorAsync());
+        await Task.Factory.StartNew(async () => await StartConsumableMonitorAsync());
         await Task.Factory.StartNew(async () => await StartPerkMonitorAsync());
         await Task.Factory.StartNew(async () => await StartPotMonitorAsync());
     }
@@ -75,6 +76,33 @@ public class MonitorSystem
                         await channel.SendMessageAsync("This channel has thawed out! Continue the chaos!");
                         await chill.Reference.DeleteAsync();
                     }
+                }
+            }
+        }
+    }
+
+    private async Task StartConsumableMonitorAsync()
+    {
+        while (true)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30));
+            foreach (SocketGuild guild in client.Guilds)
+            {
+                // cocaine
+                QuerySnapshot usersWCocaine = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("CocaineInSystem", 0).GetSnapshotAsync();
+                foreach (DocumentSnapshot snap in usersWCocaine.Documents)
+                {
+                    DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
+                    if (user.CocaineTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                        user.CocaineInSystem = 0;
+                }
+                // recovery
+                QuerySnapshot usersUnderRecovery = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("RecoveryTime", 0).GetSnapshotAsync();
+                foreach (DocumentSnapshot snap in usersUnderRecovery.Documents)
+                {
+                    DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
+                    if (user.RecoveryTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                        user.RecoveryTime = 0;
                 }
             }
         }
