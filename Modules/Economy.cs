@@ -136,7 +136,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         counts.AppendLine($"\n**Commands On Cooldown**: {cooldowns}");
 
         embed.RRAddField("Counts", counts.ToString());
-        embed.RRAddField("Misc", BuildPropsList(dbUser, "GamblingMultiplier", "Prestige"));
+        embed.RRAddField("Misc", BuildPropsList(dbUser, "GamblingMultiplier", "Prestige", "CocaineInSystem"));
 
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
