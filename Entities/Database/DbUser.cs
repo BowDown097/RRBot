@@ -15,7 +15,7 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long ChopCooldown { get; set; }
     [FirestoreProperty]
-    public int CocaineInSystem { get; set; }
+    public long CocaineRecoveryTime { get; set; }
     [FirestoreProperty]
     public long CocaineTime { get; set; }
     [FirestoreProperty]
@@ -61,7 +61,7 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long RapeCooldown { get; set; }
     [FirestoreProperty]
-    public long RecoveryTime { get; set; }
+    public long RomanianFlagTime { get; set; }
     [FirestoreProperty]
     public long RobCooldown { get; set; }
     [FirestoreProperty]
@@ -76,6 +76,11 @@ public class DbUser : DbObject
     public long TimeTillCash { get; set; }
     [FirestoreProperty]
     public List<string> Tools { get; set; } = new();
+    [FirestoreProperty]
+    public Dictionary<string, int> UsedConsumables { get; set; } = new() {
+        { "Cocaine", 0 },
+        { "Romanian Flag", 0 }
+    };
     [FirestoreProperty]
     public bool UsingSlots { get; set; }
     [FirestoreProperty]
@@ -196,7 +201,7 @@ public class DbUser : DbObject
         if (user.GetRoleIds().Contains(ranks.Ids.Select(k => k.Value).LastOrDefault()))
             secs = (long)(secs * 0.80);
         // cocaine cooldown reducer
-        secs = (long)(secs * (1 - (0.10 * CocaineInSystem)));
+        secs = (long)(secs * (1 - (0.10 * UsedConsumables["Cocaine"])));
 
         this[name] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(secs);
     }

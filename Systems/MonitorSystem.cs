@@ -89,20 +89,28 @@ public class MonitorSystem
             foreach (SocketGuild guild in client.Guilds)
             {
                 // cocaine
-                QuerySnapshot usersWCocaine = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("CocaineInSystem", 0).GetSnapshotAsync();
+                QuerySnapshot usersWCocaine = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("UsedConsumables.Cocaine", 0).GetSnapshotAsync();
                 foreach (DocumentSnapshot snap in usersWCocaine.Documents)
                 {
                     DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
                     if (user.CocaineTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                        user.CocaineInSystem = 0;
+                        user.UsedConsumables["Cocaine"] = 0;
                 }
                 // recovery
-                QuerySnapshot usersUnderRecovery = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("RecoveryTime", 0).GetSnapshotAsync();
+                QuerySnapshot usersUnderRecovery = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("CocaineRecoveryTime", 0).GetSnapshotAsync();
                 foreach (DocumentSnapshot snap in usersUnderRecovery.Documents)
                 {
                     DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
-                    if (user.RecoveryTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                        user.RecoveryTime = 0;
+                    if (user.CocaineRecoveryTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                        user.CocaineRecoveryTime = 0;
+                }
+                // romanian flag
+                QuerySnapshot usersWFlag = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("UsedConsumables.Romanian Flag", 0).GetSnapshotAsync();
+                foreach (DocumentSnapshot snap in usersWFlag.Documents)
+                {
+                    DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
+                    if (user.RomanianFlagTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                        user.UsedConsumables["Romanian Flag"] = 0;
                 }
             }
         }

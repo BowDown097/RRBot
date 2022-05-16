@@ -122,21 +122,21 @@ public class Economy : ModuleBase<SocketCommandContext>
             .WithAuthor(user)
             .WithTitle("User Profile")
             .RRAddField("Currencies", BuildPropsList(dbUser, "Cash", "BTC", "ETH", "LTC", "XRP"))
-            .RRAddField("Items", BuildPropsList(dbUser, "Tools", "Perks", "Consumables", "Crates"));
+            .RRAddField("Items", BuildPropsList(dbUser, "Tools", "Perks", "Consumables", "Crates"))
+            .RRAddField("Active Consumables", string.Join('\n', dbUser.UsedConsumables.Where(c => c.Value > 0).Select(c => $"**{c.Key}**: {c.Value}x")));
 
         StringBuilder counts = new($"**Achievements**: {dbUser.Achievements.Count}");
         int cooldowns = 0;
         foreach (string cmd in CMDS_WITH_COOLDOWN)
         {
-            long cooldown = (long)dbUser[$"{cmd}Cooldown"];
-            long cooldownSecs = cooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long cooldownSecs = (long)dbUser[$"{cmd}Cooldown"] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (cooldownSecs > 0)
                 cooldowns++;
         }
         counts.AppendLine($"\n**Commands On Cooldown**: {cooldowns}");
 
         embed.RRAddField("Counts", counts.ToString());
-        embed.RRAddField("Misc", BuildPropsList(dbUser, "GamblingMultiplier", "Prestige", "CocaineInSystem"));
+        embed.RRAddField("Misc", BuildPropsList(dbUser, "GamblingMultiplier", "Prestige"));
 
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();

@@ -202,7 +202,8 @@ public class Crime : ModuleBase<SocketCommandContext>
             return CommandResult.FromError($"You can only rob {Constants.ROB_MAX_PERCENT}% of **{user.Sanitize()}**'s cash, that being **{robMax:C2}**.");
 
         int roll = RandomUtil.Next(1, 101);
-        if (roll < Constants.ROB_ODDS)
+        double odds = author.UsedConsumables["Romanian Flag"] > 0 ? Constants.ROB_ODDS + 10 : Constants.ROB_ODDS;
+        if (roll < odds)
         {
             await target.SetCash(user, target.Cash - amount);
             await author.SetCash(Context.User, author.Cash + amount);

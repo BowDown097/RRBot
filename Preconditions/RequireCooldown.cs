@@ -14,9 +14,9 @@ public class RequireCooldownAttribute : PreconditionAttribute
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
         DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
-        if (user.RecoveryTime > 0)
+        if (user.CocaineRecoveryTime > 0)
         {
-            long recoverySecs = user.RecoveryTime - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long recoverySecs = user.CocaineRecoveryTime - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             return PreconditionResult.FromError($"You're still under recovery from an overdose! You've gotta wait {TimeSpan.FromSeconds(recoverySecs).FormatCompound()}.");
         }
 

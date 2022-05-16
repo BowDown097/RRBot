@@ -136,6 +136,7 @@ public static class Constants
     //       GOODS
     // ********************
     public const long COCAINE_DURATION = 3600;
+    public const long ROMANIAN_FLAG_DURATION = 3600;
     // ********************
     //     INVESTMENTS
     // ********************

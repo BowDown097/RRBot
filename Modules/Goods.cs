@@ -141,11 +141,12 @@ public class Goods : ModuleBase<SocketCommandContext>
 
         StringBuilder consumablesBuilder = new();
         StringBuilder cratesBuilder = new();
-        foreach (KeyValuePair<string, int> consumable in dbUser.Consumables)
+        IEnumerable<KeyValuePair<string, int>> consumables = dbUser.Consumables.Where(kvp => kvp.Value > 0);
+        foreach (KeyValuePair<string, int> consumable in consumables)
             consumablesBuilder.AppendLine($"{consumable.Key} ({consumable.Value}x)");
         foreach (string crate in dbUser.Crates.Distinct())
             cratesBuilder.AppendLine($"{crate} ({dbUser.Crates.Count(c => c == crate)}x)");
-        if (dbUser.Consumables.Count > 0)
+        if (consumables.Any())
             pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Consumables").WithDescription(consumablesBuilder.ToString()));
         if (dbUser.Crates.Count > 0)
             pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Crates").WithDescription(cratesBuilder.ToString()));
@@ -260,16 +261,16 @@ public class Goods : ModuleBase<SocketCommandContext>
         switch (con.Name)
         {
             case "Cocaine":
-                user.CocaineInSystem++;
                 user.Consumables["Cocaine"]--;
+                user.UsedConsumables["Cocaine"]++;
 
-                if (RandomUtil.Next(6 - user.CocaineInSystem) == 1)
+                if (RandomUtil.Next(6 - user.UsedConsumables["Cocaine"]) == 1)
                 {
-                    int recoveryHours = 1 * (1 + user.CocaineInSystem);
-                    user.CocaineInSystem = 0;
+                    int recoveryHours = 1 * (1 + user.UsedConsumables["Cocaine"]);
                     user.CocaineTime = 0;
                     user.Consumables["Cocaine"] = 0;
-                    user.RecoveryTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600 * recoveryHours);
+                    user.CocaineRecoveryTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600 * recoveryHours);
+                    user.UsedConsumables["Cocaine"] = 0;
                     await Context.User.NotifyAsync(Context.Channel, $"​OH SHIT, HOMIE! You overdosed! This is why you don't do drugs! You lost all your remaining cocaine and have to go into recovery for {recoveryHours} hours, meaning no economy commands for you!");
                     break;
                 }
@@ -285,7 +286,24 @@ public class Goods : ModuleBase<SocketCommandContext>
                 user.CocaineTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.COCAINE_DURATION);
                 break;
             case "Romanian Flag":
-                await ReplyAsync("Unimplemented");
+                if (user.UsedConsumables["Romanian Flag"] == 1)
+                    return CommandResult.FromError("You already have a Romanian flag on you!");
+
+                user.Consumables["Romanian Flag"]--;
+                user.UsedConsumables["Romanian Flag"]++;
+
+                if (RandomUtil.Next(5) == 1)
+                {
+                    user.Consumables["Romanian Flag"] = 0;
+                    user.UsedConsumables["Romanian Flag"] = 0;
+                    double lostCash = user.Cash / RandomUtil.NextDouble(2, 5);
+                    await user.SetCash(Context.User, user.Cash - lostCash);
+                    await Context.User.NotifyAsync(Context.Channel, $"Those damn gyppos caught onto you! **{lostCash:C2}** was yoinked from you and you lost all of your flags.");
+                    break;
+                }
+
+                await Context.User.NotifyAsync(Context.Channel, "Hell yeah! Wear that flag with pride! You've now got a 10% higher chance to rob people.");
+                user.RomanianFlagTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.ROMANIAN_FLAG_DURATION);
                 break;
         }
 

@@ -157,6 +157,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
         else if (TwoInARow(results))
             payoutMult = Constants.SLOTS_MULT_TWOINAROW;
 
+        user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         user.UsingSlots = false;
         if (payoutMult > 1)
         {
