@@ -61,8 +61,8 @@ public class Prestige : ModuleBase<SocketCommandContext>
             .WithDescription("**Prestige Perks**")
             .WithThumbnailUrl(Constants.PRESTIGE_IMAGES[user.Prestige])
             .RRAddField("Prestige Level", user.Prestige)
-            .RRAddField("Cash Multiplier", 1 + (0.20 * user.Prestige) + "x")
-            .RRAddField("Rank Cost Multiplier", 1 + (0.5 * user.Prestige) + "x");
+            .RRAddField("Cash Multiplier", (1 + (0.2 * user.Prestige)).ToString("0.#") + "x")
+            .RRAddField("Rank Cost Multiplier", (1 + (0.5 * user.Prestige)).ToString("0.#") + "x");
 
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();

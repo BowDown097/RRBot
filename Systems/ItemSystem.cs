@@ -83,7 +83,7 @@ public static class ItemSystem
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (dbUser.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError("You have the Pacifist perk and cannot buy another.");
-        if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && !(perk.Name is "Pacifist" or "Multiperk"))
+        if (!dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && !(perk.Name is "Pacifist" or "Multiperk"))
             return CommandResult.FromError("You already have a perk.");
         if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 3 && !(perk.Name is "Pacicist" or "Multiperk"))
             return CommandResult.FromError("You already have 2 perks.");
