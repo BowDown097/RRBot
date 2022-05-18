@@ -16,17 +16,39 @@ public class Administration : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Command("givetool")]
-    [Summary("Give a user a tool.")]
-    [Remarks("$givetool \"Lenny McLennington\" Diamond Pickaxe")]
-    public async Task<RuntimeResult> GiveTool(IGuildUser user, [Remainder] string tool)
+    [Command("givecollectible")]
+    [Summary("Give a user a collectible.")]
+    [Remarks("$givecollectible Cashmere V Card")]
+    public async Task<RuntimeResult> GiveCollectible(IGuildUser user, [Remainder] string name)
     {
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-        if (!ItemSystem.tools.Any(t => t.Name.Equals(tool, StringComparison.OrdinalIgnoreCase)))
-            return CommandResult.FromError($"**{tool}** is not a valid tool!");
 
-        Item item = ItemSystem.GetItem(tool);
+        Item item = ItemSystem.GetItem(name);
+        if (item is null)
+            return CommandResult.FromError($"**{name}** is not an item!");
+        if (item is not Collectible)
+            return CommandResult.FromError($"**{item}** is not a collectible!");
+
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        await ItemSystem.GiveCollectible(item.Name, Context.Channel, dbUser);
+        return CommandResult.FromSuccess();
+    }
+
+    [Command("givetool")]
+    [Summary("Give a user a tool.")]
+    [Remarks("$givetool \"Lenny McLennington\" Diamond Pickaxe")]
+    public async Task<RuntimeResult> GiveTool(IGuildUser user, [Remainder] string name)
+    {
+        if (user.IsBot)
+            return CommandResult.FromError("Nope.");
+
+        Item item = ItemSystem.GetItem(name);
+        if (item is null)
+            return CommandResult.FromError($"**{name}** is not an item!");
+        if (item is not Tool)
+            return CommandResult.FromError($"**{item}** is not a tool!");
+
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         if (dbUser.Tools.Contains(item.Name))
             return CommandResult.FromError($"**{user.Sanitize()}** already has a(n) {item}.");

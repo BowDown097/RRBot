@@ -19,6 +19,8 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long CocaineTime { get; set; }
     [FirestoreProperty]
+    public Dictionary<string, int> Collectibles { get; set; } = new();
+    [FirestoreProperty]
     public Dictionary<string, int> Consumables { get; set; } = new();
     [FirestoreProperty]
     public List<string> Crates { get; set; } = new();

@@ -42,7 +42,7 @@ public class Goods : ModuleBase<SocketCommandContext>
 
     [Alias("sell")]
     [Command("discard")]
-    [Summary("Discard a tool or the Pacifist perk.")]
+    [Summary("Discard a tool, a collectible, or the Pacifist perk.")]
     [Remarks("$discard Pacifist")]
     public async Task<RuntimeResult> Discard([Remainder] string itemName)
     {
@@ -54,6 +54,16 @@ public class Goods : ModuleBase<SocketCommandContext>
         if (item is Crate or Consumable)
         {
             return CommandResult.FromError("Crates and consumables cannot be discarded!");
+        }
+        else if (item is Collectible)
+        {
+            if (!user.Collectibles.TryGetValue(item.Name, out int count) || count == 0)
+                return CommandResult.FromError($"You do not have a(n) {item}!");
+
+            double price = item.Price != -1 ? item.Price : RandomUtil.NextDouble(100, 1500);
+            await user.SetCash(Context.User, user.Cash + price);
+            user.Collectibles[item.Name]--;
+            await Context.User.NotifyAsync(Context.Channel, $"You gave your {item} to some dude for **{price:C2}**.");
         }
         else if (item is Perk)
         {
@@ -92,13 +102,19 @@ public class Goods : ModuleBase<SocketCommandContext>
 
         EmbedBuilder embed = item switch
         {
+            Collectible collectible => new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithThumbnailUrl(collectible.Image)
+                .WithTitle(collectible.Name)
+                .AddField("Description", collectible.Description)
+                .AddField("Worth", collectible.Price != -1 ? collectible.Price.ToString("C2") : "Some amount of money"),
             Consumable consumable => new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle(consumable.Name)
                 .WithDescription($"ℹ️ {consumable.Information}\n➕ {consumable.PosEffect}\n➖ {consumable.NegEffect}"),
             Crate crate => new EmbedBuilder()
                 .WithColor(Color.Red)
-                .WithTitle($"{crate.Name} Crate")
+                .WithTitle($"{crate} Crate")
                 .AddField("Price", crate.Price.ToString("C2"))
                 .AddField("Cash", crate.Cash.ToString("C2"), condition: crate.Cash != 0)
                 .AddField("Consumables", crate.ConsumableCount, condition: crate.ConsumableCount != 0)
@@ -133,23 +149,21 @@ public class Goods : ModuleBase<SocketCommandContext>
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
 
         IEnumerable<string> sortedPerks = dbUser.Perks.Where(k => k.Value > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(p => p.Key);
+        string collectibles = string.Join('\n', dbUser.Collectibles.Where(k => k.Value > 0).Select(c => $"{c.Key} ({c.Value}x)"));
+        string consumables = string.Join('\n', dbUser.Consumables.Where(k => k.Value > 0).Select(c => $"{c.Key} ({c.Value}x)"));
+        string crates = string.Join('\n', dbUser.Crates.Distinct().Select(c => $"{c} ({dbUser.Crates.Count(cr => cr == c)}x)"));
+
         List<PageBuilder> pages = new();
         if (dbUser.Tools.Count > 0)
             pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(string.Join('\n', dbUser.Tools)));
         if (sortedPerks.Any())
             pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(string.Join('\n', sortedPerks)));
-
-        StringBuilder consumablesBuilder = new();
-        StringBuilder cratesBuilder = new();
-        IEnumerable<KeyValuePair<string, int>> consumables = dbUser.Consumables.Where(kvp => kvp.Value > 0);
-        foreach (KeyValuePair<string, int> consumable in consumables)
-            consumablesBuilder.AppendLine($"{consumable.Key} ({consumable.Value}x)");
-        foreach (string crate in dbUser.Crates.Distinct())
-            cratesBuilder.AppendLine($"{crate} ({dbUser.Crates.Count(c => c == crate)}x)");
-        if (consumables.Any())
-            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Consumables").WithDescription(consumablesBuilder.ToString()));
-        if (dbUser.Crates.Count > 0)
-            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Crates").WithDescription(cratesBuilder.ToString()));
+        if (!string.IsNullOrWhiteSpace(collectibles))
+            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Collectibles").WithDescription(collectibles));
+        if (!string.IsNullOrWhiteSpace(consumables))
+            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Consumables").WithDescription(consumables));
+        if (!string.IsNullOrWhiteSpace(crates))
+            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Crates").WithDescription(crates));
 
         if (pages.Count == 0)
             return CommandResult.FromError(user == null ? "You've got nothing!" : $"**{user.Sanitize()}**'s got nothing!");
@@ -168,49 +182,42 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Remarks("$opencrate diamond")]
     public async Task<RuntimeResult> OpenCrate(string crateName)
     {
-        try
+        if (ItemSystem.GetItem(crateName) is not Crate crate)
+            return CommandResult.FromError($"**{crateName}** is not a crate!");
+
+        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        if (!user.Crates.Remove(crate.Name))
+            return CommandResult.FromError($"You don't have a {crate} crate!");
+        user.Cash += crate.Cash;
+
+        List<Item> items = crate.Open(user);
+        IEnumerable<string> consumables = items.Where(i => i is Consumable).Select(c => c.Name);
+        IEnumerable<string> tools = items.Where(i => i is Tool).Select(t => t.Name);
+
+        StringBuilder description = new();
+        if (crate.Cash > 0)
+            description.AppendLine($"**Cash** ({crate.Cash:C2})");
+        foreach (string consumable in consumables.Distinct())
         {
-            if (ItemSystem.GetItem(crateName) is not Crate crate)
-                return CommandResult.FromError($"**{crateName}** is not a crate!");
+            int count = consumables.Count(c => c == consumable);
+            if (user.Consumables.ContainsKey(consumable))
+                user.Consumables[consumable] += count;
+            else
+                user.Consumables.Add(consumable, count);
 
-            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-            if (!user.Crates.Remove(crate.Name))
-                return CommandResult.FromError($"You don't have a {crate.Name} crate!");
-            user.Cash += crate.Cash;
-
-            List<Item> items = crate.Open(user);
-            IEnumerable<string> consumables = items.Where(i => i is Consumable).Select(c => c.Name);
-            IEnumerable<string> tools = items.Where(i => i is Tool).Select(t => t.Name);
-
-            StringBuilder description = new();
-            if (crate.Cash > 0)
-                description.AppendLine($"**Cash** ({crate.Cash:C2})");
-            foreach (string consumable in consumables.Distinct())
-            {
-                int count = consumables.Count(c => c == consumable);
-                if (user.Consumables.ContainsKey(consumable))
-                    user.Consumables[consumable] += count;
-                else
-                    user.Consumables.Add(consumable, count);
-
-                description.AppendLine($"**{consumable}** ({count}x)");
-            }
-            foreach (string tool in tools)
-            {
-                user.Tools.Add(tool);
-                description.AppendLine($"**{tool}**");
-            }
-
-            EmbedBuilder embed = new EmbedBuilder()
-                .WithColor(Color.Red)
-                .WithTitle($"{crate.Name} Crate")
-                .WithDescription($"You got:\n{description}");
-            await ReplyAsync(embed: embed.Build());
+            description.AppendLine($"**{consumable}** ({count}x)");
         }
-        catch (Exception e)
+        foreach (string tool in tools)
         {
-            Console.WriteLine(e.StackTrace);
+            user.Tools.Add(tool);
+            description.AppendLine($"**{tool}**");
         }
+
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Red)
+            .WithTitle($"{crate} Crate")
+            .WithDescription($"You got:\n{description}");
+        await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
     }
 
@@ -218,22 +225,15 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Summary("Check out what's available for purchase in the shop.")]
     public async Task Shop()
     {
-        StringBuilder tools = new();
-        StringBuilder perks = new();
-        StringBuilder crates = new();
-
-        foreach (Tool tool in ItemSystem.tools)
-            tools.AppendLine($"**{tool}**: {tool.Price:C2}");
-        foreach (Perk perk in ItemSystem.perks)
-            perks.AppendLine($"**{perk.Name}**: {perk.Description}\nDuration: {TimeSpan.FromSeconds(perk.Duration).FormatCompound()}\nPrice: {perk.Price:C2}");
-        foreach (Crate crate in ItemSystem.crates.Where(c => c.Name != "Daily"))
-            crates.AppendLine($"**{crate}**: {crate.Price:C2}");
+        string crates = string.Join('\n', ItemSystem.crates.Where(c => c.Name != "Daily").Select(c => $"**{c}**: {c.Price:C2}"));
+        string perks = string.Join('\n', ItemSystem.perks.Select(p => $"**{p}**: {p.Description}\nDuration: {TimeSpan.FromSeconds(p.Duration).FormatCompound()}\nPrice: {p.Price:C2}"));
+        string tools = string.Join('\n', ItemSystem.tools.Select(t => $"**{t}**: {t.Price:C2}"));
 
         PageBuilder[] pages = new[]
         {
-            new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools.ToString()),
-            new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(perks.ToString()),
-            new PageBuilder().WithColor(Color.Red).WithTitle("Crates").WithDescription(crates.ToString())
+            new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools),
+            new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(perks),
+            new PageBuilder().WithColor(Color.Red).WithTitle("Crates").WithDescription(crates)
         };
 
         StaticPaginator paginator = new StaticPaginatorBuilder()
@@ -252,11 +252,11 @@ public class Goods : ModuleBase<SocketCommandContext>
         if (item is null)
             return CommandResult.FromError($"**{name}** is not an item!");
         if (item is not Consumable con)
-            return CommandResult.FromError($"**{name}** is not a consumable!");
+            return CommandResult.FromError($"**{item}** is not a consumable!");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         if (!user.Consumables.TryGetValue(con.Name, out int amount) || amount == 0)
-            return CommandResult.FromError($"You don't have any {con.Name}!");
+            return CommandResult.FromError($"You don't have any {con}(s)!");
 
         switch (con.Name)
         {

@@ -321,6 +321,9 @@ public class Crime : ModuleBase<SocketCommandContext>
                 break;
         }
 
+        if (RandomUtil.Next(50) == 1)
+            await ItemSystem.GiveCollectible("Ape NFT", Context.Channel, user);
+
         await user.SetCooldown("ScavengeCooldown", Constants.SCAVENGE_COOLDOWN, Context.Guild, Context.User);
     }
 

@@ -10,6 +10,14 @@ public static class ItemSystem
         new("Diamond", 25000, 10, 3)
     };
 
+    public static readonly Collectible[] collectibles =
+    {
+        new("Ape NFT", "Who actually likes these? Why does this have value?", 1000, "https://i.ibb.co/w0syJ61/nft.png"),
+        new("Bank Cheque", "Hey hey hey, we got ourselves some free money!", -1, "https://i.ibb.co/wCYcrP7/Blank-Cheque.png"),
+        new("Coconut", "Well this is cool, I guess.", 3, "https://i.ibb.co/svxvLKP/coconut.png"),
+        new("V Card", "Here you go, ya fuckin' virgin. Get a life bro", 6969, "https://i.ibb.co/rvKXgb5/vcard.png")
+    };
+
     public static readonly Consumable[] consumables =
     {
         new("Cocaine", "Snorting a line of this funny sugar makes you HYPER and has some crazy effects. It wears off after 1 hour.", "You have a chance of overdosing, which will make you lose all your remaining cocaine as well as not be able to use commands with cooldowns for a certain amount of time. The chance of overdosing and how long you can't use economy commands depends on how many lines you have in your system.", "Cooldowns are reduced by 10% for each line snorted.", 0, 3600),
@@ -49,7 +57,7 @@ public static class ItemSystem
         new("Fishing Rod", 7500, Constants.FISH.First().Value * 7, Constants.FISH.Last().Value * 15)
     };
 
-    public static Item GetItem(string name) => Array.Find(crates.Cast<Item>().Concat(consumables).Concat(perks).Concat(tools).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+    public static Item GetItem(string name) => Array.Find(crates.Cast<Item>().Concat(collectibles).Concat(consumables).Concat(perks).Concat(tools).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 
     public static async Task<RuntimeResult> BuyCrate(Crate crate, SocketUser user, SocketGuild guild, ISocketMessageChannel channel, bool notify = true)
     {
@@ -139,6 +147,23 @@ public static class ItemSystem
         }
 
         return CommandResult.FromError($"You already have a {tool}!");
+    }
+
+    public static async Task GiveCollectible(string name, IMessageChannel channel, DbUser user)
+    {
+        Collectible collectible = GetItem(name) as Collectible;
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Red)
+            .WithThumbnailUrl(collectible.Image)
+            .WithTitle("Collectible found!")
+            .WithDescription($"**{collectible}:** {collectible.Description}\n\nWorth {(collectible.Price != -1 ? collectible.Price.ToString("C2") : "some amount of money")}");
+
+        if (user.Collectibles.ContainsKey(collectible.Name))
+            user.Collectibles[collectible.Name]++;
+        else
+            user.Collectibles.Add(collectible.Name, 1);
+
+        await channel.SendMessageAsync(embed: embed.Build());
     }
 
     public static string GetBestTool(List<string> tools, string type)

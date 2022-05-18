@@ -47,11 +47,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
         double totalCash = user.Cash + cashGained;
 
         if (RandomUtil.NextDouble(1, 101) < Constants.FISH_COCONUT_ODDS)
-        {
-            cashGained += 3;
-            totalCash += 3;
-            await ReplyAsync("What's this? The fish came with a coconut! You sold it to some dude for **$3.00**.");
-        }
+            await ItemSystem.GiveCollectible("Coconut", Context.Channel, user);
 
         user.AddToStats(new()
         {

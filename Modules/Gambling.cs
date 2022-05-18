@@ -168,7 +168,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
             if (payoutMult == Constants.SLOTS_MULT_THREESEVENS)
             {
-                message = $"SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!\nBalance: {totalCash:C2}";
+                message = $"​SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!\nBalance: {totalCash:C2}";
                 await user.UnlockAchievement("Jackpot!", Context.User, Context.Channel);
             }
 
