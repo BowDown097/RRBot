@@ -15,7 +15,7 @@ public static class ItemSystem
         new("Ape NFT", "Who actually likes these? Why does this have value?", 1000, "https://i.ibb.co/w0syJ61/nft.png"),
         new("Bank Cheque", "Hey hey hey, we got ourselves some free money!", -1, "https://i.ibb.co/wCYcrP7/Blank-Cheque.png"),
         new("Coconut", "Well this is cool, I guess.", 3, "https://i.ibb.co/svxvLKP/coconut.png"),
-        new("V Card", "Here you go, ya fuckin' virgin. Get a life bro", 6969, "https://i.ibb.co/rvKXgb5/vcard.png")
+        new("V Card", "Here you go, ya fuckin' virgin. Get a life bro", 69696969.69, "https://i.ibb.co/rvKXgb5/vcard.png", false)
     };
 
     public static readonly Consumable[] consumables =

@@ -2,6 +2,7 @@
 [Summary("The best way to earn money by far, at least for those lucky or rich enough to get themselves a tool.")]
 public class Tasks : ModuleBase<SocketCommandContext>
 {
+    #region Commands
     [Command("chop")]
     [Summary("Go chop some wood.")]
     [RequireCooldown("ChopCooldown", "You cannot chop wood for {0}.")]
@@ -109,7 +110,9 @@ public class Tasks : ModuleBase<SocketCommandContext>
         await user.SetCash(Context.User, totalCash, Context.Channel, response);
         await user.SetCooldown("MineCooldown", Constants.MINE_COOLDOWN, Context.Guild, Context.User);
     }
+    #endregion
 
+    #region Helpers
     private async Task GenericTask(string toolType, string activity, string thing, string cooldown, long duration)
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
@@ -150,4 +153,5 @@ public class Tasks : ModuleBase<SocketCommandContext>
         await user.SetCash(Context.User, totalCash, Context.Channel, $"You {activity} {numMined} {thing} with your {tool} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
         await user.SetCooldown(cooldown, duration, Context.Guild, Context.User);
     }
+    #endregion
 }

@@ -2,13 +2,16 @@ namespace RRBot.Entities.Database;
 [FirestoreData]
 public class DbGlobalConfig : DbObject
 {
+    #region Variables
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
     public List<ulong> BannedUsers { get; set; } = new();
     [FirestoreProperty]
     public List<string> DisabledCommands { get; set; } = new();
+    #endregion
 
+    #region Methods
     public static async Task<DbGlobalConfig> Get()
     {
         if (MemoryCache.Default.Contains("globalconfig"))
@@ -26,4 +29,5 @@ public class DbGlobalConfig : DbObject
         MemoryCache.Default.CacheDatabaseObject("globalconfig", config);
         return config;
     }
+    #endregion
 }

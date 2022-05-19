@@ -2,6 +2,7 @@
 [Summary("Invest in our selection of coins, Bit or Shit. The prices here are updated in REAL TIME with the REAL LIFE values. Experience the fast, entrepreneural life without going broke, having your house repossessed, and having your girlfriend leave you.")]
 public class Investments : ModuleBase<SocketCommandContext>
 {
+    #region Commands
     [Command("invest")]
     [Summary("Invest in a cryptocurrency. Currently accepted currencies are BTC, ETH, LTC, and XRP. Here, the amount you put in should be RR Cash.")]
     [Remarks("$invest ethereum 600")]
@@ -126,7 +127,9 @@ public class Investments : ModuleBase<SocketCommandContext>
             $"A {Constants.INVESTMENT_FEE_PERCENT}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
         return CommandResult.FromSuccess();
     }
+    #endregion
 
+    #region Helpers
     public static async Task<double> QueryCryptoValue(string crypto)
     {
         using HttpClient client = new();
@@ -146,4 +149,5 @@ public class Investments : ModuleBase<SocketCommandContext>
         "xrp" => "XRP",
         _ => null,
     };
+    #endregion
 }

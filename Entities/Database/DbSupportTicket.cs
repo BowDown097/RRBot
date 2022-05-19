@@ -2,6 +2,7 @@ namespace RRBot.Entities.Database;
 [FirestoreData]
 public class DbSupportTicket : DbObject
 {
+    #region Variables
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
@@ -12,7 +13,9 @@ public class DbSupportTicket : DbObject
     public ulong Message { get; set; }
     [FirestoreProperty]
     public string Request { get; set; }
+    #endregion
 
+    #region Methods
     public static async Task<DbSupportTicket> GetById(ulong guildId, ulong userId)
     {
         if (MemoryCache.Default.Contains($"ticket-{guildId}-{userId}"))
@@ -30,4 +33,5 @@ public class DbSupportTicket : DbObject
         MemoryCache.Default.CacheDatabaseObject($"ticket-{guildId}-{userId}", config);
         return config;
     }
+    #endregion
 }

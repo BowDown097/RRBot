@@ -6,6 +6,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         "Slavery", "Whore", "Bully",  "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack",
         "Daily", "Prestige" };
 
+    #region Commands
     [Alias("bal", "cash")]
     [Command("balance")]
     [Summary("Check your own or someone else's balance.")]
@@ -236,7 +237,9 @@ public class Economy : ModuleBase<SocketCommandContext>
 
         return CommandResult.FromSuccess();
     }
+    #endregion
 
+    #region Helpers
     private static string BuildPropsList(DbUser dbUser, params string[] properties)
     {
         StringBuilder builder = new();
@@ -287,4 +290,5 @@ public class Economy : ModuleBase<SocketCommandContext>
         user.HackCooldown = hackCd;
         user.DailyCooldown = dailyCd;
     }
+    #endregion
 }

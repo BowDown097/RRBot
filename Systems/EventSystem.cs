@@ -179,8 +179,15 @@ public class EventSystem
             {
                 double messageCash = Constants.MESSAGE_CASH * (1 + (0.20 * user.Prestige));
                 await user.SetCash(context.User, user.Cash + messageCash);
+
                 if (RandomUtil.Next(70) == 1)
                     await ItemSystem.GiveCollectible("Bank Cheque", context.Channel, user);
+                if (user.Cash >= 1000000 && !user.HasReachedAMilli)
+                {
+                    user.HasReachedAMilli = true;
+                    await ItemSystem.GiveCollectible("V Card", context.Channel, user);
+                }
+
                 user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN);
             }
         }

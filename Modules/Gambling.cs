@@ -5,6 +5,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
     private static readonly Emoji[] emojis = { new("\uD83C\uDF4E"), new("\uD83C\uDF47"), new("7️⃣"),  new("\uD83C\uDF52"),
         new("\uD83C\uDF4A"), new("\uD83C\uDF48"), new("\uD83C\uDF4B") }; // apple, grape, seven, cherry, orange, melon, lemon
 
+    #region Commands
     [Command("55x2")]
     [Summary("Roll 55 or higher on a 100 sided die, get 2x what you put in.")]
     [Remarks("$55x2 1000")]
@@ -195,7 +196,9 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
         return CommandResult.FromSuccess();
     }
+    #endregion
 
+    #region Helpers
     private static bool TwoInARow(int[] results) => results[0] == results[1] || results[1] == results[2];
 
     private static bool ThreeInARow(int[] results)
@@ -279,4 +282,5 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
         return CommandResult.FromSuccess();
     }
+    #endregion
 }

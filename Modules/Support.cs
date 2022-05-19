@@ -4,6 +4,7 @@
 [RequireRushReborn]
 public class Support : ModuleBase<SocketCommandContext>
 {
+    #region Commands
     [Command("close")]
     [Summary("Close your currently active support ticket or a support ticket that you have been assigned to (if there is one).")]
     public async Task<RuntimeResult> Close(IGuildUser user = null)
@@ -93,7 +94,9 @@ public class Support : ModuleBase<SocketCommandContext>
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
     }
+    #endregion
 
+    #region Helpers
     public static async Task<RuntimeResult> CloseTicket(SocketCommandContext context, SocketUser user,
         DbSupportTicket ticket, string response)
     {
@@ -109,4 +112,5 @@ public class Support : ModuleBase<SocketCommandContext>
         await user.NotifyAsync(context.Channel, response);
         return CommandResult.FromSuccess();
     }
+    #endregion
 }

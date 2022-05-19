@@ -2,6 +2,7 @@ namespace RRBot.Entities.Database;
 [FirestoreData]
 public class DbUser : DbObject
 {
+    #region Variables
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
@@ -42,6 +43,8 @@ public class DbUser : DbObject
     public double GamblingMultiplier { get; set; } = 1.0;
     [FirestoreProperty]
     public long HackCooldown { get; set; }
+    [FirestoreProperty]
+    public bool HasReachedAMilli { get; set; }
     [FirestoreProperty]
     public long HuntCooldown { get; set; }
     [FirestoreProperty]
@@ -89,7 +92,9 @@ public class DbUser : DbObject
     public long WhoreCooldown { get; set; }
     [FirestoreProperty]
     public double XRP { get; set; }
+    #endregion
 
+    #region Methods
     public object this[string name]
     {
         get
@@ -234,4 +239,5 @@ public class DbUser : DbObject
             await user.NotifyAsync(channel, "Congratulations! You've acquired every gambling achievement. Enjoy this **1.1x gambling multiplier**!");
         }
     }
+    #endregion
 }

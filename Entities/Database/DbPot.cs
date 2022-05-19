@@ -2,6 +2,7 @@ namespace RRBot.Entities.Database;
 [FirestoreData]
 public class DbPot : DbObject
 {
+    #region Variables
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
@@ -10,7 +11,9 @@ public class DbPot : DbObject
     public Dictionary<string, double> Members { get; set; } = new();
     [FirestoreProperty]
     public double Value { get; set; }
+    #endregion
 
+    #region Methods
     public ulong DrawMember()
     {
         double[] ranges = {0, 0};
@@ -47,4 +50,5 @@ public class DbPot : DbObject
         MemoryCache.Default.CacheDatabaseObject($"pot-{guildId}", pot);
         return pot;
     }
+    #endregion
 }

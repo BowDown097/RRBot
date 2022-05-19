@@ -55,10 +55,12 @@ public class Goods : ModuleBase<SocketCommandContext>
         {
             return CommandResult.FromError("Crates and consumables cannot be discarded!");
         }
-        else if (item is Collectible)
+        else if (item is Collectible collectible)
         {
             if (!user.Collectibles.TryGetValue(item.Name, out int count) || count == 0)
                 return CommandResult.FromError($"You do not have a(n) {item}!");
+            if (!collectible.Discardable)
+                return CommandResult.FromError($"You cannot discard your {item}.");
 
             double price = item.Price != -1 ? item.Price : RandomUtil.NextDouble(100, 1500);
             await user.SetCash(Context.User, user.Cash + price);

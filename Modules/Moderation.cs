@@ -3,6 +3,7 @@
 [RequireStaff]
 public class Moderation : ModuleBase<SocketCommandContext>
 {
+    #region Commands
     [Alias("seethe")]
     [Command("ban")]
     [Summary("Ban any member.")]
@@ -233,7 +234,9 @@ public class Moderation : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"Unmuted **{user.Sanitize()}**.");
         return CommandResult.FromSuccess();
     }
+    #endregion
 
+    #region Helpers
     private static Tuple<TimeSpan, string> ResolveDuration(string duration, int time, string action, string reason)
     {
         TimeSpan ts = char.ToLower(duration[^1]) switch
@@ -252,4 +255,5 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
         return new(ts, response);
     }
+    #endregion
 }

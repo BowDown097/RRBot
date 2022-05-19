@@ -2,11 +2,14 @@ namespace RRBot.Entities.Database;
 [FirestoreData]
 public class DbBan : DbObject
 {
+    #region Variables
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
     public long Time { get; set; }
+    #endregion
 
+    #region Methods
     public static async Task<DbBan> GetById(ulong guildId, ulong userId)
     {
         if (MemoryCache.Default.Contains($"ban-{guildId}-{userId}"))
@@ -24,4 +27,5 @@ public class DbBan : DbObject
         MemoryCache.Default.CacheDatabaseObject($"ban-{guildId}-{userId}", config);
         return config;
     }
+    #endregion
 }

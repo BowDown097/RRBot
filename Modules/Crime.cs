@@ -5,6 +5,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 {
     public InteractiveService Interactive { get; set; }
 
+    #region Commands
     [Command("bully")]
     [Summary("Change the nickname of any victim you wish!")]
     [Remarks("$bully \"John Boyer#2168\" gay lol")]
@@ -354,7 +355,9 @@ public class Crime : ModuleBase<SocketCommandContext>
             "You didn't give good enough head to the cop! You had to pay **{0}** in fines." };
         return await GenericCrime(successes, fails, "WhoreCooldown", Constants.WHORE_COOLDOWN);
     }
+    #endregion
 
+    #region Helpers
     private async Task<RuntimeResult> GenericCrime(string[] successOutcomes, string[] failOutcomes, string cdKey,
         long duration, bool hasMehOutcome = false)
     {
@@ -470,4 +473,5 @@ public class Crime : ModuleBase<SocketCommandContext>
             });
         }
     }
+    #endregion
 }

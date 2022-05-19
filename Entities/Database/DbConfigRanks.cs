@@ -2,13 +2,16 @@ namespace RRBot.Entities.Database;
 [FirestoreData]
 public class DbConfigRanks : DbObject
 {
+    #region Variables
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
     public Dictionary<string, double> Costs { get; set; } = new();
     [FirestoreProperty]
     public Dictionary<string, ulong> Ids { get; set; } = new();
+    #endregion
 
+    #region Methods
     public static async Task<DbConfigRanks> GetById(ulong guildId)
     {
         if (MemoryCache.Default.Contains($"rankconf-{guildId}"))
@@ -26,4 +29,5 @@ public class DbConfigRanks : DbObject
         MemoryCache.Default.CacheDatabaseObject($"rankconf-{guildId}", config);
         return config;
     }
+    #endregion
 }

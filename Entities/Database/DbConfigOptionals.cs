@@ -2,6 +2,7 @@ namespace RRBot.Entities.Database;
 [FirestoreData]
 public class DbConfigOptionals : DbObject
 {
+    #region Variables
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
@@ -16,7 +17,9 @@ public class DbConfigOptionals : DbObject
     public bool NSFWEnabled { get; set; }
     [FirestoreProperty]
     public bool ScamFilterEnabled { get; set; }
+    #endregion
 
+    #region Methods
     public static async Task<DbConfigOptionals> GetById(ulong guildId)
     {
         if (MemoryCache.Default.Contains($"optionalconf-{guildId}"))
@@ -34,4 +37,5 @@ public class DbConfigOptionals : DbObject
         MemoryCache.Default.CacheDatabaseObject($"optionalconf-{guildId}", config);
         return config;
     }
+    #endregion
 }

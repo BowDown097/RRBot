@@ -2,11 +2,14 @@ namespace RRBot.Entities.Database;
 [FirestoreData]
 public class DbChill : DbObject
 {
+    #region Variables
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
     public long Time { get; set; }
+    #endregion
 
+    #region Methods
     public static async Task<DbChill> GetById(ulong guildId, ulong channelId)
     {
         if (MemoryCache.Default.Contains($"chill-{guildId}-{channelId}"))
@@ -24,4 +27,5 @@ public class DbChill : DbObject
         MemoryCache.Default.CacheDatabaseObject($"chill-{guildId}-{channelId}", config);
         return config;
     }
+    #endregion
 }

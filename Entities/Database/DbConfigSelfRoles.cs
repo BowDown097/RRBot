@@ -2,6 +2,7 @@ namespace RRBot.Entities.Database;
 [FirestoreData]
 public class DbConfigSelfRoles : DbObject
 {
+    #region Variables
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
@@ -10,7 +11,9 @@ public class DbConfigSelfRoles : DbObject
     public ulong Message { get; set; }
     [FirestoreProperty]
     public Dictionary<string, ulong> SelfRoles { get; set; } = new();
+    #endregion
 
+    #region Methods
     public static async Task<DbConfigSelfRoles> GetById(ulong guildId)
     {
         if (MemoryCache.Default.Contains($"selfroleconf-{guildId}"))
@@ -28,4 +31,5 @@ public class DbConfigSelfRoles : DbObject
         MemoryCache.Default.CacheDatabaseObject($"selfroleconf-{guildId}", config);
         return config;
     }
+    #endregion
 }

@@ -4,6 +4,7 @@ public class Games : ModuleBase<SocketCommandContext>
 {
     private static readonly BoardPos[] adjacents = { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
 
+    #region Commands
     [Command("minesweeper")]
     [Summary("Play a game of Minesweeper. Choose between difficulty 1-3.")]
     [Remarks("$minesweeper 2")]
@@ -28,7 +29,9 @@ public class Games : ModuleBase<SocketCommandContext>
         await ReplyAsync(boardBuilder.ToString());
         return CommandResult.FromSuccess();
     }
+    #endregion
 
+    #region Helpers
     private static int[,] GenerateBoard(int difficulty)
     {
         double density = difficulty switch
@@ -64,4 +67,5 @@ public class Games : ModuleBase<SocketCommandContext>
 
         return board;
     }
+    #endregion
 }

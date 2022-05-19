@@ -2,6 +2,7 @@ namespace RRBot.Entities.Database;
 [FirestoreData]
 public class DbConfigChannels : DbObject
 {
+    #region Variables
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
@@ -12,7 +13,9 @@ public class DbConfigChannels : DbObject
     public ulong PotChannel { get; set; }
     [FirestoreProperty]
     public List<ulong> WhitelistedChannels { get; set; } = new();
+    #endregion
 
+    #region Methods
     public static async Task<DbConfigChannels> GetById(ulong guildId)
     {
         if (MemoryCache.Default.Contains($"chanconf-{guildId}"))
@@ -30,4 +33,5 @@ public class DbConfigChannels : DbObject
         MemoryCache.Default.CacheDatabaseObject($"chanconf-{guildId}", config);
         return config;
     }
+    #endregion
 }
