@@ -85,7 +85,10 @@ public class Crime : ModuleBase<SocketCommandContext>
 
         int roll = RandomUtil.Next(1, 101);
         double cryptoValue = await Investments.QueryCryptoValue(abbreviation) * amount;
-        if (roll < Constants.HACK_ODDS)
+        double odds = author.UsedConsumables["Black Hat"] > 0 ? Constants.HACK_ODDS + 10 : Constants.HACK_ODDS;
+        if (author.Perks.ContainsKey("Speed Demon"))
+            odds *= 0.95;
+        if (roll < odds)
         {
             target[abbreviation] = targetBal - amount;
             author[abbreviation] = authorBal + amount;
@@ -156,8 +159,10 @@ public class Crime : ModuleBase<SocketCommandContext>
             return CommandResult.FromError($"Dear Lord, talk about kicking them while they're down! **{user.Sanitize()}** is broke! Have some decency.");
 
         double rapePercent = RandomUtil.NextDouble(Constants.RAPE_MIN_PERCENT, Constants.RAPE_MAX_PERCENT);
-        double winOdds = author.Perks.ContainsKey("Speed Demon") ? Constants.RAPE_ODDS * 0.95 : Constants.RAPE_ODDS;
-        if (RandomUtil.NextDouble(1, 101) < winOdds)
+        double odds = author.UsedConsumables["Viagra"] > 0 ? Constants.RAPE_ODDS + 10 : Constants.RAPE_ODDS;
+        if (author.Perks.ContainsKey("Speed Demon"))
+            odds *= 0.95;
+        if (RandomUtil.NextDouble(1, 101) < odds)
         {
             double repairs = target.Cash / 100.0 * rapePercent;
             StatUpdate(target, false, repairs);
@@ -204,6 +209,8 @@ public class Crime : ModuleBase<SocketCommandContext>
 
         int roll = RandomUtil.Next(1, 101);
         double odds = author.UsedConsumables["Romanian Flag"] > 0 ? Constants.ROB_ODDS + 10 : Constants.ROB_ODDS;
+        if (author.Perks.ContainsKey("Speed Demon"))
+            odds *= 0.95;
         if (roll < odds)
         {
             await target.SetCash(user, target.Cash - amount);

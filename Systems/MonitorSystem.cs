@@ -88,30 +88,11 @@ public class MonitorSystem
             await Task.Delay(TimeSpan.FromSeconds(30));
             foreach (SocketGuild guild in client.Guilds)
             {
-                // cocaine
-                QuerySnapshot usersWCocaine = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("UsedConsumables.Cocaine", 0).GetSnapshotAsync();
-                foreach (DocumentSnapshot snap in usersWCocaine.Documents)
-                {
-                    DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
-                    if (user.CocaineTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                        user.UsedConsumables["Cocaine"] = 0;
-                }
-                // recovery
-                QuerySnapshot usersUnderRecovery = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("CocaineRecoveryTime", 0).GetSnapshotAsync();
-                foreach (DocumentSnapshot snap in usersUnderRecovery.Documents)
-                {
-                    DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
-                    if (user.CocaineRecoveryTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                        user.CocaineRecoveryTime = 0;
-                }
-                // romanian flag
-                QuerySnapshot usersWFlag = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("UsedConsumables.Romanian Flag", 0).GetSnapshotAsync();
-                foreach (DocumentSnapshot snap in usersWFlag.Documents)
-                {
-                    DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
-                    if (user.RomanianFlagTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                        user.UsedConsumables["Romanian Flag"] = 0;
-                }
+                await ConsumableCheck("Black Hat", "BlackHatTime", guild);
+                await ConsumableCheck("Cocaine", "CocaineTime", guild);
+                await ConsumableCheck("CocaineRecoveryTime", "CocaineRecoveryTime", guild, true);
+                await ConsumableCheck("Romanian Flag", "RomanianFlagTime", guild);
+                await ConsumableCheck("Viagra", "ViagraTime", guild);
             }
         }
     }
@@ -176,6 +157,22 @@ public class MonitorSystem
                     pot.Members = new();
                     pot.Value = 0;
                 }
+            }
+        }
+    }
+
+    private async Task ConsumableCheck(string name, string timeKey, SocketGuild guild, bool recoveryTime = false)
+    {
+        QuerySnapshot usersWConsumable = await database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo($"UsedConsumables.{name}", 0).GetSnapshotAsync();
+        foreach (DocumentSnapshot snap in usersWConsumable.Documents)
+        {
+            DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
+            if ((long)user[timeKey] <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            {
+                if (recoveryTime)
+                    user[name] = 0;
+                else
+                    user.UsedConsumables[name] = 0;
             }
         }
     }

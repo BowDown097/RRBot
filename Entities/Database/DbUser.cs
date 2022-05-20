@@ -8,6 +8,8 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public Dictionary<string, string> Achievements { get; set; } = new();
     [FirestoreProperty]
+    public long BlackHatTime { get; set; }
+    [FirestoreProperty]
     public double BTC { get; set; }
     [FirestoreProperty]
     public long BullyCooldown { get; set; }
@@ -83,11 +85,15 @@ public class DbUser : DbObject
     public List<string> Tools { get; set; } = new();
     [FirestoreProperty]
     public Dictionary<string, int> UsedConsumables { get; set; } = new() {
+        { "Black Hat", 0},
         { "Cocaine", 0 },
-        { "Romanian Flag", 0 }
+        { "Romanian Flag", 0 },
+        { "Viagra", 0 }
     };
     [FirestoreProperty]
     public bool UsingSlots { get; set; }
+    [FirestoreProperty]
+    public long ViagraTime { get; set; }
     [FirestoreProperty]
     public long WhoreCooldown { get; set; }
     [FirestoreProperty]

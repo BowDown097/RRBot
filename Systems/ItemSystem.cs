@@ -20,8 +20,10 @@ public static class ItemSystem
 
     public static readonly Consumable[] consumables =
     {
-        new("Cocaine", "Snorting a line of this funny sugar makes you HYPER and has some crazy effects. It wears off after 1 hour.", "You have a chance of overdosing, which will make you lose all your remaining cocaine as well as not be able to use commands with cooldowns for a certain amount of time. The chance of overdosing and how long you can't use economy commands depends on how many lines you have in your system.", "Cooldowns are reduced by 10% for each line snorted.", 0, 3600),
-        new("Romanian Flag", "A neat little good luck charm for $rob. Your Romanian pride makes stealing wallets much easier! Wears off after 1 hour. Can only carry one at a time.", "A Romanian might notice you and take some of your money.", "$rob chance increased by 10%.", 0, 3600)
+        new("Black Hat", "Become an epic hax0r.", "You might get busted by the feds and get fined.", "$hack chance increased by 10%.", Constants.BLACK_HAT_DURATION, 1),
+        new("Cocaine", "Snorting a line of this funny sugar makes you HYPER and has some crazy effects.", "You have a chance of overdosing, which will make you lose all your remaining cocaine as well as not be able to use commands with cooldowns for a certain amount of time. The chance of overdosing and how long you can't use economy commands depends on how many lines you have in your system.", "Cooldowns are reduced by 10% for each line snorted.", Constants.COCAINE_DURATION),
+        new("Romanian Flag", "A neat little good luck charm for $rob. Your Romanian pride makes stealing wallets much easier!", "A Romanian might notice you and take some of your money.", "$rob chance increased by 10%.", Constants.ROMANIAN_FLAG_DURATION, 1),
+        new("Viagra", "Get it goin', if you know what I mean.", "The pill has a chance to backfire and give you ED.", "$rape chance increased by 10%.", Constants.VIAGRA_DURATION, 1)
     };
 
     public static readonly Perk[] perks =

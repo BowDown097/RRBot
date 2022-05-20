@@ -4,6 +4,7 @@ public class Goods : ModuleBase<SocketCommandContext>
 {
     public InteractiveService Interactive { get; set; }
 
+    #region Commands
     [Alias("purchase")]
     [Command("buy")]
     [Summary("Buy an item from the shop.")]
@@ -113,7 +114,7 @@ public class Goods : ModuleBase<SocketCommandContext>
             Consumable consumable => new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle(consumable.Name)
-                .WithDescription($"ℹ️ {consumable.Information}\n➕ {consumable.PosEffect}\n➖ {consumable.NegEffect}"),
+                .WithDescription($"ℹ️ {consumable.Information}\n⏱️ {TimeSpan.FromSeconds(consumable.Duration).FormatCompound()}\n➕ {consumable.PosEffect}\n➖ {consumable.NegEffect}\n{(consumable.Max > 0 ? $"⚠️ {consumable.Max} max" : "")}"),
             Crate crate => new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle($"{crate} Crate")
@@ -259,13 +260,21 @@ public class Goods : ModuleBase<SocketCommandContext>
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         if (!user.Consumables.TryGetValue(con.Name, out int amount) || amount == 0)
             return CommandResult.FromError($"You don't have any {con}(s)!");
+        if (amount == con.Max)
+            return CommandResult.FromError($"You cannot use more than {con.Max} {con}!");
+
+        user.Consumables[con.Name]--;
+        user.UsedConsumables[con.Name]++;
 
         switch (con.Name)
         {
+            case "Black Hat":
+                await GenericUse(con, user, Context,
+                    "Oh yeah. Hacker mode activated. 10% greater $hack chance.",
+                    "Dammit! The feds caught onto you! You were fined **{0:C2}**.",
+                    "BlackHatTime", Constants.BLACK_HAT_DURATION, 1.5, 3);
+                break;
             case "Cocaine":
-                user.Consumables["Cocaine"]--;
-                user.UsedConsumables["Cocaine"]++;
-
                 if (RandomUtil.Next(6 - user.UsedConsumables["Cocaine"]) == 1)
                 {
                     int recoveryHours = 1 * (1 + user.UsedConsumables["Cocaine"]);
@@ -288,27 +297,38 @@ public class Goods : ModuleBase<SocketCommandContext>
                 user.CocaineTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.COCAINE_DURATION);
                 break;
             case "Romanian Flag":
-                if (user.UsedConsumables["Romanian Flag"] == 1)
-                    return CommandResult.FromError("You already have a Romanian flag on you!");
-
-                user.Consumables["Romanian Flag"]--;
-                user.UsedConsumables["Romanian Flag"]++;
-
-                if (RandomUtil.Next(5) == 1)
-                {
-                    user.Consumables["Romanian Flag"] = 0;
-                    user.UsedConsumables["Romanian Flag"] = 0;
-                    double lostCash = user.Cash / RandomUtil.NextDouble(2, 5);
-                    await user.SetCash(Context.User, user.Cash - lostCash);
-                    await Context.User.NotifyAsync(Context.Channel, $"Those damn gyppos caught onto you! **{lostCash:C2}** was yoinked from you and you lost all of your flags.");
-                    break;
-                }
-
-                await Context.User.NotifyAsync(Context.Channel, "Hell yeah! Wear that flag with pride! You've now got a 10% higher chance to rob people.");
-                user.RomanianFlagTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.ROMANIAN_FLAG_DURATION);
+                await GenericUse(con, user, Context,
+                    "Hell yeah! Wear that flag with pride! You've now got a 10% higher chance to rob people.",
+                    "Those damn gyppos caught onto you! **{0:C2}** was yoinked from you and you lost all of your flags.",
+                    "RomanianFlagTime", Constants.ROMANIAN_FLAG_DURATION);
+                break;
+            case "Viagra":
+                await GenericUse(con, user, Context,
+                    "Zoo wee mama! Your blood is rushing so much you can feel it. You're now 10% more likely for a rape to land.",
+                    "Dammit bro! The pill backfired and now you've got ED! You had to pay **{0:C2}** to get that shit fixed.",
+                    "ViagraTime", Constants.VIAGRA_DURATION);
                 break;
         }
 
         return CommandResult.FromSuccess();
     }
+    #endregion
+
+    #region Helpers
+    private static async Task GenericUse(Consumable con, DbUser user, SocketCommandContext context, string successMsg, string loseMsg, string cdKey, long cdDuration, double divMin = 2, double divMax = 5)
+    {
+        if (RandomUtil.Next(5) == 1)
+        {
+            user.Consumables[con.Name] = 0;
+            user.UsedConsumables[con.Name] = 0;
+            double lostCash = user.Cash / RandomUtil.NextDouble(divMin, divMax);
+            await user.SetCash(context.User, user.Cash - lostCash);
+            await context.User.NotifyAsync(context.Channel, string.Format(loseMsg, lostCash));
+            return;
+        }
+
+        await context.User.NotifyAsync(context.Channel, successMsg);
+        user[cdKey] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(cdDuration);
+    }
+    #endregion
 }
