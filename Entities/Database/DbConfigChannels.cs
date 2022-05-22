@@ -6,6 +6,10 @@ public class DbConfigChannels : DbObject
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
+    public ulong ElectionsAnnounceChannel { get; set; }
+    [FirestoreProperty]
+    public ulong ElectionsVotingChannel { get; set; }
+    [FirestoreProperty]
     public ulong LogsChannel { get; set; }
     [FirestoreProperty]
     public ulong PollsChannel { get; set; }

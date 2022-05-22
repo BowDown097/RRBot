@@ -154,7 +154,7 @@ public class Config : ModuleBase<SocketCommandContext>
     }
 
     [Command("setdjrole")]
-    [Summary("Register the ID for the DJ role in your server so that most of the music commands work properly with the bot.")]
+    [Summary("Register the ID for the DJ role in your server so that some of the music commands work properly.")]
     [Remarks("$setdjrole 850827023982395413")]
     public async Task SetDJRole(IRole role)
     {
@@ -163,8 +163,28 @@ public class Config : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"Set {role} as the DJ role.");
     }
 
+    [Command("setelectionannouncementschannel")]
+    [Summary("Register the ID for the election announcements channel in your server so that elections work properly.")]
+    [Remarks("$setelectionannouncementschannel \\#elections")]
+    public async Task SetElectionAnnouncementsChannel(IChannel channel)
+    {
+        DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+        channels.ElectionsAnnounceChannel = channel.Id;
+        await Context.User.NotifyAsync(Context.Channel, $"Set election announcements channel to {MentionUtils.MentionChannel(channel.Id)}.");
+    }
+
+    [Command("setelectionvotingchannel")]
+    [Summary("Register the ID for the election voting channel in your server so that elections work properly.")]
+    [Remarks("$setelectionvotingchannel \\#vote")]
+    public async Task SetElectionVotingChannel(IChannel channel)
+    {
+        DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+        channels.ElectionsVotingChannel = channel.Id;
+        await Context.User.NotifyAsync(Context.Channel, $"Set election voting channel to {MentionUtils.MentionChannel(channel.Id)}.");
+    }
+
     [Command("setlogschannel")]
-    [Summary("Register the ID for the logs channel in your server so that logging works properly with the bot.")]
+    [Summary("Register the ID for the logs channel in your server so that logging works properly.")]
     [Remarks("$setlogschannel \\#logs")]
     public async Task SetLogsChannel(IChannel channel)
     {
@@ -174,7 +194,7 @@ public class Config : ModuleBase<SocketCommandContext>
     }
 
     [Command("setpollschannel")]
-    [Summary("Register the ID for the polls channel in your server so that polls work properly with the bot.")]
+    [Summary("Register the ID for the polls channel in your server so that polls work properly.")]
     [Remarks("$setpollschannel \\#polls")]
     public async Task SetPollsChannel(IChannel channel)
     {
@@ -210,7 +230,7 @@ public class Config : ModuleBase<SocketCommandContext>
     }
 
     [Command("setstafflvl1role")]
-    [Summary("Register the ID for the first level Staff role in your server so that staff-related operations work properly with the bot.")]
+    [Summary("Register the ID for the first level Staff role in your server so that staff-related operations work properly.")]
     [Remarks("$setstafflvl1role House")]
     public async Task SetStaffLvl1Role(IRole role)
     {
@@ -220,7 +240,7 @@ public class Config : ModuleBase<SocketCommandContext>
     }
 
     [Command("setstafflvl2role")]
-    [Summary("Register the ID for the second level Staff role in your server so that staff-related operations work properly with the bot.")]
+    [Summary("Register the ID for the second level Staff role in your server so that staff-related operations work properly.")]
     [Remarks("$setstafflvl2role Senate")]
     public async Task SetStaffLvl2Role(IRole role)
     {

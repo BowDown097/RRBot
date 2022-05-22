@@ -152,6 +152,7 @@ public static class Constants
     // ********************
     //        POLLS
     // ********************
+    public const long ELECTION_DURATION = 259200;
     public static readonly Dictionary<int, string> POLL_EMOTES = new()
     {
         { 0, "0️⃣" },

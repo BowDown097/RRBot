@@ -218,7 +218,7 @@ public class EventSystem
                 await user.Reference.SetAsync(new { UsingSlots = FieldValue.Delete }, SetOptions.MergeAll);
         }
 
-        await new MonitorSystem(client, Program.database).Initialise();
+        await new MonitorSystem(client).Initialise();
         await audioService.InitializeAsync();
     }
 
