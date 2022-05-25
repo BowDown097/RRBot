@@ -260,7 +260,7 @@ public class Goods : ModuleBase<SocketCommandContext>
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         if (!user.Consumables.TryGetValue(con.Name, out int amount) || amount == 0)
             return CommandResult.FromError($"You don't have any {con}(s)!");
-        if (amount == con.Max)
+        if (user.UsedConsumables.TryGetValue(con.Name, out int used) && used == con.Max)
             return CommandResult.FromError($"You cannot use more than {con.Max} {con}!");
 
         if (!user.UsedConsumables.ContainsKey(con.Name))
