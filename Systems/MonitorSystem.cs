@@ -106,7 +106,10 @@ public class MonitorSystem
                     DbConfigChannels channels = await DbConfigChannels.GetById(guild.Id);
                     DbElection election = await DbElection.GetById(guild.Id, id);
                     if (election.EndTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                    {
                         await Polls.ConcludeElection(election, channels, guild);
+                        await doc.Reference.DeleteAsync();
+                    }
                 }
             }
         }
@@ -178,7 +181,7 @@ public class MonitorSystem
 
     private static async Task ConsumableCheck(string name, string timeKey, SocketGuild guild, bool recoveryTime = false)
     {
-        QuerySnapshot usersWConsumable = await Program.database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo($"UsedConsumables.{name}", 0).GetSnapshotAsync();
+        QuerySnapshot usersWConsumable = await Program.database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo(!recoveryTime ? $"UsedConsumables.{name}" : name, 0).GetSnapshotAsync();
         foreach (DocumentSnapshot snap in usersWConsumable.Documents)
         {
             DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));

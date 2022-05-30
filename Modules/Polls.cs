@@ -40,10 +40,10 @@ public class Polls : ModuleBase<SocketCommandContext>
     [Summary("Preemptively end an ongoing election.")]
     [Remarks("$endelection 1")]
     [RequireStaff]
-    public async Task<RuntimeResult> EndElection(int id)
+    public async Task<RuntimeResult> EndElection(int electionId)
     {
         QuerySnapshot elections = await Program.database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
-        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(id.ToString())) && !elections.Any(r => r.Id == id.ToString()))
+        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && !elections.Any(r => r.Id == electionId.ToString()))
             return CommandResult.FromError("There is no election with that ID!");
 
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
@@ -52,7 +52,7 @@ public class Polls : ModuleBase<SocketCommandContext>
         if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsVotingChannel))
             return CommandResult.FromError("This server's election voting channel has yet to be set or no longer exists.");
 
-        DbElection election = await DbElection.GetById(Context.Guild.Id, id);
+        DbElection election = await DbElection.GetById(Context.Guild.Id, electionId);
         await ConcludeElection(election, channels, Context.Guild);
         await Context.User.NotifyAsync(Context.Channel, "Election ended.");
         return CommandResult.FromSuccess();
@@ -60,9 +60,9 @@ public class Polls : ModuleBase<SocketCommandContext>
 
     [Command("startelection")]
     [Summary("Start an election.")]
-    [Remarks("$startelection John \"Obesity Contest \" 3")]
+    [Remarks("$startelection John \"Obesity Contest\" 72 3")]
     [RequireStaff]
-    public async Task<RuntimeResult> StartElection(IGuildUser firstCandidate, string role, int numWinners = 1)
+    public async Task<RuntimeResult> StartElection(IGuildUser firstCandidate, string role, long hours = Constants.ELECTION_DURATION / 3600, int numWinners = 1)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsAnnounceChannel))
@@ -72,7 +72,7 @@ public class Polls : ModuleBase<SocketCommandContext>
 
         DbElection election = await DbElection.GetById(Context.Guild.Id);
         election.Candidates = new() { { firstCandidate.Id.ToString(), 0 } };
-        election.EndTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.ELECTION_DURATION);
+        election.EndTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)TimeSpan.FromHours(hours).TotalSeconds);
         election.NumWinners = numWinners;
 
         SocketTextChannel announcementsChannel = Context.Guild.GetTextChannel(channels.ElectionsAnnounceChannel);
@@ -96,15 +96,15 @@ public class Polls : ModuleBase<SocketCommandContext>
     [Command("vote")]
     [Summary("Vote in an election.")]
     [Remarks("$vote 2 *Jazzy Hands*")]
-    public async Task<RuntimeResult> Vote(int id, IGuildUser user)
+    public async Task<RuntimeResult> Vote(int electionId, IGuildUser user)
     {
-        if (user.IsBot)
+        if (user.IsBot || await FilterSystem.ContainsFilteredWord(Context.Guild, user.ToString()))
             return CommandResult.FromError("Nope.");
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("You can't vote for yourself!");
 
         QuerySnapshot elections = await Program.database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
-        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(id.ToString())) && !elections.Any(r => r.Id == id.ToString()))
+        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && !elections.Any(r => r.Id == electionId.ToString()))
             return CommandResult.FromError("There is no election with that ID!");
 
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
@@ -113,16 +113,30 @@ public class Polls : ModuleBase<SocketCommandContext>
         if (Context.Channel.Id != channels.ElectionsVotingChannel)
             return CommandResult.FromError($"You must vote in {MentionUtils.MentionChannel(channels.ElectionsVotingChannel)}.");
 
-        DbElection election = await DbElection.GetById(Context.Guild.Id, id);
-        if (election.Voters.Contains(Context.User.Id))
-            return CommandResult.FromError("You already voted in this election!");
+        DbElection election = await DbElection.GetById(Context.Guild.Id, electionId);
+        if (election.Voters.TryGetValue(Context.User.Id.ToString(), out List<ulong> votes))
+        {
+            if (votes.Contains(user.Id))
+                return CommandResult.FromError($"You already voted for {user.Sanitize()}!");
+
+            if (votes.Count == election.NumWinners)
+            {
+                return CommandResult.FromError(election.NumWinners == 1
+                    ? "You already voted in this election!"
+                    : $"You already voted for the maximum of {election.NumWinners} candidates in this election!");
+            }
+        }
 
         if (!election.Candidates.ContainsKey(user.Id.ToString()))
             election.Candidates.Add(user.Id.ToString(), 1);
         else
             election.Candidates[user.Id.ToString()]++;
 
-        election.Voters.Add(Context.User.Id);
+        if (!election.Voters.ContainsKey(Context.User.Id.ToString()))
+            election.Voters.Add(Context.User.Id.ToString(), new() { user.Id });
+        else
+            election.Voters[Context.User.Id.ToString()].Add(user.Id);
+
         await UpdateElection(election, channels, Context.Guild);
         await Context.User.NotifyAsync(Context.Channel, $"Voted for {user.Sanitize()}.");
         return CommandResult.FromSuccess();
@@ -155,10 +169,10 @@ public class Polls : ModuleBase<SocketCommandContext>
         await announcementMessage.ModifyAsync(msg => msg.Embed = embed.Build());
         OverwritePermissions perms = votingChannel.GetPermissionOverwrite(guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
         await votingChannel.AddPermissionOverwriteAsync(guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
-        await election.Reference.DeleteAsync();
+        election.EndTime = -1;
     }
 
-    private static async Task UpdateElection(DbElection election, DbConfigChannels channels, SocketGuild guild)
+    public static async Task UpdateElection(DbElection election, DbConfigChannels channels, SocketGuild guild)
     {
         SocketTextChannel announcementsChannel = guild.GetTextChannel(channels.ElectionsAnnounceChannel);
         IUserMessage announcementMessage = await announcementsChannel.GetMessageAsync(election.AnnouncementMessage) as IUserMessage;

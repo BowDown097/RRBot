@@ -135,6 +135,26 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         }
     }
 
+    [Command("setvotes")]
+    [Summary("Set a user's votes in an election.")]
+    [Remarks("$setvotes 3 BowDown097 1000000")]
+    public async Task<RuntimeResult> SetVotes(int electionId, IGuildUser user, int votes)
+    {
+        QuerySnapshot elections = await Program.database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
+        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && !elections.Any(r => r.Id == electionId.ToString()))
+            return CommandResult.FromError("There is no election with that ID!");
+
+        DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+        if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsAnnounceChannel))
+            return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
+
+        DbElection election = await DbElection.GetById(Context.Guild.Id, electionId);
+        election.Candidates[user.Id.ToString()] = votes;
+        await Polls.UpdateElection(election, channels, Context.Guild);
+
+        return CommandResult.FromSuccess();
+    }
+
     [Alias("unbotban")]
     [Command("unblacklist")]
     [Summary("Unban a user from using the bot.")]

@@ -14,7 +14,7 @@ public class DbElection : DbObject
     [FirestoreProperty]
     public int NumWinners { get; set; }
     [FirestoreProperty]
-    public List<ulong> Voters { get; set; } = new();
+    public Dictionary<string, List<ulong>> Voters { get; set; } = new();
     #endregion
 
     #region Methods

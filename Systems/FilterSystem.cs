@@ -67,7 +67,7 @@ public static class FilterSystem
         if (!optionals.InviteFilterEnabled || optionals.NoFilterChannels.Contains(message.Channel.Id))
             return;
 
-        foreach (Match match in INVITE_REGEX.Matches(message.Content))
+        foreach (Match match in INVITE_REGEX.Matches(message.Content).Cast<Match>())
         {
             string inviteCode = match.Groups[1].Value;
             RestInviteMetadata invite = await client.GetInviteAsync(inviteCode);
