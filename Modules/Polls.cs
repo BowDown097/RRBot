@@ -181,7 +181,7 @@ public class Polls : ModuleBase<SocketCommandContext>
         int processedUsers = 0;
         foreach (KeyValuePair<string, int> kvp in election.Candidates.OrderByDescending(k => k.Value))
         {
-            if (processedUsers == 10)
+            if (processedUsers == 20)
                 break;
 
             IGuildUser user = guild.GetUser(Convert.ToUInt64(kvp.Key));

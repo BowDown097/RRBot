@@ -44,6 +44,8 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public double GamblingMultiplier { get; set; } = 1.0;
     [FirestoreProperty]
+    public string Gang { get; set; }
+    [FirestoreProperty]
     public long HackCooldown { get; set; }
     [FirestoreProperty]
     public bool HasReachedAMilli { get; set; }

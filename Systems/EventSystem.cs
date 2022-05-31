@@ -146,7 +146,7 @@ public class EventSystem
 
             DbConfigChannels channelsConfig = await DbConfigChannels.GetById(context.Guild.Id);
             CommandInfo command = search.Commands[0].Command;
-            if (!(command.Module.Name is "Administration" or "BotOwner" or "Moderation" or "Music")
+            if (!(command.Module.Name is "Administration" or "BotOwner" or "Moderation" or "Music" or "Polls")
                 && channelsConfig.WhitelistedChannels.Count > 0 && !channelsConfig.WhitelistedChannels.Contains(context.Channel.Id))
             {
                 await context.User.NotifyAsync(context.Channel, "Commands are disabled in this channel!");

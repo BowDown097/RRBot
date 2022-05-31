@@ -133,6 +133,13 @@ public static class Constants
     public const double SLOTS_MULT_THREESEVENS = 21;
     public const double SLOTS_MULT_TWOINAROW = 1.75;
     // ********************
+    //       GANGS
+    // ********************
+    public const double GANG_CREATION_COST = 5000;
+    public const double GANG_VAULT_COST = 10000;
+    public static readonly string[] GANG_POSITIONS = { "Leader", "Elder", "Member" };
+    public const int MAX_GANGS_PER_GUILD = 50;
+    // ********************
     //       GOODS
     // ********************
     public const long BLACK_HAT_DURATION = 3600;

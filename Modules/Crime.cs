@@ -13,7 +13,7 @@ public class Crime : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
     {
         if (await FilterSystem.ContainsFilteredWord(Context.Guild, nickname))
-            return CommandResult.FromError("You cannot bully someone to the funny word.");
+            return CommandResult.FromError("You cannot bully someone to a filtered word.");
         if (nickname.Length > 32)
             return CommandResult.FromError("The nickname you put is longer than the maximum accepted length (32).");
         if (user.Id == Context.User.Id)
