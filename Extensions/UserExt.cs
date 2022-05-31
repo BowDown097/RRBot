@@ -10,7 +10,7 @@ public static class UserExt
         DbUser dbUser = await DbUser.GetById(user.GetGuild().Id, user.Id);
         if (doDM && dbUser.DMNotifs)
             return await user.SendMessageAsync(message);
-        if (!dbUser.NoReplyPings)
+        if (dbUser.WantsReplyPings)
             message = $"{user.Mention}, {char.ToLower(message[0]) + message[1..]}";
 
         return await channel.SendMessageAsync(message, allowedMentions: Constants.MENTIONS);

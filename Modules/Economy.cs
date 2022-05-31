@@ -212,7 +212,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await user.Reference.DeleteAsync();
                 await user.SetCash(Context.User, 0);
                 RestoreUserData(user, temp.BTC, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
-                    temp.NoReplyPings, temp.Stats, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
+                    temp.Stats, temp.WantsReplyPings, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
                     temp.HuntCooldown, temp.MineCooldown, temp.SupportCooldown, temp.HackCooldown,
@@ -223,7 +223,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await user.Reference.DeleteAsync();
                 await user.SetCash(Context.User, 0);
                 RestoreUserData(user, temp.BTC, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
-                    temp.NoReplyPings, temp.Stats, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
+                    temp.Stats, temp.WantsReplyPings, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
                     temp.HuntCooldown, temp.MineCooldown, temp.SupportCooldown, temp.HackCooldown,
@@ -257,7 +257,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     }
 
     private static void RestoreUserData(DbUser user, double btc, double eth, double ltc, double xrp,
-        bool dmNotifs, bool noReplyPings, Dictionary<string, string> stats, long dealCd, long lootCd,
+        bool dmNotifs, Dictionary<string, string> stats, bool wantsReplyPings, long dealCd, long lootCd,
         long rapeCd, long robCd, long scavengeCd, long slaveryCd, long whoreCd, long bullyCd, long chopCd, long digCd,
         long farmCd, long fishCd, long huntCd, long mineCd, long supportCd, long hackCd, long dailyCd)
     {
@@ -266,7 +266,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         user.LTC = ltc;
         user.XRP = xrp;
         user.DMNotifs = dmNotifs;
-        user.NoReplyPings = noReplyPings;
+        user.WantsReplyPings = wantsReplyPings;
         user.Stats = stats;
         user.DealCooldown = dealCd;
         user.LootCooldown = lootCd;

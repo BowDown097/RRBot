@@ -58,8 +58,6 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long MineCooldown { get; set; }
     [FirestoreProperty]
-    public bool NoReplyPings { get; set; }
-    [FirestoreProperty]
     public long PacifistCooldown { get; set; }
     [FirestoreProperty]
     public List<string> PendingGangInvites { get; set; } = new();
@@ -96,6 +94,8 @@ public class DbUser : DbObject
     };
     [FirestoreProperty]
     public bool UsingSlots { get; set; }
+    [FirestoreProperty]
+    public bool WantsReplyPings { get; set; } = true;
     [FirestoreProperty]
     public long ViagraTime { get; set; }
     [FirestoreProperty]
