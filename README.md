@@ -6,6 +6,7 @@
         <img src="https://img.shields.io/discord/809485099238031420" />
     </a>
     <img src="https://img.shields.io/codefactor/grade/github/BowDown097/RRBot" />
+	<img src="https://img.shields.io/tokei/lines/github/BowDown097/RRBot" />
 </p>
 <p align="center">The bot for the <a href="https://discord.gg/USpJnaaNap">Rush Reborn Discord server</a>, heavily inspired by the <a href="https://github.com/Asshley/DEA">DEA Discord bot</a>.</p>
 <p align="center">
