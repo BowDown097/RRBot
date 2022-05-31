@@ -136,6 +136,7 @@ public static class Constants
     //       GANGS
     // ********************
     public const double GANG_CREATION_COST = 5000;
+    public const int GANG_MAX_MEMBERS = 10;
     public const double GANG_VAULT_COST = 10000;
     public static readonly string[] GANG_POSITIONS = { "Leader", "Elder", "Member" };
     public const int MAX_GANGS_PER_GUILD = 50;

@@ -62,6 +62,8 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long PacifistCooldown { get; set; }
     [FirestoreProperty]
+    public List<string> PendingGangInvites { get; set; } = new();
+    [FirestoreProperty]
     public Dictionary<string, long> Perks { get; set; } = new();
     [FirestoreProperty]
     public int Prestige { get; set; }

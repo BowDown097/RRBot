@@ -6,11 +6,13 @@ public class DbGang : DbObject
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
-    public List<ulong> JoinRequests { get; set; }
+    public bool IsPublic { get; set; }
     [FirestoreProperty]
     public ulong Leader { get; set; }
     [FirestoreProperty]
-    public Dictionary<ulong, string> Members { get; set; } = new();
+    public Dictionary<string, string> Members { get; set; } = new();
+    [FirestoreProperty]
+    public string Name { get; set; }
     [FirestoreProperty]
     public double VaultBalance { get; set; }
     [FirestoreProperty]
@@ -20,19 +22,20 @@ public class DbGang : DbObject
     #region Methods
     public static async Task<DbGang> GetByName(ulong guildId, string name)
     {
-        if (MemoryCache.Default.Contains($"gang-{guildId}-{name}"))
-            return (DbGang)MemoryCache.Default.Get($"gang-{guildId}-{name}");
+        string dbName = name.ToLower();
+        if (MemoryCache.Default.Contains($"gang-{guildId}-{dbName}"))
+            return (DbGang)MemoryCache.Default.Get($"gang-{guildId}-{dbName}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/gangs").Document(name);
+        DocumentReference doc = Program.database.Collection($"servers/{guildId}/gangs").Document(dbName);
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {
-            await doc.CreateAsync(new { Leader = 0UL });
+            await doc.CreateAsync(new { Name = name });
             return await GetByName(guildId, name);
         }
 
         DbGang gang = snap.ConvertTo<DbGang>();
-        MemoryCache.Default.CacheDatabaseObject($"gang-{guildId}-{name}", gang);
+        MemoryCache.Default.CacheDatabaseObject($"gang-{guildId}-{dbName}", gang);
         return gang;
     }
     #endregion

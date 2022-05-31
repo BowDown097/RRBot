@@ -20,11 +20,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         if (dbUser.Cash < 0.01)
             return CommandResult.FromError(user == null ? "You're broke!" : $"**{user.Sanitize()}** is broke!");
 
-        if (user == null)
-            await Context.User.NotifyAsync(Context.Channel, $"You have **{dbUser.Cash:C2}**.");
-        else
-            await ReplyAsync($"**{user.Sanitize()}** has **{dbUser.Cash:C2}**.", allowedMentions: Constants.MENTIONS);
-
+        await Context.User.NotifyAsync(Context.Channel, user == null ? $"You have **{dbUser.Cash:C2}**." : $"**{user.Sanitize()}** has **{dbUser.Cash:C2}**.");
         return CommandResult.FromSuccess();
     }
 
