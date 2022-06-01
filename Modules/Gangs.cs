@@ -74,9 +74,10 @@ public class Gangs : ModuleBase<SocketCommandContext>
         if (!gang.VaultUnlocked)
             return CommandResult.FromError("Your gang does not have a vault!");
 
-        gang.VaultBalance += amount * 0.95;
+        double finalAmount = amount / 100.0 * (100 - Constants.VAULT_TAX_PERCENT);
+        gang.VaultBalance += finalAmount;
         await user.SetCash(Context.User, user.Cash - amount);
-        await Context.User.NotifyAsync(Context.Channel, $"Deposited **{amount * 0.95:C2}** into the vault (-{amount * 0.05:C2} from tax).");
+        await Context.User.NotifyAsync(Context.Channel, $"Deposited **{finalAmount:C2}** into your gang's vault ({Constants.VAULT_TAX_PERCENT}% tax).");
         return CommandResult.FromSuccess();
     }
 
@@ -111,10 +112,13 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Remarks("$gang Sex Havers")]
     public async Task<RuntimeResult> Gang([Remainder] string name = null)
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        if (name == null && string.IsNullOrWhiteSpace(user.Gang))
-            return CommandResult.FromError("You are not in a gang!");
-        name = user.Gang;
+        if (name == null)
+        {
+            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            if (string.IsNullOrWhiteSpace(user.Gang))
+                return CommandResult.FromError("You are not in a gang!");
+            name = user.Gang;
+        }
 
         QuerySnapshot gangs = await Program.database.Collection($"servers/{Context.Guild.Id}/gangs").GetSnapshotAsync();
         if (!gangs.Any(r => r.Id.Equals(name, StringComparison.OrdinalIgnoreCase)))
@@ -133,7 +137,8 @@ public class Gangs : ModuleBase<SocketCommandContext>
             embed.RRAddField($"{position}s", string.Join('\n', posMemNames));
         }
 
-        embed.RRAddField("Vault Balance", gang.VaultBalance.ToString("C2"));
+        if (gang.VaultBalance >= 0.01)
+            embed.RRAddField("Vault Balance", gang.VaultBalance.ToString("C2"));
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
     }

@@ -140,6 +140,7 @@ public static class Constants
     public const double GANG_VAULT_COST = 10000;
     public static readonly string[] GANG_POSITIONS = { "Leader", "Elder", "Member" };
     public const int MAX_GANGS_PER_GUILD = 50;
+    public const double VAULT_TAX_PERCENT = 1.5;
     // ********************
     //       GOODS
     // ********************

@@ -218,7 +218,7 @@ public class General : ModuleBase<SocketCommandContext>
             .RRAddField("Joined At", user.JoinedAt.Value, true)
             .RRAddField("Created At", user.CreatedAt, true)
             .AddSeparatorField()
-            .RRAddField("Permissions", string.Join(", ", perms))
+            .RRAddField("Permissions", string.Join(", ", perms.Where(p => p != null)))
             .RRAddField("Roles", string.Join(" ", user.Roles.Select(r => r.Mention)));
 
         await ReplyAsync(embed: embed.Build());
