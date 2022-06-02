@@ -1,4 +1,6 @@
-﻿namespace RRBot.Systems;
+﻿using System.Diagnostics;
+
+namespace RRBot.Systems;
 public sealed class AudioSystem
 {
     private readonly IAudioService audioService;
@@ -27,7 +29,8 @@ public sealed class AudioSystem
             return CommandResult.FromError("The bot is not currently being used.");
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
-        StringBuilder builder = new($"By: {Format.Sanitize(player.CurrentTrack.Author)}\n");
+        TrackMetadata metadata = player.CurrentTrack.Context as TrackMetadata;
+        StringBuilder builder = new($"By: {metadata.Author}\n");
         if (!player.CurrentTrack.IsLiveStream)
             builder.AppendLine($"Duration: {player.CurrentTrack.Duration.Round()}\nPosition: {player.Position.Position.Round()}");
 
@@ -36,7 +39,7 @@ public sealed class AudioSystem
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle(player.CurrentTrack.Title)
+            .WithTitle(metadata.Title)
             .WithThumbnailUrl(artwork?.ToString())
             .WithDescription(builder.ToString());
         await context.Channel.SendMessageAsync(embed: embed.Build());
@@ -49,6 +52,7 @@ public sealed class AudioSystem
             return CommandResult.FromError("The bot is not currently being used.");
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        TrackMetadata metadata = player.CurrentTrack.Context as TrackMetadata;
 
         using LyricsService lyricsService = new(new LyricsOptions());
         string lyrics = await lyricsService.RequestLyricsAsync(TrackDecoder.DecodeTrackInfo(player.CurrentTrack.Identifier));
@@ -57,7 +61,7 @@ public sealed class AudioSystem
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle($"{player.CurrentTrack.Title} Lyrics")
+            .WithTitle($"{metadata.Title} Lyrics")
             .WithDescription(Format.Sanitize(lyrics));
         await context.Channel.SendMessageAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
@@ -69,18 +73,20 @@ public sealed class AudioSystem
             return CommandResult.FromError("The bot is not currently being used.");
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        TrackMetadata currMetadata = player.CurrentTrack.Context as TrackMetadata;
 
         if (player.Queue.IsEmpty)
         {
-            await context.Channel.SendMessageAsync($"Now playing: \"{Format.Sanitize(player.CurrentTrack.Title)}\". Nothing else is queued.", allowedMentions: Constants.MENTIONS);
+            await context.Channel.SendMessageAsync($"Now playing: \"{currMetadata.Title}\". Nothing else is queued.", allowedMentions: Constants.MENTIONS);
             return CommandResult.FromSuccess();
         }
 
-        StringBuilder playlist = new($"**1**: \"{Format.Sanitize(player.CurrentTrack.Title)}\" by {Format.Sanitize(player.CurrentTrack.Author)} {(!player.CurrentTrack.IsLiveStream ? $"({player.CurrentTrack.Duration.Round()})\n" : "\n")}");
+        StringBuilder playlist = new($"**1**: \"{currMetadata.Title}\" by {currMetadata.Author} {(!player.CurrentTrack.IsLiveStream ? $"({player.CurrentTrack.Duration.Round()})\n" : "\n")}");
         for (int i = 0; i < player.Queue.Count; i++)
         {
             LavalinkTrack track = player.Queue[i];
-            playlist.AppendLine($"**{i + 2}**: \"{Format.Sanitize(track.Title)}\" by {Format.Sanitize(track.Author)} {(!track.IsLiveStream ? $"({track.Duration.Round()})" : "")}");
+            TrackMetadata metadata = track.Context as TrackMetadata;
+            playlist.AppendLine($"**{i + 2}**: \"{metadata.Title}\" by {metadata.Author} {(!track.IsLiveStream ? $"({track.Duration.Round()})" : "")}");
         }
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -104,36 +110,84 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> PlayAsync(SocketCommandContext context, string query)
     {
-        SocketGuildUser user = context.User as SocketGuildUser;
-        if (user.VoiceChannel is null)
-            return CommandResult.FromError("You must be in a voice channel.");
-
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild.Id)
-            ?? await audioService.JoinAsync<VoteLavalinkPlayer>(context.Guild.Id, user.VoiceChannel.Id, true);
-
-        SearchMode searchMode = Uri.TryCreate(query, UriKind.Absolute, out Uri uri) && uri.Host == "soundcloud.com"
-            ? SearchMode.SoundCloud : SearchMode.YouTube;
-        LavalinkTrack track = await audioService.GetTrackAsync(query, searchMode);
-        if (track is null)
-            return CommandResult.FromError("No results were found for your query.");
-        if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && !track.IsLiveStream && track.Duration.TotalSeconds > 7200)
-            return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
-
-        int position = await player.PlayAsync(track, enqueue: true);
-        if (position == 0)
+        query = query.Replace("\\", "");
+        try
         {
-            StringBuilder message = new($"Now playing: \"{Format.Sanitize(track.Title)}\"\nBy: {Format.Sanitize(track.Author)}\n");
-            if (!track.IsLiveStream)
-                message.AppendLine($"Length: {track.Duration.Round()}");
-            message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
-            await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: Constants.MENTIONS);
-        }
-        else
-        {
-            await context.Channel.SendMessageAsync($"**{Format.Sanitize(track.Title)}** has been added to the queue.", allowedMentions: Constants.MENTIONS);
-        }
+            SocketGuildUser user = context.User as SocketGuildUser;
+            if (user.VoiceChannel is null)
+                return CommandResult.FromError("You must be in a voice channel.");
 
-        await LoggingSystem.Custom_TrackStarted(user, track.Source);
+            VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild.Id)
+                ?? await audioService.JoinAsync<VoteLavalinkPlayer>(context.Guild.Id, user.VoiceChannel.Id, true);
+
+            LavalinkTrack track = null;
+            if (Uri.TryCreate(query, UriKind.Absolute, out Uri uri))
+            {
+                SearchMode searchMode = uri.Host switch
+                {
+                    "soundcloud.com" or "snd.sc" => SearchMode.SoundCloud,
+                    "youtube.com" or "youtu.be" => SearchMode.YouTube,
+                    _ => SearchMode.None
+                };
+
+                if (searchMode == SearchMode.None && !uri.ToString().Split('/').Last().Contains('.'))
+                {
+                    using Process ytdlpProc = new();
+                    ytdlpProc.StartInfo.FileName = new FileInfo("yt-dlp").GetFullPath();
+                    ytdlpProc.StartInfo.Arguments = $"-xj --no-warnings {uri}";
+                    ytdlpProc.StartInfo.CreateNoWindow = true;
+                    ytdlpProc.StartInfo.RedirectStandardOutput = true;
+                    ytdlpProc.StartInfo.UseShellExecute = false;
+                    ytdlpProc.Start();
+
+                    string output = await ytdlpProc.StandardOutput.ReadToEndAsync();
+                    await ytdlpProc.WaitForExitAsync();
+
+                    JObject obj = JObject.Parse(output);
+                    track = await audioService.GetTrackAsync(obj["url"].ToString());
+                    if (track != null)
+                        track.Context = new TrackMetadata(obj["uploader"]?.ToString(), obj["title"]?.ToString());
+                }
+                else
+                {
+                    track = await audioService.GetTrackAsync(query, searchMode);
+                    if (track != null)
+                        track.Context = new TrackMetadata(track);
+                }
+            }
+            else
+            {
+                track = await audioService.GetTrackAsync(query, SearchMode.YouTube);
+                if (track != null)
+                    track.Context = new TrackMetadata(track);
+            }
+
+            if (track is null)
+                return CommandResult.FromError("No results were found. Either your search query didn't return anything or your URL is unsupported.");
+            if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && !track.IsLiveStream && track.Duration.TotalSeconds > 7200)
+                return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
+
+            int position = await player.PlayAsync(track, enqueue: true);
+            TrackMetadata metadata = track.Context as TrackMetadata;
+            if (position == 0)
+            {
+                StringBuilder message = new($"Now playing: \"{metadata.Title}\"\nBy: {metadata.Author}\n");
+                if (!track.IsLiveStream)
+                    message.AppendLine($"Length: {track.Duration.Round()}");
+                message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
+                await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: Constants.MENTIONS);
+            }
+            else
+            {
+                await context.Channel.SendMessageAsync($"**{metadata.Title}** has been added to the queue.", allowedMentions: Constants.MENTIONS);
+            }
+
+            await LoggingSystem.Custom_TrackStarted(user, track.Source);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"{e.Message}\n{e.StackTrace}");
+        }
         return CommandResult.FromSuccess();
     }
 
@@ -173,7 +227,8 @@ public sealed class AudioSystem
             return CommandResult.FromError("The bot is not currently being used.");
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
-        await context.Channel.SendMessageAsync($"Skipped \"{Format.Sanitize(player.CurrentTrack.Title)}\".", allowedMentions: Constants.MENTIONS);
+        TrackMetadata metadata = player.CurrentTrack.Context as TrackMetadata;
+        await context.Channel.SendMessageAsync($"Skipped \"{metadata.Title}\".", allowedMentions: Constants.MENTIONS);
         if (!player.Queue.TryDequeue(out LavalinkTrack track))
         {
             await player.StopAsync(true);
@@ -204,7 +259,7 @@ public sealed class AudioSystem
             return CommandResult.FromError("The bot is not currently being used.");
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
-        string track = Format.Sanitize(player.CurrentTrack.Title);
+        TrackMetadata metadata = player.CurrentTrack.Context as TrackMetadata;
         UserVoteSkipInfo info = await player.VoteAsync(context.User.Id);
         if (!info.WasAdded)
             return CommandResult.FromError("You already voted to skip!");
@@ -216,7 +271,7 @@ public sealed class AudioSystem
         }
         else
         {
-            await context.Channel.SendMessageAsync($"Skipped \"{Format.Sanitize(track)}\".", allowedMentions: Constants.MENTIONS);
+            await context.Channel.SendMessageAsync($"Skipped \"{metadata.Title}\".", allowedMentions: Constants.MENTIONS);
         }
 
         return CommandResult.FromSuccess();

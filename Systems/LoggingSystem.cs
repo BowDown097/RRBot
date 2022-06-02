@@ -220,7 +220,7 @@ public static class LoggingSystem
             .WithDescription($"**Message Deleted in {MentionUtils.MentionChannel(channel.Id)}**\n{msg.Content}")
             .WithFooter($"ID: {msg.Id}");
 
-        foreach (Embed msgEmbed in msg.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)))
+        foreach (Embed msgEmbed in msg.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)).Cast<Embed>())
         {
             embed.RRAddField("Embed Title", msgEmbed.Title)
                 .RRAddField("Embed Description", msgEmbed.Description);
@@ -240,7 +240,7 @@ public static class LoggingSystem
             .WithDescription($"**Message Updated in {MentionUtils.MentionChannel(channel.Id)}**\n[Jump]({msgAfter.GetJumpUrl()})")
             .RRAddField("Previous Content", msgBefore.Content);
 
-        foreach (Embed msgEmbed in msgBefore.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)))
+        foreach (Embed msgEmbed in msgBefore.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)).Cast<Embed>())
         {
             embed.RRAddField("Embed Title", msgEmbed.Title)
                 .RRAddField("Embed Description", msgEmbed.Description);
