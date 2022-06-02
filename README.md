@@ -49,4 +49,4 @@ You can get the bot token from your instance of the bot's application at https:/
 
 As the bot uses Firestore as its database, you will need to create your own database and generate a credentials file. For information on how to, see [this page for creating the database](https://firebase.google.com/docs/firestore/quickstart) and/or [this page for authentication](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account).
 
-In order to use the music features of the bot, you will need to get the [latest release of Lavalink](https://github.com/freyacodes/Lavalink/releases) and throw it in the bot's main directory. You will need to run it alongside the bot.
+In order to use the music features of the bot, you will need to get the [latest release of Lavalink](https://github.com/freyacodes/Lavalink/releases) and throw it in the bot's main directory. You will need to run it alongside the bot. [yt-dlp](https://github.com/yt-dlp/yt-dlp) is also optionally required for support for more platforms than just YouTube and SoundCloud. Keep in mind that not everything that works with yt-dlp will work with Lavalink (ie. Pornhub, Vimeo).
