@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace RRBot.Systems;
+﻿namespace RRBot.Systems;
 public sealed class AudioSystem
 {
     private readonly IAudioService audioService;
@@ -29,13 +27,16 @@ public sealed class AudioSystem
             return CommandResult.FromError("The bot is not currently being used.");
 
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        if (player.CurrentTrack is null)
+            return CommandResult.FromError("There is no track currently playing.");
+
         TrackMetadata metadata = player.CurrentTrack.Context as TrackMetadata;
         StringBuilder builder = new($"By: {metadata.Author}\n");
         if (!player.CurrentTrack.IsLiveStream)
             builder.AppendLine($"Duration: {player.CurrentTrack.Duration.Round()}\nPosition: {player.Position.Position.Round()}");
 
         using ArtworkService artworkService = new();
-        Uri artwork = await artworkService.ResolveAsync(player.CurrentTrack);
+        Uri artwork = metadata.Artwork ?? await artworkService.ResolveAsync(player.CurrentTrack);
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -111,83 +112,81 @@ public sealed class AudioSystem
     public async Task<RuntimeResult> PlayAsync(SocketCommandContext context, string query)
     {
         query = query.Replace("\\", "");
-        try
+        SocketGuildUser user = context.User as SocketGuildUser;
+        if (user.VoiceChannel is null)
+            return CommandResult.FromError("You must be in a voice channel.");
+
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild.Id)
+            ?? await audioService.JoinAsync<VoteLavalinkPlayer>(context.Guild.Id, user.VoiceChannel.Id, true);
+
+        LavalinkTrack track = null;
+        if (Uri.TryCreate(query, UriKind.Absolute, out Uri uri))
         {
-            SocketGuildUser user = context.User as SocketGuildUser;
-            if (user.VoiceChannel is null)
-                return CommandResult.FromError("You must be in a voice channel.");
-
-            VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild.Id)
-                ?? await audioService.JoinAsync<VoteLavalinkPlayer>(context.Guild.Id, user.VoiceChannel.Id, true);
-
-            LavalinkTrack track = null;
-            if (Uri.TryCreate(query, UriKind.Absolute, out Uri uri))
+            SearchMode searchMode = uri.Host.Replace("www.", "") switch
             {
-                SearchMode searchMode = uri.Host switch
-                {
-                    "soundcloud.com" or "snd.sc" => SearchMode.SoundCloud,
-                    "youtube.com" or "youtu.be" => SearchMode.YouTube,
-                    _ => SearchMode.None
-                };
+                "soundcloud.com" or "snd.sc" => SearchMode.SoundCloud,
+                "youtube.com" or "youtu.be" => SearchMode.YouTube,
+                _ => SearchMode.None
+            };
 
-                if (searchMode == SearchMode.None && !uri.ToString().Split('/').Last().Contains('.'))
-                {
-                    using Process ytdlpProc = new();
-                    ytdlpProc.StartInfo.FileName = new FileInfo("yt-dlp").GetFullPath();
-                    ytdlpProc.StartInfo.Arguments = $"-xj --no-warnings {uri}";
-                    ytdlpProc.StartInfo.CreateNoWindow = true;
-                    ytdlpProc.StartInfo.RedirectStandardOutput = true;
-                    ytdlpProc.StartInfo.UseShellExecute = false;
-                    ytdlpProc.Start();
+            if (searchMode == SearchMode.None && !uri.ToString().Split('/').Last().Contains('.'))
+            {
+                using Process ytdlpProc = new();
+                ytdlpProc.StartInfo.FileName = new FileInfo("yt-dlp").GetFullPath();
+                ytdlpProc.StartInfo.Arguments = $"-xj --no-warnings {uri}";
+                ytdlpProc.StartInfo.CreateNoWindow = true;
+                ytdlpProc.StartInfo.RedirectStandardOutput = true;
+                ytdlpProc.StartInfo.UseShellExecute = false;
+                ytdlpProc.Start();
 
-                    string output = await ytdlpProc.StandardOutput.ReadToEndAsync();
-                    await ytdlpProc.WaitForExitAsync();
+                string output = await ytdlpProc.StandardOutput.ReadToEndAsync();
+                await ytdlpProc.WaitForExitAsync();
 
-                    JObject obj = JObject.Parse(output);
-                    track = await audioService.GetTrackAsync(obj["url"].ToString());
-                    if (track != null)
-                        track.Context = new TrackMetadata(obj["uploader"]?.ToString(), obj["title"]?.ToString());
-                }
-                else
+                JObject obj = JObject.Parse(output);
+                track = await audioService.GetTrackAsync(obj["url"].ToString());
+                if (track != null)
                 {
-                    track = await audioService.GetTrackAsync(query, searchMode);
-                    if (track != null)
-                        track.Context = new TrackMetadata(track);
+                    track.Context = new TrackMetadata(
+                        obj["thumbnail"]?.ToString(),
+                        obj["uploader"]?.ToString() ?? obj["channel"]?.ToString(),
+                        obj["title"]?.ToString());
                 }
             }
             else
             {
-                track = await audioService.GetTrackAsync(query, SearchMode.YouTube);
+                track = await audioService.GetTrackAsync(query, searchMode);
                 if (track != null)
                     track.Context = new TrackMetadata(track);
             }
-
-            if (track is null)
-                return CommandResult.FromError("No results were found. Either your search query didn't return anything or your URL is unsupported.");
-            if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && !track.IsLiveStream && track.Duration.TotalSeconds > 7200)
-                return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
-
-            int position = await player.PlayAsync(track, enqueue: true);
-            TrackMetadata metadata = track.Context as TrackMetadata;
-            if (position == 0)
-            {
-                StringBuilder message = new($"Now playing: \"{metadata.Title}\"\nBy: {metadata.Author}\n");
-                if (!track.IsLiveStream)
-                    message.AppendLine($"Length: {track.Duration.Round()}");
-                message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
-                await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: Constants.MENTIONS);
-            }
-            else
-            {
-                await context.Channel.SendMessageAsync($"**{metadata.Title}** has been added to the queue.", allowedMentions: Constants.MENTIONS);
-            }
-
-            await LoggingSystem.Custom_TrackStarted(user, track.Source);
         }
-        catch (Exception e)
+        else
         {
-            Console.WriteLine($"{e.Message}\n{e.StackTrace}");
+            track = await audioService.GetTrackAsync(query, SearchMode.YouTube);
+            if (track != null)
+                track.Context = new TrackMetadata(track);
         }
+
+        if (track is null)
+            return CommandResult.FromError("No results were found. Either your search query didn't return anything or your URL is unsupported.");
+        if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && !track.IsLiveStream && track.Duration.TotalSeconds > 7200)
+            return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
+
+        int position = await player.PlayAsync(track, enqueue: true);
+        TrackMetadata metadata = track.Context as TrackMetadata;
+        if (position == 0)
+        {
+            StringBuilder message = new($"Now playing: \"{metadata.Title}\"\nBy: {metadata.Author}\n");
+            if (!track.IsLiveStream)
+                message.AppendLine($"Length: {track.Duration.Round()}");
+            message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
+            await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: Constants.MENTIONS);
+        }
+        else
+        {
+            await context.Channel.SendMessageAsync($"**{metadata.Title}** has been added to the queue.", allowedMentions: Constants.MENTIONS);
+        }
+
+        await LoggingSystem.Custom_TrackStarted(user, track.Source);
         return CommandResult.FromSuccess();
     }
 

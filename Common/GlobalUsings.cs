@@ -30,6 +30,7 @@ global using RRBot.Preconditions;
 global using RRBot.Systems;
 global using RRBot.TypeReaders;
 global using System.Collections.Immutable;
+global using System.Diagnostics;
 global using System.Globalization;
 global using System.Net;
 global using System.Reflection;

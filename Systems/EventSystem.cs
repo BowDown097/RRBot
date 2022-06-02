@@ -7,6 +7,7 @@ public class EventSystem
     private readonly IAudioService audioService;
     private readonly CommandService commands;
     private readonly DiscordSocketClient client;
+    private readonly InactivityTrackingService inactivityTracking;
     private readonly InteractionService interactions;
     private readonly ServiceProvider serviceProvider;
 
@@ -16,6 +17,7 @@ public class EventSystem
         audioService = serviceProvider.GetRequiredService<IAudioService>();
         commands = serviceProvider.GetRequiredService<CommandService>();
         client = serviceProvider.GetRequiredService<DiscordSocketClient>();
+        inactivityTracking = serviceProvider.GetRequiredService<InactivityTrackingService>();
         interactions = serviceProvider.GetRequiredService<InteractionService>();
     }
 
@@ -220,6 +222,7 @@ public class EventSystem
 
         await new MonitorSystem(client).Initialise();
         await audioService.InitializeAsync();
+        inactivityTracking.BeginTracking();
     }
 
     private static async Task Client_ThreadCreated(SocketThreadChannel thread)
