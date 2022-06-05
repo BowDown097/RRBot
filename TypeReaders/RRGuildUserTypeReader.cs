@@ -87,7 +87,7 @@ public class RRGuildUserTypeReader : TypeReader
 
     private static void AddResult(Dictionary<ulong, TypeReaderValue> results, IGuildUser user, float score)
     {
-        if (user != null && !results.ContainsKey(user.Id))
+        if (user != null && !results.ContainsKey(user.Id) && !FilterSystem.ContainsFilteredWord(user.Guild, user.Username).GetAwaiter().GetResult())
             results.Add(user.Id, new TypeReaderValue(user, score));
     }
 }

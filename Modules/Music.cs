@@ -15,10 +15,6 @@ public class Music : ModuleBase<SocketCommandContext>
     [RequireDJ]
     public async Task<RuntimeResult> Loop() => await AudioSystem.LoopAsync(Context);
 
-    [Command("lyrics")]
-    [Summary("View the lyrics of the current playing track, if any.")]
-    public async Task<RuntimeResult> Lyrics() => await AudioSystem.GetLyricsAsync(Context);
-
     [Alias("np", "playing")]
     [Command("nowplaying")]
     [Summary("Get details on the currently playing track, if there is one.")]

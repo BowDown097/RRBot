@@ -144,6 +144,7 @@ public class Goods : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Alias("inv", "inventory")]
     [Command("items", RunMode = RunMode.Async)]
     [Summary("View your own or someone else's tools, active perks, and consumables.")]
     [Remarks("$items Zurmii#2208")]

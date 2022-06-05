@@ -3,10 +3,7 @@ public sealed class AudioSystem
 {
     private readonly IAudioService audioService;
 
-    public AudioSystem(IAudioService audioService)
-    {
-        this.audioService = audioService;
-    }
+    public AudioSystem(IAudioService audioService) => this.audioService = audioService;
 
     public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, float volume)
     {
@@ -43,27 +40,6 @@ public sealed class AudioSystem
             .WithTitle(metadata.Title)
             .WithThumbnailUrl(artwork?.ToString())
             .WithDescription(builder.ToString());
-        await context.Channel.SendMessageAsync(embed: embed.Build());
-        return CommandResult.FromSuccess();
-    }
-
-    public async Task<RuntimeResult> GetLyricsAsync(SocketCommandContext context)
-    {
-        if (!audioService.HasPlayer(context.Guild))
-            return CommandResult.FromError("The bot is not currently being used.");
-
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
-        TrackMetadata metadata = player.CurrentTrack.Context as TrackMetadata;
-
-        using LyricsService lyricsService = new(new LyricsOptions());
-        string lyrics = await lyricsService.RequestLyricsAsync(TrackDecoder.DecodeTrackInfo(player.CurrentTrack.Identifier));
-        if (string.IsNullOrWhiteSpace(lyrics))
-            return CommandResult.FromError("No lyrics found!");
-
-        EmbedBuilder embed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle($"{metadata.Title} Lyrics")
-            .WithDescription(Format.Sanitize(lyrics));
         await context.Channel.SendMessageAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
     }
@@ -132,17 +108,8 @@ public sealed class AudioSystem
             if (searchMode == SearchMode.None && !uri.ToString().Split('/').Last().Contains('.'))
             {
                 using Process ytdlpProc = new();
-                ytdlpProc.StartInfo.FileName = new FileInfo("yt-dlp").GetFullPath();
-                ytdlpProc.StartInfo.Arguments = $"-xj --no-warnings {uri}";
-                ytdlpProc.StartInfo.CreateNoWindow = true;
-                ytdlpProc.StartInfo.RedirectStandardOutput = true;
-                ytdlpProc.StartInfo.UseShellExecute = false;
-                ytdlpProc.Start();
-
-                string output = await ytdlpProc.StandardOutput.ReadToEndAsync();
-                await ytdlpProc.WaitForExitAsync();
-
-                JObject obj = JObject.Parse(output);
+                string output = await ytdlpProc.RunWithOutputAsync("yt-dlp", $"-xj --no-warnings {uri}");
+                JObject obj = JObject.Parse(output.Split('\n')[0]);
                 track = await audioService.GetTrackAsync(obj["url"].ToString());
                 if (track != null)
                 {
@@ -173,6 +140,9 @@ public sealed class AudioSystem
 
         int position = await player.PlayAsync(track, enqueue: true);
         TrackMetadata metadata = track.Context as TrackMetadata;
+        if (await FilterSystem.ContainsFilteredWord(context.Guild, metadata.Title))
+            return CommandResult.FromError("Nope.");
+
         if (position == 0)
         {
             StringBuilder message = new($"Now playing: \"{metadata.Title}\"\nBy: {metadata.Author}\n");
