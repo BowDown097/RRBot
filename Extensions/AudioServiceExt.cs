@@ -1,7 +1,7 @@
 namespace RRBot.Extensions;
 public static class AudioServiceExt
 {
-    public static async Task<LavalinkTrack> GetYTTrackAsync(this IAudioService service, Uri uri)
+    public static async Task<LavalinkTrack> GetYTTrackAsync(this IAudioService service, Uri uri, SocketGuild guild)
     {
         using HttpClient client = new();
         var ctx = new
@@ -27,9 +27,16 @@ public static class AudioServiceExt
         using HttpResponseMessage resMsg = await client.SendAsync(reqMsg, HttpCompletionOption.ResponseHeadersRead);
         string response = await resMsg.Content.ReadAsStringAsync();
         if (JObject.Parse(response)["playabilityStatus"]?["reason"]?.ToString() == "Sign in to confirm your age")
+        {
+            DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
+            if (!optionals.NSFWEnabled)
+                return new("restricted", "", TimeSpan.Zero, false, false, "", "", "", StreamProvider.Unknown);
             return await service.YTDLPGetTrackAsync(uri);
+        }
         else
+        {
             return await service.RRGetTrackAsync(uri.ToString(), SearchMode.YouTube);
+        }
     }
 
     public static async Task<LavalinkTrack> RRGetTrackAsync(this IAudioService service, string query, SearchMode mode = SearchMode.None)

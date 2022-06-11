@@ -108,7 +108,7 @@ public sealed class AudioSystem
             if (searchMode == SearchMode.None && !uri.ToString().Split('/').Last().Contains('.'))
                 track = await audioService.YTDLPGetTrackAsync(uri);
             else if (searchMode == SearchMode.YouTube && uri.AbsolutePath == "/watch")
-                track = await audioService.GetYTTrackAsync(uri);
+                track = await audioService.GetYTTrackAsync(uri, context.Guild);
             else
                 track = await audioService.RRGetTrackAsync(query, searchMode);
         }
@@ -117,6 +117,8 @@ public sealed class AudioSystem
             track = await audioService.RRGetTrackAsync(query, SearchMode.YouTube);
         }
 
+        if (track.Identifier == "restricted")
+            return CommandResult.FromError("A result was found, but is age restricted. Age restricted content can only be played if the NSFW module is enabled.");
         if (track is null)
             return CommandResult.FromError("No results were found. Either your search query didn't return anything or your URL is unsupported.");
         if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && !track.IsLiveStream && track.Duration.TotalSeconds > 7200)
@@ -132,7 +134,6 @@ public sealed class AudioSystem
             StringBuilder message = new($"Now playing: \"{metadata.Title}\"\nBy: {metadata.Author}\n");
             if (!track.IsLiveStream)
                 message.AppendLine($"Length: {track.Duration.Round()}");
-            message.AppendLine("*Tip: if the track instantly doesn't play, it's probably age restricted.*");
             await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: Constants.MENTIONS);
         }
         else
