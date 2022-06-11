@@ -95,7 +95,7 @@ public sealed class AudioSystem
         VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild.Id)
             ?? await audioService.JoinAsync<VoteLavalinkPlayer>(context.Guild.Id, user.VoiceChannel.Id, true);
 
-        LavalinkTrack track = null;
+        LavalinkTrack track;
         if (Uri.TryCreate(query, UriKind.Absolute, out Uri uri))
         {
             SearchMode searchMode = uri.Host.Replace("www.", "") switch
@@ -106,31 +106,15 @@ public sealed class AudioSystem
             };
 
             if (searchMode == SearchMode.None && !uri.ToString().Split('/').Last().Contains('.'))
-            {
-                using Process ytdlpProc = new();
-                string output = await ytdlpProc.RunWithOutputAsync("yt-dlp", $"-xj --no-warnings {uri}");
-                JObject obj = JObject.Parse(output.Split('\n')[0]);
-                track = await audioService.GetTrackAsync(obj["url"].ToString());
-                if (track != null)
-                {
-                    track.Context = new TrackMetadata(
-                        obj["thumbnail"]?.ToString(),
-                        obj["uploader"]?.ToString() ?? obj["channel"]?.ToString(),
-                        obj["title"]?.ToString());
-                }
-            }
+                track = await audioService.YTDLPGetTrackAsync(uri);
+            else if (searchMode == SearchMode.YouTube && uri.AbsolutePath == "/watch")
+                track = await audioService.GetYTTrackAsync(uri);
             else
-            {
-                track = await audioService.GetTrackAsync(query, searchMode);
-                if (track != null)
-                    track.Context = new TrackMetadata(track);
-            }
+                track = await audioService.RRGetTrackAsync(query, searchMode);
         }
         else
         {
-            track = await audioService.GetTrackAsync(query, SearchMode.YouTube);
-            if (track != null)
-                track.Context = new TrackMetadata(track);
+            track = await audioService.RRGetTrackAsync(query, SearchMode.YouTube);
         }
 
         if (track is null)
