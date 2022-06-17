@@ -160,7 +160,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
             if (gang.VaultBalance < Constants.INVESTMENT_MIN_AMOUNT)
                 break;
 
-            lb.AppendLine($"{processedGangs + 1}: **{Format.Sanitize(doc.Id).Replace("\\:", ":").Replace("\\/", "/").Replace("\\.", ".")}**: {gang.VaultBalance:C2}");
+            lb.AppendLine($"{processedGangs + 1}: **{Format.Sanitize(gang.Name).Replace("\\:", ":").Replace("\\/", "/").Replace("\\.", ".")}**: {gang.VaultBalance:C2}");
             processedGangs++;
         }
 
