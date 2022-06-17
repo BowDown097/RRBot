@@ -143,6 +143,37 @@ public class Gangs : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Command("ganglb")]
+    [Summary("Leaderboard for gang vaults.")]
+    public async Task GangLb()
+    {
+        QuerySnapshot gangs = await Program.database.Collection($"servers/{Context.Guild.Id}/gangs")
+            .OrderByDescending("VaultBalance").GetSnapshotAsync();
+        StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
+        int processedGangs = 0;
+        foreach (DocumentSnapshot doc in gangs.Documents)
+        {
+            if (processedGangs == 10)
+                break;
+
+            DbGang gang = await DbGang.GetByName(Context.Guild.Id, doc.Id, false);
+            if (gang.VaultBalance < Constants.INVESTMENT_MIN_AMOUNT)
+                break;
+
+            lb.AppendLine($"{processedGangs + 1}: **{Format.Sanitize(doc.Id).Replace("\\:", ":").Replace("\\/", "/").Replace("\\.", ".")}**: {gang.VaultBalance:C2}");
+            processedGangs++;
+        }
+
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Red)
+            .WithTitle("Gang Leaderboard")
+            .WithDescription(lb.Length > 0 ? lb.ToString() : "Nothing to see here!");
+        ComponentBuilder component = new ComponentBuilder()
+            .WithButton("Back", "dddd", disabled: true)
+            .WithButton("Next", $"ganglbnext-{Context.User.Id}-11-20", disabled: processedGangs != 10 || gangs.Documents.Count < 11);
+        await ReplyAsync(embed: embed.Build(), components: component.Build());
+    }
+
     [Command("invite")]
     [Summary("Invite a member to your gang (if it is private).")]
     [Remarks("$invite Barcode3")]

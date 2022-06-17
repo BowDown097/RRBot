@@ -16,5 +16,5 @@ public static class UserExt
         return await channel.SendMessageAsync(message, allowedMentions: Constants.MENTIONS);
     }
 
-    public static string Sanitize(this IUser user) => Format.Sanitize(user.ToString());
+    public static string Sanitize(this IUser user) => Format.Sanitize(user.ToString()).Replace("\\:", ":").Replace("\\/", "/").Replace("\\.", ".");
 }

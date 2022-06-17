@@ -20,10 +20,10 @@ public class DbGang : DbObject
     #endregion
 
     #region Methods
-    public static async Task<DbGang> GetByName(ulong guildId, string name)
+    public static async Task<DbGang> GetByName(ulong guildId, string name, bool useCache = true)
     {
         string dbName = name.ToLower();
-        if (MemoryCache.Default.Contains($"gang-{guildId}-{dbName}"))
+        if (useCache && MemoryCache.Default.Contains($"gang-{guildId}-{dbName}"))
             return (DbGang)MemoryCache.Default.Get($"gang-{guildId}-{dbName}");
 
         DocumentReference doc = Program.database.Collection($"servers/{guildId}/gangs").Document(dbName);
@@ -35,7 +35,8 @@ public class DbGang : DbObject
         }
 
         DbGang gang = snap.ConvertTo<DbGang>();
-        MemoryCache.Default.CacheDatabaseObject($"gang-{guildId}-{dbName}", gang);
+        if (useCache)
+            MemoryCache.Default.CacheDatabaseObject($"gang-{guildId}-{dbName}", gang);
         return gang;
     }
     #endregion
