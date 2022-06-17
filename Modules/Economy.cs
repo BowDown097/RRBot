@@ -245,12 +245,19 @@ public class Economy : ModuleBase<SocketCommandContext>
             if (obj is null) continue;
 
             string propS = prop.SplitPascalCase();
-            if (obj is double d && d > 0.01)
-                builder.AppendLine($"**{propS}**: {(prop == "Cash" ? d.ToString("C2") : d.ToString("0.####"))}");
-            else if (obj is System.Collections.ICollection col && col.Count > 0)
-                builder.AppendLine($"**{propS}**: {col.Count}");
-            else if (obj is int i && i > 0)
-                builder.AppendLine($"**{propS}**: {obj}");
+            if (propS != "Gambling Multiplier")
+            {
+                if (obj is double d && d > 0.01)
+                    builder.AppendLine($"**{propS}**: {(prop == "Cash" ? d.ToString("C2") : d.ToString("0.####"))}");
+                else if (obj is System.Collections.ICollection col && col.Count > 0)
+                    builder.AppendLine($"**{propS}**: {col.Count}");
+                else if (obj is int i && i > 0)
+                    builder.AppendLine($"**{propS}**: {obj}");
+            }
+            else if ((double)obj > 1)
+            {
+                builder.AppendLine($"**{propS}**: {obj}x");
+            }
         }
 
         return builder.ToString();
