@@ -1,4 +1,4 @@
-namespace RRBot.Entities.Commands;
+namespace RRBot.Entities.Commands.Goods;
 public class Consumable : Item
 {
     public long Duration { get; set; }

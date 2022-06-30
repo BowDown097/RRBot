@@ -21,6 +21,8 @@ global using Newtonsoft.Json.Linq;
 global using NHentaiSharp.Search;
 global using RRBot.Common;
 global using RRBot.Entities.Commands;
+global using RRBot.Entities.Commands.Fun;
+global using RRBot.Entities.Commands.Goods;
 global using RRBot.Entities.Database;
 global using RRBot.Extensions;
 global using RRBot.Modules;

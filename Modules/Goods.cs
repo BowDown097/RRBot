@@ -181,10 +181,11 @@ public class Goods : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Command("opencrate")]
+    [Alias("oc", "opencrate")]
+    [Command("open")]
     [Summary("Open a crate.")]
-    [Remarks("$opencrate diamond")]
-    public async Task<RuntimeResult> OpenCrate(string crateName)
+    [Remarks("$open diamond")]
+    public async Task<RuntimeResult> Open(string crateName)
     {
         if (ItemSystem.GetItem(crateName) is not Crate crate)
             return CommandResult.FromError($"**{crateName}** is not a crate!");

@@ -118,7 +118,8 @@ public class Economy : ModuleBase<SocketCommandContext>
             .WithColor(Color.Red)
             .WithAuthor(user)
             .WithTitle("User Profile")
-            .RRAddField("Currencies", BuildPropsList(dbUser, "Cash", "BTC", "ETH", "LTC", "XRP"))
+            .RRAddField("Essentials", BuildPropsList(dbUser, "Cash", "Gang", "Health"))
+            .RRAddField("Crypto", BuildPropsList(dbUser, "BTC", "ETH", "LTC", "XRP"))
             .RRAddField("Items", BuildPropsList(dbUser, "Tools", "Perks", "Consumables", "Crates"))
             .RRAddField("Active Consumables", string.Join('\n', dbUser.UsedConsumables.Where(c => c.Value > 0).Select(c => $"**{c.Key}**: {c.Value}x")));
 

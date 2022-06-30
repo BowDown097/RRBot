@@ -1,4 +1,4 @@
-namespace RRBot.Entities.Commands;
+namespace RRBot.Entities.Commands.Fun;
 public struct BoardPos
 {
     public static readonly BoardPos ORIGIN = (0, 0);

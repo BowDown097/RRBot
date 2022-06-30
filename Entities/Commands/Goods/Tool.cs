@@ -1,4 +1,4 @@
-namespace RRBot.Entities.Commands;
+namespace RRBot.Entities.Commands.Goods;
 public class Tool : Item
 {
     public double GenericMin { get; set; }

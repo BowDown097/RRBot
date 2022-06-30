@@ -50,6 +50,8 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public bool HasReachedAMilli { get; set; }
     [FirestoreProperty]
+    public int Health { get; set; } = 100;
+    [FirestoreProperty]
     public long HuntCooldown { get; set; }
     [FirestoreProperty]
     public long LootCooldown { get; set; }

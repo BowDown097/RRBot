@@ -1,4 +1,4 @@
-namespace RRBot.Entities.Commands;
+namespace RRBot.Entities.Commands.Goods;
 public class Crate : Item
 {
     public double Cash { get; set; }

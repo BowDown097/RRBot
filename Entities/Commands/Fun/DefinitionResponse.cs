@@ -1,4 +1,4 @@
-namespace RRBot.Entities.Commands;
+namespace RRBot.Entities.Commands.Fun;
 public class DefinitionResponse
 {
     [JsonProperty("count")]
