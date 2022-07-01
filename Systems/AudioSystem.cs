@@ -87,6 +87,13 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> PlayAsync(SocketCommandContext context, string query)
     {
+        Attachment attachment = context.Message.Attachments.FirstOrDefault();
+        if (attachment?.ContentType?.StartsWith("video/") == true)
+            query = attachment.Url;
+
+        if (string.IsNullOrWhiteSpace(query))
+            return CommandResult.FromError("You must provide a search query or video attachment.");
+
         query = query.Replace("\\", "");
         SocketGuildUser user = context.User as SocketGuildUser;
         if (user.VoiceChannel is null)

@@ -23,7 +23,7 @@ public class Music : ModuleBase<SocketCommandContext>
     [Command("play")]
     [Summary("Play something from YouTube or SoundCloud.")]
     [Remarks("$play ram ranch 200")]
-    public async Task<RuntimeResult> Play([Remainder] string url) => await AudioSystem.PlayAsync(Context, url);
+    public async Task<RuntimeResult> Play([Remainder] string url = "") => await AudioSystem.PlayAsync(Context, url);
 
     [Alias("list")]
     [Command("queue")]

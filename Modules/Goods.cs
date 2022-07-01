@@ -181,7 +181,7 @@ public class Goods : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Alias("oc", "opencrate")]
+    [Alias("oc")]
     [Command("open")]
     [Summary("Open a crate.")]
     [Remarks("$open diamond")]

@@ -164,7 +164,7 @@ public class DbUser : DbObject
                 {
                     double oldValue = double.Parse(Stats[kvp.Key]);
                     double toAdd = double.Parse(kvp.Value);
-                    Stats[kvp.Key] = (oldValue + toAdd).ToString();
+                    Stats[kvp.Key] = (oldValue + toAdd).ToString("0.####");
                 }
             }
             else

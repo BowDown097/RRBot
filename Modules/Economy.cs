@@ -246,18 +246,23 @@ public class Economy : ModuleBase<SocketCommandContext>
             if (obj is null) continue;
 
             string propS = prop.SplitPascalCase();
-            if (propS != "Gambling Multiplier")
+            switch (obj)
             {
-                if (obj is double d && d > 0.01)
-                    builder.AppendLine($"**{propS}**: {(prop == "Cash" ? d.ToString("C2") : d.ToString("0.####"))}");
-                else if (obj is System.Collections.ICollection col && col.Count > 0)
-                    builder.AppendLine($"**{propS}**: {col.Count}");
-                else if (obj is int i && i > 0)
+                case System.Collections.ICollection col:
+                    if (col.Count > 0) builder.AppendLine($"**{propS}**: {col.Count}");
+                    break;
+                case double d:
+                    if (prop == "GamblingMultiplier" && d > 1)
+                        builder.AppendLine($"**{propS}**: {obj}x");
+                    else if (prop != "GamblingMultiplier" && d > 0.01)
+                        builder.AppendLine($"**{propS}**: {(prop == "Cash" ? d.ToString("C2") : d.ToString("0.####"))}");
+                    break;
+                case int i:
+                    if (i > 0) builder.AppendLine($"**{propS}**: {obj}");
+                    break;
+                default:
                     builder.AppendLine($"**{propS}**: {obj}");
-            }
-            else if ((double)obj > 1)
-            {
-                builder.AppendLine($"**{propS}**: {obj}x");
+                    break;
             }
         }
 
