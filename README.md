@@ -16,17 +16,20 @@
 </p>
 
 ## Features
-This bot offers a lot of things:
+This bot is JAM-PACKED with features done like no other, such as:
 - 💵 **Cash system**
     - 🕵🏻‍♂️ Crime
     - 🎲 Gambling
     - ⛏️ Items
     - 🪙 Supplementary cryptocurrency system, modeled after **REAL WORLD PRICES**
-- 🎮 **Games**
+- 🪵 **Logging**
+    - 📝 Logs pretty much everything possible. Probably the most verbose out of any bot.
 - 🧹 **Moderation**
 - 📻 **Music**
+    - 🥇 Supports literally HUNDREDS of websites, as well as direct links and attachments. Completely unmatched.
 - 🔞 **NSFW** (optional of course)
 - 🗳️ **Polls**
+    - 🏛️ Easy to set up elections, perfect for democratic servers
 
 and best of all, it's **HIGHLY** customizable.
 
