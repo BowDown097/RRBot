@@ -215,9 +215,10 @@ public class DbUser : DbObject
         // speed demon cooldown reducer
         if (Perks.ContainsKey("Speed Demon"))
             secs = (long)(secs * 0.85);
-        // 4th rank cooldown reducer
+        // highest rank cooldown reducer
         DbConfigRanks ranks = await DbConfigRanks.GetById(guild.Id);
-        if (user.GetRoleIds().Contains(ranks.Ids.Select(k => k.Value).LastOrDefault()))
+        ulong highest = ranks.Ids.OrderByDescending(kvp => int.Parse(kvp.Key)).FirstOrDefault().Value;
+        if (user.GetRoleIds().Contains(highest))
             secs = (long)(secs * 0.80);
         // cocaine cooldown reducer
         secs = (long)(secs * (1 - (0.10 * UsedConsumables["Cocaine"])));
