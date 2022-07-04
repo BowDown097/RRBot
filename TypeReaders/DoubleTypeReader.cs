@@ -17,6 +17,9 @@ public class DoubleTypeReader : TypeReader
                     if (abbreviation is null)
                         return TypeReaderResult.FromError(CommandError.ParseFailed, $"**{crypto}** is not a currently accepted currency!");
                     return TypeReaderResult.FromSuccess((double)user[abbreviation]);
+                case "withdrawvault":
+                    DbGang gang = await DbGang.GetByName(context.Guild.Id, user.Gang);
+                    return TypeReaderResult.FromSuccess(gang.VaultBalance);
                 default:
                     return TypeReaderResult.FromSuccess(user.Cash);
             }
