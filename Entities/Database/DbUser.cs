@@ -89,7 +89,7 @@ public class DbUser : DbObject
     public List<string> Tools { get; set; } = new();
     [FirestoreProperty]
     public Dictionary<string, int> UsedConsumables { get; set; } = new() {
-        { "Black Hat", 0},
+        { "Black Hat", 0 },
         { "Cocaine", 0 },
         { "Romanian Flag", 0 },
         { "Viagra", 0 }

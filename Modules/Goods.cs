@@ -280,9 +280,9 @@ public class Goods : ModuleBase<SocketCommandContext>
                     "BlackHatTime", Constants.BLACK_HAT_DURATION, 1.5, 3);
                 break;
             case "Cocaine":
-                if (RandomUtil.Next(6 - user.UsedConsumables["Cocaine"]) == 1)
+                if (RandomUtil.Next(6 - user.UsedConsumables.GetValueOrDefault("Cocaine")) == 1)
                 {
-                    int recoveryHours = 1 * (1 + user.UsedConsumables["Cocaine"]);
+                    int recoveryHours = 1 * (1 + user.UsedConsumables.GetValueOrDefault("Cocaine"));
                     user.CocaineTime = 0;
                     user.Consumables["Cocaine"] = 0;
                     user.CocaineRecoveryTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(3600 * recoveryHours);
