@@ -108,6 +108,9 @@ public class Polls : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("There is no election with that ID!");
 
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+        int ageDays = (DateTimeOffset.UtcNow - (Context.User as IGuildUser)?.JoinedAt).GetValueOrDefault().Days;
+        if (ageDays < channels.MinimumVotingAgeDays)
+            return CommandResult.FromError($"You need to be in the server for at least {channels.MinimumVotingAgeDays} days to vote.");
         if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsAnnounceChannel))
             return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
         if (Context.Channel.Id != channels.ElectionsVotingChannel)

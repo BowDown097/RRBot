@@ -10,6 +10,8 @@ public class DbConfigChannels : DbObject
     [FirestoreProperty]
     public ulong ElectionsVotingChannel { get; set; }
     [FirestoreProperty]
+    public int MinimumVotingAgeDays { get; set; }
+    [FirestoreProperty]
     public ulong LogsChannel { get; set; }
     [FirestoreProperty]
     public ulong PollsChannel { get; set; }

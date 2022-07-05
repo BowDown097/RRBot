@@ -249,6 +249,16 @@ public class Config : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"Set second level Staff role to {role}.");
     }
 
+    [Command("setvotingage")]
+    [Summary("Set the minimum voting age for elections.")]
+    [Remarks("$setvotingage 14")]
+    public async Task SetVotingAge(int days)
+    {
+        DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+        channels.MinimumVotingAgeDays = days;
+        await Context.User.NotifyAsync(Context.Channel, $"Set minimum voting age to **{days} days**.");
+    }
+
     [Command("toggleinvitefilter")]
     [Summary("Toggle the invite filter.")]
     public async Task ToggleInviteFilter()
