@@ -4,6 +4,12 @@ public class Music : ModuleBase<SocketCommandContext>
 {
     public AudioSystem AudioSystem { get; set; }
 
+    [Command("dequeue")]
+    [Summary("Dequeue all tracks with a specific name.")]
+    [Remarks("$dequeue kiminosei")]
+    [RequireDJ]
+    public async Task<RuntimeResult> Dequeue([Remainder] string name) => await AudioSystem.DequeueAllWithNameAsync(Context, name);
+
     [Alias("fs")]
     [Command("forceskip")]
     [Summary("Skip the current playing track, ignoring the voting process.")]

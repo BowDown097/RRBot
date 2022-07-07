@@ -18,6 +18,20 @@ public sealed class AudioSystem
         return CommandResult.FromSuccess();
     }
 
+    public async Task<RuntimeResult> DequeueAllWithNameAsync(SocketCommandContext context, string name)
+    {
+        if (!audioService.HasPlayer(context.Guild))
+            return CommandResult.FromError("The bot is not currently being used.");
+
+        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        int count = player.Queue.RemoveAll(t => (t.Context as TrackMetadata)?.Title.Equals(name, StringComparison.OrdinalIgnoreCase) == true);
+        if (count == 0)
+            return CommandResult.FromError("There are no tracks in the queue with that name.");
+
+        await context.User.NotifyAsync(context.Channel, $"Removed all **{count}** tracks with that title.");
+        return CommandResult.FromSuccess();
+    }
+
     public async Task<RuntimeResult> GetCurrentlyPlayingAsync(SocketCommandContext context)
     {
         if (!audioService.HasPlayer(context.Guild))
@@ -131,10 +145,10 @@ public sealed class AudioSystem
         if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && !track.IsLiveStream && track.Duration.TotalSeconds > 7200)
             return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
 
-        int position = await player.PlayAsync(track, enqueue: true);
         TrackMetadata metadata = track.Context as TrackMetadata;
         if (await FilterSystem.ContainsFilteredWord(context.Guild, metadata.Title))
             return CommandResult.FromError("Nope.");
+        int position = await player.PlayAsync(track, enqueue: true);
 
         if (position == 0)
         {
