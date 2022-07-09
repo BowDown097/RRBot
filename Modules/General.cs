@@ -68,6 +68,8 @@ public class General : ModuleBase<SocketCommandContext>
             preconditions.AppendLine("Requires a perk");
         if (commandInfo.TryGetPrecondition(out RequireRankLevelAttribute rRL))
             preconditions.AppendLine($"Requires rank level {rRL.RankLevel}");
+        if (commandInfo.TryGetPrecondition<RequireServerOwnerAttribute>())
+            preconditions.AppendLine("Requires Server Owner");
         if (commandInfo.TryGetPrecondition<RequireStaffAttribute>())
             preconditions.AppendLine("Requires Staff");
         if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC))

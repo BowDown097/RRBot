@@ -70,11 +70,11 @@ public class Moderation : ModuleBase<SocketCommandContext>
         if (perms.SendMessages == PermValue.Deny)
             return CommandResult.FromError("This chat is already chilled.");
 
+        await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
         await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
+
         DbChill chill = await DbChill.GetById(Context.Guild.Id, Context.Channel.Id);
         chill.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)resolved.Item1.TotalSeconds);
-
-        await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
         return CommandResult.FromSuccess();
     }
 

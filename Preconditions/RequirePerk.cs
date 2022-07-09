@@ -7,6 +7,6 @@ public class RequirePerkAttribute : PreconditionAttribute
         DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
         return user.Perks.Count > 0
             ? PreconditionResult.FromSuccess()
-            : PreconditionResult.FromError("You have no perks!");
+            : PreconditionResult.FromError("You have no perks.");
     }
 }

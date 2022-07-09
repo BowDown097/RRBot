@@ -7,6 +7,6 @@ public class RequireNsfwEnabledAttribute : PreconditionAttribute
         DbConfigOptionals modules = await DbConfigOptionals.GetById(context.Guild.Id);
         return modules.NSFWEnabled
             ? PreconditionResult.FromSuccess()
-            : PreconditionResult.FromError("NSFW commands are disabled!");
+            : PreconditionResult.FromError("NSFW commands are disabled.");
     }
 }

@@ -87,12 +87,12 @@ public class Fun : ModuleBase<SocketCommandContext>
         if (RandomUtil.Next(0, 2) != 0)
         {
             embed.WithDescription("You flipped.. HEADS!");
-            embed.WithImageUrl("https://images.squarespace-cdn.com/content/v1/5786a922cd0f688d44f9cab2/1482515593363-33KPMNHCMDW7G0T12VK9/image-asset.png");
+            embed.WithImageUrl("https://i.imgur.com/Y77AMLp.png");
         }
         else
         {
             embed.WithDescription("You flipped.. TAILS!");
-            embed.WithImageUrl("https://i.imgur.com/LxajBRS.png");
+            embed.WithImageUrl("https://i.imgur.com/O3ULvhg.png");
         }
 
         await ReplyAsync(embed: embed.Build());

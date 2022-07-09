@@ -39,7 +39,7 @@ public class Polls : ModuleBase<SocketCommandContext>
     [Command("endelection")]
     [Summary("Preemptively end an ongoing election.")]
     [Remarks("$endelection 1")]
-    [RequireStaff]
+    [RequireUserPermission(GuildPermission.Administrator)]
     public async Task<RuntimeResult> EndElection(int electionId)
     {
         QuerySnapshot elections = await Program.database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
@@ -61,7 +61,7 @@ public class Polls : ModuleBase<SocketCommandContext>
     [Command("startelection")]
     [Summary("Start an election.")]
     [Remarks("$startelection John \"Obesity Contest\" 72 3")]
-    [RequireStaff]
+    [RequireUserPermission(GuildPermission.Administrator)]
     public async Task<RuntimeResult> StartElection(IGuildUser firstCandidate, string role, long hours = Constants.ELECTION_DURATION / 3600, int numWinners = 1)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);

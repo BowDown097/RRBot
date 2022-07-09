@@ -7,6 +7,6 @@ public class RequireDJAttribute : PreconditionAttribute
         DbConfigRoles roles = await DbConfigRoles.GetById(context.Guild.Id);
         return context.User.GetRoleIds().Contains(roles.DJRole)
             ? PreconditionResult.FromSuccess()
-            : PreconditionResult.FromError("You must be a DJ!");
+            : PreconditionResult.FromError("You must be a DJ.");
     }
 }

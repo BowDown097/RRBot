@@ -3,6 +3,8 @@
 [Summary("Commands for admin stuff. Whether you wanna screw with the economy or fuck someone over, I'm sure you'll have fun. However, you'll need to have a very high role to have all this fun. Sorry!")]
 public class Administration : ModuleBase<SocketCommandContext>
 {
+    public InteractiveService Interactive { get; set; }
+
     [Command("drawpot")]
     [Summary("Draw the pot before it ends.")]
     public async Task<RuntimeResult> DrawPot()
@@ -90,6 +92,41 @@ public class Administration : ModuleBase<SocketCommandContext>
         foreach (string cmd in Economy.CMDS_WITH_COOLDOWN)
             dbUser[$"{cmd}Cooldown"] = 0;
         await Context.User.NotifyAsync(Context.Channel, $"Reset **{user.Sanitize()}**'s cooldowns.");
+    }
+
+    [Alias("greatreset")]
+    [Command("reseteconomy", RunMode = RunMode.Async)]
+    [Summary("Reset the economy.")]
+    [RequireServerOwner]
+    public async Task<RuntimeResult> ResetEconomy()
+    {
+        await Context.User.NotifyAsync(Context.Channel, "Are you SURE you want to reset the economy?\n**Respond with YES if you're sure. There is no turning back!**");
+        InteractiveResult<SocketMessage> iResult = await Interactive.NextMessageAsync(
+            x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
+            timeout: TimeSpan.FromSeconds(20)
+        );
+        if (!iResult.IsSuccess || !iResult.Value.Content.Equals("yes", StringComparison.OrdinalIgnoreCase))
+            return CommandResult.FromError("Reset canceled.");
+
+        await Context.User.NotifyAsync(Context.Channel, "Doing as you say! This will probably take a while.");
+        foreach (string key in MemoryCache.Default.Select(kvp => kvp.Key))
+        {
+            try
+            {
+                if (MemoryCache.Default.Get(key) is not DbUser)
+                    continue;
+
+                MemoryCache.Default.Remove(key);
+            }
+            catch (NullReferenceException) {}
+        }
+
+        QuerySnapshot users = await Program.database.Collection($"servers/{Context.Guild.Id}/users").GetSnapshotAsync();
+        foreach (DocumentSnapshot document in users.Documents)
+            await document.Reference.DeleteAsync();
+
+        await Context.User.NotifyAsync(Context.Channel, "Well, there you go. Everything was reset. GG.");
+        return CommandResult.FromSuccess();
     }
 
     [Command("setcash")]
