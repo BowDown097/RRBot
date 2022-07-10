@@ -10,7 +10,7 @@
 </p>
 <p align="center">The bot for the <a href="https://discord.gg/USpJnaaNap">Rush Reborn Discord server</a>, heavily inspired by the <a href="https://github.com/Asshley/DEA">DEA Discord bot</a>.</p>
 <p align="center">
-    <a href="https://discord.com/oauth2/authorize?response_type=code&client_id=817790099823525909&permissions=8&scope=bot">
+    <a href="https://discord.com/api/oauth2/authorize?client_id=817790099823525909&permissions=1392042404951&scope=bot">
         <img src="https://i.imgur.com/5qpaqiQ.png" width="248px" height="63px" />
     </a>
 </p>
