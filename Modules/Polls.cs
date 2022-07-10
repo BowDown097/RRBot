@@ -96,7 +96,7 @@ public class Polls : ModuleBase<SocketCommandContext>
     [Command("vote")]
     [Summary("Vote in an election.")]
     [Remarks("$vote 2 *Jazzy Hands*")]
-    public async Task<RuntimeResult> Vote(int electionId, IGuildUser user)
+    public async Task<RuntimeResult> Vote(int electionId, [Remainder] IGuildUser user)
     {
         if (user.IsBot || await FilterSystem.ContainsFilteredWord(Context.Guild, user.ToString()))
             return CommandResult.FromError("Nope.");

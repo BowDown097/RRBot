@@ -101,7 +101,7 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Command("gay")]
     [Summary("See how gay a user is.")]
     [Remarks("$gay luner")]
-    public async Task Gay(IGuildUser user)
+    public async Task Gay([Remainder] IGuildUser user)
     {
         int gay = !user.IsBot ? RandomUtil.Next(1, 101) : 0;
         string title = gay switch
@@ -146,8 +146,8 @@ public class Fun : ModuleBase<SocketCommandContext>
 
     [Command("penis")]
     [Summary("See how big a user's penis is.")]
-    [Remarks("$penis \"Arctic Hawk\"")]
-    public async Task Penis(IGuildUser user)
+    [Remarks("$penis Arctic Hawk")]
+    public async Task Penis([Remainder] IGuildUser user)
     {
         int equals = !user.IsBot ? RandomUtil.Next(1, 16) : 20;
         string title = equals switch

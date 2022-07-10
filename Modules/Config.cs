@@ -5,8 +5,8 @@ public class Config : ModuleBase<SocketCommandContext>
 {
     [Command("addrank")]
     [Summary("Register a rank, its level, and the money required to get it.")]
-    [Remarks("$addrank 809512753081483294 1 10000")]
-    public async Task AddRank(IRole role, int level, double cost)
+    [Remarks("$addrank 1 10000 809512753081483294")]
+    public async Task AddRank(int level, double cost, [Remainder] IRole role)
     {
         DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
         ranks.Costs.Add(level.ToString(), cost);
@@ -18,8 +18,12 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("addselfrole")]
     [Summary("Add a self role for the self role message.")]
     [Remarks("$addselfrole \\:Sperg\\: 809512856713166918")]
-    public async Task<RuntimeResult> AddSelfRole(IEmote emote, IRole role)
+    public async Task<RuntimeResult> AddSelfRole(IEmote emote, [Remainder] SocketRole role)
     {
+        SocketRole authorHighest = (Context.User as SocketGuildUser)?.Roles.OrderBy(r => r.Position).Last();
+        if (role.Position >= authorHighest.Position)
+            return CommandResult.FromError("Cannot create this selfrole because it is higher than or is the same as your highest role.");
+
         DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
         if (selfRoles.Channel == 0UL)
             return CommandResult.FromError("The self roles message has not been set. Please set it using ``$setselfrolesmsg``.");
@@ -55,7 +59,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("currentconfig")]
     [Summary("List the current configuration that has been set for the bot.")]
-    public async Task GetCurrentConfig()
+    public async Task CurrentConfig()
     {
         QuerySnapshot config = await Program.database.Collection($"servers/{Context.Guild.Id}/config").GetSnapshotAsync();
         StringBuilder description = new();
@@ -153,10 +157,30 @@ public class Config : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Alias("delselfrole", "rmselfrole")]
+    [Command("removeselfrole")]
+    [Summary("Remove a registered self role.")]
+    [Remarks("$removeselfrole :Sperg:")]
+    public async Task<RuntimeResult> RemoveSelfRole(IEmote emote)
+    {
+        DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
+        if (selfRoles.Channel == 0UL)
+            return CommandResult.FromError("The self roles message has not been set. Please set it using ``$setselfrolesmsg``.");
+        if (!selfRoles.SelfRoles.Remove(emote.ToString()))
+            return CommandResult.FromError("There is no selfrole bound to that emote.");
+
+        SocketTextChannel channel = Context.Guild.GetTextChannel(selfRoles.Channel);
+        IMessage message = await channel.GetMessageAsync(selfRoles.Message);
+        await message.RemoveAllReactionsForEmoteAsync(emote);
+
+        await Context.User.NotifyAsync(Context.Channel, $"Successfully removed the selfrole bound to {emote}.");
+        return CommandResult.FromSuccess();
+    }
+
     [Command("setdjrole")]
     [Summary("Register the ID for the DJ role in your server so that some of the music commands work properly.")]
     [Remarks("$setdjrole 850827023982395413")]
-    public async Task SetDJRole(IRole role)
+    public async Task SetDJRole([Remainder] IRole role)
     {
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
         roles.DJRole = role.Id;
@@ -232,7 +256,7 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("setstafflvl1role")]
     [Summary("Register the ID for the first level Staff role in your server so that staff-related operations work properly.")]
     [Remarks("$setstafflvl1role House")]
-    public async Task SetStaffLvl1Role(IRole role)
+    public async Task SetStaffLvl1Role([Remainder] IRole role)
     {
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
         roles.StaffLvl1Role = role.Id;
@@ -242,7 +266,7 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("setstafflvl2role")]
     [Summary("Register the ID for the second level Staff role in your server so that staff-related operations work properly.")]
     [Remarks("$setstafflvl2role Senate")]
-    public async Task SetStaffLvl2Role(IRole role)
+    public async Task SetStaffLvl2Role([Remainder] IRole role)
     {
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
         roles.StaffLvl2Role = role.Id;

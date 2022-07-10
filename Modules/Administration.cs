@@ -18,48 +18,50 @@ public class Administration : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Command("givecollectible")]
-    [Summary("Give a user a collectible.")]
-    [Remarks("$givecollectible Cashmere V Card")]
-    public async Task<RuntimeResult> GiveCollectible(IGuildUser user, [Remainder] string name)
+    [Command("giveitem")]
+    [Summary("Give a user an item.")]
+    [Remarks("$giveitem Cashmere V Card")]
+    public async Task<RuntimeResult> GiveItem(IGuildUser user, [Remainder] string name)
     {
+        name = name.Replace(" crate", "");
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
 
-        Item item = ItemSystem.GetItem(name);
-        if (item is null)
-            return CommandResult.FromError($"**{name}** is not an item!");
-        if (item is not Collectible)
-            return CommandResult.FromError($"**{item}** is not a collectible!");
-
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-        await ItemSystem.GiveCollectible(item.Name, Context.Channel, dbUser);
-        return CommandResult.FromSuccess();
-    }
-
-    [Command("givetool")]
-    [Summary("Give a user a tool.")]
-    [Remarks("$givetool \"Lenny McLennington\" Diamond Pickaxe")]
-    public async Task<RuntimeResult> GiveTool(IGuildUser user, [Remainder] string name)
-    {
-        if (user.IsBot)
-            return CommandResult.FromError("Nope.");
-
         Item item = ItemSystem.GetItem(name);
-        if (item is null)
-            return CommandResult.FromError($"**{name}** is not an item!");
-        if (item is not Tool)
-            return CommandResult.FromError($"**{item}** is not a tool!");
+        switch (item)
+        {
+            case Collectible:
+                await ItemSystem.GiveCollectible(item.Name, Context.Channel, dbUser);
+                break;
+            case Consumable:
+                if (dbUser.Consumables.ContainsKey(item.Name))
+                    dbUser.Consumables[item.Name]++;
+                else
+                    dbUser.Consumables.Add(item.Name, 1);
+                break;
+            case Crate:
+                dbUser.Crates.Add(item.Name);
+                break;
+            case Perk:
+                if (dbUser.Perks.ContainsKey(item.Name))
+                    return CommandResult.FromError($"**{user.Sanitize()}** already has a(n) {item}.");
+                dbUser.Perks.Add(item.Name, DateTimeOffset.UtcNow.ToUnixTimeSeconds(86400));
+                break;
+            case Tool:
+                if (dbUser.Tools.Contains(item.Name))
+                    return CommandResult.FromError($"**{user.Sanitize()}** already has a(n) {item}.");
+                dbUser.Tools.Add(item.Name);
+                break;
+            default:
+                return CommandResult.FromError($"**{name}** is not an item!");
+        }
 
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-        if (dbUser.Tools.Contains(item.Name))
-            return CommandResult.FromError($"**{user.Sanitize()}** already has a(n) {item}.");
-
-        dbUser.Tools.Add(item.Name);
         await Context.User.NotifyAsync(Context.Channel, $"Gave **{user.Sanitize()}** a(n) {item}.");
         return CommandResult.FromSuccess();
     }
 
+    [Alias("delachievement", "rmachievement", "delach", "removeach", "rmach")]
     [Command("removeachievement")]
     [Summary("Remove a user's achievement.")]
     [Remarks("$removeachievement AceOfSevens I Just Feel Bad")]
@@ -73,20 +75,35 @@ public class Administration : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Alias("delcrates", "rmcrates")]
     [Command("removecrates")]
     [Summary("Remove a user's crates.")]
     [Remarks("$removecrates cashmere")]
-    public async Task RemoveCrates(IGuildUser user)
+    public async Task RemoveCrates([Remainder] IGuildUser user)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         dbUser.Crates = new();
         await Context.User.NotifyAsync(Context.Channel, $"Removed **{user.Sanitize()}**'s crates.");
     }
 
+    [Alias("delstat", "rmstat")]
+    [Command("removestat")]
+    [Summary("Removes a user's stat.")]
+    [Remarks("$removestat cashmere Bitches")]
+    public async Task<RuntimeResult> RemoveStat(IGuildUser user, [Remainder] string stat)
+    {
+        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        if (!dbUser.Stats.Remove(stat))
+            return CommandResult.FromError("They do not have that stat!");
+
+        await Context.User.NotifyAsync(Context.Channel, $"Removed the **{stat}** stat from {user.Sanitize()}.");
+        return CommandResult.FromSuccess();
+    }
+
     [Command("resetcd")]
     [Summary("Reset a user's crime cooldowns.")]
-    [Remarks("$resetcd \"\\*Jazzy Hands\\*\"")]
-    public async Task ResetCooldowns(IGuildUser user)
+    [Remarks("$resetcd \\*Jazzy Hands\\*")]
+    public async Task ResetCooldowns([Remainder] IGuildUser user)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         foreach (string cmd in Economy.CMDS_WITH_COOLDOWN)
@@ -184,6 +201,27 @@ public class Administration : ModuleBase<SocketCommandContext>
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         dbUser.Stats[stat] = value;
         await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s **{stat}** to **{value}**.");
+    }
+
+    [Command("setvotes")]
+    [Summary("Set a user's votes in an election.")]
+    [Remarks("$setvotes 3 BowDown097 1000000")]
+    [RequireServerOwner]
+    public async Task<RuntimeResult> SetVotes(int electionId, IGuildUser user, int votes)
+    {
+        QuerySnapshot elections = await Program.database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
+        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && !elections.Any(r => r.Id == electionId.ToString()))
+            return CommandResult.FromError("There is no election with that ID!");
+
+        DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
+        if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsAnnounceChannel))
+            return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
+
+        DbElection election = await DbElection.GetById(Context.Guild.Id, electionId);
+        election.Candidates[user.Id.ToString()] = votes;
+        await Polls.UpdateElection(election, channels, Context.Guild);
+
+        return CommandResult.FromSuccess();
     }
 
     [Command("unlockachievement")]

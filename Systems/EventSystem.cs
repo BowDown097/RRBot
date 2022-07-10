@@ -33,6 +33,7 @@ public class EventSystem
         client.Ready += Client_Ready;
         client.ThreadCreated += Client_ThreadCreated;
         client.ThreadUpdated += Client_ThreadUpdated;
+        client.UserJoined += Client_UserJoined;
         commands.CommandExecuted += Commands_CommandExecuted;
 
         client.ChannelCreated += LoggingSystem.Client_ChannelCreated;
@@ -236,6 +237,12 @@ public class EventSystem
     {
         if (await FilterSystem.ContainsFilteredWord(threadAfter.Guild, threadAfter.Name))
             await threadAfter.DeleteAsync();
+    }
+
+    private static async Task Client_UserJoined(SocketGuildUser user)
+    {
+        if (await FilterSystem.ContainsFilteredWord(user.Guild, user.Username))
+            await user.KickAsync();
     }
 
     private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, Discord.Commands.IResult result)

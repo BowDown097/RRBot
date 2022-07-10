@@ -7,7 +7,8 @@ public class Support : ModuleBase<SocketCommandContext>
     #region Commands
     [Command("close")]
     [Summary("Close your currently active support ticket or a support ticket that you have been assigned to (if there is one).")]
-    public async Task<RuntimeResult> Close(IGuildUser user = null)
+    [Remarks("$close BlazeItGhey")]
+    public async Task<RuntimeResult> Close([Remainder] IGuildUser user = null)
     {
         DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
         if (string.IsNullOrWhiteSpace(ticket.Request))
@@ -77,7 +78,7 @@ public class Support : ModuleBase<SocketCommandContext>
     [Command("viewticket")]
     [Summary("View a user's support ticket, if they have one that is opened.")]
     [Remarks("$viewticket Sylent")]
-    public async Task<RuntimeResult> ViewTicket(IGuildUser user)
+    public async Task<RuntimeResult> ViewTicket([Remainder] IGuildUser user)
     {
         DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, user.Id);
         if (string.IsNullOrWhiteSpace(ticket.Request))

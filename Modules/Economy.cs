@@ -11,7 +11,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Command("balance")]
     [Summary("Check your own or someone else's balance.")]
     [Remarks("$bal \"Coalava 🌙#1002\"")]
-    public async Task<RuntimeResult> Balance(IGuildUser user = null)
+    public async Task<RuntimeResult> Balance([Remainder] IGuildUser user = null)
     {
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
@@ -28,7 +28,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Command("cooldowns")]
     [Summary("Check your own or someone else's crime cooldowns.")]
     [Remarks("$cd Lilpumpfan1")]
-    public async Task Cooldowns(IGuildUser user = null)
+    public async Task Cooldowns([Remainder] IGuildUser user = null)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
         StringBuilder description = new();
@@ -107,7 +107,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Command("profile")]
     [Summary("View a bunch of economy-related info on yourself or another user.")]
     [Remarks("$profile zuki")]
-    public async Task<RuntimeResult> Profile(IGuildUser user = null)
+    public async Task<RuntimeResult> Profile([Remainder] IGuildUser user = null)
     {
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");

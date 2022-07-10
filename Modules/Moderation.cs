@@ -8,6 +8,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Command("ban")]
     [Summary("Ban any member.")]
     [Remarks("$ban \"Danny Parker\" 5d Spamming the n-word")]
+    [RequireUserPermission(GuildPermission.BanMembers)]
     public async Task<RuntimeResult> Ban(IGuildUser user, string duration = "", [Remainder] string reason = "")
     {
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
@@ -41,7 +42,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Remarks("$cancelticket JamByte")]
     [RequireBeInChannel("help-requests")]
     [RequireRushReborn]
-    public async Task<RuntimeResult> CancelTicket(IGuildUser user)
+    public async Task<RuntimeResult> CancelTicket([Remainder] IGuildUser user)
     {
         DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, user.Id);
         if (string.IsNullOrWhiteSpace(ticket.Request))
@@ -82,6 +83,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Command("kick")]
     [Summary("Kick any member.")]
     [Remarks("$kick Geeky™ calling me fat")]
+    [RequireUserPermission(GuildPermission.KickMembers)]
     public async Task<RuntimeResult> Kick(IGuildUser user, [Remainder] string reason = "")
     {
         if (user.IsBot)
@@ -105,7 +107,8 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Command("memeban", RunMode = RunMode.Async)]
     [Summary("Meme bans a member and DMs an invite back to the server.")]
     [Remarks("$memeban LYNESTAR")]
-    public async Task<RuntimeResult> MemeBan(IGuildUser user)
+    [RequireUserPermission(GuildPermission.KickMembers)]
+    public async Task<RuntimeResult> MemeBan([Remainder] IGuildUser user)
     {
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
@@ -173,7 +176,8 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Command("purge", RunMode = RunMode.Async)]
     [Summary("Purge any amount of messages (Note: messages that are two weeks old or older will fail to delete).")]
     [Remarks("$purge 30 Woob#3770")]
-    public async Task<RuntimeResult> Purge(int count, IGuildUser user = null)
+    [RequireUserPermission(GuildPermission.ManageMessages)]
+    public async Task<RuntimeResult> Purge(int count, [Remainder] IGuildUser user = null)
     {
         if (count <= 0)
             return CommandResult.FromError("You want me to delete NO messages? Are you dense?");
@@ -194,6 +198,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Command("unban")]
     [Summary("Unban any currently banned member.")]
     [Remarks("$unban 472054136251351050")]
+    [RequireUserPermission(GuildPermission.BanMembers)]
     public async Task<RuntimeResult> Unban(ulong userId)
     {
         RestBan ban = await Context.Guild.GetBanAsync(userId);
@@ -224,7 +229,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Command("unmute")]
     [Summary("Unmute any member.")]
     [Remarks("$unmute JustinKingPiggy#5000")]
-    public async Task<RuntimeResult> Unmute(IGuildUser user)
+    public async Task<RuntimeResult> Unmute([Remainder] IGuildUser user)
     {
         if (user.TimedOutUntil.GetValueOrDefault() < DateTimeOffset.UtcNow)
             return CommandResult.FromError($"**{user.Sanitize()}** is not muted.");

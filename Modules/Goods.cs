@@ -15,14 +15,13 @@ public class Goods : ModuleBase<SocketCommandContext>
         if (item?.Name == "Daily")
             return CommandResult.FromError("You cannot buy the Daily crate!");
 
-        if (item is Crate crate)
-            return await ItemSystem.BuyCrate(crate, Context.User, Context.Guild, Context.Channel);
-        if (item is Perk perk)
-            return await ItemSystem.BuyPerk(perk, Context.User, Context.Guild, Context.Channel);
-        else if (item is Tool tool)
-            return await ItemSystem.BuyTool(tool, Context.User, Context.Guild, Context.Channel);
-        else
-            return CommandResult.FromError($"**{itemName}** is not an item!");
+        return item switch
+        {
+            Crate crate => await ItemSystem.BuyCrate(crate, Context.User, Context.Guild, Context.Channel),
+            Perk perk => await ItemSystem.BuyPerk(perk, Context.User, Context.Guild, Context.Channel),
+            Tool tool => await ItemSystem.BuyTool(tool, Context.User, Context.Guild, Context.Channel),
+            _ => CommandResult.FromError($"**{itemName}** is not an item!"),
+        };
     }
 
     [Command("daily")]
@@ -38,6 +37,7 @@ public class Goods : ModuleBase<SocketCommandContext>
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
             await user.SetCooldown("DailyCooldown", Constants.DAILY_COOLDOWN, Context.Guild, Context.User);
         }
+
         return result;
     }
 
@@ -52,46 +52,40 @@ public class Goods : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
         Item item = ItemSystem.GetItem(itemName);
-        if (item is Crate or Consumable)
+        switch (item)
         {
-            return CommandResult.FromError("Crates and consumables cannot be discarded!");
-        }
-        else if (item is Collectible collectible)
-        {
-            if (!user.Collectibles.TryGetValue(item.Name, out int count) || count == 0)
-                return CommandResult.FromError($"You do not have a(n) {item}!");
-            if (!collectible.Discardable)
-                return CommandResult.FromError($"You cannot discard your {item}.");
+            case Consumable or Crate:
+                return CommandResult.FromError("Consumables and crates cannot be discarded!");
+            case Collectible collectible:
+                if (!user.Collectibles.TryGetValue(item.Name, out int count) || count == 0)
+                    return CommandResult.FromError($"You do not have a(n) {item}!");
+                if (!collectible.Discardable)
+                    return CommandResult.FromError($"You cannot discard your {item}.");
 
-            double price = item.Price != -1 ? item.Price : RandomUtil.NextDouble(100, 1500);
-            await user.SetCash(Context.User, user.Cash + price);
-            user.Collectibles[item.Name]--;
-            await Context.User.NotifyAsync(Context.Channel, $"You gave your {item} to some dude for **{price:C2}**.");
-        }
-        else if (item is Perk)
-        {
-            if (item.Name != "Pacifist")
-                return CommandResult.FromError("No perks other than Pacifist can be discarded!");
-            if (!user.Perks.Remove("Pacifist"))
-                return CommandResult.FromError("You do not have the Pacifist perk!");
+                double price = item.Price != -1 ? item.Price : RandomUtil.NextDouble(100, 1500);
+                await user.SetCash(Context.User, user.Cash + price);
+                user.Collectibles[item.Name]--;
+                await Context.User.NotifyAsync(Context.Channel, $"You gave your {item} to some dude for **{price:C2}**.");
+                return CommandResult.FromSuccess();
+            case Perk:
+                if (item.Name != "Pacifist")
+                    return CommandResult.FromError("No perks other than Pacifist can be discarded!");
+                if (!user.Perks.Remove("Pacifist"))
+                    return CommandResult.FromError("You do not have the Pacifist perk!");
 
-            await user.SetCooldown("PacifistCooldown", 259200, Context.Guild, Context.User);
-            await Context.User.NotifyAsync(Context.Channel, "You discarded your Pacifist perk. If you wish to buy it again, you will have to wait 3 days.");
-        }
-        else if (item is Tool)
-        {
-            if (!user.Tools.Remove(item.Name))
-                return CommandResult.FromError($"You do not have a(n) {item}!");
+                await user.SetCooldown("PacifistCooldown", 259200, Context.Guild, Context.User);
+                await Context.User.NotifyAsync(Context.Channel, "You discarded your Pacifist perk. If you wish to buy it again, you will have to wait 3 days.");
+                return CommandResult.FromSuccess();
+            case Tool:
+                if (!user.Tools.Remove(item.Name))
+                    return CommandResult.FromError($"You do not have a(n) {item}!");
 
-            await user.SetCash(Context.User, user.Cash + (item.Price * 0.9));
-            await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{item.Price * 0.9:C2}**.");
+                await user.SetCash(Context.User, user.Cash + (item.Price * 0.9));
+                await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{item.Price * 0.9:C2}**.");
+                return CommandResult.FromSuccess();
+            default:
+                return CommandResult.FromError($"**{itemName}** is not an item!");
         }
-        else
-        {
-            return CommandResult.FromError($"**{itemName}** is not an item!");
-        }
-
-        return CommandResult.FromSuccess();
     }
 
     [Command("item")]
@@ -148,7 +142,7 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Command("items", RunMode = RunMode.Async)]
     [Summary("View your own or someone else's tools, active perks, and consumables.")]
     [Remarks("$items Zurmii#2208")]
-    public async Task<RuntimeResult> Items(IGuildUser user = null)
+    public async Task<RuntimeResult> Items([Remainder] IGuildUser user = null)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
 
@@ -185,8 +179,9 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Command("open")]
     [Summary("Open a crate.")]
     [Remarks("$open diamond")]
-    public async Task<RuntimeResult> Open(string crateName)
+    public async Task<RuntimeResult> Open([Remainder] string crateName)
     {
+        crateName = crateName.Replace(" crate", "");
         if (ItemSystem.GetItem(crateName) is not Crate crate)
             return CommandResult.FromError($"**{crateName}** is not a crate!");
 

@@ -142,7 +142,7 @@ public class Crime : ModuleBase<SocketCommandContext>
     [Remarks("$rape \"BowDown's Kitten\"")]
     [RequireCash]
     [RequireCooldown("RapeCooldown", "You cannot rape for {0}.")]
-    public async Task<RuntimeResult> Rape(IGuildUser user)
+    public async Task<RuntimeResult> Rape([Remainder] IGuildUser user)
     {
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("How are you supposed to rape yourself?");

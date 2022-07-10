@@ -46,7 +46,7 @@ public class Investments : ModuleBase<SocketCommandContext>
     [Command("investments")]
     [Summary("Check your investments, or someone else's, and their value.")]
     [Remarks("$investments gurrenm4")]
-    public async Task<RuntimeResult> InvestmentsView(IGuildUser user = null)
+    public async Task<RuntimeResult> InvestmentsView([Remainder] IGuildUser user = null)
     {
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");

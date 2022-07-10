@@ -177,7 +177,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Command("invite")]
     [Summary("Invite a member to your gang (if it is private).")]
     [Remarks("$invite Barcode3")]
-    public async Task<RuntimeResult> Invite(IGuildUser user)
+    public async Task<RuntimeResult> Invite([Remainder] IGuildUser user)
     {
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("You got any brain cells in that head of yours?");
@@ -236,7 +236,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Command("kickgangmember")]
     [Summary("Kick a member from your gang.")]
     [Remarks("$kickgangmember Thunderstar")]
-    public async Task<RuntimeResult> KickGangMember(IGuildUser user)
+    public async Task<RuntimeResult> KickGangMember([Remainder] IGuildUser user)
     {
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("Sorry bro! You'll have to transfer leadership and leave the gang.");
@@ -338,7 +338,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Command("transferleadership")]
     [Summary("Transfer leadership of your gang to another member.")]
     [Remarks("$transferleadership \"Mr. DeeJay\"")]
-    public async Task<RuntimeResult> TransferLeadership(IGuildUser user)
+    public async Task<RuntimeResult> TransferLeadership([Remainder] IGuildUser user)
     {
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("Hey, dumbass, you're already the leader (probably).");

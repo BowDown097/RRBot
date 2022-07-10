@@ -8,7 +8,7 @@ public class General : ModuleBase<SocketCommandContext>
     [Command("achievements")]
     [Summary("View your own or someone else's achievements.")]
     [Remarks("$achievements toes69ing")]
-    public async Task Achievements(IGuildUser user = null)
+    public async Task Achievements([Remainder] IGuildUser user = null)
     {
         ulong userId = user != null ? user.Id : Context.User.Id;
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
@@ -180,7 +180,7 @@ public class General : ModuleBase<SocketCommandContext>
     [Command("stats")]
     [Summary("View various statistics about your own, or another user's, bot usage.")]
     [Remarks("$stats Ross")]
-    public async Task<RuntimeResult> Stats(IGuildUser user = null)
+    public async Task<RuntimeResult> Stats([Remainder] IGuildUser user = null)
     {
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
@@ -205,7 +205,7 @@ public class General : ModuleBase<SocketCommandContext>
     [Command("userinfo")]
     [Summary("View info about a user.")]
     [Remarks("$userinfo Moth")]
-    public async Task UserInfo(SocketGuildUser user)
+    public async Task UserInfo([Remainder] SocketGuildUser user)
     {
         IEnumerable<string> perms = user.GuildPermissions.ToList().Select(p => Enum.GetName(p).SplitPascalCase());
 
