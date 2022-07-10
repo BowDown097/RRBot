@@ -6,6 +6,10 @@ public class DbConfigOptionals : DbObject
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
+    public List<string> DisabledCommands { get; set; } = new();
+    [FirestoreProperty]
+    public List<string> DisabledModules { get; set; } = new();
+    [FirestoreProperty]
     public List<string> FilterRegexes { get; set; } = new();
     [FirestoreProperty]
     public List<string> FilteredWords { get; set; } = new();

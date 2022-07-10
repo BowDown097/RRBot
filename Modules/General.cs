@@ -81,7 +81,7 @@ public class General : ModuleBase<SocketCommandContext>
 
         EmbedBuilder commandEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithDescription("**" + CultureInfo.CurrentCulture.TextInfo.ToTitleCase(command.ToLower()) + "**")
+            .WithDescription($"**{command.ToTitleCase()}**")
             .RRAddField("Description", commandInfo.Summary)
             .RRAddField("Usage", commandInfo.GetUsage())
             .RRAddField("Example", commandInfo.Remarks)
@@ -113,7 +113,7 @@ public class General : ModuleBase<SocketCommandContext>
 
         EmbedBuilder moduleEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithDescription("**" + CultureInfo.CurrentCulture.TextInfo.ToTitleCase(module.ToLower()) + "**")
+            .WithDescription($"**{module.ToTitleCase()}**")
             .RRAddField("Available commands", string.Join(", ", moduleInfo.Commands.Select(x => x.Name)))
             .RRAddField("Description", moduleInfo.Summary);
         await ReplyAsync(embed: moduleEmbed.Build());

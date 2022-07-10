@@ -43,13 +43,13 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         });
     }
 
-    [Command("disablecmd")]
-    [Summary("Disable a command.")]
-    [Remarks("$disablecmd eval")]
-    public async Task<RuntimeResult> DisableCommand(string cmd)
+    [Command("disablecmdglobal")]
+    [Summary("Globally disable a command.")]
+    [Remarks("$disablecmdglobal eval")]
+    public async Task<RuntimeResult> DisableCommandGlobal(string cmd)
     {
         string cmdLower = cmd.ToLower();
-        if (cmdLower is "disablecmd" or "enablecmd")
+        if (cmdLower is "disablecmdglobal" or "enablecmdglobal")
             return CommandResult.FromError("I don't think that's a good idea.");
 
         Discord.Commands.SearchResult search = Commands.Search(cmd);
@@ -62,17 +62,16 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Command("enablecmd")]
-    [Summary("Enable a previously disabled command.")]
-    [Remarks("$enablecmd disablecmd")]
-    public async Task<RuntimeResult> EnableCommand(string cmd)
+    [Command("enablecmdglobal")]
+    [Summary("Globally enable a previously disabled command.")]
+    [Remarks("$enablecmdglobal disablecmd")]
+    public async Task<RuntimeResult> EnableCommandGlobal(string cmd)
     {
         string cmdLower = cmd.ToLower();
         DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
-        if (!globalConfig.DisabledCommands.Contains(cmdLower))
-            return CommandResult.FromError($"**{cmdLower}** is either not a command or is not disabled!");
+        if (!globalConfig.DisabledCommands.Remove(cmdLower))
+            return CommandResult.FromError($"**{cmdLower}** is not disabled!");
 
-        globalConfig.DisabledCommands.Remove(cmdLower);
         await Context.User.NotifyAsync(Context.Channel, $"Enabled ${cmdLower}.");
         return CommandResult.FromSuccess();
     }

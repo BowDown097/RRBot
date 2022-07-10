@@ -18,7 +18,7 @@ public static class LoggingSystem
     public static async Task Client_ChannelCreated(SocketChannel channel)
     {
         EmbedBuilder embed = new EmbedBuilder()
-            .WithDescription($"**Channel Created**\n{MentionUtils.MentionChannel(channel.Id)}");
+            .WithDescription($"**Channel Created**\n{channel.Mention()}");
 
         await WriteToLogs(channel.GetGuild(), embed);
     }
@@ -26,7 +26,7 @@ public static class LoggingSystem
     public static async Task Client_ChannelDestroyed(SocketChannel channel)
     {
         EmbedBuilder embed = new EmbedBuilder()
-            .WithDescription($"**Channel Deleted**\n{MentionUtils.MentionChannel(channel.Id)}");
+            .WithDescription($"**Channel Deleted**\n{channel.Mention()}");
 
         await WriteToLogs(channel.GetGuild(), embed);
     }
@@ -36,7 +36,7 @@ public static class LoggingSystem
         SocketTextChannel beforeText = before as SocketTextChannel;
         SocketTextChannel afterText = after as SocketTextChannel;
         EmbedBuilder embed = new EmbedBuilder()
-            .WithDescription($"**Channel Updated**\n*(If nothing here appears changed, then the channel permissions were updated)*\n{MentionUtils.MentionChannel(after.Id)}")
+            .WithDescription($"**Channel Updated**\n*(If nothing here appears changed, then the channel permissions were updated)*\n{after.Mention()}")
             .AddUpdateCompField("Name", before, after)
             .AddUpdateCompField("Topic", beforeText.Topic, afterText.Topic)
             .AddUpdateCompField("Position", beforeText.Position, afterText.Position)
@@ -194,7 +194,7 @@ public static class LoggingSystem
             .WithAuthor(invite.Inviter)
             .WithDescription("**Invite Created**")
             .RRAddField("URL", invite.Url)
-            .RRAddField("Channel", MentionUtils.MentionChannel(invite.ChannelId))
+            .RRAddField("Channel", invite.Channel.Mention())
             .RRAddField("Max Age", invite.MaxAge)
             .RRAddField("Max Uses", invite.MaxUses);
 
@@ -205,7 +205,7 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Invite Deleted**")
-            .RRAddField("Channel", MentionUtils.MentionChannel(channel.Id))
+            .RRAddField("Channel", channel.Mention())
             .RRAddField("Code", code);
 
         await WriteToLogs(channel.Guild, embed);
@@ -217,7 +217,7 @@ public static class LoggingSystem
         IMessageChannel channel = await channelCached.GetOrDownloadAsync();
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(msg.Author)
-            .WithDescription($"**Message Deleted in {MentionUtils.MentionChannel(channel.Id)}**\n{msg.Content}")
+            .WithDescription($"**Message Deleted in {channel.Mention()}**\n{msg.Content}")
             .WithFooter($"ID: {msg.Id}");
 
         foreach (Embed msgEmbed in msg.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)).Cast<Embed>())
@@ -237,7 +237,7 @@ public static class LoggingSystem
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(msgAfter.Author)
-            .WithDescription($"**Message Updated in {MentionUtils.MentionChannel(channel.Id)}**\n[Jump]({msgAfter.GetJumpUrl()})")
+            .WithDescription($"**Message Updated in {channel.Mention()}**\n[Jump]({msgAfter.GetJumpUrl()})")
             .RRAddField("Previous Content", msgBefore.Content);
 
         foreach (Embed msgEmbed in msgBefore.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)).Cast<Embed>())
@@ -263,7 +263,7 @@ public static class LoggingSystem
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(reaction.User.Value)
-            .WithDescription($"**Reaction Added in {MentionUtils.MentionChannel(reaction.Channel.Id)}**")
+            .WithDescription($"**Reaction Added in {reaction.Channel.Mention()}**")
             .RRAddField("Emoji", reaction.Emote.Name)
             .RRAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
 
@@ -280,7 +280,7 @@ public static class LoggingSystem
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(reaction.User.Value)
-            .WithDescription($"**Reaction Removed in {MentionUtils.MentionChannel(reaction.Channel.Id)}**")
+            .WithDescription($"**Reaction Removed in {reaction.Channel.Mention()}**")
             .RRAddField("Emoji", reaction.Emote.Name)
             .RRAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
 
@@ -327,7 +327,7 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(user)
-            .WithDescription($"**Speaker Added to Stage**\n{MentionUtils.MentionChannel(stage.Id)}");
+            .WithDescription($"**Speaker Added to Stage**\n{stage.Mention()}");
 
         await WriteToLogs(user.Guild, embed);
     }
@@ -336,7 +336,7 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(user)
-            .WithDescription($"**Speaker Removed from Stage**\n{MentionUtils.MentionChannel(stage.Id)}");
+            .WithDescription($"**Speaker Removed from Stage**\n{stage.Mention()}");
 
         await WriteToLogs(user.Guild, embed);
     }
@@ -345,7 +345,7 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Stage Ended**")
-            .RRAddField("Channel", MentionUtils.MentionChannel(stage.Id))
+            .RRAddField("Channel", stage.Mention())
             .RRAddField("Topic", stage.Topic);
 
         await WriteToLogs(stage.Guild, embed);
@@ -355,7 +355,7 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Stage Started**")
-            .RRAddField("Channel", MentionUtils.MentionChannel(stage.Id))
+            .RRAddField("Channel", stage.Mention())
             .RRAddField("Topic", stage.Topic);
 
         await WriteToLogs(stage.Guild, embed);
@@ -377,7 +377,7 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Thread Created**")
-            .RRAddField("Channel", MentionUtils.MentionChannel(threadChannel.ParentChannel.Id))
+            .RRAddField("Channel", threadChannel.ParentChannel.Mention())
             .RRAddField("Name", threadChannel.Name);
 
         await WriteToLogs(threadChannel.Guild, embed);
@@ -388,7 +388,7 @@ public static class LoggingSystem
         SocketThreadChannel threadChannel = await threadChannelCached.GetOrDownloadAsync();
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Thread Deleted**")
-            .RRAddField("Channel", MentionUtils.MentionChannel(threadChannel.ParentChannel.Id))
+            .RRAddField("Channel", threadChannel.ParentChannel.Mention())
             .RRAddField("Name", threadChannel.Name);
 
         await WriteToLogs(threadChannel.Guild, embed);

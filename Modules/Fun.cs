@@ -56,7 +56,7 @@ public class Fun : ModuleBase<SocketCommandContext>
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(term.ToLower()))
+            .WithTitle(term.ToTitleCase())
             .WithDescription(description.ToString());
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();

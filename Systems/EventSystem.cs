@@ -25,6 +25,7 @@ public class EventSystem
     {
         client.ButtonExecuted += Client_ButtonExecuted;
         client.GuildMemberUpdated += Client_GuildMemberUpdated;
+        client.JoinedGuild += Client_JoinedGuild;
         client.Log += Client_Log;
         client.MessageReceived += Client_MessageReceived;
         client.MessageUpdated += Client_MessageUpdated;
@@ -115,6 +116,17 @@ public class EventSystem
             await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
     }
 
+    private static async Task Client_JoinedGuild(SocketGuild guild)
+    {
+        SocketTextChannel hopefullyGeneral = Array.Find(guild.TextChannels.ToArray(), c => c.Name == "general")
+            ?? guild.DefaultChannel;
+        await hopefullyGeneral.SendMessageAsync(@"Thank you for inviting me to your server!
+        You're gonna want to check out $modules. Use $module to view the commands in each module, and $help to see how to use a command.
+        The Config module will probably be the most important to look at as an admin or server owner.
+        There's a LOT to look at, so it's probably gonna take some time to get everything set up, but trust me, it's worth it.
+        Have fun!");
+    }
+
     private static async Task Client_Log(LogMessage msg)
     {
         if (msg.Exception != null)
@@ -157,14 +169,20 @@ public class EventSystem
             }
 
             DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
+            DbConfigOptionals optionals = await DbConfigOptionals.GetById(context.Guild.Id);
             if (globalConfig.BannedUsers.Contains(context.User.Id))
             {
                 await context.User.NotifyAsync(context.Channel, "You are banned from using the bot!");
                 return;
             }
-            if (globalConfig.DisabledCommands.Contains(command.Name))
+            if (globalConfig.DisabledCommands.Contains(command.Name) || optionals.DisabledCommands.Contains(command.Name))
             {
-                await context.User.NotifyAsync(context.Channel, "This command is temporarily disabled!");
+                await context.User.NotifyAsync(context.Channel, "This command is disabled!");
+                return;
+            }
+            if (optionals.DisabledModules.Contains(command.Module.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                await context.User.NotifyAsync(context.Channel, "The module for this command is disabled!");
                 return;
             }
 
