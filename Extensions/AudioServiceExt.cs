@@ -1,7 +1,7 @@
 namespace RRBot.Extensions;
 public static class AudioServiceExt
 {
-    public static async Task<LavalinkTrack> GetYTTrackAsync(this IAudioService service, Uri uri, SocketGuild guild)
+    public static async Task<LavalinkTrack> GetYTTrackAsync(this IAudioService service, Uri uri, SocketGuild guild, IUser requester)
     {
         using HttpClient client = new();
         var ctx = new
@@ -31,23 +31,23 @@ public static class AudioServiceExt
             DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
             if (!optionals.NSFWEnabled)
                 return new("restricted", "", TimeSpan.Zero, false, false, "", "", "", StreamProvider.Unknown);
-            return await service.YTDLPGetTrackAsync(uri);
+            return await service.YTDLPGetTrackAsync(uri, requester);
         }
         else
         {
-            return await service.RRGetTrackAsync(uri.ToString(), SearchMode.YouTube);
+            return await service.RRGetTrackAsync(uri.ToString(), requester, SearchMode.YouTube);
         }
     }
 
-    public static async Task<LavalinkTrack> RRGetTrackAsync(this IAudioService service, string query, SearchMode mode = SearchMode.None)
+    public static async Task<LavalinkTrack> RRGetTrackAsync(this IAudioService service, string query, IUser requester, SearchMode mode = SearchMode.None)
     {
         LavalinkTrack track = await service.GetTrackAsync(query, mode);
         if (track != null)
-            track.Context = new TrackMetadata(track);
+            track.Context = new TrackMetadata(track, requester);
         return track;
     }
 
-    public static async Task<LavalinkTrack> YTDLPGetTrackAsync(this IAudioService service, Uri uri)
+    public static async Task<LavalinkTrack> YTDLPGetTrackAsync(this IAudioService service, Uri uri, IUser requester)
     {
         using Process proc = new();
         proc.StartInfo.FileName = new FileInfo("yt-dlp").GetFullPath();
@@ -67,7 +67,8 @@ public static class AudioServiceExt
             track.Context = new TrackMetadata(
                 obj["thumbnail"]?.ToString(),
                 obj["uploader"]?.ToString() ?? obj["channel"]?.ToString(),
-                obj["title"]?.ToString());
+                obj["title"]?.ToString(),
+                requester);
         }
 
         return track;

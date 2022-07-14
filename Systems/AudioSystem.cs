@@ -72,13 +72,23 @@ public sealed class AudioSystem
             return CommandResult.FromSuccess();
         }
 
-        StringBuilder playlist = new($"**1**: \"{currMetadata.Title}\" by {currMetadata.Author} {(!player.CurrentTrack.IsLiveStream ? $"({player.CurrentTrack.Duration.Round()})\n" : "\n")}");
-        for (int i = 0; i < player.Queue.Count; i++)
+        LavalinkTrack[] tracks = player.Queue.Prepend(player.CurrentTrack).ToArray();
+        TimeSpan totalLength = TimeSpan.Zero;
+        StringBuilder playlist = new();
+        for (int i = 0; i < tracks.Length; i++)
         {
-            LavalinkTrack track = player.Queue[i];
+            LavalinkTrack track = tracks[i];
             TrackMetadata metadata = track.Context as TrackMetadata;
-            playlist.AppendLine($"**{i + 2}**: \"{metadata.Title}\" by {metadata.Author} {(!track.IsLiveStream ? $"({track.Duration.Round()})" : "")}");
+            playlist.Append($"**{i+1}**: [\"{metadata.Title}\" by {metadata.Author}]({track.Source})");
+            if (!track.IsLiveStream)
+            {
+                playlist.Append($" ({track.Duration.Round()})");
+                totalLength += track.Duration.Round();
+            }
+            playlist.AppendLine($" ``Added by: {metadata.Requester}``");
         }
+
+        playlist.AppendLine($"\n**Total Length: {totalLength}**");
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -127,15 +137,15 @@ public sealed class AudioSystem
             };
 
             if (searchMode == SearchMode.None && !uri.ToString().Split('/').Last().Contains('.'))
-                track = await audioService.YTDLPGetTrackAsync(uri);
+                track = await audioService.YTDLPGetTrackAsync(uri, context.User);
             else if (searchMode == SearchMode.YouTube && uri.AbsolutePath == "/watch")
-                track = await audioService.GetYTTrackAsync(uri, context.Guild);
+                track = await audioService.GetYTTrackAsync(uri, context.Guild, context.User);
             else
-                track = await audioService.RRGetTrackAsync(query, searchMode);
+                track = await audioService.RRGetTrackAsync(query, context.User, searchMode);
         }
         else
         {
-            track = await audioService.RRGetTrackAsync(query, SearchMode.YouTube);
+            track = await audioService.RRGetTrackAsync(query, context.User, SearchMode.YouTube);
         }
 
         if (track.Identifier == "restricted")
