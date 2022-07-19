@@ -119,6 +119,21 @@ public class Fun : ModuleBase<SocketCommandContext>
         await ReplyAsync(embed: embed.Build());
     }
 
+    #pragma warning disable IDE0060, RCS1163
+    [Alias("conch")]
+    [Command("magicconch")]
+    [Summary("Ask the Magic Conch ANYTHING!")]
+    [Remarks("$magicconch Will I get bitches?")]
+    public async Task MagicConch([Remainder] string question) // not discarded for $help
+    {
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Red)
+            .WithTitle("The Magic Conch Shell says...")
+            .WithImageUrl(Constants.MAGIC_CONCH_IMAGES[RandomUtil.Next(Constants.MAGIC_CONCH_IMAGES.Length)]);
+        await ReplyAsync(embed: embed.Build());
+    }
+    #pragma warning restore IDE0060, RCS1163
+
     [Command("minesweeper")]
     [Summary("Play a game of Minesweeper. Choose between difficulty 1-3.")]
     [Remarks("$minesweeper 2")]

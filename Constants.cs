@@ -79,6 +79,14 @@ public static class Constants
     // ********************
     //         FUN
     // ********************
+    public static readonly string[] MAGIC_CONCH_IMAGES =
+    {
+        "https://i.imgur.com/kJmUvt2.png", // i don't think so
+        "https://i.imgur.com/h1GvIe6.png", // maybe someday
+        "https://i.imgur.com/ozPmMUQ.png", // no
+        "https://i.imgur.com/uRynAAx.png", // try asking again
+        "https://i.imgur.com/qVjaDSs.png", // yes
+    };
     public static readonly Dictionary<string, string> WAIFUS = new()
     {
         { "Adolf Dripler", "https://i.redd.it/cd9v84v46ma21.jpg" },
