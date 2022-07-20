@@ -85,7 +85,7 @@ public sealed class AudioSystem
                 playlist.Append($" ({track.Duration.Round()})");
                 totalLength += track.Duration.Round();
             }
-            playlist.AppendLine($" ``Added by: {metadata.Requester}``");
+            playlist.AppendLine($" | Added by: {metadata.Requester}");
         }
 
         playlist.AppendLine($"\n**Total Length: {totalLength}**");
