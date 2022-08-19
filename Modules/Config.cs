@@ -310,8 +310,9 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("setselfrolesmsg")]
     [Summary("Register the ID for the message that users can react to to receive roles.")]
     [Remarks("$setselfrolesmsg \\#self-roles 837416517133271063")]
-    public async Task<RuntimeResult> SetSelfRolesMsg(ITextChannel channel, IMessage msg)
+    public async Task<RuntimeResult> SetSelfRolesMsg(ITextChannel channel, ulong msgId)
     {
+        IMessage msg = await channel.GetMessageAsync(msgId);
         DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
         selfRoles.Channel = channel.Id;
         selfRoles.Message = msg.Id;
