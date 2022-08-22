@@ -10,6 +10,8 @@ public class DbConfigOptionals : DbObject
     [FirestoreProperty]
     public List<string> DisabledModules { get; set; } = new();
     [FirestoreProperty]
+    public bool DropsDisabled { get; set; }
+    [FirestoreProperty]
     public List<string> FilterRegexes { get; set; } = new();
     [FirestoreProperty]
     public List<string> FilteredWords { get; set; } = new();

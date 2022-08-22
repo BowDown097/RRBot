@@ -180,7 +180,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("enablecmd")]
     [Summary("Enable a previously disabled command for your server.")]
-    [Remarks("$disablecmd rob")]
+    [Remarks("$enablecmd rob")]
     public async Task<RuntimeResult> EnableCommand(string cmd)
     {
         string cmdLower = cmd.ToLower();
@@ -348,6 +348,15 @@ public class Config : ModuleBase<SocketCommandContext>
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         channels.MinimumVotingAgeDays = days;
         await Context.User.NotifyAsync(Context.Channel, $"Set minimum voting age to **{days} days**.");
+    }
+
+    [Command("toggledrops")]
+    [Summary("Toggles random drops, such as Bank Cheques.")]
+    public async Task ToggleDrops()
+    {
+        DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
+        optionals.DropsDisabled = !optionals.DropsDisabled;
+        await Context.User.NotifyAsync(Context.Channel, $"Toggled random drops {(optionals.DropsDisabled ? "OFF" : "ON")}.");
     }
 
     [Command("toggleinvitefilter")]

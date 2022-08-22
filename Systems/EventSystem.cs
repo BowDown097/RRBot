@@ -200,8 +200,9 @@ public class EventSystem
             {
                 double messageCash = Constants.MESSAGE_CASH * (1 + (0.20 * user.Prestige));
                 await user.SetCash(context.User, user.Cash + messageCash);
+                DbConfigOptionals optionals = await DbConfigOptionals.GetById(context.Guild.Id);
 
-                if (RandomUtil.Next(70) == 1)
+                if (!optionals.DropsDisabled && RandomUtil.Next(70) == 1)
                     await ItemSystem.GiveCollectible("Bank Cheque", context.Channel, user);
                 if (user.Cash >= 1000000 && !user.HasReachedAMilli)
                 {
