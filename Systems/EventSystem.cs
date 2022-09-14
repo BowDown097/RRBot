@@ -4,77 +4,77 @@ using Discord.Interactions;
 namespace RRBot.Systems;
 public class EventSystem
 {
-    private readonly IAudioService audioService;
-    private readonly CommandService commands;
-    private readonly DiscordSocketClient client;
-    private readonly InactivityTrackingService inactivityTracking;
-    private readonly InteractionService interactions;
-    private readonly ServiceProvider serviceProvider;
+    private readonly IAudioService _audioService;
+    private readonly CommandService _commands;
+    private readonly DiscordSocketClient _client;
+    private readonly InactivityTrackingService _inactivityTracking;
+    private readonly InteractionService _interactions;
+    private readonly ServiceProvider _serviceProvider;
 
     public EventSystem(ServiceProvider serviceProvider)
     {
-        this.serviceProvider = serviceProvider;
-        audioService = serviceProvider.GetRequiredService<IAudioService>();
-        commands = serviceProvider.GetRequiredService<CommandService>();
-        client = serviceProvider.GetRequiredService<DiscordSocketClient>();
-        inactivityTracking = serviceProvider.GetRequiredService<InactivityTrackingService>();
-        interactions = serviceProvider.GetRequiredService<InteractionService>();
+        this._serviceProvider = serviceProvider;
+        _audioService = serviceProvider.GetRequiredService<IAudioService>();
+        _commands = serviceProvider.GetRequiredService<CommandService>();
+        _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
+        _inactivityTracking = serviceProvider.GetRequiredService<InactivityTrackingService>();
+        _interactions = serviceProvider.GetRequiredService<InteractionService>();
     }
 
     public void SubscribeEvents()
     {
-        client.ButtonExecuted += Client_ButtonExecuted;
-        client.GuildMemberUpdated += Client_GuildMemberUpdated;
-        client.JoinedGuild += Client_JoinedGuild;
-        client.Log += Client_Log;
-        client.MessageReceived += Client_MessageReceived;
-        client.MessageUpdated += Client_MessageUpdated;
-        client.ReactionAdded += Client_ReactionAdded;
-        client.ReactionRemoved += Client_ReactionRemoved;
-        client.Ready += Client_Ready;
-        client.ThreadCreated += Client_ThreadCreated;
-        client.ThreadUpdated += Client_ThreadUpdated;
-        client.UserJoined += Client_UserJoined;
-        commands.CommandExecuted += Commands_CommandExecuted;
+        _client.ButtonExecuted += Client_ButtonExecuted;
+        _client.GuildMemberUpdated += Client_GuildMemberUpdated;
+        _client.JoinedGuild += Client_JoinedGuild;
+        _client.Log += Client_Log;
+        _client.MessageReceived += Client_MessageReceived;
+        _client.MessageUpdated += Client_MessageUpdated;
+        _client.ReactionAdded += Client_ReactionAdded;
+        _client.ReactionRemoved += Client_ReactionRemoved;
+        _client.Ready += Client_Ready;
+        _client.ThreadCreated += Client_ThreadCreated;
+        _client.ThreadUpdated += Client_ThreadUpdated;
+        _client.UserJoined += Client_UserJoined;
+        _commands.CommandExecuted += Commands_CommandExecuted;
 
-        client.ChannelCreated += LoggingSystem.Client_ChannelCreated;
-        client.ChannelDestroyed += LoggingSystem.Client_ChannelDestroyed;
-        client.ChannelUpdated += LoggingSystem.Client_ChannelUpdated;
-        client.GuildMemberUpdated += LoggingSystem.Client_GuildMemberUpdated;
-        client.GuildScheduledEventCancelled += LoggingSystem.Client_GuildScheduledEventCancelled;
-        client.GuildScheduledEventCompleted += LoggingSystem.Client_GuildScheduledEventCompleted;
-        client.GuildScheduledEventCreated += LoggingSystem.Client_GuildScheduledEventCreated;
-        client.GuildScheduledEventStarted += LoggingSystem.Client_GuildScheduledEventStarted;
-        client.GuildScheduledEventUpdated += LoggingSystem.Client_GuildScheduledEventUpdated;
-        client.GuildScheduledEventUserAdd += LoggingSystem.Client_GuildScheduledEventUserAdd;
-        client.GuildScheduledEventUserRemove += LoggingSystem.Client_GuildScheduledEventUserRemove;
-        client.GuildStickerCreated += LoggingSystem.Client_GuildStickerCreated;
-        client.GuildStickerDeleted += LoggingSystem.Client_GuildStickerDeleted;
-        client.GuildUpdated += LoggingSystem.Client_GuildUpdated;
-        client.InviteCreated += LoggingSystem.Client_InviteCreated;
-        client.InviteDeleted += LoggingSystem.Client_InviteDeleted;
-        client.MessageDeleted += LoggingSystem.Client_MessageDeleted;
-        client.MessageUpdated += LoggingSystem.Client_MessageUpdated;
-        client.ReactionAdded += LoggingSystem.Client_ReactionAdded;
-        client.ReactionRemoved += LoggingSystem.Client_ReactionRemoved;
-        client.RoleCreated += LoggingSystem.Client_RoleCreated;
-        client.RoleDeleted += LoggingSystem.Client_RoleDeleted;
-        client.RoleUpdated += LoggingSystem.Client_RoleUpdated;
-        client.SpeakerAdded += LoggingSystem.Client_SpeakerAdded;
-        client.SpeakerRemoved += LoggingSystem.Client_SpeakerRemoved;
-        client.StageEnded += LoggingSystem.Client_StageEnded;
-        client.StageStarted += LoggingSystem.Client_StageStarted;
-        client.StageUpdated += LoggingSystem.Client_StageUpdated;
-        client.ThreadCreated += LoggingSystem.Client_ThreadCreated;
-        client.ThreadDeleted += LoggingSystem.Client_ThreadDeleted;
-        client.ThreadMemberJoined += LoggingSystem.Client_ThreadMemberJoined;
-        client.ThreadMemberLeft += LoggingSystem.Client_ThreadMemberLeft;
-        client.ThreadUpdated += LoggingSystem.Client_ThreadUpdated;
-        client.UserBanned += LoggingSystem.Client_UserBanned;
-        client.UserJoined += LoggingSystem.Client_UserJoined;
-        client.UserLeft += LoggingSystem.Client_UserLeft;
-        client.UserUnbanned += LoggingSystem.Client_UserUnbanned;
-        client.UserVoiceStateUpdated += LoggingSystem.Client_UserVoiceStateUpdated;
+        _client.ChannelCreated += LoggingSystem.Client_ChannelCreated;
+        _client.ChannelDestroyed += LoggingSystem.Client_ChannelDestroyed;
+        _client.ChannelUpdated += LoggingSystem.Client_ChannelUpdated;
+        _client.GuildMemberUpdated += LoggingSystem.Client_GuildMemberUpdated;
+        _client.GuildScheduledEventCancelled += LoggingSystem.Client_GuildScheduledEventCancelled;
+        _client.GuildScheduledEventCompleted += LoggingSystem.Client_GuildScheduledEventCompleted;
+        _client.GuildScheduledEventCreated += LoggingSystem.Client_GuildScheduledEventCreated;
+        _client.GuildScheduledEventStarted += LoggingSystem.Client_GuildScheduledEventStarted;
+        _client.GuildScheduledEventUpdated += LoggingSystem.Client_GuildScheduledEventUpdated;
+        _client.GuildScheduledEventUserAdd += LoggingSystem.Client_GuildScheduledEventUserAdd;
+        _client.GuildScheduledEventUserRemove += LoggingSystem.Client_GuildScheduledEventUserRemove;
+        _client.GuildStickerCreated += LoggingSystem.Client_GuildStickerCreated;
+        _client.GuildStickerDeleted += LoggingSystem.Client_GuildStickerDeleted;
+        _client.GuildUpdated += LoggingSystem.Client_GuildUpdated;
+        _client.InviteCreated += LoggingSystem.Client_InviteCreated;
+        _client.InviteDeleted += LoggingSystem.Client_InviteDeleted;
+        _client.MessageDeleted += LoggingSystem.Client_MessageDeleted;
+        _client.MessageUpdated += LoggingSystem.Client_MessageUpdated;
+        _client.ReactionAdded += LoggingSystem.Client_ReactionAdded;
+        _client.ReactionRemoved += LoggingSystem.Client_ReactionRemoved;
+        _client.RoleCreated += LoggingSystem.Client_RoleCreated;
+        _client.RoleDeleted += LoggingSystem.Client_RoleDeleted;
+        _client.RoleUpdated += LoggingSystem.Client_RoleUpdated;
+        _client.SpeakerAdded += LoggingSystem.Client_SpeakerAdded;
+        _client.SpeakerRemoved += LoggingSystem.Client_SpeakerRemoved;
+        _client.StageEnded += LoggingSystem.Client_StageEnded;
+        _client.StageStarted += LoggingSystem.Client_StageStarted;
+        _client.StageUpdated += LoggingSystem.Client_StageUpdated;
+        _client.ThreadCreated += LoggingSystem.Client_ThreadCreated;
+        _client.ThreadDeleted += LoggingSystem.Client_ThreadDeleted;
+        _client.ThreadMemberJoined += LoggingSystem.Client_ThreadMemberJoined;
+        _client.ThreadMemberLeft += LoggingSystem.Client_ThreadMemberLeft;
+        _client.ThreadUpdated += LoggingSystem.Client_ThreadUpdated;
+        _client.UserBanned += LoggingSystem.Client_UserBanned;
+        _client.UserJoined += LoggingSystem.Client_UserJoined;
+        _client.UserLeft += LoggingSystem.Client_UserLeft;
+        _client.UserUnbanned += LoggingSystem.Client_UserUnbanned;
+        _client.UserVoiceStateUpdated += LoggingSystem.Client_UserVoiceStateUpdated;
     }
 
     private static async Task HandleReactionAsync(Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction, bool addedReaction)
@@ -98,11 +98,11 @@ public class EventSystem
 
     private async Task Client_ButtonExecuted(SocketMessageComponent interaction)
     {
-        if (interaction.Message.Author.Id != client.CurrentUser.Id) // don't wanna interfere with other bots' stuff
+        if (interaction.Message.Author.Id != _client.CurrentUser.Id) // don't wanna interfere with other bots' stuff
             return;
 
-        SocketInteractionContext<SocketMessageComponent> context = new(client, interaction);
-        await interactions.ExecuteCommandAsync(context, serviceProvider);
+        SocketInteractionContext<SocketMessageComponent> context = new(_client, interaction);
+        await _interactions.ExecuteCommandAsync(context, _serviceProvider);
     }
 
     private static async Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> userBeforeCached,
@@ -144,18 +144,18 @@ public class EventSystem
     private async Task Client_MessageReceived(SocketMessage msg)
     {
         SocketUserMessage userMsg = msg as SocketUserMessage;
-        SocketCommandContext context = new(client, userMsg);
+        SocketCommandContext context = new(_client, userMsg);
         if (context.User.IsBot || string.IsNullOrWhiteSpace(userMsg.Content))
             return;
 
-        await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, client);
+        await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, _client);
         await FilterSystem.DoFilteredWordCheckAsync(userMsg, context.Guild);
         await FilterSystem.DoScamCheckAsync(userMsg, context.Guild);
 
         int argPos = 0;
-        if (userMsg.HasStringPrefix(Constants.PREFIX, ref argPos))
+        if (userMsg.HasStringPrefix(Constants.Prefix, ref argPos))
         {
-            Discord.Commands.SearchResult search = commands.Search(msg.Content[argPos..]);
+            Discord.Commands.SearchResult search = _commands.Search(msg.Content[argPos..]);
             if (search.Error == CommandError.UnknownCommand)
                 return;
 
@@ -186,7 +186,7 @@ public class EventSystem
                 return;
             }
 
-            await commands.ExecuteAsync(context, argPos, serviceProvider);
+            await _commands.ExecuteAsync(context, argPos, _serviceProvider);
         }
         else
         {
@@ -194,11 +194,11 @@ public class EventSystem
 
             if (user.TimeTillCash == 0)
             {
-                user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN);
+                user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MessageCashCooldown);
             }
             else if (user.TimeTillCash <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             {
-                double messageCash = Constants.MESSAGE_CASH * (1 + (0.20 * user.Prestige));
+                double messageCash = Constants.MessageCash * (1 + (0.20 * user.Prestige));
                 await user.SetCash(context.User, user.Cash + messageCash);
                 DbConfigOptionals optionals = await DbConfigOptionals.GetById(context.Guild.Id);
 
@@ -210,7 +210,7 @@ public class EventSystem
                     await ItemSystem.GiveCollectible("V Card", context.Channel, user);
                 }
 
-                user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MESSAGE_CASH_COOLDOWN);
+                user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MessageCashCooldown);
             }
         }
     }
@@ -218,7 +218,7 @@ public class EventSystem
     private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
     {
         SocketUserMessage userMsgAfter = msgAfter as SocketUserMessage;
-        await FilterSystem.DoInviteCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild(), client);
+        await FilterSystem.DoInviteCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild(), _client);
         await FilterSystem.DoFilteredWordCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
         await FilterSystem.DoScamCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
     }
@@ -232,17 +232,17 @@ public class EventSystem
     private async Task Client_Ready()
     {
         // reset usingSlots if someone happened to be using slots during bot restart
-        foreach (SocketGuild guild in client.Guilds)
+        foreach (SocketGuild guild in _client.Guilds)
         {
-            QuerySnapshot slotsQuery = await Program.database.Collection($"servers/{guild.Id}/users")
+            QuerySnapshot slotsQuery = await Program.Database.Collection($"servers/{guild.Id}/users")
                 .WhereEqualTo("UsingSlots", true).GetSnapshotAsync();
             foreach (DocumentSnapshot user in slotsQuery.Documents)
                 await user.Reference.SetAsync(new { UsingSlots = FieldValue.Delete }, SetOptions.MergeAll);
         }
 
-        await new MonitorSystem(client).Initialise();
-        await audioService.InitializeAsync();
-        inactivityTracking.BeginTracking();
+        await new MonitorSystem(_client).Initialise();
+        await _audioService.InitializeAsync();
+        _inactivityTracking.BeginTracking();
     }
 
     private static async Task Client_ThreadCreated(SocketThreadChannel thread)

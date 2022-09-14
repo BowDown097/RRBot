@@ -38,7 +38,7 @@ public class DbPot : DbObject
         if (MemoryCache.Default.Contains($"pot-{guildId}"))
             return (DbPot)MemoryCache.Default.Get($"pot-{guildId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/pots").Document("1"); // might add support for multiple pots at some point
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/pots").Document("1"); // might add support for multiple pots at some point
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

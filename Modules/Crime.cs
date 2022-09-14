@@ -34,7 +34,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"You BULLIED **{user.Sanitize()}** to ``{nickname}``!");
 
         DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        await author.SetCooldown("BullyCooldown", Constants.BULLY_COOLDOWN, Context.Guild, Context.User);
+        await author.SetCooldown("BullyCooldown", Constants.BullyCooldown, Context.Guild, Context.User);
         return CommandResult.FromSuccess();
     }
 
@@ -48,7 +48,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             "You sold grass to some elementary schoolers and passed it off as weed. They didn't have a lot of course, only **{0}**, but money's money." };
         string[] fails = { "You tripped balls on acid with the boys at a party. After waking up, you realize not only did someone take money from your piggy bank, but you also gave out too much free acid, leaving you a whopping **{0}** poorer.",
             "The Democrats have launched yet another crime bill, leading to your hood being under heavy investigation. You could not escape the feds and paid **{0}** in fines." };
-        return await GenericCrime(successes, fails, "DealCooldown", Constants.DEAL_COOLDOWN, true);
+        return await GenericCrime(successes, fails, "DealCooldown", Constants.DealCooldown, true);
     }
 
     [Command("hack")]
@@ -57,8 +57,8 @@ public class Crime : ModuleBase<SocketCommandContext>
     [RequireCooldown("HackCooldown", "You exhausted all your brain power bro, you're gonna have to wait {0}.")]
     public async Task<RuntimeResult> Hack(IGuildUser user, string crypto, double amount)
     {
-        if (amount < Constants.INVESTMENT_MIN_AMOUNT || double.IsNaN(amount))
-            return CommandResult.FromError($"You must hack {Constants.INVESTMENT_MIN_AMOUNT} or more.");
+        if (amount < Constants.InvestmentMinAmount || double.IsNaN(amount))
+            return CommandResult.FromError($"You must hack {Constants.InvestmentMinAmount} or more.");
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("How are you supposed to hack yourself?");
         if (user.IsBot)
@@ -77,15 +77,15 @@ public class Crime : ModuleBase<SocketCommandContext>
 
         double authorBal = (double)author[abbreviation];
         double targetBal = (double)target[abbreviation];
-        double robMax = Math.Round(targetBal / 100.0 * Constants.ROB_MAX_PERCENT, 4);
+        double robMax = Math.Round(targetBal / 100.0 * Constants.RobMaxPercent, 4);
         if (authorBal < amount)
             return CommandResult.FromError($"You don't have that much {abbreviation}!");
         if (amount > robMax)
-            return CommandResult.FromError($"You can only hack {Constants.ROB_MAX_PERCENT}% of **{user.Sanitize()}**'s {abbreviation}, that being **{robMax}**.");
+            return CommandResult.FromError($"You can only hack {Constants.RobMaxPercent}% of **{user.Sanitize()}**'s {abbreviation}, that being **{robMax}**.");
 
         int roll = RandomUtil.Next(1, 101);
         double cryptoValue = await Investments.QueryCryptoValue(abbreviation) * amount;
-        double odds = author.UsedConsumables.GetValueOrDefault("Black Hat") > 0 ? Constants.HACK_ODDS + 10 : Constants.HACK_ODDS;
+        double odds = author.UsedConsumables.GetValueOrDefault("Black Hat") > 0 ? Constants.HackOdds + 10 : Constants.HackOdds;
         if (author.Perks.ContainsKey("Speed Demon"))
             odds *= 0.95;
         if (roll < odds)
@@ -119,7 +119,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             }
         }
 
-        await author.SetCooldown("HackCooldown", Constants.HACK_COOLDOWN, Context.Guild, Context.User);
+        await author.SetCooldown("HackCooldown", Constants.HackCooldown, Context.Guild, Context.User);
         return CommandResult.FromSuccess();
     }
 
@@ -133,7 +133,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             "You stole from a gas station because you're a fucking idiot. You earned **{0}**, basically nothing." };
         string[] fails = { "There happened to be a cop coming out of the donut shop next door. You had to pay **{0}** in fines.",
             "The manager gave no fucks and beat the SHIT out of you. You lost **{0}** paying for face stitches." };
-        return await GenericCrime(successes, fails, "LootCooldown", Constants.LOOT_COOLDOWN, true);
+        return await GenericCrime(successes, fails, "LootCooldown", Constants.LootCooldown, true);
     }
 
     [Alias("strugglesnuggle")]
@@ -158,8 +158,8 @@ public class Crime : ModuleBase<SocketCommandContext>
         if (target.Cash < 0.01)
             return CommandResult.FromError($"Dear Lord, talk about kicking them while they're down! **{user.Sanitize()}** is broke! Have some decency.");
 
-        double rapePercent = RandomUtil.NextDouble(Constants.RAPE_MIN_PERCENT, Constants.RAPE_MAX_PERCENT);
-        double odds = author.UsedConsumables.GetValueOrDefault("Viagra") > 0 ? Constants.RAPE_ODDS + 10 : Constants.RAPE_ODDS;
+        double rapePercent = RandomUtil.NextDouble(Constants.RapeMinPercent, Constants.RapeMaxPercent);
+        double odds = author.UsedConsumables.GetValueOrDefault("Viagra") > 0 ? Constants.RapeOdds + 10 : Constants.RapeOdds;
         if (author.Perks.ContainsKey("Speed Demon"))
             odds *= 0.95;
         if (RandomUtil.NextDouble(1, 101) < odds)
@@ -177,7 +177,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user.Sanitize()}**! You just paid **{repairs:C2}** in asshole repairs.");
         }
 
-        await author.SetCooldown("RapeCooldown", Constants.RAPE_COOLDOWN, Context.Guild, Context.User);
+        await author.SetCooldown("RapeCooldown", Constants.RapeCooldown, Context.Guild, Context.User);
         return CommandResult.FromSuccess();
     }
 
@@ -187,8 +187,8 @@ public class Crime : ModuleBase<SocketCommandContext>
     [RequireCooldown("RobCooldown", "It's best to avoid getting caught if you don't go out for {0}.")]
     public async Task<RuntimeResult> Rob(IGuildUser user, double amount)
     {
-        if (amount < Constants.ROB_MIN_CASH)
-            return CommandResult.FromError($"There's no point in robbing for less than {Constants.ROB_MIN_CASH:C2}!");
+        if (amount < Constants.RobMinCash)
+            return CommandResult.FromError($"There's no point in robbing for less than {Constants.RobMinCash:C2}!");
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("How are you supposed to rob yourself?");
         if (user.IsBot)
@@ -201,14 +201,14 @@ public class Crime : ModuleBase<SocketCommandContext>
         if (target.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError($"You cannot rob **{user.Sanitize()}** as they have the Pacifist perk equipped.");
 
-        double robMax = Math.Round(target.Cash / 100.0 * Constants.ROB_MAX_PERCENT, 2);
+        double robMax = Math.Round(target.Cash / 100.0 * Constants.RobMaxPercent, 2);
         if (author.Cash < amount)
             return CommandResult.FromError("You don't have that much money!");
         if (amount > robMax)
-            return CommandResult.FromError($"You can only rob {Constants.ROB_MAX_PERCENT}% of **{user.Sanitize()}**'s cash, that being **{robMax:C2}**.");
+            return CommandResult.FromError($"You can only rob {Constants.RobMaxPercent}% of **{user.Sanitize()}**'s cash, that being **{robMax:C2}**.");
 
         int roll = RandomUtil.Next(1, 101);
-        double odds = author.UsedConsumables.GetValueOrDefault("Romanian Flag") > 0 ? Constants.ROB_ODDS + 10 : Constants.ROB_ODDS;
+        double odds = author.UsedConsumables.GetValueOrDefault("Romanian Flag") > 0 ? Constants.RobOdds + 10 : Constants.RobOdds;
         if (author.Perks.ContainsKey("Speed Demon"))
             odds *= 0.95;
         if (roll < odds)
@@ -246,7 +246,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             }
         }
 
-        await author.SetCooldown("RobCooldown", Constants.ROB_COOLDOWN, Context.Guild, Context.User);
+        await author.SetCooldown("RobCooldown", Constants.RobCooldown, Context.Guild, Context.User);
         return CommandResult.FromSuccess();
     }
 
@@ -279,7 +279,7 @@ public class Crime : ModuleBase<SocketCommandContext>
                 EmbedBuilder scrambleEmbed = new EmbedBuilder()
                     .WithColor(Color.Red)
                     .WithTitle("Scramble!")
-                    .WithDescription($"**Unscramble this word:**\n{scrambled}\n*Type your response in the chat. You have {Constants.SCAVENGE_TIMEOUT} seconds!*");
+                    .WithDescription($"**Unscramble this word:**\n{scrambled}\n*Type your response in the chat. You have {Constants.ScavengeTimeout} seconds!*");
                 IUserMessage scrambleMsg = await ReplyAsync(embed: scrambleEmbed.Build());
                 if (scrambled == "egg")
                 {
@@ -289,7 +289,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 
                 InteractiveResult<SocketMessage> scrambleResult = await Interactive.NextMessageAsync(
                     x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
-                    timeout: TimeSpan.FromSeconds(Constants.SCAVENGE_TIMEOUT)
+                    timeout: TimeSpan.FromSeconds(Constants.ScavengeTimeout)
                 );
                 await HandleScavenge(scrambleMsg, scrambleResult, user, scrambleResult.Value.Content.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
                     $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
@@ -314,12 +314,12 @@ public class Crime : ModuleBase<SocketCommandContext>
                 EmbedBuilder translateEmbed = new EmbedBuilder()
                     .WithColor(Color.Red)
                     .WithTitle("Translate!")
-                    .WithDescription($"**Translate this Spanish word/phrase to English:**\n{translatedText}\n*Type your response in the chat. You have {Constants.SCAVENGE_TIMEOUT} seconds!*");
+                    .WithDescription($"**Translate this Spanish word/phrase to English:**\n{translatedText}\n*Type your response in the chat. You have {Constants.ScavengeTimeout} seconds!*");
                 IUserMessage translateMsg = await ReplyAsync(embed: translateEmbed.Build());
 
                 InteractiveResult<SocketMessage> translateResult = await Interactive.NextMessageAsync(
                     x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
-                    timeout: TimeSpan.FromSeconds(Constants.SCAVENGE_TIMEOUT)
+                    timeout: TimeSpan.FromSeconds(Constants.ScavengeTimeout)
                 );
                 await HandleScavenge(translateMsg, translateResult, user, translateResult.Value.Content.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
                     $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
@@ -332,7 +332,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         if (RandomUtil.Next(50) == 1)
             await ItemSystem.GiveCollectible("Ape NFT", Context.Channel, user);
 
-        await user.SetCooldown("ScavengeCooldown", Constants.SCAVENGE_COOLDOWN, Context.Guild, Context.User);
+        await user.SetCooldown("ScavengeCooldown", Constants.ScavengeCooldown, Context.Guild, Context.User);
     }
 
     [Command("slavery")]
@@ -346,7 +346,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             "This cotton is BUSSIN! The Confederacy is proud. You have been awarded **{0}**." };
         string[] fails = { "Some fucker ratted you out and the police showed up. Thankfully, they're corrupt and you were able to sauce them **{0}** to fuck off. Thank the lord.",
             "A slave got away and yoinked **{0}** from you. Sad day." };
-        return await GenericCrime(successes, fails, "SlaveryCooldown", Constants.SLAVERY_COOLDOWN);
+        return await GenericCrime(successes, fails, "SlaveryCooldown", Constants.SlaveryCooldown);
     }
 
     [Command("whore")]
@@ -360,7 +360,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             "You found the Chad Thundercock himself! **{0}** and some amazing sex. What a great night." };
         string[] fails = { "You were too ugly and nobody wanted you. You lost **{0}** buying clothes for the night.",
             "You didn't give good enough head to the cop! You had to pay **{0}** in fines." };
-        return await GenericCrime(successes, fails, "WhoreCooldown", Constants.WHORE_COOLDOWN);
+        return await GenericCrime(successes, fails, "WhoreCooldown", Constants.WhoreCooldown);
     }
     #endregion
 
@@ -372,12 +372,12 @@ public class Crime : ModuleBase<SocketCommandContext>
         if (user.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-        double winOdds = user.Perks.ContainsKey("Speed Demon") ? Constants.GENERIC_CRIME_WIN_ODDS * 0.95 : Constants.GENERIC_CRIME_WIN_ODDS;
+        double winOdds = user.Perks.ContainsKey("Speed Demon") ? Constants.GenericCrimeWinOdds * 0.95 : Constants.GenericCrimeWinOdds;
         if (RandomUtil.NextDouble(1, 101) < winOdds)
         {
             int outcomeNum = RandomUtil.Next(successOutcomes.Length);
             string outcome = successOutcomes[outcomeNum];
-            double moneyEarned = RandomUtil.NextDouble(Constants.GENERIC_CRIME_WIN_MIN, Constants.GENERIC_CRIME_WIN_MAX);
+            double moneyEarned = RandomUtil.NextDouble(Constants.GenericCrimeWinMin, Constants.GenericCrimeWinMax);
             if (hasMehOutcome && outcomeNum == successOutcomes.Length - 1)
                 moneyEarned /= 5;
             double totalCash = user.Cash + moneyEarned;
@@ -388,7 +388,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         else
         {
             string outcome = failOutcomes[RandomUtil.Next(failOutcomes.Length)];
-            double lostCash = RandomUtil.NextDouble(Constants.GENERIC_CRIME_LOSS_MIN, Constants.GENERIC_CRIME_LOSS_MAX);
+            double lostCash = RandomUtil.NextDouble(Constants.GenericCrimeLossMin, Constants.GenericCrimeLossMax);
             lostCash = (user.Cash - lostCash) < 0 ? lostCash - Math.Abs(user.Cash - lostCash) : lostCash;
             double totalCash = (user.Cash - lostCash) > 0 ? user.Cash - lostCash : 0;
 
@@ -397,9 +397,9 @@ public class Crime : ModuleBase<SocketCommandContext>
             await Context.User.NotifyAsync(Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", lostCash.ToString("C2")));
         }
 
-        if (RandomUtil.NextDouble(1, 101) < Constants.GENERIC_CRIME_TOOL_ODDS)
+        if (RandomUtil.NextDouble(1, 101) < Constants.GenericCrimeToolOdds)
         {
-            string[] availableTools = ItemSystem.tools.Where(t => !user.Tools.Contains(t.Name)).Select(t => t.Name).ToArray();
+            string[] availableTools = ItemSystem.Tools.Where(t => !user.Tools.Contains(t.Name)).Select(t => t.Name).ToArray();
             if (availableTools.Length > 0)
             {
                 string tool = availableTools[RandomUtil.Next(availableTools.Length)];
@@ -424,7 +424,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         }
         else if (successCondition)
         {
-            double rewardCash = RandomUtil.NextDouble(Constants.SCAVENGE_MIN_CASH, Constants.SCAVENGE_MAX_CASH);
+            double rewardCash = RandomUtil.NextDouble(Constants.ScavengeMinCash, Constants.ScavengeMaxCash);
             double prestigeCash = rewardCash * (0.20 * user.Prestige);
             double totalCash = user.Cash + rewardCash + prestigeCash;
             EmbedBuilder successEmbed = new EmbedBuilder()

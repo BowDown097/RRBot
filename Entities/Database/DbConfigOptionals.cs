@@ -20,7 +20,7 @@ public class DbConfigOptionals : DbObject
     [FirestoreProperty]
     public List<ulong> NoFilterChannels { get; set; } = new();
     [FirestoreProperty]
-    public bool NSFWEnabled { get; set; }
+    public bool NsfwEnabled { get; set; }
     [FirestoreProperty]
     public bool ScamFilterEnabled { get; set; }
     #endregion
@@ -31,7 +31,7 @@ public class DbConfigOptionals : DbObject
         if (MemoryCache.Default.Contains($"optionalconf-{guildId}"))
             return (DbConfigOptionals)MemoryCache.Default.Get($"optionalconf-{guildId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("optionals");
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/config").Document("optionals");
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

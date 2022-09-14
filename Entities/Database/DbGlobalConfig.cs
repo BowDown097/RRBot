@@ -17,7 +17,7 @@ public class DbGlobalConfig : DbObject
         if (MemoryCache.Default.Contains("globalconfig"))
             return (DbGlobalConfig)MemoryCache.Default.Get("globalconfig");
 
-        DocumentReference doc = Program.database.Collection("globalConfig").Document("banstuff");
+        DocumentReference doc = Program.Database.Collection("globalConfig").Document("banstuff");
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

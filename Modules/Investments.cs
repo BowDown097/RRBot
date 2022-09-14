@@ -9,8 +9,8 @@ public class Investments : ModuleBase<SocketCommandContext>
     [RequireCash]
     public async Task<RuntimeResult> Invest(string crypto, double amount)
     {
-        if (amount < Constants.TRANSACTION_MIN || double.IsNaN(amount))
-            return CommandResult.FromError($"You need to invest at least {Constants.TRANSACTION_MIN:C2}.");
+        if (amount < Constants.TransactionMin || double.IsNaN(amount))
+            return CommandResult.FromError($"You need to invest at least {Constants.TransactionMin:C2}.");
 
         string abbreviation = ResolveAbbreviation(crypto);
         if (abbreviation is null)
@@ -23,10 +23,10 @@ public class Investments : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You can't invest more than what you have!");
 
         double cryptoAmount = amount / await QueryCryptoValue(abbreviation);
-        if (cryptoAmount < Constants.INVESTMENT_MIN_AMOUNT)
+        if (cryptoAmount < Constants.InvestmentMinAmount)
         {
-            return CommandResult.FromError($"The amount you specified converts to less than {Constants.INVESTMENT_MIN_AMOUNT} of {abbreviation}, which is not permitted.\n"
-                + $"You'll need to invest at least **{await QueryCryptoValue(abbreviation) * Constants.INVESTMENT_MIN_AMOUNT:C2}**.");
+            return CommandResult.FromError($"The amount you specified converts to less than {Constants.InvestmentMinAmount} of {abbreviation}, which is not permitted.\n"
+                + $"You'll need to invest at least **{await QueryCryptoValue(abbreviation) * Constants.InvestmentMinAmount:C2}**.");
         }
 
         CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
@@ -54,14 +54,14 @@ public class Investments : ModuleBase<SocketCommandContext>
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
 
         StringBuilder investments = new();
-        if (dbUser.BTC >= Constants.INVESTMENT_MIN_AMOUNT)
-            investments.AppendLine($"**Bitcoin (BTC)**: {dbUser.BTC:0.####} ({await QueryCryptoValue("BTC") * dbUser.BTC:C2})");
-        if (dbUser.ETH >= Constants.INVESTMENT_MIN_AMOUNT)
-            investments.AppendLine($"**Ethereum (ETH)**: {dbUser.ETH:0.####} ({await QueryCryptoValue("ETH") * dbUser.ETH:C2})");
-        if (dbUser.LTC >= Constants.INVESTMENT_MIN_AMOUNT)
-            investments.AppendLine($"**Litecoin (LTC)**: {dbUser.LTC:0.####} ({await QueryCryptoValue("LTC") * dbUser.LTC:C2})");
-        if (dbUser.XRP >= Constants.INVESTMENT_MIN_AMOUNT)
-            investments.AppendLine($"**XRP**: {dbUser.XRP:0.####} ({await QueryCryptoValue("XRP") * dbUser.XRP:C2})");
+        if (dbUser.Btc >= Constants.InvestmentMinAmount)
+            investments.AppendLine($"**Bitcoin (BTC)**: {dbUser.Btc:0.####} ({await QueryCryptoValue("BTC") * dbUser.Btc:C2})");
+        if (dbUser.Eth >= Constants.InvestmentMinAmount)
+            investments.AppendLine($"**Ethereum (ETH)**: {dbUser.Eth:0.####} ({await QueryCryptoValue("ETH") * dbUser.Eth:C2})");
+        if (dbUser.Ltc >= Constants.InvestmentMinAmount)
+            investments.AppendLine($"**Litecoin (LTC)**: {dbUser.Ltc:0.####} ({await QueryCryptoValue("LTC") * dbUser.Ltc:C2})");
+        if (dbUser.Xrp >= Constants.InvestmentMinAmount)
+            investments.AppendLine($"**XRP**: {dbUser.Xrp:0.####} ({await QueryCryptoValue("XRP") * dbUser.Xrp:C2})");
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -84,10 +84,10 @@ public class Investments : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Cryptocurrency Values")
-            .RRAddField("Bitcoin (BTC)", btc.ToString("C2"))
-            .RRAddField("Ethereum (ETH)", eth.ToString("C2"))
-            .RRAddField("Litecoin (LTC)", ltc.ToString("C2"))
-            .RRAddField("XRP", xrp.ToString("C2"));
+            .RrAddField("Bitcoin (BTC)", btc.ToString("C2"))
+            .RrAddField("Ethereum (ETH)", eth.ToString("C2"))
+            .RrAddField("Litecoin (LTC)", ltc.ToString("C2"))
+            .RrAddField("XRP", xrp.ToString("C2"));
         await ReplyAsync(embed: embed.Build());
     }
 
@@ -96,8 +96,8 @@ public class Investments : ModuleBase<SocketCommandContext>
     [Remarks("$withdraw ltc 10")]
     public async Task<RuntimeResult> Withdraw(string crypto, double amount)
     {
-        if (amount < Constants.INVESTMENT_MIN_AMOUNT || double.IsNaN(amount))
-            return CommandResult.FromError($"You must withdraw {Constants.INVESTMENT_MIN_AMOUNT} or more of the crypto.");
+        if (amount < Constants.InvestmentMinAmount || double.IsNaN(amount))
+            return CommandResult.FromError($"You must withdraw {Constants.InvestmentMinAmount} or more of the crypto.");
 
         string abbreviation = ResolveAbbreviation(crypto);
         if (abbreviation is null)
@@ -108,13 +108,13 @@ public class Investments : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
         double cryptoBal = (double)user[abbreviation];
-        if (cryptoBal < Constants.INVESTMENT_MIN_AMOUNT)
+        if (cryptoBal < Constants.InvestmentMinAmount)
             return CommandResult.FromError($"You have no {abbreviation}!");
         if (cryptoBal < amount)
             return CommandResult.FromError($"You don't have {amount} {abbreviation}! You've only got **{cryptoBal:0.####}** of it.");
 
         double cryptoValue = await QueryCryptoValue(abbreviation) * amount;
-        double finalValue = cryptoValue / 100.0 * (100 - Constants.INVESTMENT_FEE_PERCENT);
+        double finalValue = cryptoValue / 100.0 * (100 - Constants.InvestmentFeePercent);
 
         CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
         culture.NumberFormat.CurrencyNegativePattern = 2;
@@ -124,7 +124,7 @@ public class Investments : ModuleBase<SocketCommandContext>
         user.AddToStat($"Money Gained From {abbreviation}", finalValue.ToString("C2", culture));
 
         await Context.User.NotifyAsync(Context.Channel, $"You withdrew **{amount:0.####}** {abbreviation}, currently valued at **{cryptoValue:C2}**.\n" +
-            $"A {Constants.INVESTMENT_FEE_PERCENT}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
+            $"A {Constants.InvestmentFeePercent}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
         return CommandResult.FromSuccess();
     }
     #endregion

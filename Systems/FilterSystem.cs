@@ -1,7 +1,7 @@
 namespace RRBot.Systems;
 public static class FilterSystem
 {
-    public static readonly Dictionary<string, string[]> HOMOGLYPHS = new()
+    public static readonly Dictionary<string, string[]> Homoglyphs = new()
 	{
         { "-", new string[]{"\U000006d4", "\U00002cba", "\U0000fe58", "\U000002d7", "\U00002212", "\U00002796", "\U00002011", "\U00002043", "\U00002012", "\U00002013", "\U00002010"} },
         { ".", new string[]{"\U00000701", "\U00000660", "\U00002024", "\U000006f0", "\U0000a60e", "\U0000a4f8", "\U00000702", "\U00010a50", "\U0000ff0e", "\U0001d16d"} },
@@ -42,7 +42,7 @@ public static class FilterSystem
         { "y", new string[]{"\U0000ab5a", "\U00001eff", "\U00000443", "\U0000028f", "\U0001d606", "\U0000213d", "\U0001d772", "\U000004af", "\U000010e7", "\U0001d56a", "\U0001d4ce", "\U0001d6c4", "\U0001d63a", "\U0000ff59", "\U0001d66e", "\U0001d738", "\U00000263", "\U0001d7ac", "\U0001d502", "\U0001d466", "\U0001d6a2", "\U000003b3", "\U0001d536", "\U00001d8c", "\U0001d49a", "\U000118dc", "\U0001d432", "\U0001d59e", "\U0001d6fe", "\U0001d5d2"} },
         { "z", new string[]{"\U0001d49b", "\U0001d433", "\U0001d59f", "\U0001d63b", "\U0001d56b", "\U0001d607", "\U0001d537", "\U00001d22", "\U0001d4cf", "\U0000ab93", "\U0001d467", "\U0001d66f", "\U0001d6a3", "\U000118c4", "\U0001d503", "\U0001d5d3", "\U0000ff5a"} }
     };
-    private static readonly Regex INVITE_REGEX = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
+    private static readonly Regex InviteRegex = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
 
     public static async Task<bool> ContainsFilteredWord(IGuild guild, string input, DbConfigOptionals opt = null)
     {
@@ -67,7 +67,7 @@ public static class FilterSystem
         if (!optionals.InviteFilterEnabled || optionals.NoFilterChannels.Contains(message.Channel.Id))
             return;
 
-        foreach (Match match in INVITE_REGEX.Matches(message.Content).Cast<Match>())
+        foreach (Match match in InviteRegex.Matches(message.Content).Cast<Match>())
         {
             string inviteCode = match.Groups[1].Value;
             RestInviteMetadata invite = await client.GetInviteAsync(inviteCode);

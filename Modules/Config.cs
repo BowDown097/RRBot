@@ -45,7 +45,7 @@ public class Config : ModuleBase<SocketCommandContext>
     [Summary("Clear all configuration that has been set.")]
     public async Task ClearConfig()
     {
-        CollectionReference collection = Program.database.Collection($"servers/{Context.Guild.Id}/config");
+        CollectionReference collection = Program.Database.Collection($"servers/{Context.Guild.Id}/config");
         foreach (DocumentReference doc in collection.ListDocumentsAsync().ToEnumerable())
             await doc.DeleteAsync();
         await Context.User.NotifyAsync(Context.Channel, "All configuration cleared!");
@@ -64,7 +64,7 @@ public class Config : ModuleBase<SocketCommandContext>
     [Summary("List the current configuration that has been set for the bot.")]
     public async Task CurrentConfig()
     {
-        QuerySnapshot config = await Program.database.Collection($"servers/{Context.Guild.Id}/config").GetSnapshotAsync();
+        QuerySnapshot config = await Program.Database.Collection($"servers/{Context.Guild.Id}/config").GetSnapshotAsync();
         StringBuilder description = new();
         foreach (DocumentSnapshot entry in config.Documents)
         {
@@ -89,7 +89,7 @@ public class Config : ModuleBase<SocketCommandContext>
                     description.AppendLine(Pair("Filtered Words", string.Join(", ", optionals.FilteredWords)));
                     description.AppendLine($"Invite Filter Enabled: {optionals.InviteFilterEnabled}");
                     description.AppendLine(Pair("No Filter Channels", string.Join(", ", noFilter)));
-                    description.AppendLine($"NSFW Enabled: {optionals.NSFWEnabled}");
+                    description.AppendLine($"NSFW Enabled: {optionals.NsfwEnabled}");
                     description.AppendLine($"Scam Filter Enabled: {optionals.ScamFilterEnabled}");
                     break;
                 case "ranks":
@@ -102,7 +102,7 @@ public class Config : ModuleBase<SocketCommandContext>
                     break;
                 case "roles":
                     DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-                    SocketRole djRole = Context.Guild.GetRole(roles.DJRole);
+                    SocketRole djRole = Context.Guild.GetRole(roles.DjRole);
                     SocketRole staffLvl1Role = Context.Guild.GetRole(roles.StaffLvl1Role);
                     SocketRole staffLvl2Role = Context.Guild.GetRole(roles.StaffLvl2Role);
                     description.AppendLine($"DJ Role: {djRole?.ToString() ?? "(deleted role)"}");
@@ -215,9 +215,9 @@ public class Config : ModuleBase<SocketCommandContext>
         foreach (char c in word)
         {
             string cStr = c.ToString();
-            if (!FilterSystem.HOMOGLYPHS.ContainsKey(cStr))
+            if (!FilterSystem.Homoglyphs.ContainsKey(cStr))
                 return CommandResult.FromError($"Invalid character found in input: '{cStr}'.");
-            regexString.Append($"[{cStr}{string.Concat(FilterSystem.HOMOGLYPHS[cStr])}]");
+            regexString.Append($"[{cStr}{string.Concat(FilterSystem.Homoglyphs[cStr])}]");
         }
 
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
@@ -250,10 +250,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("setdjrole")]
     [Summary("Register the ID for the DJ role in your server so that some of the music commands work properly.")]
     [Remarks("$setdjrole 850827023982395413")]
-    public async Task SetDJRole([Remainder] IRole role)
+    public async Task SetDjRole([Remainder] IRole role)
     {
         DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-        roles.DJRole = role.Id;
+        roles.DjRole = role.Id;
         await Context.User.NotifyAsync(Context.Channel, $"Set {role} as the DJ role.");
     }
 
@@ -370,11 +370,11 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("togglensfw")]
     [Summary("Toggle the NSFW module.")]
-    public async Task ToggleNSFW()
+    public async Task ToggleNsfw()
     {
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
-        optionals.NSFWEnabled = !optionals.NSFWEnabled;
-        await Context.User.NotifyAsync(Context.Channel, $"Toggled NSFW enabled {(optionals.NSFWEnabled ? "ON" : "OFF")}.");
+        optionals.NsfwEnabled = !optionals.NsfwEnabled;
+        await Context.User.NotifyAsync(Context.Channel, $"Toggled NSFW enabled {(optionals.NsfwEnabled ? "ON" : "OFF")}.");
     }
 
     [Command("togglescamfilter")]

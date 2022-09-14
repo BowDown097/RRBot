@@ -27,7 +27,7 @@ public class DbConfigChannels : DbObject
         if (MemoryCache.Default.Contains($"chanconf-{guildId}"))
             return (DbConfigChannels)MemoryCache.Default.Get($"chanconf-{guildId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("channels");
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/config").Document("channels");
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

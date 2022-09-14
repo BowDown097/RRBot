@@ -2,7 +2,7 @@
 [Summary("Degenerates and retards with no significant other (and probably no friends either) unite!")]
 [RequireNsfwEnabled]
 [RequireNsfw]
-public class NSFW : ModuleBase<SocketCommandContext>
+public class Nsfw : ModuleBase<SocketCommandContext>
 {
     [Command("neko")]
     [Summary("Some good ol' neko hentai (sometimes just saucy lewds too).")]

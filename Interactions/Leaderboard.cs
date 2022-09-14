@@ -14,7 +14,7 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
 
         Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault();
         double cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
-        QuerySnapshot users = await Program.database.Collection($"servers/{Context.Guild.Id}/users")
+        QuerySnapshot users = await Program.Database.Collection($"servers/{Context.Guild.Id}/users")
             .OrderByDescending(currency).GetSnapshotAsync();
         StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
         int processedUsers = 0;
@@ -38,7 +38,7 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
             }
 
             double val = (double)dbUser[currency];
-            if (val < Constants.INVESTMENT_MIN_AMOUNT)
+            if (val < Constants.InvestmentMinAmount)
                 break;
 
             if (currency == "Cash")
@@ -70,7 +70,7 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
         }
 
         Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault();
-        QuerySnapshot gangs = await Program.database.Collection($"servers/{Context.Guild.Id}/gangs")
+        QuerySnapshot gangs = await Program.Database.Collection($"servers/{Context.Guild.Id}/gangs")
             .OrderByDescending("VaultBalance").GetSnapshotAsync();
         StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
         int processedGangs = 0;
@@ -80,7 +80,7 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
                 break;
 
             DbGang gang = await DbGang.GetByName(Context.Guild.Id, doc.Id, false);
-            if (gang.VaultBalance < Constants.INVESTMENT_MIN_AMOUNT)
+            if (gang.VaultBalance < Constants.InvestmentMinAmount)
                 break;
 
             lb.AppendLine($"{processedGangs + 1}: **{Format.Sanitize(gang.Name).Replace("\\:", ":").Replace("\\/", "/").Replace("\\.", ".")}**: {gang.VaultBalance:C2}");

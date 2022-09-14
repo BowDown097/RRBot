@@ -10,7 +10,7 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long BlackHatTime { get; set; }
     [FirestoreProperty]
-    public double BTC { get; set; }
+    public double Btc { get; set; }
     [FirestoreProperty]
     public long BullyCooldown { get; set; }
     [FirestoreProperty]
@@ -34,9 +34,9 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long DigCooldown { get; set; }
     [FirestoreProperty]
-    public bool DMNotifs { get; set; }
+    public bool DmNotifs { get; set; }
     [FirestoreProperty]
-    public double ETH { get; set; }
+    public double Eth { get; set; }
     [FirestoreProperty]
     public long FarmCooldown { get; set; }
     [FirestoreProperty]
@@ -56,7 +56,7 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long LootCooldown { get; set; }
     [FirestoreProperty]
-    public double LTC { get; set; }
+    public double Ltc { get; set; }
     [FirestoreProperty]
     public long MineCooldown { get; set; }
     [FirestoreProperty]
@@ -103,7 +103,7 @@ public class DbUser : DbObject
     [FirestoreProperty]
     public long WhoreCooldown { get; set; }
     [FirestoreProperty]
-    public double XRP { get; set; }
+    public double Xrp { get; set; }
     #endregion
 
     #region Methods
@@ -130,7 +130,7 @@ public class DbUser : DbObject
         if (useCache && MemoryCache.Default.Contains($"user-{guildId}-{userId}"))
             return (DbUser)MemoryCache.Default.Get($"user-{guildId}-{userId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/users").Document(userId.ToString());
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/users").Document(userId.ToString());
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {
@@ -182,7 +182,7 @@ public class DbUser : DbObject
             amount = 0;
 
         IGuildUser guildUser = user as IGuildUser;
-        amount = Math.Round(amount, 2) * Constants.CASH_MULTIPLIER;
+        amount = Math.Round(amount, 2) * Constants.CashMultiplier;
 
         double difference = amount - Cash;
         if (Prestige > 0 && difference > 0 && channel != null)
@@ -231,13 +231,13 @@ public class DbUser : DbObject
         if (Achievements.Any(kvp => kvp.Key.Equals(name, StringComparison.OrdinalIgnoreCase)))
             return;
 
-        Achievement ach = Array.Find(Constants.DEFAULT_ACHIEVEMENTS, ach => ach.name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        Achievements.Add(ach.name, ach.description);
-        string description = $"GG {user}, you unlocked an achievement.\n**{ach.name}**: {ach.description}";
-        if (ach.reward > 0)
+        Achievement ach = Array.Find(Constants.DefaultAchievements, ach => ach.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        Achievements.Add(ach.Name, ach.Description);
+        string description = $"GG {user}, you unlocked an achievement.\n**{ach.Name}**: {ach.Description}";
+        if (ach.Reward > 0)
         {
-            Cash += ach.reward;
-            description += $"\nReward: {ach.reward:C2}";
+            Cash += ach.Reward;
+            description += $"\nReward: {ach.Reward:C2}";
         }
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -246,7 +246,7 @@ public class DbUser : DbObject
             .WithDescription(description);
         await channel.SendMessageAsync(embed: embed.Build());
 
-        if (GamblingMultiplier == 1.0 && Constants.GAMBLING_ACHIEVEMENTS.All(a => Achievements.ContainsKey(a)))
+        if (GamblingMultiplier == 1.0 && Constants.GamblingAchievements.All(a => Achievements.ContainsKey(a)))
         {
             GamblingMultiplier = 1.1;
             await user.NotifyAsync(channel, "Congratulations! You've acquired every gambling achievement. Enjoy this **1.1x gambling multiplier**!");

@@ -29,7 +29,7 @@ public static class EmbedBuilderExt
         return builder;
     }
 
-    public static EmbedBuilder RRAddField(this EmbedBuilder builder, string name, object? value,
+    public static EmbedBuilder RrAddField(this EmbedBuilder builder, string name, object? value,
         bool inline = false, string defaultValue = "N/A")
     {
         string? valueStr = value?.ToString();

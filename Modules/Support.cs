@@ -53,11 +53,11 @@ public class Support : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle($"Support Ticket #{tickets + 1}")
-            .RRAddField("Issuer", Context.User.Mention)
-            .RRAddField("Helper", helperUser.Mention)
-            .RRAddField("Request", request);
+            .RrAddField("Issuer", Context.User.Mention)
+            .RrAddField("Helper", helperUser.Mention)
+            .RrAddField("Request", request);
 
-        IUserMessage userMessage = await ReplyAsync($"{helperUser.Mention}, someone needs some help!", embed: embed.Build(), allowedMentions: Constants.MENTIONS);
+        IUserMessage userMessage = await ReplyAsync($"{helperUser.Mention}, someone needs some help!", embed: embed.Build(), allowedMentions: Constants.Mentions);
         ticket.Helper = helperUser.Id;
         ticket.Issuer = Context.User.Id;
         ticket.Message = userMessage.Id;
@@ -69,7 +69,7 @@ public class Support : ModuleBase<SocketCommandContext>
     [Summary("Check the amount of currently open support tickets.")]
     public async Task Tickets()
     {
-        QuerySnapshot tickets = await Program.database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();
+        QuerySnapshot tickets = await Program.Database.Collection($"servers/{Context.Guild.Id}/supportTickets").GetSnapshotAsync();
         await Context.User.NotifyAsync(Context.Channel, tickets.Documents.Count == 1
             ? "There is currently 1 open support ticket."
             : $"There are currently {tickets.Documents.Count} open support tickets.");
@@ -90,8 +90,8 @@ public class Support : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle($"Support Ticket from {issuer}")
-            .RRAddField("Helper", helper.Mention)
-            .RRAddField("Request", ticket.Request);
+            .RrAddField("Helper", helper.Mention)
+            .RrAddField("Request", ticket.Request);
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
     }

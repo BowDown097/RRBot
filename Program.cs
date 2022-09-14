@@ -3,8 +3,8 @@
 namespace RRBot;
 internal static class Program
 {
-    public static FirestoreDb database = FirestoreDb.Create("rushrebornbot",
-        new FirestoreClientBuilder { CredentialsPath = Credentials.CREDENTIALS_PATH }.Build());
+    public static FirestoreDb Database = FirestoreDb.Create("rushrebornbot",
+        new FirestoreClientBuilder { CredentialsPath = Credentials.CredentialsPath }.Build());
 
     private static async Task Main()
     {
@@ -33,7 +33,7 @@ internal static class Program
             .AddSingleton(new InactivityTrackingOptions
             {
                 DisconnectDelay = TimeSpan.Zero,
-                PollInterval = TimeSpan.FromSeconds(Constants.POLL_INTERVAL_SECS),
+                PollInterval = TimeSpan.FromSeconds(Constants.PollIntervalSecs),
                 TrackInactivity = true
             })
             .AddSingleton<AudioSystem>()
@@ -42,16 +42,16 @@ internal static class Program
         CommandService commands = serviceProvider.GetRequiredService<CommandService>();
         commands.AddTypeReader<double>(new DoubleTypeReader());
         commands.AddTypeReader<IEmote>(new EmoteTypeReader());
-        commands.AddTypeReader<IGuildUser>(new RRGuildUserTypeReader());
-        commands.AddTypeReader<SocketGuildUser>(new RRGuildUserTypeReader());
+        commands.AddTypeReader<IGuildUser>(new RrGuildUserTypeReader());
+        commands.AddTypeReader<SocketGuildUser>(new RrGuildUserTypeReader());
         commands.AddTypeReader<string>(new SanitizedStringTypeReader());
         await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
         InteractionService interactions = serviceProvider.GetRequiredService<InteractionService>();
         await interactions.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
         new EventSystem(serviceProvider).SubscribeEvents();
 
-        await client.LoginAsync(TokenType.Bot, Credentials.TOKEN);
-        await client.SetGameAsync(Constants.ACTIVITY, type: Constants.ACTIVITY_TYPE);
+        await client.LoginAsync(TokenType.Bot, Credentials.Token);
+        await client.SetGameAsync(Constants.Activity, type: Constants.ActivityType);
         await client.StartAsync();
         await Task.Delay(-1);
     }

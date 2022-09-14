@@ -4,7 +4,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
 {
     [Command("buyvault")]
     [Summary("Buy a vault for your gang.")]
-    [RequireCash(Constants.GANG_VAULT_COST)]
+    [RequireCash(Constants.GangVaultCost)]
     public async Task<RuntimeResult> BuyVault()
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
@@ -18,25 +18,25 @@ public class Gangs : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("Your gang already has a vault!");
 
         gang.VaultUnlocked = true;
-        await user.SetCash(Context.User, user.Cash - Constants.GANG_VAULT_COST);
+        await user.SetCash(Context.User, user.Cash - Constants.GangVaultCost);
 
-        await Context.User.NotifyAsync(Context.Channel, $"Unlocked a vault for your gang for {Constants.GANG_VAULT_COST:C2}!");
+        await Context.User.NotifyAsync(Context.Channel, $"Unlocked a vault for your gang for {Constants.GangVaultCost:C2}!");
         return CommandResult.FromSuccess();
     }
 
     [Command("creategang")]
     [Summary("Create a gang.")]
     [Remarks("$creategang Vrilerinnen")]
-    [RequireCash(Constants.GANG_CREATION_COST)]
+    [RequireCash(Constants.GangCreationCost)]
     public async Task<RuntimeResult> CreateGang([Remainder] string name)
     {
-        QuerySnapshot gangs = await Program.database.Collection($"servers/{Context.Guild.Id}/gangs").GetSnapshotAsync();
+        QuerySnapshot gangs = await Program.Database.Collection($"servers/{Context.Guild.Id}/gangs").GetSnapshotAsync();
         if (name.Length <= 2 || name.Length > 32 || !Regex.IsMatch(name, "^[a-zA-Z0-9\x20]*$") || await FilterSystem.ContainsFilteredWord(Context.Guild, name))
             return CommandResult.FromError("That gang name is not allowed.");
         if (gangs.Any(r => r.Id.Equals(name, StringComparison.OrdinalIgnoreCase)))
             return CommandResult.FromError("There is already a gang with that name.");
-        if (gangs.Documents.Count == Constants.MAX_GANGS_PER_GUILD)
-            return CommandResult.FromError($"This server has reached the maximum of {Constants.MAX_GANGS_PER_GUILD} gangs.");
+        if (gangs.Documents.Count == Constants.MaxGangsPerGuild)
+            return CommandResult.FromError($"This server has reached the maximum of {Constants.MaxGangsPerGuild} gangs.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         if (!string.IsNullOrWhiteSpace(user.Gang))
@@ -44,13 +44,13 @@ public class Gangs : ModuleBase<SocketCommandContext>
         if (user.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         user.Gang = name;
-        await user.SetCash(Context.User, user.Cash - Constants.GANG_CREATION_COST);
+        await user.SetCash(Context.User, user.Cash - Constants.GangCreationCost);
 
         DbGang gang = await DbGang.GetByName(Context.Guild.Id, name);
         gang.Leader = Context.User.Id;
-        gang.Members.Add(Context.User.Id.ToString(), Constants.GANG_POSITIONS[0]);
+        gang.Members.Add(Context.User.Id.ToString(), Constants.GangPositions[0]);
 
-        await Context.User.NotifyAsync(Context.Channel, $"Created a gang with the name **{name}** for {Constants.GANG_CREATION_COST:C2}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Created a gang with the name **{name}** for {Constants.GangCreationCost:C2}.");
         return CommandResult.FromSuccess();
     }
 
@@ -59,8 +59,8 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Remarks("$deposit 6969.69")]
     public async Task<RuntimeResult> Deposit(double amount)
     {
-        if (amount < Constants.TRANSACTION_MIN || double.IsNaN(amount))
-            return CommandResult.FromError($"You need to deposit at least {Constants.TRANSACTION_MIN:C2}.");
+        if (amount < Constants.TransactionMin || double.IsNaN(amount))
+            return CommandResult.FromError($"You need to deposit at least {Constants.TransactionMin:C2}.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         if (string.IsNullOrWhiteSpace(user.Gang))
@@ -74,10 +74,10 @@ public class Gangs : ModuleBase<SocketCommandContext>
         if (!gang.VaultUnlocked)
             return CommandResult.FromError("Your gang does not have a vault!");
 
-        double finalAmount = amount / 100.0 * (100 - Constants.VAULT_TAX_PERCENT);
+        double finalAmount = amount / 100.0 * (100 - Constants.VaultTaxPercent);
         gang.VaultBalance += finalAmount;
         await user.SetCash(Context.User, user.Cash - amount);
-        await Context.User.NotifyAsync(Context.Channel, $"Deposited **{finalAmount:C2}** into your gang's vault ({Constants.VAULT_TAX_PERCENT}% tax).");
+        await Context.User.NotifyAsync(Context.Channel, $"Deposited **{finalAmount:C2}** into your gang's vault ({Constants.VaultTaxPercent}% tax).");
         return CommandResult.FromSuccess();
     }
 
@@ -120,7 +120,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
             name = user.Gang;
         }
 
-        QuerySnapshot gangs = await Program.database.Collection($"servers/{Context.Guild.Id}/gangs").GetSnapshotAsync();
+        QuerySnapshot gangs = await Program.Database.Collection($"servers/{Context.Guild.Id}/gangs").GetSnapshotAsync();
         if (!gangs.Any(r => r.Id.Equals(name, StringComparison.OrdinalIgnoreCase)))
             return CommandResult.FromError("There is no gang with that name.");
 
@@ -128,17 +128,17 @@ public class Gangs : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle(gang.Name)
-            .RRAddField("Leader", Context.Guild.GetUser(gang.Leader).Sanitize());
+            .RrAddField("Leader", Context.Guild.GetUser(gang.Leader).Sanitize());
 
-        foreach (string position in Constants.GANG_POSITIONS.Take(1..))
+        foreach (string position in Constants.GangPositions.Take(1..))
         {
             var posMems = gang.Members.Where(m => m.Value == position);
             IEnumerable<string> posMemNames = posMems.Select(m => Context.Guild.GetUser(Convert.ToUInt64(m.Key)).Sanitize());
-            embed.RRAddField($"{position}s", string.Join('\n', posMemNames));
+            embed.RrAddField($"{position}s", string.Join('\n', posMemNames));
         }
 
         if (gang.VaultBalance >= 0.01)
-            embed.RRAddField("Vault Balance", gang.VaultBalance.ToString("C2"));
+            embed.RrAddField("Vault Balance", gang.VaultBalance.ToString("C2"));
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
     }
@@ -147,7 +147,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Summary("Leaderboard for gang vaults.")]
     public async Task GangLb()
     {
-        QuerySnapshot gangs = await Program.database.Collection($"servers/{Context.Guild.Id}/gangs")
+        QuerySnapshot gangs = await Program.Database.Collection($"servers/{Context.Guild.Id}/gangs")
             .OrderByDescending("VaultBalance").GetSnapshotAsync();
         StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
         int processedGangs = 0;
@@ -157,7 +157,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
                 break;
 
             DbGang gang = await DbGang.GetByName(Context.Guild.Id, doc.Id, false);
-            if (gang.VaultBalance < Constants.INVESTMENT_MIN_AMOUNT)
+            if (gang.VaultBalance < Constants.InvestmentMinAmount)
                 break;
 
             lb.AppendLine($"{processedGangs + 1}: **{Format.Sanitize(gang.Name).Replace("\\:", ":").Replace("\\/", "/").Replace("\\.", ".")}**: {gang.VaultBalance:C2}");
@@ -194,10 +194,10 @@ public class Gangs : ModuleBase<SocketCommandContext>
         DbGang gang = await DbGang.GetByName(Context.Guild.Id, author.Gang);
         if (gang.IsPublic)
             return CommandResult.FromError("No need to invite people! Your gang is public!");
-        if (gang.Members.Count == Constants.GANG_MAX_MEMBERS)
-            return CommandResult.FromError($"Your gang has already reached the maximum of {Constants.GANG_MAX_MEMBERS} members.");
-        if (Array.IndexOf(Constants.GANG_POSITIONS, gang.Members[Context.User.Id.ToString()]) > 1)
-            return CommandResult.FromError($"You need to be a(n) {Constants.GANG_POSITIONS[1]} or higher in your gang.");
+        if (gang.Members.Count == Constants.GangMaxMembers)
+            return CommandResult.FromError($"Your gang has already reached the maximum of {Constants.GangMaxMembers} members.");
+        if (Array.IndexOf(Constants.GangPositions, gang.Members[Context.User.Id.ToString()]) > 1)
+            return CommandResult.FromError($"You need to be a(n) {Constants.GangPositions[1]} or higher in your gang.");
 
         target.PendingGangInvites.Add(gang.Name);
         await Context.User.NotifyAsync(Context.Channel, $"Invited **{user.Sanitize()}** to your gang.");
@@ -210,22 +210,22 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Remarks("$join Comedy Central")]
     public async Task<RuntimeResult> JoinGang([Remainder] string name)
     {
-        QuerySnapshot gangs = await Program.database.Collection($"servers/{Context.Guild.Id}/gangs").GetSnapshotAsync();
+        QuerySnapshot gangs = await Program.Database.Collection($"servers/{Context.Guild.Id}/gangs").GetSnapshotAsync();
         if (!gangs.Any(r => r.Id.Equals(name, StringComparison.OrdinalIgnoreCase)))
             return CommandResult.FromError("There is no gang with that name.");
 
         DbGang gang = await DbGang.GetByName(Context.Guild.Id, name);
-        if (gang.Members.Count == Constants.GANG_MAX_MEMBERS)
-            return CommandResult.FromError($"That gang has already reached the maximum of {Constants.GANG_MAX_MEMBERS} members.");
+        if (gang.Members.Count == Constants.GangMaxMembers)
+            return CommandResult.FromError($"That gang has already reached the maximum of {Constants.GangMaxMembers} members.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         if (!string.IsNullOrWhiteSpace(user.Gang))
             return CommandResult.FromError("You are already in a gang!");
 
         if (!gang.IsPublic && !user.PendingGangInvites.Contains(gang.Name))
-            return CommandResult.FromError($"That gang is private! You will need to be invited by a(n) {Constants.GANG_POSITIONS[1]} or above.");
+            return CommandResult.FromError($"That gang is private! You will need to be invited by a(n) {Constants.GangPositions[1]} or above.");
 
-        gang.Members[Context.User.Id.ToString()] = Constants.GANG_POSITIONS.Last();
+        gang.Members[Context.User.Id.ToString()] = Constants.GangPositions.Last();
         user.Gang = gang.Name;
         user.PendingGangInvites.Remove(gang.Name);
 
@@ -251,10 +251,10 @@ public class Gangs : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("They are not in your gang!");
 
         DbGang gang = await DbGang.GetByName(Context.Guild.Id, author.Gang);
-        int authorIndex = Array.IndexOf(Constants.GANG_POSITIONS, gang.Members[Context.User.Id.ToString()]);
-        int targetIndex = Array.IndexOf(Constants.GANG_POSITIONS, gang.Members[user.Id.ToString()]);
+        int authorIndex = Array.IndexOf(Constants.GangPositions, gang.Members[Context.User.Id.ToString()]);
+        int targetIndex = Array.IndexOf(Constants.GangPositions, gang.Members[user.Id.ToString()]);
         if (authorIndex > 1)
-            return CommandResult.FromError($"You need to be a(n) {Constants.GANG_POSITIONS[1]} or higher in your gang.");
+            return CommandResult.FromError($"You need to be a(n) {Constants.GangPositions[1]} or higher in your gang.");
         if (authorIndex > targetIndex)
             return CommandResult.FromError($"**{user.Sanitize()}** is in a higher position than you in your gang.");
 
@@ -294,10 +294,10 @@ public class Gangs : ModuleBase<SocketCommandContext>
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
 
-        string foundPosition = Array.Find(Constants.GANG_POSITIONS, p => p.Equals(position, StringComparison.OrdinalIgnoreCase));
+        string foundPosition = Array.Find(Constants.GangPositions, p => p.Equals(position, StringComparison.OrdinalIgnoreCase));
         if (foundPosition == null)
             return CommandResult.FromError("That is not a valid gang position!");
-        if (foundPosition == Constants.GANG_POSITIONS[0])
+        if (foundPosition == Constants.GangPositions[0])
             return CommandResult.FromError("Use $transferleadership.");
 
         DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
@@ -357,8 +357,8 @@ public class Gangs : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You are not the leader of your gang!");
 
         gang.Leader = user.Id;
-        gang.Members[Context.User.Id.ToString()] = Constants.GANG_POSITIONS.Last();
-        gang.Members[user.Id.ToString()] = Constants.GANG_POSITIONS[0];
+        gang.Members[Context.User.Id.ToString()] = Constants.GangPositions.Last();
+        gang.Members[user.Id.ToString()] = Constants.GangPositions[0];
 
         await Context.User.NotifyAsync(Context.Channel, $"Transferred leadership to **{user.Sanitize()}**.");
         return CommandResult.FromSuccess();
@@ -389,8 +389,8 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Remarks("$withdrawvault 1000000")]
     public async Task<RuntimeResult> WithdrawVault(double amount)
     {
-        if (amount < Constants.TRANSACTION_MIN || double.IsNaN(amount))
-            return CommandResult.FromError($"You need to deposit at least {Constants.TRANSACTION_MIN:C2}.");
+        if (amount < Constants.TransactionMin || double.IsNaN(amount))
+            return CommandResult.FromError($"You need to deposit at least {Constants.TransactionMin:C2}.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         if (string.IsNullOrWhiteSpace(user.Gang))

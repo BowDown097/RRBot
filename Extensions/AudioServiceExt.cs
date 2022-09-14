@@ -1,7 +1,7 @@
 namespace RRBot.Extensions;
 public static class AudioServiceExt
 {
-    public static async Task<LavalinkTrack> GetYTTrackAsync(this IAudioService service, Uri uri, SocketGuild guild, IUser requester)
+    public static async Task<LavalinkTrack> GetYtTrackAsync(this IAudioService service, Uri uri, SocketGuild guild, IUser requester)
     {
         using HttpClient client = new();
         var ctx = new
@@ -29,17 +29,17 @@ public static class AudioServiceExt
         if (JObject.Parse(response)["playabilityStatus"]?["reason"]?.ToString() == "Sign in to confirm your age")
         {
             DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
-            if (!optionals.NSFWEnabled)
+            if (!optionals.NsfwEnabled)
                 return new("restricted", "", TimeSpan.Zero, false, false, "", "", "", StreamProvider.Unknown);
-            return await service.YTDLPGetTrackAsync(uri, requester);
+            return await service.YtdlpGetTrackAsync(uri, requester);
         }
         else
         {
-            return await service.RRGetTrackAsync(uri.ToString(), requester, SearchMode.YouTube);
+            return await service.RrGetTrackAsync(uri.ToString(), requester, SearchMode.YouTube);
         }
     }
 
-    public static async Task<LavalinkTrack> RRGetTrackAsync(this IAudioService service, string query, IUser requester, SearchMode mode = SearchMode.None)
+    public static async Task<LavalinkTrack> RrGetTrackAsync(this IAudioService service, string query, IUser requester, SearchMode mode = SearchMode.None)
     {
         LavalinkTrack track = await service.GetTrackAsync(query, mode);
         if (track != null)
@@ -47,7 +47,7 @@ public static class AudioServiceExt
         return track;
     }
 
-    public static async Task<LavalinkTrack> YTDLPGetTrackAsync(this IAudioService service, Uri uri, IUser requester)
+    public static async Task<LavalinkTrack> YtdlpGetTrackAsync(this IAudioService service, Uri uri, IUser requester)
     {
         using Process proc = new();
         proc.StartInfo.FileName = new FileInfo("yt-dlp").GetFullPath();

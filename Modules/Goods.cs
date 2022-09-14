@@ -35,7 +35,7 @@ public class Goods : ModuleBase<SocketCommandContext>
         {
             await Context.User.NotifyAsync(Context.Channel, "Here's a Daily crate, my good man! Best of luck.");
             DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-            await user.SetCooldown("DailyCooldown", Constants.DAILY_COOLDOWN, Context.Guild, Context.User);
+            await user.SetCooldown("DailyCooldown", Constants.DailyCooldown, Context.Guild, Context.User);
         }
 
         return result;
@@ -225,9 +225,9 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Summary("Check out what's available for purchase in the shop.")]
     public async Task Shop()
     {
-        string crates = string.Join('\n', ItemSystem.crates.Where(c => c.Name != "Daily").Select(c => $"**{c}**: {c.Price:C2}"));
-        string perks = string.Join('\n', ItemSystem.perks.Select(p => $"**{p}**: {p.Description}\nDuration: {TimeSpan.FromSeconds(p.Duration).FormatCompound()}\nPrice: {p.Price:C2}"));
-        string tools = string.Join('\n', ItemSystem.tools.Select(t => $"**{t}**: {t.Price:C2}"));
+        string crates = string.Join('\n', ItemSystem.Crates.Where(c => c.Name != "Daily").Select(c => $"**{c}**: {c.Price:C2}"));
+        string perks = string.Join('\n', ItemSystem.Perks.Select(p => $"**{p}**: {p.Description}\nDuration: {TimeSpan.FromSeconds(p.Duration).FormatCompound()}\nPrice: {p.Price:C2}"));
+        string tools = string.Join('\n', ItemSystem.Tools.Select(t => $"**{t}**: {t.Price:C2}"));
 
         PageBuilder[] pages = new[]
         {
@@ -272,7 +272,7 @@ public class Goods : ModuleBase<SocketCommandContext>
                 await GenericUse(con, user, Context,
                     "Oh yeah. Hacker mode activated. 10% greater $hack chance.",
                     "Dammit! The feds caught onto you! You were fined **{0:C2}**.",
-                    "BlackHatTime", Constants.BLACK_HAT_DURATION, 1.5, 3);
+                    "BlackHatTime", Constants.BlackHatDuration, 1.5, 3);
                 break;
             case "Cocaine":
                 if (RandomUtil.Next(6 - user.UsedConsumables.GetValueOrDefault("Cocaine")) == 1)
@@ -287,26 +287,26 @@ public class Goods : ModuleBase<SocketCommandContext>
                 }
 
                 await Context.User.NotifyAsync(Context.Channel, "​PHEW WEE! That nose candy is already making you feel hyped as FUCK! Your cooldowns have been reduced by a solid 10%.");
-                foreach (string cmd in Economy.CMDS_WITH_COOLDOWN)
+                foreach (string cmd in Economy.CmdsWithCooldown)
                 {
                     long cooldownSecs = (long)user[$"{cmd}Cooldown"] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                     if (cooldownSecs > 0)
                         user[$"{cmd}Cooldown"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)(cooldownSecs * 0.90));
                 }
 
-                user.CocaineTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.COCAINE_DURATION);
+                user.CocaineTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.CocaineDuration);
                 break;
             case "Romanian Flag":
                 await GenericUse(con, user, Context,
                     "Hell yeah! Wear that flag with pride! You've now got a 10% higher chance to rob people.",
                     "Those damn gyppos caught onto you! **{0:C2}** was yoinked from you and you lost all of your flags.",
-                    "RomanianFlagTime", Constants.ROMANIAN_FLAG_DURATION);
+                    "RomanianFlagTime", Constants.RomanianFlagDuration);
                 break;
             case "Viagra":
                 await GenericUse(con, user, Context,
                     "Zoo wee mama! Your blood is rushing so much you can feel it. You're now 10% more likely for a rape to land.",
                     "Dammit bro! The pill backfired and now you've got ED! You had to pay **{0:C2}** to get that shit fixed.",
-                    "ViagraTime", Constants.VIAGRA_DURATION);
+                    "ViagraTime", Constants.ViagraDuration);
                 break;
         }
 

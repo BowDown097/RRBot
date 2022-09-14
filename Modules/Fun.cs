@@ -2,7 +2,7 @@ namespace RRBot.Modules;
 [Summary("Commands that don't do anything related to the bot's systems: they just exist for fun (hence the name).")]
 public class Fun : ModuleBase<SocketCommandContext>
 {
-    private static readonly BoardPos[] adjacents = { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
+    private static readonly BoardPos[] Adjacents = { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
 
     #region Commands
     [Alias("gato", "kitty")]
@@ -129,7 +129,7 @@ public class Fun : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("The Magic Conch Shell says...")
-            .WithImageUrl(Constants.MAGIC_CONCH_IMAGES[RandomUtil.Next(Constants.MAGIC_CONCH_IMAGES.Length)]);
+            .WithImageUrl(Constants.MagicConchImages[RandomUtil.Next(Constants.MagicConchImages.Length)]);
         await ReplyAsync(embed: embed.Build());
     }
     #pragma warning restore IDE0060, RCS1163
@@ -148,7 +148,7 @@ public class Fun : ModuleBase<SocketCommandContext>
         {
             for (int y = 0; y < board.GetLength(1); y++)
             {
-                string tile = board[x, y] == -1 ? "💥" : Constants.POLL_EMOTES[board[x, y]];
+                string tile = board[x, y] == -1 ? "💥" : Constants.PollEmotes[board[x, y]];
                 boardBuilder.Append($"||{tile}||");
             }
 
@@ -237,12 +237,12 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Summary("Get yourself a random waifu from our vast and sexy collection of scrumptious waifus.")]
     public async Task Waifu()
     {
-        string waifu = Constants.WAIFUS.Keys.ElementAt(RandomUtil.Next(Constants.WAIFUS.Count));
+        string waifu = Constants.Waifus.Keys.ElementAt(RandomUtil.Next(Constants.Waifus.Count));
         EmbedBuilder waifuEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Say hello to your new waifu!")
             .WithDescription($"Your waifu is **{waifu}**.")
-            .WithImageUrl(Constants.WAIFUS[waifu]);
+            .WithImageUrl(Constants.Waifus[waifu]);
         await ReplyAsync(embed: waifuEmbed.Build());
     }
     #endregion
@@ -264,20 +264,20 @@ public class Fun : ModuleBase<SocketCommandContext>
         while (mines.Count < totalMines)
         {
             BoardPos pos = (RandomUtil.Next(8), RandomUtil.Next(8));
-            if (pos != BoardPos.ORIGIN && board[pos.x, pos.y] != -1)
+            if (pos != BoardPos.Origin && board[pos.X, pos.Y] != -1)
             {
-                board[pos.x, pos.y] = -1;
+                board[pos.X, pos.Y] = -1;
                 mines.Add(pos);
             }
         }
 
         foreach (BoardPos mine in mines)
         {
-            foreach (BoardPos adjacent in adjacents.Select(adj => mine + adj))
+            foreach (BoardPos adjacent in Adjacents.Select(adj => mine + adj))
             {
-                if (adjacent.x < 0 || adjacent.x >= 8 || adjacent.y < 0 || adjacent.y >= 8 || board[adjacent.x, adjacent.y] == -1)
+                if (adjacent.X < 0 || adjacent.X >= 8 || adjacent.Y < 0 || adjacent.Y >= 8 || board[adjacent.X, adjacent.Y] == -1)
                     continue;
-                board[adjacent.x, adjacent.y]++;
+                board[adjacent.X, adjacent.Y]++;
             }
         }
 

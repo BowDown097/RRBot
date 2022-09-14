@@ -6,7 +6,7 @@ public class DbConfigRoles : DbObject
     [FirestoreDocumentId]
     public override DocumentReference Reference { get; set; }
     [FirestoreProperty]
-    public ulong DJRole { get; set; }
+    public ulong DjRole { get; set; }
     [FirestoreProperty]
     public ulong StaffLvl1Role { get; set; }
     [FirestoreProperty]
@@ -19,7 +19,7 @@ public class DbConfigRoles : DbObject
         if (MemoryCache.Default.Contains($"roleconf-{guildId}"))
             return (DbConfigRoles)MemoryCache.Default.Get($"roleconf-{guildId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("roles");
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/config").Document("roles");
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

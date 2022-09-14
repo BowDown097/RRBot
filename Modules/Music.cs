@@ -7,18 +7,18 @@ public class Music : ModuleBase<SocketCommandContext>
     [Command("dequeue")]
     [Summary("Dequeue all tracks with a specific name.")]
     [Remarks("$dequeue kiminosei")]
-    [RequireDJ]
+    [RequireDj]
     public async Task<RuntimeResult> Dequeue([Remainder] string name) => await AudioSystem.DequeueAllWithNameAsync(Context, name);
 
     [Alias("fs")]
     [Command("forceskip")]
     [Summary("Skip the current playing track, ignoring the voting process.")]
-    [RequireDJ]
+    [RequireDj]
     public async Task<RuntimeResult> ForceSkip() => await AudioSystem.SkipTrackAsync(Context);
 
     [Command("loop")]
     [Summary("Toggle looping.")]
-    [RequireDJ]
+    [RequireDj]
     public async Task<RuntimeResult> Loop() => await AudioSystem.LoopAsync(Context);
 
     [Alias("np", "playing")]
@@ -39,12 +39,12 @@ public class Music : ModuleBase<SocketCommandContext>
     [Command("seek")]
     [Summary("Seek to a position in the currently playing track.")]
     [Remarks("$seek 34:32")]
-    [RequireDJ]
+    [RequireDj]
     public async Task<RuntimeResult> Seek(string pos) => await AudioSystem.SeekAsync(Context, pos);
 
     [Command("shuffle")]
     [Summary("Shuffle the queue.")]
-    [RequireDJ]
+    [RequireDj]
     public async Task<RuntimeResult> Shuffle() => await AudioSystem.ShuffleAsync(Context);
 
     [Alias("voteskip", "vs")]
@@ -54,12 +54,12 @@ public class Music : ModuleBase<SocketCommandContext>
 
     [Command("stop")]
     [Summary("Stop playing entirely.")]
-    [RequireDJ]
+    [RequireDj]
     public async Task<RuntimeResult> Stop() => await AudioSystem.StopAsync(Context);
 
     [Command("volume")]
     [Summary("Change the volume of the currently playing track (must be between 5% and 200%).")]
     [Remarks("$volume 200")]
-    [RequireDJ]
+    [RequireDj]
     public async Task<RuntimeResult> Volume(float volume) => await AudioSystem.ChangeVolumeAsync(Context, volume);
 }

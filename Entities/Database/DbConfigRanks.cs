@@ -17,7 +17,7 @@ public class DbConfigRanks : DbObject
         if (MemoryCache.Default.Contains($"rankconf-{guildId}"))
             return (DbConfigRanks)MemoryCache.Default.Get($"rankconf-{guildId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("ranks");
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/config").Document("ranks");
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

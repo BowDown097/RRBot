@@ -19,7 +19,7 @@ public class DbConfigSelfRoles : DbObject
         if (MemoryCache.Default.Contains($"selfroleconf-{guildId}"))
             return (DbConfigSelfRoles)MemoryCache.Default.Get($"selfroleconf-{guildId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/config").Document("selfroles");
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/config").Document("selfroles");
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

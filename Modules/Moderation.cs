@@ -61,10 +61,10 @@ public class Moderation : ModuleBase<SocketCommandContext>
         Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, "Chilled the chat", "");
         if (resolved.Item1 == TimeSpan.Zero)
             return CommandResult.FromError("You specified an invalid amount of time!");
-        if (resolved.Item1.TotalSeconds < Constants.CHILL_MIN_SECONDS)
-            return CommandResult.FromError($"You cannot chill the chat for less than {Constants.CHILL_MIN_SECONDS} seconds.");
-        if (resolved.Item1.TotalSeconds > Constants.CHILL_MAX_SECONDS)
-            return CommandResult.FromError($"You cannot chill the chat for more than {Constants.CHILL_MAX_SECONDS} seconds.");
+        if (resolved.Item1.TotalSeconds < Constants.ChillMinSeconds)
+            return CommandResult.FromError($"You cannot chill the chat for less than {Constants.ChillMinSeconds} seconds.");
+        if (resolved.Item1.TotalSeconds > Constants.ChillMaxSeconds)
+            return CommandResult.FromError($"You cannot chill the chat for more than {Constants.ChillMaxSeconds} seconds.");
 
         SocketTextChannel channel = Context.Channel as SocketTextChannel;
         OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;

@@ -18,15 +18,15 @@ public class Crate : Item
     {
         List<Item> items = new();
         for (int i = 0; i < ConsumableCount; i++)
-            items.Add(ItemSystem.consumables[RandomUtil.Next(ItemSystem.consumables.Length)]);
+            items.Add(ItemSystem.Consumables[RandomUtil.Next(ItemSystem.Consumables.Length)]);
         for (int i = 0; i < ToolCount; i++)
-            items.Add(ItemSystem.tools.Where(t => !items.Contains(t)).ElementAt(RandomUtil.Next(ItemSystem.tools.Length)));
+            items.Add(ItemSystem.Tools.Where(t => !items.Contains(t)).ElementAt(RandomUtil.Next(ItemSystem.Tools.Length)));
 
         foreach (Item item in items.ToList().Where(i => user.Tools.Contains(i.Name)))
         {
             items.Remove(item);
             for (int i = 0; i < 3; i++)
-                items.Add(ItemSystem.consumables[RandomUtil.Next(ItemSystem.consumables.Length)]);
+                items.Add(ItemSystem.Consumables[RandomUtil.Next(ItemSystem.Consumables.Length)]);
         }
 
         return items;

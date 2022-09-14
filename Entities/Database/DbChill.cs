@@ -15,7 +15,7 @@ public class DbChill : DbObject
         if (MemoryCache.Default.Contains($"chill-{guildId}-{channelId}"))
             return (DbChill)MemoryCache.Default.Get($"chill-{guildId}-{channelId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/chills").Document(channelId.ToString());
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/chills").Document(channelId.ToString());
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

@@ -106,7 +106,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     public async Task ResetCooldowns([Remainder] IGuildUser user)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-        foreach (string cmd in Economy.CMDS_WITH_COOLDOWN)
+        foreach (string cmd in Economy.CmdsWithCooldown)
             dbUser[$"{cmd}Cooldown"] = 0;
         await Context.User.NotifyAsync(Context.Channel, $"Reset **{user.Sanitize()}**'s cooldowns.");
     }
@@ -138,7 +138,7 @@ public class Administration : ModuleBase<SocketCommandContext>
             catch (NullReferenceException) {}
         }
 
-        QuerySnapshot users = await Program.database.Collection($"servers/{Context.Guild.Id}/users").GetSnapshotAsync();
+        QuerySnapshot users = await Program.Database.Collection($"servers/{Context.Guild.Id}/users").GetSnapshotAsync();
         foreach (DocumentSnapshot document in users.Documents)
             await document.Reference.DeleteAsync();
 
@@ -158,7 +158,7 @@ public class Administration : ModuleBase<SocketCommandContext>
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
         await dbUser.SetCash(user, amount);
-        await ReplyAsync($"Set **{user.Sanitize()}**'s cash to **{amount:C2}**.", allowedMentions: Constants.MENTIONS);
+        await ReplyAsync($"Set **{user.Sanitize()}**'s cash to **{amount:C2}**.", allowedMentions: Constants.Mentions);
         return CommandResult.FromSuccess();
     }
 
@@ -184,7 +184,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$setprestige Justin 10")]
     public async Task<RuntimeResult> SetPrestige(IGuildUser user, int level)
     {
-        if (level < 0 || level > Constants.MAX_PRESTIGE)
+        if (level < 0 || level > Constants.MaxPrestige)
             return CommandResult.FromError("Invalid prestige level!");
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
@@ -209,7 +209,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     [RequireServerOwner]
     public async Task<RuntimeResult> SetVotes(int electionId, IGuildUser user, int votes)
     {
-        QuerySnapshot elections = await Program.database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
+        QuerySnapshot elections = await Program.Database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
         if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && !elections.Any(r => r.Id == electionId.ToString()))
             return CommandResult.FromError("There is no election with that ID!");
 

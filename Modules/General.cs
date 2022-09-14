@@ -42,11 +42,11 @@ public class General : ModuleBase<SocketCommandContext>
         if (commandInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
         {
             DbConfigOptionals modules = await DbConfigOptionals.GetById(Context.Guild.Id);
-            if (!modules.NSFWEnabled)
+            if (!modules.NsfwEnabled)
                 return CommandResult.FromError("NSFW commands are disabled!");
         }
         if (commandInfo.TryGetPrecondition<RequireRushRebornAttribute>()
-            && !(Context.Guild.Id is RequireRushRebornAttribute.RR_MAIN or RequireRushRebornAttribute.RR_TEST))
+            && !(Context.Guild.Id is RequireRushRebornAttribute.RrMain or RequireRushRebornAttribute.RrTest))
         {
             return CommandResult.FromError("You have specified a nonexistent command!");
         }
@@ -56,7 +56,7 @@ public class General : ModuleBase<SocketCommandContext>
             preconditions.AppendLine("Requires not having the Pacifist perk equipped");
         if (commandInfo.TryGetPrecondition<RequireCashAttribute>())
             preconditions.AppendLine("Requires any amount of cash");
-        if (commandInfo.TryGetPrecondition<RequireDJAttribute>())
+        if (commandInfo.TryGetPrecondition<RequireDjAttribute>())
             preconditions.AppendLine("Requires DJ");
         if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>())
             preconditions.AppendLine("Must be in NSFW channel");
@@ -66,27 +66,27 @@ public class General : ModuleBase<SocketCommandContext>
             preconditions.AppendLine("Exclusive to Rush Reborn");
         if (commandInfo.TryGetPrecondition<RequirePerkAttribute>())
             preconditions.AppendLine("Requires a perk");
-        if (commandInfo.TryGetPrecondition(out RequireRankLevelAttribute rRL))
-            preconditions.AppendLine($"Requires rank level {rRL.RankLevel}");
+        if (commandInfo.TryGetPrecondition(out RequireRankLevelAttribute rankLevelAttr))
+            preconditions.AppendLine($"Requires rank level {rankLevelAttr.RankLevel}");
         if (commandInfo.TryGetPrecondition<RequireServerOwnerAttribute>())
             preconditions.AppendLine("Requires Server Owner");
         if (commandInfo.TryGetPrecondition<RequireStaffAttribute>())
             preconditions.AppendLine("Requires Staff");
-        if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute rBIC))
-            preconditions.AppendLine($"Must be in #{rBIC.Name}");
-        if (commandInfo.TryGetPrecondition(out RequireToolAttribute ri))
-            preconditions.AppendLine(string.IsNullOrEmpty(ri.ToolType) ? "Requires a tool" : $"Requires {ri.ToolType}");
-        if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute rUP))
-            preconditions.AppendLine($"Requires {Enum.GetName(rUP.GuildPermission.GetValueOrDefault())} permission");
+        if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute requireChannelAttr))
+            preconditions.AppendLine($"Must be in #{requireChannelAttr.Name}");
+        if (commandInfo.TryGetPrecondition(out RequireToolAttribute requireToolAttr))
+            preconditions.AppendLine(string.IsNullOrEmpty(requireToolAttr.ToolType) ? "Requires a tool" : $"Requires {requireToolAttr.ToolType}");
+        if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute requirePermAttr))
+            preconditions.AppendLine($"Requires {Enum.GetName(requirePermAttr.GuildPermission.GetValueOrDefault())} permission");
 
         EmbedBuilder commandEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithDescription($"**{command.ToTitleCase()}**")
-            .RRAddField("Description", commandInfo.Summary)
-            .RRAddField("Usage", commandInfo.GetUsage())
-            .RRAddField("Example", commandInfo.Remarks)
-            .RRAddField("Aliases", string.Join(", ", commandInfo.Aliases.Where(a => a != commandInfo.Name)))
-            .RRAddField("Preconditions", preconditions);
+            .RrAddField("Description", commandInfo.Summary)
+            .RrAddField("Usage", commandInfo.GetUsage())
+            .RrAddField("Example", commandInfo.Remarks)
+            .RrAddField("Aliases", string.Join(", ", commandInfo.Aliases.Where(a => a != commandInfo.Name)))
+            .RrAddField("Preconditions", preconditions);
         await ReplyAsync(embed: commandEmbed.Build());
         return CommandResult.FromSuccess();
     }
@@ -103,7 +103,7 @@ public class General : ModuleBase<SocketCommandContext>
         if (moduleInfo.Name == "NSFW")
         {
             DbConfigOptionals modules = await DbConfigOptionals.GetById(Context.Guild.Id);
-            if (!modules.NSFWEnabled)
+            if (!modules.NsfwEnabled)
                 return CommandResult.FromError("NSFW commands are disabled!");
         }
         if (moduleInfo.Name == "Support")
@@ -114,8 +114,8 @@ public class General : ModuleBase<SocketCommandContext>
         EmbedBuilder moduleEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithDescription($"**{module.ToTitleCase()}**")
-            .RRAddField("Available commands", string.Join(", ", moduleInfo.Commands.Select(x => x.Name)))
-            .RRAddField("Description", moduleInfo.Summary);
+            .RrAddField("Available commands", string.Join(", ", moduleInfo.Commands.Select(x => x.Name)))
+            .RrAddField("Description", moduleInfo.Summary);
         await ReplyAsync(embed: moduleEmbed.Build());
         return CommandResult.FromSuccess();
     }
@@ -125,7 +125,7 @@ public class General : ModuleBase<SocketCommandContext>
     public async Task Modules()
     {
         List<string> modulesList = Commands.Modules.Select(x => x.Name).ToList();
-        if (!(Context.Guild.Id is RequireRushRebornAttribute.RR_MAIN or RequireRushRebornAttribute.RR_TEST))
+        if (!(Context.Guild.Id is RequireRushRebornAttribute.RrMain or RequireRushRebornAttribute.RrTest))
         {
             modulesList.Remove("Support");
         }
@@ -151,27 +151,27 @@ public class General : ModuleBase<SocketCommandContext>
             .WithColor(Color.Red)
             .WithDescription("**Server Info**")
             .WithThumbnailUrl(Context.Guild.IconUrl)
-            .RRAddField("Banner", !string.IsNullOrWhiteSpace(banner) ? $"[Here]({banner})" : "N/A", true)
-            .RRAddField("Discovery Splash", !string.IsNullOrWhiteSpace(discovery) ? $"[Here]({discovery})" : "N/A", true)
-            .RRAddField("Icon", !string.IsNullOrWhiteSpace(icon) ? $"[Here]({icon})" : "N/A", true)
-            .RRAddField("Invite Splash", !string.IsNullOrWhiteSpace(invSplash) ? $"[Here]({invSplash})" : "N/A", true)
+            .RrAddField("Banner", !string.IsNullOrWhiteSpace(banner) ? $"[Here]({banner})" : "N/A", true)
+            .RrAddField("Discovery Splash", !string.IsNullOrWhiteSpace(discovery) ? $"[Here]({discovery})" : "N/A", true)
+            .RrAddField("Icon", !string.IsNullOrWhiteSpace(icon) ? $"[Here]({icon})" : "N/A", true)
+            .RrAddField("Invite Splash", !string.IsNullOrWhiteSpace(invSplash) ? $"[Here]({invSplash})" : "N/A", true)
             .AddSeparatorField()
-            .RRAddField("Categories", Context.Guild.CategoryChannels.Count, true)
-            .RRAddField("Text Channels", Context.Guild.TextChannels.Count, true)
-            .RRAddField("Voice Channels", Context.Guild.VoiceChannels.Count, true)
+            .RrAddField("Categories", Context.Guild.CategoryChannels.Count, true)
+            .RrAddField("Text Channels", Context.Guild.TextChannels.Count, true)
+            .RrAddField("Voice Channels", Context.Guild.VoiceChannels.Count, true)
             .AddSeparatorField()
-            .RRAddField("Boosts", Context.Guild.PremiumSubscriptionCount, true)
-            .RRAddField("Emotes", Context.Guild.Emotes.Count, true)
-            .RRAddField("Members", Context.Guild.MemberCount, true)
-            .RRAddField("Roles", Context.Guild.Roles.Count, true)
-            .RRAddField("Stickers", Context.Guild.Stickers.Count, true)
-            .RRAddField("Upload Limit", $"{Context.Guild.MaxUploadLimit/1000000} MB", true)
+            .RrAddField("Boosts", Context.Guild.PremiumSubscriptionCount, true)
+            .RrAddField("Emotes", Context.Guild.Emotes.Count, true)
+            .RrAddField("Members", Context.Guild.MemberCount, true)
+            .RrAddField("Roles", Context.Guild.Roles.Count, true)
+            .RrAddField("Stickers", Context.Guild.Stickers.Count, true)
+            .RrAddField("Upload Limit", $"{Context.Guild.MaxUploadLimit/1000000} MB", true)
             .AddSeparatorField()
-            .RRAddField("Created At", Context.Guild.CreatedAt)
-            .RRAddField("Description", Context.Guild.Description)
-            .RRAddField("ID", Context.Guild.Id)
-            .RRAddField("Owner", Context.Guild.Owner)
-            .RRAddField("Vanity URL", Context.Guild.VanityURLCode);
+            .RrAddField("Created At", Context.Guild.CreatedAt)
+            .RrAddField("Description", Context.Guild.Description)
+            .RrAddField("ID", Context.Guild.Id)
+            .RrAddField("Owner", Context.Guild.Owner)
+            .RrAddField("Vanity URL", Context.Guild.VanityURLCode);
 
         await ReplyAsync(embed: embed.Build());
     }
@@ -214,14 +214,14 @@ public class General : ModuleBase<SocketCommandContext>
             .WithColor(Color.Red)
             .WithDescription("**User Info**")
             .WithThumbnailUrl(user.GetAvatarUrl())
-            .RRAddField("ID", user.Id, true)
-            .RRAddField("Nickname", user.Nickname, true)
+            .RrAddField("ID", user.Id, true)
+            .RrAddField("Nickname", user.Nickname, true)
             .AddSeparatorField()
-            .RRAddField("Joined At", user.JoinedAt.Value, true)
-            .RRAddField("Created At", user.CreatedAt, true)
+            .RrAddField("Joined At", user.JoinedAt.Value, true)
+            .RrAddField("Created At", user.CreatedAt, true)
             .AddSeparatorField()
-            .RRAddField("Permissions", string.Join(", ", perms.Where(p => p != null)))
-            .RRAddField("Roles", string.Join(" ", user.Roles.Select(r => r.Mention)));
+            .RrAddField("Permissions", string.Join(", ", perms.Where(p => p != null)))
+            .RrAddField("Roles", string.Join(" ", user.Roles.Select(r => r.Mention)));
 
         await ReplyAsync(embed: embed.Build());
     }

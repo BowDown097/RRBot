@@ -2,7 +2,7 @@ namespace RRBot.TypeReaders;
 /// <summary>
 ///     A <see cref="UserTypeReader"/>, but StartsWith is used instead of Equals for usernames/nicknames
 /// </summary>
-public class RRGuildUserTypeReader : TypeReader
+public class RrGuildUserTypeReader : TypeReader
 {
     /// <inheritdoc />
     public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)

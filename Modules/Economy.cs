@@ -2,7 +2,7 @@
 [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
 public class Economy : ModuleBase<SocketCommandContext>
 {
-    public static readonly string[] CMDS_WITH_COOLDOWN = { "Deal", "Loot", "Rape", "Rob", "Scavenge",
+    public static readonly string[] CmdsWithCooldown = { "Deal", "Loot", "Rape", "Rob", "Scavenge",
         "Slavery", "Whore", "Bully",  "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack",
         "Daily", "Prestige" };
 
@@ -33,7 +33,7 @@ public class Economy : ModuleBase<SocketCommandContext>
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
         StringBuilder description = new();
 
-        foreach (string cmd in CMDS_WITH_COOLDOWN)
+        foreach (string cmd in CmdsWithCooldown)
         {
             long cooldownSecs = (long)dbUser[$"{cmd}Cooldown"] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (cooldownSecs > 0)
@@ -58,7 +58,7 @@ public class Economy : ModuleBase<SocketCommandContext>
             return CommandResult.FromError($"**{currency}** is not a currently accepted currency!");
 
         double cryptoValue = cUp != "Cash" ? await Investments.QueryCryptoValue(cUp) : 0;
-        QuerySnapshot users = await Program.database.Collection($"servers/{Context.Guild.Id}/users")
+        QuerySnapshot users = await Program.Database.Collection($"servers/{Context.Guild.Id}/users")
             .OrderByDescending(cUp).GetSnapshotAsync();
         StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
         int processedUsers = 0, failedUsers = 0;
@@ -82,7 +82,7 @@ public class Economy : ModuleBase<SocketCommandContext>
             }
 
             double val = (double)user[cUp];
-            if (val < Constants.INVESTMENT_MIN_AMOUNT)
+            if (val < Constants.InvestmentMinAmount)
                 break;
 
             if (cUp == "Cash")
@@ -118,14 +118,14 @@ public class Economy : ModuleBase<SocketCommandContext>
             .WithColor(Color.Red)
             .WithAuthor(user)
             .WithTitle("User Profile")
-            .RRAddField("Essentials", BuildPropsList(dbUser, "Cash", "Gang", "Health"))
-            .RRAddField("Crypto", BuildPropsList(dbUser, "BTC", "ETH", "LTC", "XRP"))
-            .RRAddField("Items", BuildPropsList(dbUser, "Tools", "Perks", "Consumables", "Crates"))
-            .RRAddField("Active Consumables", string.Join('\n', dbUser.UsedConsumables.Where(c => c.Value > 0).Select(c => $"**{c.Key}**: {c.Value}x")));
+            .RrAddField("Essentials", BuildPropsList(dbUser, "Cash", "Gang", "Health"))
+            .RrAddField("Crypto", BuildPropsList(dbUser, "BTC", "ETH", "LTC", "XRP"))
+            .RrAddField("Items", BuildPropsList(dbUser, "Tools", "Perks", "Consumables", "Crates"))
+            .RrAddField("Active Consumables", string.Join('\n', dbUser.UsedConsumables.Where(c => c.Value > 0).Select(c => $"**{c.Key}**: {c.Value}x")));
 
         StringBuilder counts = new($"**Achievements**: {dbUser.Achievements.Count}");
         int cooldowns = 0;
-        foreach (string cmd in CMDS_WITH_COOLDOWN)
+        foreach (string cmd in CmdsWithCooldown)
         {
             long cooldownSecs = (long)dbUser[$"{cmd}Cooldown"] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (cooldownSecs > 0)
@@ -133,8 +133,8 @@ public class Economy : ModuleBase<SocketCommandContext>
         }
         counts.AppendLine($"\n**Commands On Cooldown**: {cooldowns}");
 
-        embed.RRAddField("Counts", counts.ToString());
-        embed.RRAddField("Misc", BuildPropsList(dbUser, "GamblingMultiplier", "Prestige"));
+        embed.RrAddField("Counts", counts.ToString());
+        embed.RrAddField("Misc", BuildPropsList(dbUser, "GamblingMultiplier", "Prestige"));
 
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
@@ -169,8 +169,8 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Remarks("$sauce Mateo 1000")]
     public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
     {
-        if (amount < Constants.TRANSACTION_MIN || double.IsNaN(amount))
-            return CommandResult.FromError($"You need to sauce at least {Constants.TRANSACTION_MIN:C2}.");
+        if (amount < Constants.TransactionMin || double.IsNaN(amount))
+            return CommandResult.FromError($"You need to sauce at least {Constants.TransactionMin:C2}.");
         if (Context.User == user)
             return CommandResult.FromError("You can't sauce yourself money. Don't even know how you would.");
         if (user.IsBot)
@@ -212,7 +212,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await Context.User.NotifyAsync(Context.Channel, "​DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
                 await user.Reference.DeleteAsync();
                 await user.SetCash(Context.User, 0);
-                RestoreUserData(user, temp.BTC, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
+                RestoreUserData(user, temp.Btc, temp.Eth, temp.Ltc, temp.Xrp, temp.DmNotifs,
                     temp.Stats, temp.WantsReplyPings, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
@@ -223,7 +223,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                 await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
                 await user.Reference.DeleteAsync();
                 await user.SetCash(Context.User, 0);
-                RestoreUserData(user, temp.BTC, temp.ETH, temp.LTC, temp.XRP, temp.DMNotifs,
+                RestoreUserData(user, temp.Btc, temp.Eth, temp.Ltc, temp.Xrp, temp.DmNotifs,
                     temp.Stats, temp.WantsReplyPings, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
@@ -274,11 +274,11 @@ public class Economy : ModuleBase<SocketCommandContext>
         long rapeCd, long robCd, long scavengeCd, long slaveryCd, long whoreCd, long bullyCd, long chopCd, long digCd,
         long farmCd, long fishCd, long huntCd, long mineCd, long supportCd, long hackCd, long dailyCd)
     {
-        user.BTC = btc;
-        user.ETH = eth;
-        user.LTC = ltc;
-        user.XRP = xrp;
-        user.DMNotifs = dmNotifs;
+        user.Btc = btc;
+        user.Eth = eth;
+        user.Ltc = ltc;
+        user.Xrp = xrp;
+        user.DmNotifs = dmNotifs;
         user.WantsReplyPings = wantsReplyPings;
         user.Stats = stats;
         user.DealCooldown = dealCd;

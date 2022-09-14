@@ -2,7 +2,7 @@
 [Summary("Do you want to test your luck? Do you want to probably go broke? Here you go! By the way, you don't need to be 21 or over in this joint ;)")]
 public class Gambling : ModuleBase<SocketCommandContext>
 {
-    private static readonly Emoji[] emojis = { new("\uD83C\uDF4E"), new("\uD83C\uDF47"), new("7️⃣"),  new("\uD83C\uDF52"),
+    private static readonly Emoji[] Emojis = { new("\uD83C\uDF4E"), new("\uD83C\uDF47"), new("7️⃣"),  new("\uD83C\uDF52"),
         new("\uD83C\uDF4A"), new("\uD83C\uDF48"), new("\uD83C\uDF4B") }; // apple, grape, seven, cherry, orange, melon, lemon
 
     #region Commands
@@ -39,7 +39,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
         if (user.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-        if (RandomUtil.Next(1, 101) < Constants.DOUBLE_ODDS)
+        if (RandomUtil.Next(1, 101) < Constants.DoubleOdds)
         {
             StatUpdate(user, true, user.Cash);
             await user.SetCash(Context.User, user.Cash * 2);
@@ -70,8 +70,8 @@ public class Gambling : ModuleBase<SocketCommandContext>
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle("Pot")
-                .RRAddField("Total Value", pot.Value.ToString("C2"))
-                .RRAddField("Draws At", $"<t:{pot.EndTime}>");
+                .RrAddField("Total Value", pot.Value.ToString("C2"))
+                .RrAddField("Draws At", $"<t:{pot.EndTime}>");
 
             StringBuilder memberInfo = new();
             foreach (KeyValuePair<string, double> mem in pot.Members)
@@ -80,15 +80,15 @@ public class Gambling : ModuleBase<SocketCommandContext>
                 memberInfo.AppendLine($"**{guildUser.Sanitize()}**: {mem.Value:C2} ({pot.GetMemberOdds(mem.Key)}%)");
             }
 
-            embed.RRAddField("Members", memberInfo);
+            embed.RrAddField("Members", memberInfo);
             await ReplyAsync(embed: embed.Build());
         }
         else
         {
             if (user.UsingSlots)
                 return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-            if (amount < Constants.TRANSACTION_MIN)
-                return CommandResult.FromError($"You need to pitch in at least {Constants.TRANSACTION_MIN:C2}.");
+            if (amount < Constants.TransactionMin)
+                return CommandResult.FromError($"You need to pitch in at least {Constants.TransactionMin:C2}.");
             if (user.Cash < amount)
                 return CommandResult.FromError($"You don't have {amount:C2}!");
 
@@ -115,8 +115,8 @@ public class Gambling : ModuleBase<SocketCommandContext>
     [RequireCash]
     public async Task<RuntimeResult> Slots(double bet)
     {
-        if (bet < Constants.TRANSACTION_MIN || double.IsNaN(bet))
-            return CommandResult.FromError($"You need to bet at least {Constants.TRANSACTION_MIN:C2}.");
+        if (bet < Constants.TransactionMin || double.IsNaN(bet))
+            return CommandResult.FromError($"You need to bet at least {Constants.TransactionMin:C2}.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
 
@@ -141,9 +141,9 @@ public class Gambling : ModuleBase<SocketCommandContext>
             results[2] = RandomUtil.Next(1, 6);
 
             embed.WithDescription("------------\n" +
-            $"{emojis[results[0] - 1]}  {emojis[results[1] - 1]}  {emojis[results[2] - 1]}\n" +
-            $"{emojis[results[0]]}  {emojis[results[1]]}  {emojis[results[2]]}\n" +
-            $"{emojis[results[0] + 1]}  {emojis[results[1] + 1]}  {emojis[results[2] + 1]}\n" +
+            $"{Emojis[results[0] - 1]}  {Emojis[results[1] - 1]}  {Emojis[results[2] - 1]}\n" +
+            $"{Emojis[results[0]]}  {Emojis[results[1]]}  {Emojis[results[2]]}\n" +
+            $"{Emojis[results[0] + 1]}  {Emojis[results[1] + 1]}  {Emojis[results[2] + 1]}\n" +
             "------------");
             await slotMsg.ModifyAsync(msg => msg.Embed = embed.Build());
 
@@ -152,11 +152,11 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
         int sevens = results.Count(num => num == 2);
         if (sevens == 3)
-            payoutMult = Constants.SLOTS_MULT_THREESEVENS;
+            payoutMult = Constants.SlotsMultThreesevens;
         else if (ThreeInARow(results))
-            payoutMult = Constants.SLOTS_MULT_THREEINAROW;
+            payoutMult = Constants.SlotsMultThreeinarow;
         else if (TwoInARow(results))
-            payoutMult = Constants.SLOTS_MULT_TWOINAROW;
+            payoutMult = Constants.SlotsMultTwoinarow;
 
         user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         user.UsingSlots = false;
@@ -167,7 +167,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
             StatUpdate(user, true, payout);
             string message = $"Nicely done! You won **{payout:C2}**.\nBalance: {totalCash:C2}";
 
-            if (payoutMult == Constants.SLOTS_MULT_THREESEVENS)
+            if (payoutMult == Constants.SlotsMultThreesevens)
             {
                 message = $"​SWEET BABY JESUS, YOU GOT A MOTHERFUCKING JACKPOT! You won **{payout:C2}**!\nBalance: {totalCash:C2}";
                 await user.UnlockAchievement("Jackpot!", Context.User, Context.Channel);
@@ -234,8 +234,8 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
     private async Task<RuntimeResult> GenericGamble(double bet, double odds, double mult, bool exactRoll = false)
     {
-        if (bet < Constants.TRANSACTION_MIN || double.IsNaN(bet))
-            return CommandResult.FromError($"You need to bet at least {Constants.TRANSACTION_MIN:C2}.");
+        if (bet < Constants.TransactionMin || double.IsNaN(bet))
+            return CommandResult.FromError($"You need to bet at least {Constants.TransactionMin:C2}.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         if (user.UsingSlots)

@@ -151,7 +151,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
 
     [Command("updatedb")]
     [Summary("Pushes all cached data to the database.")]
-    public async Task UpdateDB()
+    public async Task UpdateDb()
     {
         long count = MemoryCache.Default.GetCount();
         foreach (string key in MemoryCache.Default.Select(kvp => kvp.Key))

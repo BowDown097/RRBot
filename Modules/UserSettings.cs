@@ -10,19 +10,19 @@ public class UserSettings : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Your Settings")
-            .RRAddField("DM Notifications", user.DMNotifs)
-            .RRAddField("Reply Pings", user.WantsReplyPings);
+            .RrAddField("DM Notifications", user.DmNotifs)
+            .RrAddField("Reply Pings", user.WantsReplyPings);
         await ReplyAsync(embed: embed.Build());
     }
 
     [Alias("toggledmnotifs")]
     [Command("toggledmnotifications")]
     [Summary("Toggle whether or not you will be DM'd by commands/general notifications that support it. *(default: false)*")]
-    public async Task ToggleDMNotifications()
+    public async Task ToggleDmNotifications()
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        user.DMNotifs = !user.DMNotifs;
-        await Context.User.NotifyAsync(Context.Channel, $"You will {(user.DMNotifs ? "now see" : "no longer see")} DM notifications.");
+        user.DmNotifs = !user.DmNotifs;
+        await Context.User.NotifyAsync(Context.Channel, $"You will {(user.DmNotifs ? "now see" : "no longer see")} DM notifications.");
     }
 
     [Command("togglereplypings")]

@@ -67,9 +67,9 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Event Cancelled**")
-            .RRAddField("Name", guildEvent.Name)
-            .RRAddField("Description", guildEvent.Description)
-            .RRAddField("Location", guildEvent.Location);
+            .RrAddField("Name", guildEvent.Name)
+            .RrAddField("Description", guildEvent.Description)
+            .RrAddField("Location", guildEvent.Location);
 
         await WriteToLogs(guildEvent.Guild, embed);
     }
@@ -78,9 +78,9 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Event Ended**")
-            .RRAddField("Name", guildEvent.Name)
-            .RRAddField("Description", guildEvent.Description)
-            .RRAddField("Location", guildEvent.Location);
+            .RrAddField("Name", guildEvent.Name)
+            .RrAddField("Description", guildEvent.Description)
+            .RrAddField("Location", guildEvent.Location);
 
         await WriteToLogs(guildEvent.Guild, embed);
     }
@@ -90,11 +90,11 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(guildEvent.Creator)
             .WithDescription("**Event Created**")
-            .RRAddField("Name", guildEvent.Name)
-            .RRAddField("Description", guildEvent.Description)
-            .RRAddField("Location", guildEvent.Location)
-            .RRAddField("Start Time", guildEvent.StartTime)
-            .RRAddField("End Time", guildEvent.EndTime);
+            .RrAddField("Name", guildEvent.Name)
+            .RrAddField("Description", guildEvent.Description)
+            .RrAddField("Location", guildEvent.Location)
+            .RrAddField("Start Time", guildEvent.StartTime)
+            .RrAddField("End Time", guildEvent.EndTime);
 
         await WriteToLogs(guildEvent.Guild, embed);
     }
@@ -103,9 +103,9 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Event Started**")
-            .RRAddField("Name", guildEvent.Name)
-            .RRAddField("Description", guildEvent.Description)
-            .RRAddField("Location", guildEvent.Location);
+            .RrAddField("Name", guildEvent.Name)
+            .RrAddField("Description", guildEvent.Description)
+            .RrAddField("Location", guildEvent.Location);
 
         await WriteToLogs(guildEvent.Guild, embed);
     }
@@ -152,8 +152,8 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Sticker Created**")
             .WithImageUrl(sticker.GetStickerUrl())
-            .RRAddField("Name", sticker.Name)
-            .RRAddField("Description", sticker.Description);
+            .RrAddField("Name", sticker.Name)
+            .RrAddField("Description", sticker.Description);
 
         if (sticker.Author != null) // sticker.Author can randomly be null :(
             embed.WithAuthor(sticker.Author);
@@ -166,8 +166,8 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Sticker Deleted**")
             .WithImageUrl(sticker.GetStickerUrl())
-            .RRAddField("Name", sticker.Name)
-            .RRAddField("Description", sticker.Description);
+            .RrAddField("Name", sticker.Name)
+            .RrAddField("Description", sticker.Description);
 
         if (sticker.Author != null) // sticker.Author can randomly be null :(
             embed.WithAuthor(sticker.Author);
@@ -193,10 +193,10 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(invite.Inviter)
             .WithDescription("**Invite Created**")
-            .RRAddField("URL", invite.Url)
-            .RRAddField("Channel", invite.Channel.Mention())
-            .RRAddField("Max Age", invite.MaxAge)
-            .RRAddField("Max Uses", invite.MaxUses);
+            .RrAddField("URL", invite.Url)
+            .RrAddField("Channel", invite.Channel.Mention())
+            .RrAddField("Max Age", invite.MaxAge)
+            .RrAddField("Max Uses", invite.MaxUses);
 
         await WriteToLogs(invite.Guild, embed);
     }
@@ -205,8 +205,8 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Invite Deleted**")
-            .RRAddField("Channel", channel.Mention())
-            .RRAddField("Code", code);
+            .RrAddField("Channel", channel.Mention())
+            .RrAddField("Code", code);
 
         await WriteToLogs(channel.Guild, embed);
     }
@@ -222,8 +222,8 @@ public static class LoggingSystem
 
         foreach (Embed msgEmbed in msg.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)).Cast<Embed>())
         {
-            embed.RRAddField("Embed Title", msgEmbed.Title)
-                .RRAddField("Embed Description", msgEmbed.Description);
+            embed.RrAddField("Embed Title", msgEmbed.Title)
+                .RrAddField("Embed Description", msgEmbed.Description);
         }
 
         await WriteToLogs(channel.GetGuild(), embed);
@@ -238,19 +238,19 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(msgAfter.Author)
             .WithDescription($"**Message Updated in {channel.Mention()}**\n[Jump]({msgAfter.GetJumpUrl()})")
-            .RRAddField("Previous Content", msgBefore.Content);
+            .RrAddField("Previous Content", msgBefore.Content);
 
         foreach (Embed msgEmbed in msgBefore.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)).Cast<Embed>())
         {
-            embed.RRAddField("Embed Title", msgEmbed.Title)
-                .RRAddField("Embed Description", msgEmbed.Description);
+            embed.RrAddField("Embed Title", msgEmbed.Title)
+                .RrAddField("Embed Description", msgEmbed.Description);
         }
 
-        embed.RRAddField("Current Content", msgAfter.Content);
+        embed.RrAddField("Current Content", msgAfter.Content);
         foreach (Embed msgEmbed in msgAfter.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)))
         {
-            embed.RRAddField("Embed Title", msgEmbed.Title)
-                .RRAddField("Embed Description", msgEmbed.Description);
+            embed.RrAddField("Embed Title", msgEmbed.Title)
+                .RrAddField("Embed Description", msgEmbed.Description);
         }
 
         await WriteToLogs(channel.GetGuild(), embed);
@@ -264,8 +264,8 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(reaction.User.Value)
             .WithDescription($"**Reaction Added in {reaction.Channel.Mention()}**")
-            .RRAddField("Emoji", reaction.Emote.Name)
-            .RRAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
+            .RrAddField("Emoji", reaction.Emote.Name)
+            .RrAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
 
         if (reaction.Emote is Emote emote)
             embed.WithImageUrl(emote.Url + "?size=40");
@@ -281,8 +281,8 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(reaction.User.Value)
             .WithDescription($"**Reaction Removed in {reaction.Channel.Mention()}**")
-            .RRAddField("Emoji", reaction.Emote.Name)
-            .RRAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
+            .RrAddField("Emoji", reaction.Emote.Name)
+            .RrAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
 
         if (reaction.Emote is Emote emote)
             embed.WithImageUrl(emote.Url + "?size=40");
@@ -294,8 +294,8 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Role Created**")
-            .RRAddField("Name", role)
-            .RRAddField("Color", $"{role.Color} ({role.Color.R}, {role.Color.G}, {role.Color.B})");
+            .RrAddField("Name", role)
+            .RrAddField("Color", $"{role.Color} ({role.Color.R}, {role.Color.G}, {role.Color.B})");
 
         await WriteToLogs(role.Guild, embed);
     }
@@ -345,8 +345,8 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Stage Ended**")
-            .RRAddField("Channel", stage.Mention())
-            .RRAddField("Topic", stage.Topic);
+            .RrAddField("Channel", stage.Mention())
+            .RrAddField("Topic", stage.Topic);
 
         await WriteToLogs(stage.Guild, embed);
     }
@@ -355,8 +355,8 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Stage Started**")
-            .RRAddField("Channel", stage.Mention())
-            .RRAddField("Topic", stage.Topic);
+            .RrAddField("Channel", stage.Mention())
+            .RrAddField("Topic", stage.Topic);
 
         await WriteToLogs(stage.Guild, embed);
     }
@@ -377,8 +377,8 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Thread Created**")
-            .RRAddField("Channel", threadChannel.ParentChannel.Mention())
-            .RRAddField("Name", threadChannel.Name);
+            .RrAddField("Channel", threadChannel.ParentChannel.Mention())
+            .RrAddField("Name", threadChannel.Name);
 
         await WriteToLogs(threadChannel.Guild, embed);
     }
@@ -388,8 +388,8 @@ public static class LoggingSystem
         SocketThreadChannel threadChannel = await threadChannelCached.GetOrDownloadAsync();
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Thread Deleted**")
-            .RRAddField("Channel", threadChannel.ParentChannel.Mention())
-            .RRAddField("Name", threadChannel.Name);
+            .RrAddField("Channel", threadChannel.ParentChannel.Mention())
+            .RrAddField("Name", threadChannel.Name);
 
         await WriteToLogs(threadChannel.Guild, embed);
     }
@@ -544,7 +544,7 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(target)
             .WithDescription("**User Meme Banned**\nL rip bozo")
-            .RRAddField("Banner", actor);
+            .RrAddField("Banner", actor);
 
         await WriteToLogs(target.Guild, embed);
     }
@@ -554,9 +554,9 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(target)
             .WithDescription("**User Muted**")
-            .RRAddField("Duration", duration)
-            .RRAddField("Muter", actor)
-            .RRAddField("Reason", reason);
+            .RrAddField("Duration", duration)
+            .RrAddField("Muter", actor)
+            .RrAddField("Reason", reason);
 
         await WriteToLogs(target.Guild, embed);
     }

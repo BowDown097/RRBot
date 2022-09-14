@@ -1,18 +1,18 @@
 ﻿namespace RRBot.Systems;
 public sealed class AudioSystem
 {
-    private readonly IAudioService audioService;
+    private readonly IAudioService _audioService;
 
-    public AudioSystem(IAudioService audioService) => this.audioService = audioService;
+    public AudioSystem(IAudioService audioService) => this._audioService = audioService;
 
     public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, float volume)
     {
-        if (volume < Constants.MIN_VOLUME || volume > Constants.MAX_VOLUME)
-            return CommandResult.FromError($"Volume must be between {Constants.MIN_VOLUME}% and {Constants.MAX_VOLUME}%.");
-        if (!audioService.HasPlayer(context.Guild))
+        if (volume < Constants.MinVolume || volume > Constants.MaxVolume)
+            return CommandResult.FromError($"Volume must be between {Constants.MinVolume}% and {Constants.MaxVolume}%.");
+        if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         await player.SetVolumeAsync(volume / 100f, true);
         await context.Channel.SendMessageAsync($"Set volume to {volume}%.");
         return CommandResult.FromSuccess();
@@ -20,10 +20,10 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> DequeueAllWithNameAsync(SocketCommandContext context, string name)
     {
-        if (!audioService.HasPlayer(context.Guild))
+        if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         int count = player.Queue.RemoveAll(t => (t.Context as TrackMetadata)?.Title.Equals(name, StringComparison.OrdinalIgnoreCase) == true);
         if (count == 0)
             return CommandResult.FromError("There are no tracks in the queue with that name.");
@@ -34,10 +34,10 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> GetCurrentlyPlayingAsync(SocketCommandContext context)
     {
-        if (!audioService.HasPlayer(context.Guild))
+        if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         if (player.CurrentTrack is null)
             return CommandResult.FromError("There is no track currently playing.");
 
@@ -60,15 +60,15 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> ListAsync(SocketCommandContext context)
     {
-        if (!audioService.HasPlayer(context.Guild))
+        if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         TrackMetadata currMetadata = player.CurrentTrack.Context as TrackMetadata;
 
         if (player.Queue.IsEmpty)
         {
-            await context.Channel.SendMessageAsync($"Now playing: \"{currMetadata.Title}\". Nothing else is queued.", allowedMentions: Constants.MENTIONS);
+            await context.Channel.SendMessageAsync($"Now playing: \"{currMetadata.Title}\". Nothing else is queued.", allowedMentions: Constants.Mentions);
             return CommandResult.FromSuccess();
         }
 
@@ -100,10 +100,10 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> LoopAsync(SocketCommandContext context)
     {
-        if (!audioService.HasPlayer(context.Guild))
+        if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         player.IsLooping = !player.IsLooping;
         await context.Channel.SendMessageAsync($"Looping turned {(player.IsLooping ? "ON" : "OFF")}.");
         return CommandResult.FromSuccess();
@@ -123,8 +123,8 @@ public sealed class AudioSystem
         if (user.VoiceChannel is null)
             return CommandResult.FromError("You must be in a voice channel.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild.Id)
-            ?? await audioService.JoinAsync<VoteLavalinkPlayer>(context.Guild.Id, user.VoiceChannel.Id, true);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild.Id)
+            ?? await _audioService.JoinAsync<VoteLavalinkPlayer>(context.Guild.Id, user.VoiceChannel.Id, true);
 
         LavalinkTrack track;
         if (Uri.TryCreate(query, UriKind.Absolute, out Uri uri))
@@ -137,15 +137,15 @@ public sealed class AudioSystem
             };
 
             if (searchMode == SearchMode.None && !uri.ToString().Split('/').Last().Contains('.'))
-                track = await audioService.YTDLPGetTrackAsync(uri, context.User);
+                track = await _audioService.YtdlpGetTrackAsync(uri, context.User);
             else if (searchMode == SearchMode.YouTube && uri.AbsolutePath == "/watch")
-                track = await audioService.GetYTTrackAsync(uri, context.Guild, context.User);
+                track = await _audioService.GetYtTrackAsync(uri, context.Guild, context.User);
             else
-                track = await audioService.RRGetTrackAsync(query, context.User, searchMode);
+                track = await _audioService.RrGetTrackAsync(query, context.User, searchMode);
         }
         else
         {
-            track = await audioService.RRGetTrackAsync(query, context.User, SearchMode.YouTube);
+            track = await _audioService.RrGetTrackAsync(query, context.User, SearchMode.YouTube);
         }
 
         if (track.Identifier == "restricted")
@@ -165,11 +165,11 @@ public sealed class AudioSystem
             StringBuilder message = new($"Now playing: \"{metadata.Title}\"\nBy: {metadata.Author}\n");
             if (!track.IsLiveStream)
                 message.AppendLine($"Length: {track.Duration.Round()}");
-            await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: Constants.MENTIONS);
+            await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: Constants.Mentions);
         }
         else
         {
-            await context.Channel.SendMessageAsync($"**{metadata.Title}** has been added to the queue.", allowedMentions: Constants.MENTIONS);
+            await context.Channel.SendMessageAsync($"**{metadata.Title}** has been added to the queue.", allowedMentions: Constants.Mentions);
         }
 
         await LoggingSystem.Custom_TrackStarted(user, track.Source);
@@ -180,10 +180,10 @@ public sealed class AudioSystem
     {
         if (!TimeSpan.TryParse(pos, out TimeSpan ts))
             return CommandResult.FromError("Not a valid seek position!\nExample valid seek position: 00:13:08");
-        if (!audioService.HasPlayer(context.Guild))
+        if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         if (ts < TimeSpan.Zero || ts > player.CurrentTrack.Duration)
             return CommandResult.FromError($"You can't seek to a negative position or a position longer than the track duration ({player.CurrentTrack.Duration.Round()}).");
 
@@ -194,10 +194,10 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> ShuffleAsync(SocketCommandContext context)
     {
-        if (!audioService.HasPlayer(context.Guild))
+        if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         if (player.Queue.Count <= 1)
             return CommandResult.FromError("There must be at least 2 tracks in the queue to shuffle.");
 
@@ -208,12 +208,12 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> SkipTrackAsync(SocketCommandContext context)
     {
-        if (!audioService.HasPlayer(context.Guild))
+        if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         TrackMetadata metadata = player.CurrentTrack.Context as TrackMetadata;
-        await context.Channel.SendMessageAsync($"Skipped \"{metadata.Title}\".", allowedMentions: Constants.MENTIONS);
+        await context.Channel.SendMessageAsync($"Skipped \"{metadata.Title}\".", allowedMentions: Constants.Mentions);
         if (!player.Queue.TryDequeue(out LavalinkTrack track))
         {
             await player.StopAsync(true);
@@ -229,10 +229,10 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> StopAsync(SocketCommandContext context)
     {
-        if (!audioService.HasPlayer(context.Guild))
+        if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         await player.StopAsync(true);
         await context.Channel.SendMessageAsync("Stopped playing the current track and removed any existing tracks in the queue.");
         return CommandResult.FromSuccess();
@@ -240,10 +240,10 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> VoteSkipTrackAsync(SocketCommandContext context)
     {
-        if (!audioService.HasPlayer(context.Guild))
+        if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 
-        VoteLavalinkPlayer player = audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         TrackMetadata metadata = player.CurrentTrack.Context as TrackMetadata;
         UserVoteSkipInfo info = await player.VoteAsync(context.User.Id);
         if (!info.WasAdded)
@@ -256,7 +256,7 @@ public sealed class AudioSystem
         }
         else
         {
-            await context.Channel.SendMessageAsync($"Skipped \"{metadata.Title}\".", allowedMentions: Constants.MENTIONS);
+            await context.Channel.SendMessageAsync($"Skipped \"{metadata.Title}\".", allowedMentions: Constants.Mentions);
         }
 
         return CommandResult.FromSuccess();

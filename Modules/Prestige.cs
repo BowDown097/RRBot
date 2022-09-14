@@ -17,8 +17,8 @@ public class Prestige : ModuleBase<SocketCommandContext>
         double prestigeCost = ranks.Costs.OrderBy(kvp => kvp.Value).Select(a => a.Value).Last() * (1 + (0.5 * user.Prestige));
         if (user.Cash < prestigeCost)
             return CommandResult.FromError($"You don't have enough to prestige! You need {prestigeCost:C2}.");
-        if (user.Prestige == Constants.MAX_PRESTIGE)
-            return CommandResult.FromError($"You have already reached the maximum prestige level of {Constants.MAX_PRESTIGE}.");
+        if (user.Prestige == Constants.MaxPrestige)
+            return CommandResult.FromError($"You have already reached the maximum prestige level of {Constants.MaxPrestige}.");
 
         await Context.User.NotifyAsync(Context.Channel, "Are you SURE you want to prestige? If you don't know already,\nyou will **GET**:\n- +20% cash multiplier\n- +50% rank cost multiplier\n- A shiny, cool new badge on $prestigeinfo\n\nand you will **LOSE**:\n- All money, including in crypto investments\n- All cooldowns\n- All items\n**Respond with \"YES\" if you are sure that you want to prestige. You have 20 seconds.**");
         InteractiveResult<SocketMessage> iResult = await Interactive.NextMessageAsync(
@@ -28,7 +28,7 @@ public class Prestige : ModuleBase<SocketCommandContext>
         if (!iResult.IsSuccess || !iResult.Value.Content.Equals("yes", StringComparison.OrdinalIgnoreCase))
             return CommandResult.FromError("Prestige canceled.");
 
-        user.BTC = user.Cash = user.ETH = user.LTC = user.XRP = 0;
+        user.Btc = user.Cash = user.Eth = user.Ltc = user.Xrp = 0;
         user.BullyCooldown = user.ChopCooldown = user.DailyCooldown = user.DealCooldown
             = user.DigCooldown = user.FarmCooldown = user.FishCooldown = user.HackCooldown
             = user.HuntCooldown = user.LootCooldown = user.MineCooldown = user.PacifistCooldown
@@ -40,10 +40,10 @@ public class Prestige : ModuleBase<SocketCommandContext>
         user.Tools = new();
         user.Prestige++;
 
-        await user.SetCooldown("PrestigeCooldown", Constants.PRESTIGE_COOLDOWN, Context.Guild, Context.User);
+        await user.SetCooldown("PrestigeCooldown", Constants.PrestigeCooldown, Context.Guild, Context.User);
         await Context.User.NotifyAsync(Context.Channel, $"Congratulations, homie! You're now Prestige {user.Prestige}. Check $prestigeinfo for your new prestige perks. Hope you said your goodbyes to all of your stuff, cause it's gone!");
         await user.UnlockAchievement("Prestiged!", Context.User, Context.Channel);
-        if (user.Prestige == Constants.MAX_PRESTIGE)
+        if (user.Prestige == Constants.MaxPrestige)
             await user.UnlockAchievement("Maxed!", Context.User, Context.Channel);
         return CommandResult.FromSuccess();
     }
@@ -59,10 +59,10 @@ public class Prestige : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithDescription("**Prestige Perks**")
-            .WithThumbnailUrl(Constants.PRESTIGE_IMAGES[user.Prestige])
-            .RRAddField("Prestige Level", user.Prestige)
-            .RRAddField("Cash Multiplier", (1 + (0.2 * user.Prestige)).ToString("0.#") + "x")
-            .RRAddField("Rank Cost Multiplier", (1 + (0.5 * user.Prestige)).ToString("0.#") + "x");
+            .WithThumbnailUrl(Constants.PrestigeImages[user.Prestige])
+            .RrAddField("Prestige Level", user.Prestige)
+            .RrAddField("Cash Multiplier", (1 + (0.2 * user.Prestige)).ToString("0.#") + "x")
+            .RrAddField("Rank Cost Multiplier", (1 + (0.5 * user.Prestige)).ToString("0.#") + "x");
 
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();

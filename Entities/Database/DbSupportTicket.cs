@@ -21,7 +21,7 @@ public class DbSupportTicket : DbObject
         if (MemoryCache.Default.Contains($"ticket-{guildId}-{userId}"))
             return (DbSupportTicket)MemoryCache.Default.Get($"ticket-{guildId}-{userId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/supportTickets").Document(userId.ToString());
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/supportTickets").Document(userId.ToString());
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

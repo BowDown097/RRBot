@@ -22,7 +22,7 @@ public class DbElection : DbObject
     {
         if (electionId == null)
         {
-            QuerySnapshot elections = await Program.database.Collection($"servers/{guildId}/elections").GetSnapshotAsync();
+            QuerySnapshot elections = await Program.Database.Collection($"servers/{guildId}/elections").GetSnapshotAsync();
             IOrderedEnumerable<string> orderedCacheElections = MemoryCache.Default.Where(kvp => kvp.Key.StartsWith("election-")).Select(kvp => kvp.Key.Split('-')[2]).OrderBy(id => Convert.ToInt32(id));
             IOrderedEnumerable<string> orderedDbElections = elections.Select(r => r.Id).OrderBy(id => Convert.ToInt32(id));
             IEnumerable<string> orderedElections = orderedDbElections.Concat(orderedCacheElections.Where(e => !orderedDbElections.Contains(e)));
@@ -32,7 +32,7 @@ public class DbElection : DbObject
         if (MemoryCache.Default.Contains($"election-{guildId}-{electionId}"))
             return (DbElection)MemoryCache.Default.Get($"election-{guildId}-{electionId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/elections").Document(electionId.ToString());
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/elections").Document(electionId.ToString());
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

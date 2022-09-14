@@ -7,19 +7,19 @@ public class Tasks : ModuleBase<SocketCommandContext>
     [Summary("Go chop some wood.")]
     [RequireCooldown("ChopCooldown", "You cannot chop wood for {0}.")]
     [RequireTool("Axe")]
-    public async Task Chop() => await GenericTask("Axe", "chopped down", "trees", "ChopCooldown", Constants.CHOP_COOLDOWN);
+    public async Task Chop() => await GenericTask("Axe", "chopped down", "trees", "ChopCooldown", Constants.ChopCooldown);
 
     [Command("dig")]
     [Summary("Go digging.")]
     [RequireCooldown("DigCooldown", "You cannot go digging for {0}.")]
     [RequireTool("Shovel")]
-    public async Task Dig() => await GenericTask("Shovel", "mined", "dirt", "DigCooldown", Constants.DIG_COOLDOWN);
+    public async Task Dig() => await GenericTask("Shovel", "mined", "dirt", "DigCooldown", Constants.DigCooldown);
 
     [Command("farm")]
     [Summary("Go farming.")]
     [RequireCooldown("FarmCooldown", "You cannot farm for {0}.")]
     [RequireTool("Hoe")]
-    public async Task Farm() => await GenericTask("Hoe", "farmed", "crops", "FarmCooldown", Constants.FARM_COOLDOWN);
+    public async Task Farm() => await GenericTask("Hoe", "farmed", "crops", "FarmCooldown", Constants.FarmCooldown);
 
     [Command("fish")]
     [Summary("Go fishing.")]
@@ -28,7 +28,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
     public async Task Fish()
     {
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        KeyValuePair<string, double> fish = Constants.FISH.ElementAt(RandomUtil.Next(Constants.FISH.Count));
+        KeyValuePair<string, double> fish = Constants.Fish.ElementAt(RandomUtil.Next(Constants.Fish.Count));
         int numCaught = RandomUtil.Next(7, 15);
 
         if (user.Perks.ContainsKey("Enchanter"))
@@ -47,7 +47,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
         double cashGained = numCaught * fish.Value;
         double totalCash = user.Cash + cashGained;
 
-        if (RandomUtil.NextDouble(1, 101) < Constants.FISH_COCONUT_ODDS)
+        if (RandomUtil.NextDouble(1, 101) < Constants.FishCoconutOdds)
             await ItemSystem.GiveCollectible("Coconut", Context.Channel, user);
 
         user.AddToStats(new()
@@ -57,14 +57,14 @@ public class Tasks : ModuleBase<SocketCommandContext>
         });
 
         await user.SetCash(Context.User, totalCash, Context.Channel, $"You caught {numCaught} {fish.Key} with your rod and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        await user.SetCooldown("FishCooldown", Constants.FISH_COOLDOWN, Context.Guild, Context.User);
+        await user.SetCooldown("FishCooldown", Constants.FishCooldown, Context.Guild, Context.User);
     }
 
     [Command("hunt")]
     [Summary("Go hunting.")]
     [RequireCooldown("HuntCooldown", "You cannot go hunting for {0}.")]
     [RequireTool("Sword")]
-    public async Task Hunt() => await GenericTask("Sword", "hunted", "mobs", "HuntCooldown", Constants.HUNT_COOLDOWN);
+    public async Task Hunt() => await GenericTask("Sword", "hunted", "mobs", "HuntCooldown", Constants.HuntCooldown);
 
     [Command("mine")]
     [Summary("Go mining.")]
@@ -108,7 +108,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
         });
 
         await user.SetCash(Context.User, totalCash, Context.Channel, response);
-        await user.SetCooldown("MineCooldown", Constants.MINE_COOLDOWN, Context.Guild, Context.User);
+        await user.SetCooldown("MineCooldown", Constants.MineCooldown, Context.Guild, Context.User);
     }
     #endregion
 
@@ -120,13 +120,13 @@ public class Tasks : ModuleBase<SocketCommandContext>
         int numMined = 0;
 
         if (tool.StartsWith("Wooden"))
-            numMined = RandomUtil.Next(Constants.GENERIC_TASK_WOOD_MIN, Constants.GENERIC_TASK_WOOD_MAX); // default for wooden
+            numMined = RandomUtil.Next(Constants.GenericTaskWoodMin, Constants.GenericTaskWoodMax); // default for wooden
         else if (tool.StartsWith("Stone"))
-            numMined = RandomUtil.Next(Constants.GENERIC_TASK_STONE_MIN, Constants.GENERIC_TASK_STONE_MAX);
+            numMined = RandomUtil.Next(Constants.GenericTaskStoneMin, Constants.GenericTaskStoneMax);
         else if (tool.StartsWith("Iron"))
-            numMined = RandomUtil.Next(Constants.GENERIC_TASK_IRON_MIN, Constants.GENERIC_TASK_IRON_MAX);
+            numMined = RandomUtil.Next(Constants.GenericTaskIronMin, Constants.GenericTaskIronMax);
         else if (tool.StartsWith("Diamond"))
-            numMined = RandomUtil.Next(Constants.GENERIC_TASK_DIAMOND_MIN, Constants.GENERIC_TASK_DIAMOND_MAX);
+            numMined = RandomUtil.Next(Constants.GenericTaskDiamondMin, Constants.GenericTaskDiamondMax);
 
         if (user.Perks.ContainsKey("Enchanter"))
         {

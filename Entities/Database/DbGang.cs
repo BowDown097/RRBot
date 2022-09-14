@@ -26,7 +26,7 @@ public class DbGang : DbObject
         if (useCache && MemoryCache.Default.Contains($"gang-{guildId}-{dbName}"))
             return (DbGang)MemoryCache.Default.Get($"gang-{guildId}-{dbName}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/gangs").Document(dbName);
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/gangs").Document(dbName);
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {

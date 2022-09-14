@@ -7,7 +7,7 @@ public class DoubleTypeReader : TypeReader
         {
             DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
             string[] components = context.Message.Content.Split(' ');
-            string command = components[0].Replace(Constants.PREFIX, "").ToLower();
+            string command = components[0].Replace(Constants.Prefix, "").ToLower();
             switch (command)
             {
                 case "hack":

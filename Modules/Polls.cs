@@ -30,7 +30,7 @@ public class Polls : ModuleBase<SocketCommandContext>
 
         RestUserMessage pollMsg = await pollsChannel.SendMessageAsync(embed: pollEmbed.Build());
         for (int i = 1; i <= pollChoices.Length; i++)
-            await pollMsg.AddReactionAsync(new Emoji(Constants.POLL_EMOTES[i]));
+            await pollMsg.AddReactionAsync(new Emoji(Constants.PollEmotes[i]));
 
         await Context.User.NotifyAsync(Context.Channel, $"Created a poll [here]({pollMsg.GetJumpUrl()}).");
         return CommandResult.FromSuccess();
@@ -42,7 +42,7 @@ public class Polls : ModuleBase<SocketCommandContext>
     [RequireUserPermission(GuildPermission.Administrator)]
     public async Task<RuntimeResult> EndElection(int electionId)
     {
-        QuerySnapshot elections = await Program.database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
+        QuerySnapshot elections = await Program.Database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
         if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && !elections.Any(r => r.Id == electionId.ToString()))
             return CommandResult.FromError("There is no election with that ID!");
 
@@ -62,7 +62,7 @@ public class Polls : ModuleBase<SocketCommandContext>
     [Summary("Start an election.")]
     [Remarks("$startelection John \"Obesity Contest\" 72 3")]
     [RequireUserPermission(GuildPermission.Administrator)]
-    public async Task<RuntimeResult> StartElection(IGuildUser firstCandidate, string role, long hours = Constants.ELECTION_DURATION / 3600, int numWinners = 1)
+    public async Task<RuntimeResult> StartElection(IGuildUser firstCandidate, string role, long hours = Constants.ElectionDuration / 3600, int numWinners = 1)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsAnnounceChannel))
@@ -103,7 +103,7 @@ public class Polls : ModuleBase<SocketCommandContext>
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("You can't vote for yourself!");
 
-        QuerySnapshot elections = await Program.database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
+        QuerySnapshot elections = await Program.Database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
         if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && !elections.Any(r => r.Id == electionId.ToString()))
             return CommandResult.FromError("There is no election with that ID!");
 

@@ -6,7 +6,7 @@ public static class Constants
     // ********************
     //     ACHIEVEMENTS
     // ********************
-    public static readonly Achievement[] DEFAULT_ACHIEVEMENTS =
+    public static readonly Achievement[] DefaultAchievements =
     {
         new("Hard Boiled Egg", "Find a hard boiled egg.", 1337),
         new("I Just Feel Bad", "Take a million dollar L."),
@@ -17,7 +17,7 @@ public static class Constants
         new("Prestiged!", "Get your first prestige.", 1000),
         new("Pretty Damn Lucky", "Win $99+.")
     };
-    public static readonly string[] GAMBLING_ACHIEVEMENTS =
+    public static readonly string[] GamblingAchievements =
     {
         "I Just Feel Bad",
         "Jackpot!",
@@ -27,59 +27,59 @@ public static class Constants
     // ********************
     //     AUDIO SYSTEM
     // ********************
-    public const float MAX_VOLUME = 200;
-    public const float MIN_VOLUME = 5;
-    public const double POLL_INTERVAL_SECS = 30;
+    public const float MaxVolume = 200;
+    public const float MinVolume = 5;
+    public const double PollIntervalSecs = 30;
     // ********************
     //         BOT
     // ********************
-    public const string ACTIVITY = "your mom shower";
-    public const ActivityType ACTIVITY_TYPE = ActivityType.Watching;
-    public static readonly AllowedMentions MENTIONS = new(AllowedMentionTypes.Users);
-    public const string PREFIX = "$";
+    public const string Activity = "your mom shower";
+    public const ActivityType ActivityType = Discord.ActivityType.Watching;
+    public static readonly AllowedMentions Mentions = new(AllowedMentionTypes.Users);
+    public const string Prefix = "$";
     // ********************
     //     CASH SYSTEM
     // ********************
-    public const double CASH_MULTIPLIER = 1.0;
-    public const double MESSAGE_CASH = 30;
-    public const long MESSAGE_CASH_COOLDOWN = 60;
-    public const double TRANSACTION_MIN = 100;
+    public const double CashMultiplier = 1.0;
+    public const double MessageCash = 30;
+    public const long MessageCashCooldown = 60;
+    public const double TransactionMin = 100;
     // ********************
     //        CRIME
     // ********************
-    public const long BULLY_COOLDOWN = 900;
-    public const long DEAL_COOLDOWN = 3600;
-    public const double GENERIC_CRIME_WIN_ODDS = 80;
-    public const double GENERIC_CRIME_LOSS_MAX = 461;
-    public const double GENERIC_CRIME_LOSS_MIN = 69;
-    public const double GENERIC_CRIME_TOOL_ODDS = 4;
-    public const double GENERIC_CRIME_WIN_MAX = 691;
-    public const double GENERIC_CRIME_WIN_MIN = 69;
-    public const long HACK_COOLDOWN = 7200;
-    public const double HACK_ODDS = 10;
-    public const long LOOT_COOLDOWN = 3600;
-    public const long RAPE_COOLDOWN = 7200;
-    public const double RAPE_ODDS = 50;
-    public const double RAPE_MAX_PERCENT = 9;
-    public const double RAPE_MIN_PERCENT = 5;
-    public const long ROB_COOLDOWN = 7200;
-    public const double ROB_ODDS = 40;
-    public const double ROB_MAX_PERCENT = 20;
-    public const double ROB_MIN_CASH = 100;
-    public const long SCAVENGE_COOLDOWN = 60;
-    public const double SCAVENGE_MIN_CASH = 50;
-    public const double SCAVENGE_MAX_CASH = 100;
-    public const double SCAVENGE_TIMEOUT = 15;
-    public const long SLAVERY_COOLDOWN = 3600;
-    public const long WHORE_COOLDOWN = 3600;
+    public const long BullyCooldown = 900;
+    public const long DealCooldown = 3600;
+    public const double GenericCrimeWinOdds = 80;
+    public const double GenericCrimeLossMax = 461;
+    public const double GenericCrimeLossMin = 69;
+    public const double GenericCrimeToolOdds = 4;
+    public const double GenericCrimeWinMax = 691;
+    public const double GenericCrimeWinMin = 69;
+    public const long HackCooldown = 7200;
+    public const double HackOdds = 10;
+    public const long LootCooldown = 3600;
+    public const long RapeCooldown = 7200;
+    public const double RapeOdds = 50;
+    public const double RapeMaxPercent = 9;
+    public const double RapeMinPercent = 5;
+    public const long RobCooldown = 7200;
+    public const double RobOdds = 40;
+    public const double RobMaxPercent = 20;
+    public const double RobMinCash = 100;
+    public const long ScavengeCooldown = 60;
+    public const double ScavengeMinCash = 50;
+    public const double ScavengeMaxCash = 100;
+    public const double ScavengeTimeout = 15;
+    public const long SlaveryCooldown = 3600;
+    public const long WhoreCooldown = 3600;
     // ********************
     //        ECONOMY
     // ********************
-    public const long DAILY_COOLDOWN = 86400;
+    public const long DailyCooldown = 86400;
     // ********************
     //         FUN
     // ********************
-    public static readonly string[] MAGIC_CONCH_IMAGES =
+    public static readonly string[] MagicConchImages =
     {
         "https://i.imgur.com/kJmUvt2.png", // i don't think so
         "https://i.imgur.com/h1GvIe6.png", // maybe someday
@@ -87,7 +87,7 @@ public static class Constants
         "https://i.imgur.com/uRynAAx.png", // try asking again
         "https://i.imgur.com/qVjaDSs.png", // yes
     };
-    public static readonly Dictionary<string, string> WAIFUS = new()
+    public static readonly Dictionary<string, string> Waifus = new()
     {
         { "Adolf Dripler", "https://i.redd.it/cd9v84v46ma21.jpg" },
         { "Arctic Hawk's mom", "https://s.abcnews.com/images/Technology/whale-gty-jt-191219_hpMain_16x9_1600.jpg" },
@@ -135,42 +135,42 @@ public static class Constants
     // ********************
     //       GAMBLING
     // ********************
-    public const double DOUBLE_ODDS = 45;
-    public const double POT_FEE = 3;
-    public const double SLOTS_MULT_THREEINAROW = 4;
-    public const double SLOTS_MULT_THREESEVENS = 21;
-    public const double SLOTS_MULT_TWOINAROW = 1.75;
+    public const double DoubleOdds = 45;
+    public const double PotFee = 3;
+    public const double SlotsMultThreeinarow = 4;
+    public const double SlotsMultThreesevens = 21;
+    public const double SlotsMultTwoinarow = 1.75;
     // ********************
     //       GANGS
     // ********************
-    public const double GANG_CREATION_COST = 5000;
-    public const int GANG_MAX_MEMBERS = 10;
-    public const double GANG_VAULT_COST = 10000;
-    public static readonly string[] GANG_POSITIONS = { "Leader", "Elder", "Member" };
-    public const int MAX_GANGS_PER_GUILD = 50;
-    public const double VAULT_TAX_PERCENT = 1.5;
+    public const double GangCreationCost = 5000;
+    public const int GangMaxMembers = 10;
+    public const double GangVaultCost = 10000;
+    public static readonly string[] GangPositions = { "Leader", "Elder", "Member" };
+    public const int MaxGangsPerGuild = 50;
+    public const double VaultTaxPercent = 1.5;
     // ********************
     //       GOODS
     // ********************
-    public const long BLACK_HAT_DURATION = 3600;
-    public const long COCAINE_DURATION = 3600;
-    public const long VIAGRA_DURATION = 3600;
-    public const long ROMANIAN_FLAG_DURATION = 3600;
+    public const long BlackHatDuration = 3600;
+    public const long CocaineDuration = 3600;
+    public const long ViagraDuration = 3600;
+    public const long RomanianFlagDuration = 3600;
     // ********************
     //     INVESTMENTS
     // ********************
-    public const double INVESTMENT_FEE_PERCENT = 1.5;
-    public const double INVESTMENT_MIN_AMOUNT = 0.01;
+    public const double InvestmentFeePercent = 1.5;
+    public const double InvestmentMinAmount = 0.01;
     // ********************
     //      MODERATION
     // ********************
-    public const int CHILL_MAX_SECONDS = 21600;
-    public const int CHILL_MIN_SECONDS = 10;
+    public const int ChillMaxSeconds = 21600;
+    public const int ChillMinSeconds = 10;
     // ********************
     //        POLLS
     // ********************
-    public const long ELECTION_DURATION = 259200;
-    public static readonly Dictionary<int, string> POLL_EMOTES = new()
+    public const long ElectionDuration = 259200;
+    public static readonly Dictionary<int, string> PollEmotes = new()
     {
         { 0, "0️⃣" },
         { 1, "1️⃣" },
@@ -186,9 +186,9 @@ public static class Constants
     // ********************
     //      PRESTIGE
     // ********************
-    public const int MAX_PRESTIGE = 10;
-    public const long PRESTIGE_COOLDOWN = 86400;
-    public static readonly Dictionary<int, string> PRESTIGE_IMAGES = new()
+    public const int MaxPrestige = 10;
+    public const long PrestigeCooldown = 86400;
+    public static readonly Dictionary<int, string> PrestigeImages = new()
     {
         { 1, "https://static.wikia.nocookie.net/callofduty/images/e/e8/Prestige_1_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219030716" },
         { 2, "https://static.wikia.nocookie.net/callofduty/images/a/a4/Prestige_2_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219031107" },
@@ -204,28 +204,28 @@ public static class Constants
     // ********************
     //        TASKS
     // ********************
-    public const long CHOP_COOLDOWN = 3600;
-    public const long DIG_COOLDOWN = 3600;
-    public const long FARM_COOLDOWN = 3600;
-    public static readonly Dictionary<string, double> FISH = new()
+    public const long ChopCooldown = 3600;
+    public const long DigCooldown = 3600;
+    public const long FarmCooldown = 3600;
+    public static readonly Dictionary<string, double> Fish = new()
     {
         { "carp", 24 },
         { "trout", 27 },
         { "goldfish", 30 }
     };
-    public const long FISH_COOLDOWN = 3600;
-    public const double FISH_COCONUT_ODDS = 20;
-    public const int GENERIC_TASK_WOOD_MAX = 65;
-    public const int GENERIC_TASK_WOOD_MIN = 32;
-    public const int GENERIC_TASK_STONE_MAX = 113;
-    public const int GENERIC_TASK_STONE_MIN = 65;
-    public const int GENERIC_TASK_IRON_MAX = 161;
-    public const int GENERIC_TASK_IRON_MIN = 113;
-    public const int GENERIC_TASK_DIAMOND_MAX = 209;
-    public const int GENERIC_TASK_DIAMOND_MIN = 161;
-    public const long HUNT_COOLDOWN = 3600;
-    public const long MINE_COOLDOWN = 3600;
-    public const double MINE_STONE_MULTIPLIER = 1.33;
-    public const double MINE_IRON_MULTIPLIER = 1.66;
-    public const double MINE_DIAMOND_MULTIPLIER = 2.00;
+    public const long FishCooldown = 3600;
+    public const double FishCoconutOdds = 20;
+    public const int GenericTaskWoodMax = 65;
+    public const int GenericTaskWoodMin = 32;
+    public const int GenericTaskStoneMax = 113;
+    public const int GenericTaskStoneMin = 65;
+    public const int GenericTaskIronMax = 161;
+    public const int GenericTaskIronMin = 113;
+    public const int GenericTaskDiamondMax = 209;
+    public const int GenericTaskDiamondMin = 161;
+    public const long HuntCooldown = 3600;
+    public const long MineCooldown = 3600;
+    public const double MineStoneMultiplier = 1.33;
+    public const double MineIronMultiplier = 1.66;
+    public const double MineDiamondMultiplier = 2.00;
 }

@@ -15,7 +15,7 @@ public class DbBan : DbObject
         if (MemoryCache.Default.Contains($"ban-{guildId}-{userId}"))
             return (DbBan)MemoryCache.Default.Get($"ban-{guildId}-{userId}");
 
-        DocumentReference doc = Program.database.Collection($"servers/{guildId}/bans").Document(userId.ToString());
+        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/bans").Document(userId.ToString());
         DocumentSnapshot snap = await doc.GetSnapshotAsync();
         if (!snap.Exists)
         {
