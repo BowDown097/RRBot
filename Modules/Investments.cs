@@ -9,7 +9,7 @@ public class Investments : ModuleBase<SocketCommandContext>
     [RequireCash]
     public async Task<RuntimeResult> Invest(string crypto, double amount)
     {
-        if (amount < Constants.TransactionMin || double.IsNaN(amount))
+        if (amount is < Constants.TransactionMin or double.NaN)
             return CommandResult.FromError($"You need to invest at least {Constants.TransactionMin:C2}.");
 
         string abbreviation = ResolveAbbreviation(crypto);
@@ -33,7 +33,7 @@ public class Investments : ModuleBase<SocketCommandContext>
         culture.NumberFormat.CurrencyNegativePattern = 2;
         await user.SetCash(Context.User, user.Cash - amount);
         user[abbreviation] = (double)user[abbreviation] + Math.Round(cryptoAmount, 4);
-        user.AddToStats(new()
+        user.AddToStats(new Dictionary<string, string>
         {
             { $"Money Put Into {abbreviation}", amount.ToString("C2", culture) },
             { $"{abbreviation} Purchased", cryptoAmount.ToString("0.####") }
@@ -96,7 +96,7 @@ public class Investments : ModuleBase<SocketCommandContext>
     [Remarks("$withdraw ltc 10")]
     public async Task<RuntimeResult> Withdraw(string crypto, double amount)
     {
-        if (amount < Constants.InvestmentMinAmount || double.IsNaN(amount))
+        if (amount is < Constants.InvestmentMinAmount or double.NaN)
             return CommandResult.FromError($"You must withdraw {Constants.InvestmentMinAmount} or more of the crypto.");
 
         string abbreviation = ResolveAbbreviation(crypto);
@@ -137,8 +137,9 @@ public class Investments : ModuleBase<SocketCommandContext>
         string today = DateTime.UtcNow.ToString("yyyy-MM-dd") + "T00:00";
         string data = await client.GetStringAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
         dynamic obj = JsonConvert.DeserializeObject(data);
+        if (obj is null) return double.MaxValue;
         JToken latestEntry = JArray.FromObject(obj.data.entries).Last;
-        return Math.Round(latestEntry[1].Value<double>(), 2);
+        return Math.Round(latestEntry[1]?.Value<double>() ?? double.MaxValue, 2);
     }
 
     public static string ResolveAbbreviation(string crypto) => crypto.ToLower() switch

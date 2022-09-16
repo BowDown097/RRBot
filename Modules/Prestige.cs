@@ -34,10 +34,10 @@ public class Prestige : ModuleBase<SocketCommandContext>
             = user.HuntCooldown = user.LootCooldown = user.MineCooldown = user.PacifistCooldown
             = user.RapeCooldown = user.RobCooldown = user.ScavengeCooldown = user.SlaveryCooldown
             = user.SupportCooldown = user.TimeTillCash = user.WhoreCooldown = 0;
-        user.Consumables = new();
-        user.Crates = new();
-        user.Perks = new();
-        user.Tools = new();
+        user.Consumables = new Dictionary<string, int>();
+        user.Crates = new List<string>();
+        user.Perks = new Dictionary<string, long>();
+        user.Tools = new List<string>();
         user.Prestige++;
 
         await user.SetCooldown("PrestigeCooldown", Constants.PrestigeCooldown, Context.Guild, Context.User);

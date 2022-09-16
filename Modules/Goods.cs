@@ -146,7 +146,7 @@ public class Goods : ModuleBase<SocketCommandContext>
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
 
-        IEnumerable<string> sortedPerks = dbUser.Perks.Where(k => k.Value > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(p => p.Key);
+        List<string> sortedPerks = dbUser.Perks.Where(k => k.Value > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(p => p.Key).ToList();
         string collectibles = string.Join('\n', dbUser.Collectibles.Where(k => k.Value > 0).Select(c => $"{c.Key} ({c.Value}x)"));
         string consumables = string.Join('\n', dbUser.Consumables.Where(k => k.Value > 0).Select(c => $"{c.Key} ({c.Value}x)"));
         string crates = string.Join('\n', dbUser.Crates.Distinct().Select(c => $"{c} ({dbUser.Crates.Count(cr => cr == c)}x)"));
@@ -191,7 +191,7 @@ public class Goods : ModuleBase<SocketCommandContext>
         user.Cash += crate.Cash;
 
         List<Item> items = crate.Open(user);
-        IEnumerable<string> consumables = items.Where(i => i is Consumable).Select(c => c.Name);
+        List<string> consumables = items.Where(i => i is Consumable).Select(c => c.Name).ToList();
         IEnumerable<string> tools = items.Where(i => i is Tool).Select(t => t.Name);
 
         StringBuilder description = new();
@@ -229,8 +229,7 @@ public class Goods : ModuleBase<SocketCommandContext>
         string perks = string.Join('\n', ItemSystem.Perks.Select(p => $"**{p}**: {p.Description}\nDuration: {TimeSpan.FromSeconds(p.Duration).FormatCompound()}\nPrice: {p.Price:C2}"));
         string tools = string.Join('\n', ItemSystem.Tools.Select(t => $"**{t}**: {t.Price:C2}"));
 
-        PageBuilder[] pages = new[]
-        {
+        IPageBuilder[] pages = {
             new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools),
             new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(perks),
             new PageBuilder().WithColor(Color.Red).WithTitle("Crates").WithDescription(crates)

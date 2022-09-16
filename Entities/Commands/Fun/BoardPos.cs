@@ -1,13 +1,14 @@
 namespace RRBot.Entities.Commands.Fun;
-public struct BoardPos
+public readonly struct BoardPos
 {
     public static readonly BoardPos Origin = (0, 0);
-    public int X, Y;
+    public readonly int X;
+    public readonly int Y;
 
-    public BoardPos(int x, int y)
+    private BoardPos(int x, int y)
     {
-        this.X = x;
-        this.Y = y;
+        X = x;
+        Y = y;
     }
 
     public static implicit operator BoardPos((int x, int y) point) => new(point.x, point.y);

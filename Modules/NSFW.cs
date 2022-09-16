@@ -13,7 +13,7 @@ public class Nsfw : ModuleBase<SocketCommandContext>
             ? "https://nekos.life/api/v2/img/nsfw_neko_gif"
             : "https://nekos.life/api/v2/img/lewd";
         string response = await client.GetStringAsync(apiUrl);
-        string imgUrl = JObject.Parse(response)["url"].Value<string>();
+        string imgUrl = JObject.Parse(response)["url"]?.Value<string>();
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -34,7 +34,7 @@ public class Nsfw : ModuleBase<SocketCommandContext>
         }
         else
         {
-            string[] keywords = keyword.Contains(',') ? keyword.Split(',') : new string[] { keyword };
+            string[] keywords = keyword.Contains(',') ? keyword.Split(',') : new[] { keyword };
             try
             {
                 // the search code kinda garbage but according to the README.md of the NHentaiSharp project you have to do this i guess

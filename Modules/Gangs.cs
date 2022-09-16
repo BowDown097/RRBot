@@ -31,7 +31,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> CreateGang([Remainder] string name)
     {
         QuerySnapshot gangs = await Program.Database.Collection($"servers/{Context.Guild.Id}/gangs").GetSnapshotAsync();
-        if (name.Length <= 2 || name.Length > 32 || !Regex.IsMatch(name, "^[a-zA-Z0-9\x20]*$") || await FilterSystem.ContainsFilteredWord(Context.Guild, name))
+        if (name.Length is <= 2 or > 32 || !Regex.IsMatch(name, "^[a-zA-Z0-9\x20]*$") || await FilterSystem.ContainsFilteredWord(Context.Guild, name))
             return CommandResult.FromError("That gang name is not allowed.");
         if (gangs.Any(r => r.Id.Equals(name, StringComparison.OrdinalIgnoreCase)))
             return CommandResult.FromError("There is already a gang with that name.");
@@ -59,7 +59,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Remarks("$deposit 6969.69")]
     public async Task<RuntimeResult> Deposit(double amount)
     {
-        if (amount < Constants.TransactionMin || double.IsNaN(amount))
+        if (amount is < Constants.TransactionMin or double.NaN)
             return CommandResult.FromError($"You need to deposit at least {Constants.TransactionMin:C2}.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
@@ -389,7 +389,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Remarks("$withdrawvault 1000000")]
     public async Task<RuntimeResult> WithdrawVault(double amount)
     {
-        if (amount < Constants.TransactionMin || double.IsNaN(amount))
+        if (amount is < Constants.TransactionMin or double.NaN)
             return CommandResult.FromError($"You need to deposit at least {Constants.TransactionMin:C2}.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);

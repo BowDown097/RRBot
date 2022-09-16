@@ -80,16 +80,16 @@ public class EventSystem
     private static async Task HandleReactionAsync(Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction, bool addedReaction)
     {
         IMessageChannel channel = await channelCached.GetOrDownloadAsync();
-        SocketGuildUser user = await channel.GetUserAsync(reaction.UserId) as SocketGuildUser;
-        if (user.IsBot)
+        if (await channel.GetUserAsync(reaction.UserId) is not SocketGuildUser user || user.IsBot)
             return;
 
         // selfroles check
         DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(channel.GetGuild().Id);
-        if (reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(reaction.Emote.ToString()))
+        string emote = reaction.Emote.ToString() ?? string.Empty;
+        if (reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(emote))
             return;
 
-        ulong roleId = selfRoles.SelfRoles[reaction.Emote.ToString()];
+        ulong roleId = selfRoles.SelfRoles[emote];
         if (addedReaction)
             await user.AddRoleAsync(roleId);
         else
@@ -145,7 +145,7 @@ public class EventSystem
     {
         SocketUserMessage userMsg = msg as SocketUserMessage;
         SocketCommandContext context = new(_client, userMsg);
-        if (context.User.IsBot || string.IsNullOrWhiteSpace(userMsg.Content))
+        if (context.User.IsBot || userMsg is null || string.IsNullOrWhiteSpace(userMsg.Content))
             return;
 
         await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, _client);
@@ -161,7 +161,7 @@ public class EventSystem
 
             DbConfigChannels channelsConfig = await DbConfigChannels.GetById(context.Guild.Id);
             CommandInfo command = search.Commands[0].Command;
-            if (!(command.Module.Name is "Administration" or "BotOwner" or "Moderation" or "Music" or "Polls")
+            if (command.Module.Name is not ("Administration" or "BotOwner" or "Moderation" or "Music" or "Polls")
                 && channelsConfig.WhitelistedChannels.Count > 0 && !channelsConfig.WhitelistedChannels.Contains(context.Channel.Id))
             {
                 await context.User.NotifyAsync(context.Channel, "Commands are disabled in this channel!");
@@ -217,7 +217,9 @@ public class EventSystem
 
     private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
     {
-        SocketUserMessage userMsgAfter = msgAfter as SocketUserMessage;
+        if (msgAfter is not SocketUserMessage userMsgAfter)
+            return;
+
         await FilterSystem.DoInviteCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild(), _client);
         await FilterSystem.DoFilteredWordCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
         await FilterSystem.DoScamCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
@@ -270,9 +272,9 @@ public class EventSystem
         if (await FilterSystem.ContainsFilteredWord(context.Guild, reason))
             return;
 
-        string args = !command.Value.Parameters.Any(p => p.IsOptional)
-            ? command.Value.Parameters.Count.ToString()
-            : $"{command.Value.Parameters.Count(p => !p.IsOptional)}-{command.Value.Parameters.Count}";
+        string args = command.Value.Parameters.Any(p => p.IsOptional)
+            ? $"{command.Value.Parameters.Count(p => !p.IsOptional)}-{command.Value.Parameters.Count}"
+            : command.Value.Parameters.Count.ToString();
         string response = result.Error switch {
             CommandError.BadArgCount => $"You must specify {args} argument(s)!\nCommand usage: ``{command.Value.GetUsage()}``",
             CommandError.ParseFailed => $"Couldn't understand something you passed into the command.\nThis error info might help: ``{reason}``\nOr maybe the command usage will: ``{command.Value.GetUsage()}``",

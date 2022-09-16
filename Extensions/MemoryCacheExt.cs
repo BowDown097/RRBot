@@ -6,7 +6,7 @@ public static class MemoryCacheExt
         CacheItemPolicy policy = new()
         {
             AbsoluteExpiration = DateTime.Now.AddMinutes(10.0),
-            UpdateCallback = new CacheEntryUpdateCallback(CacheUpdateCallback)
+            UpdateCallback = CacheUpdateCallback
         };
 
         cache.Set(key, value, policy);
@@ -15,6 +15,6 @@ public static class MemoryCacheExt
     private static void CacheUpdateCallback(CacheEntryUpdateArguments args)
     {
         DbObject item = (DbObject)MemoryCache.Default.Get(args.Key);
-        item.Reference.SetAsync(item);
+        item?.Reference.SetAsync(item);
     }
 }

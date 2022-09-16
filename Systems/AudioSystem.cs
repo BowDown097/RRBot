@@ -7,7 +7,7 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, float volume)
     {
-        if (volume < Constants.MinVolume || volume > Constants.MaxVolume)
+        if (volume is < Constants.MinVolume or > Constants.MaxVolume)
             return CommandResult.FromError($"Volume must be between {Constants.MinVolume}% and {Constants.MaxVolume}%.");
         if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
@@ -136,12 +136,14 @@ public sealed class AudioSystem
                 _ => SearchMode.None
             };
 
-            if (searchMode == SearchMode.None && !uri.ToString().Split('/').Last().Contains('.'))
-                track = await _audioService.YtdlpGetTrackAsync(uri, context.User);
-            else if (searchMode == SearchMode.YouTube && uri.AbsolutePath == "/watch")
-                track = await _audioService.GetYtTrackAsync(uri, context.Guild, context.User);
-            else
-                track = await _audioService.RrGetTrackAsync(query, context.User, searchMode);
+            track = searchMode switch
+            {
+                SearchMode.None when !uri.ToString().Split('/').Last().Contains('.') => await _audioService
+                    .YtdlpGetTrackAsync(uri, context.User),
+                SearchMode.YouTube when uri.AbsolutePath == "/watch" => await _audioService.GetYtTrackAsync(uri,
+                    context.Guild, context.User),
+                _ => await _audioService.RrGetTrackAsync(query, context.User, searchMode)
+            };
         }
         else
         {

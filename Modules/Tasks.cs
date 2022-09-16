@@ -34,7 +34,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
         if (user.Perks.ContainsKey("Enchanter"))
         {
             int randNum = RandomUtil.Next(100);
-            if (randNum == 1 || randNum == 2)
+            if (randNum is 1 or 2)
             {
                 user.Tools.Remove("Fishing Rod");
                 await Context.User.NotifyAsync(Context.Channel, "Your Fishing Rod broke into pieces as soon as you tried to use it. You made no money.");
@@ -50,7 +50,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
         if (RandomUtil.NextDouble(1, 101) < Constants.FishCoconutOdds)
             await ItemSystem.GiveCollectible("Coconut", Context.Channel, user);
 
-        user.AddToStats(new()
+        user.AddToStats(new Dictionary<string, string>
         {
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }
@@ -80,7 +80,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
         if (user.Perks.ContainsKey("Enchanter"))
         {
             int randNum = RandomUtil.Next(100);
-            if (randNum == 1 || randNum == 2)
+            if (randNum is 1 or 2)
             {
                 user.Tools.Remove(toolName);
                 await Context.User.NotifyAsync(Context.Channel, $"Your {toolName} broke into pieces as soon as you tried to use it. You made no money.");
@@ -101,7 +101,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
             _ => ""
         };
 
-        user.AddToStats(new()
+        user.AddToStats(new Dictionary<string, string>
         {
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }
@@ -131,7 +131,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
         if (user.Perks.ContainsKey("Enchanter"))
         {
             int randNum = RandomUtil.Next(100);
-            if (randNum == 1 || randNum == 2)
+            if (randNum is 1 or 2)
             {
                 user.Tools.Remove(tool);
                 await Context.User.NotifyAsync(Context.Channel, $"Your {tool} broke into pieces as soon as you tried to use it. You made no money.");
@@ -144,7 +144,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
         double cashGained = numMined * 2.5;
         double totalCash = user.Cash + cashGained;
 
-        user.AddToStats(new()
+        user.AddToStats(new Dictionary<string, string>
         {
             { "Tasks Done", "1" },
             { "Money Gained from Tasks", cashGained.ToString("C2") }

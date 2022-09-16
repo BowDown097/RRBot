@@ -46,9 +46,12 @@ public class Support : ModuleBase<SocketCommandContext>
                 "If they have taken an extraordinarily long time to respond, or if the issue has been solved by yourself or someone else, you can use ``$close``.");
         }
 
-        IEnumerable<SocketGuildUser> helpers = Context.Guild.Roles.FirstOrDefault(role => role.Name == "Helper")
-            .Members.Where(user => user.Id != Context.User.Id);
-        SocketGuildUser helperUser = helpers.ElementAt(RandomUtil.Next(0, helpers.Count()));
+        List<SocketGuildUser> helpers = Context.Guild.Roles.FirstOrDefault(role => role.Name == "Helper")?.Members
+            .Where(user => user.Id != Context.User.Id).ToList();
+        if (helpers == null || helpers.Count == 0)
+            return CommandResult.FromError("There are no helpers! Unfortunate.");
+
+        SocketGuildUser helperUser = helpers[RandomUtil.Next(0, helpers.Count)];
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -101,7 +104,9 @@ public class Support : ModuleBase<SocketCommandContext>
     public static async Task<RuntimeResult> CloseTicket(SocketCommandContext context, SocketUser user,
         DbSupportTicket ticket, string response)
     {
-        IUserMessage message = await context.Channel.GetMessageAsync(ticket.Message) as IUserMessage;
+        if (await context.Channel.GetMessageAsync(ticket.Message) is not IUserMessage message)
+            return CommandResult.FromError("Failed to get support ticket.");
+
         EmbedBuilder embed = message.Embeds.FirstOrDefault().ToEmbedBuilder();
         embed.Description += "\nStatus: Closed";
         await message.ModifyAsync(msg => msg.Embed = embed.Build());

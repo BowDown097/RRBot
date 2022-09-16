@@ -10,7 +10,7 @@ public static class CommandExceptionExt
         {
             case DiscordErrorCode.MissingPermissions:
                 EmbedBuilder embed = new EmbedBuilder().WithTitle("Missing Permissions");
-                IEnumerable<GuildPermissions> rolePerms = context.Guild.CurrentUser.Roles.Select(r => r.Permissions);
+                List<GuildPermissions> rolePerms = context.Guild.CurrentUser.Roles.Select(r => r.Permissions).ToList();
                 ChannelPermissions channelPerms = context.Guild.CurrentUser.GetPermissions(context.Channel as IGuildChannel);
 
                 StringBuilder missingPerms = new("I need the following permission(s):\n");

@@ -23,9 +23,9 @@ public class DbElection : DbObject
         if (electionId == null)
         {
             QuerySnapshot elections = await Program.Database.Collection($"servers/{guildId}/elections").GetSnapshotAsync();
-            IOrderedEnumerable<string> orderedCacheElections = MemoryCache.Default.Where(kvp => kvp.Key.StartsWith("election-")).Select(kvp => kvp.Key.Split('-')[2]).OrderBy(id => Convert.ToInt32(id));
-            IOrderedEnumerable<string> orderedDbElections = elections.Select(r => r.Id).OrderBy(id => Convert.ToInt32(id));
-            IEnumerable<string> orderedElections = orderedDbElections.Concat(orderedCacheElections.Where(e => !orderedDbElections.Contains(e)));
+            IOrderedEnumerable<string> orderedCacheElections = MemoryCache.Default.Where(kvp => kvp.Key.StartsWith("election-")).Select(kvp => kvp.Key.Split('-')[2]).OrderBy(Convert.ToInt32);
+            List<string> orderedDbElections = elections.Select(r => r.Id).OrderBy(Convert.ToInt32).ToList();
+            List<string> orderedElections = orderedDbElections.Concat(orderedCacheElections.Where(e => !orderedDbElections.Contains(e))).ToList();
             electionId = orderedElections.Any() ? Convert.ToInt32(orderedElections.Last()) + 1 : 1;
         }
 

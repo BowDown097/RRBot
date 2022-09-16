@@ -23,8 +23,8 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$addselfrole \\:Sperg\\: 809512856713166918")]
     public async Task<RuntimeResult> AddSelfRole(IEmote emote, [Remainder] SocketRole role)
     {
-        SocketRole authorHighest = (Context.User as SocketGuildUser)?.Roles.OrderBy(r => r.Position).Last();
-        if (role.Position >= authorHighest.Position)
+        SocketRole authorHighest = (Context.User as SocketGuildUser)?.Roles.MaxBy(r => r.Position);
+        if (authorHighest != null && role.Position >= authorHighest.Position)
             return CommandResult.FromError("Cannot create this selfrole because it is higher than or is the same as your highest role.");
 
         DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
@@ -73,7 +73,7 @@ public class Config : ModuleBase<SocketCommandContext>
             {
                 case "channels":
                     DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
-                    IEnumerable<string> whitelisted = channels.WhitelistedChannels.Select(c => MentionUtils.MentionChannel(c));
+                    IEnumerable<string> whitelisted = channels.WhitelistedChannels.Select(MentionUtils.MentionChannel);
                     description.AppendLine(Pair("Command Whitelisted Channels", string.Join(", ", whitelisted)));
                     description.AppendLine($"Election Announcements Channel: {MentionUtils.MentionChannel(channels.ElectionsAnnounceChannel)}");
                     description.AppendLine($"Election Voting Channel: {MentionUtils.MentionChannel(channels.ElectionsVotingChannel)}");
@@ -83,7 +83,7 @@ public class Config : ModuleBase<SocketCommandContext>
                     break;
                 case "optionals":
                     DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
-                    IEnumerable<string> noFilter = optionals.NoFilterChannels.Select(c => MentionUtils.MentionChannel(c));
+                    IEnumerable<string> noFilter = optionals.NoFilterChannels.Select(MentionUtils.MentionChannel);
                     description.AppendLine(Pair("Disabled Commands", string.Join(", ", optionals.DisabledCommands)));
                     description.AppendLine(Pair("Disabled Modules", string.Join(", ", optionals.DisabledModules)));
                     description.AppendLine(Pair("Filtered Words", string.Join(", ", optionals.FilteredWords)));
@@ -111,7 +111,7 @@ public class Config : ModuleBase<SocketCommandContext>
                     break;
                 case "selfroles":
                     DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(Context.Guild.Id);
-                    IMessage message = await Context.Guild.GetTextChannel(selfRoles.Channel)?.GetMessageAsync(selfRoles.Message);
+                    IMessage message = await Context.Guild.GetTextChannel(selfRoles.Channel).GetMessageAsync(selfRoles.Message);
                     string messageContent = message != null ? $"[Jump]({message.GetJumpUrl()})" : "(deleted)";
                     description.AppendLine($"Message: {messageContent}");
                     foreach (KeyValuePair<string, ulong> kvp in selfRoles.SelfRoles)

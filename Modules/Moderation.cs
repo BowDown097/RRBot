@@ -258,7 +258,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
             response += $" for \"{reason}\"";
         response += ".";
 
-        return new(ts, response);
+        return new Tuple<TimeSpan, string>(ts, response);
     }
     #endregion
 }

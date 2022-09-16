@@ -112,16 +112,16 @@ public class DbUser : DbObject
         get
         {
             PropertyInfo property = typeof(DbUser).GetProperty(name);
-            if (!property.CanRead)
+            if (property?.CanRead == false)
                 throw new ArgumentException("Property does not exist");
-            return property.GetValue(this, null);
+            return property?.GetValue(this, null);
         }
         set
         {
             PropertyInfo property = typeof(DbUser).GetProperty(name);
-            if (!property.CanWrite)
+            if (property?.CanWrite == false)
                 throw new ArgumentException("Property does not exist");
-            property.SetValue(this, value);
+            property?.SetValue(this, value);
         }
     }
 
@@ -144,7 +144,7 @@ public class DbUser : DbObject
         return user;
     }
 
-    public void AddToStat(string stat, string value) => AddToStats(new() {{ stat, value }});
+    public void AddToStat(string stat, string value) => AddToStats(new Dictionary<string, string> {{ stat, value }});
 
     public void AddToStats(Dictionary<string, string> statsToAddTo)
     {

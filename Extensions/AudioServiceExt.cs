@@ -30,7 +30,7 @@ public static class AudioServiceExt
         {
             DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
             if (!optionals.NsfwEnabled)
-                return new("restricted", "", TimeSpan.Zero, false, false, "", "", "", StreamProvider.Unknown);
+                return new LavalinkTrack("restricted", "", TimeSpan.Zero, false, false, "", "", "", StreamProvider.Unknown);
             return await service.YtdlpGetTrackAsync(uri, requester);
         }
         else
@@ -61,7 +61,7 @@ public static class AudioServiceExt
         await proc.WaitForExitAsync();
 
         JObject obj = JObject.Parse(output.Split('\n')[0]);
-        LavalinkTrack track = await service.GetTrackAsync(obj["url"].ToString());
+        LavalinkTrack track = await service.GetTrackAsync(obj["url"]?.ToString() ?? string.Empty);
         if (track != null)
         {
             track.Context = new TrackMetadata(

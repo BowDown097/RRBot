@@ -54,7 +54,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Leaderboard(string currency = "cash")
     {
         string cUp = currency.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : currency.ToUpper();
-        if (!(cUp is "Cash" or "BTC" or "ETH" or "LTC" or "XRP"))
+        if (cUp is not ("Cash" or "BTC" or "ETH" or "LTC" or "XRP"))
             return CommandResult.FromError($"**{currency}** is not a currently accepted currency!");
 
         double cryptoValue = cUp != "Cash" ? await Investments.QueryCryptoValue(cUp) : 0;
@@ -85,10 +85,9 @@ public class Economy : ModuleBase<SocketCommandContext>
             if (val < Constants.InvestmentMinAmount)
                 break;
 
-            if (cUp == "Cash")
-                lb.AppendLine($"{processedUsers + 1}: **{guildUser.Sanitize()}**: {val:C2}");
-            else
-                lb.AppendLine($"{processedUsers + 1}: **{guildUser.Sanitize()}**: {val:0.####} ({cryptoValue * val:C2})");
+            lb.AppendLine(cUp == "Cash"
+                ? $"{processedUsers + 1}: **{guildUser.Sanitize()}**: {val:C2}"
+                : $"{processedUsers + 1}: **{guildUser.Sanitize()}**: {val:0.####} ({cryptoValue * val:C2})");
 
             processedUsers++;
         }
@@ -124,13 +123,8 @@ public class Economy : ModuleBase<SocketCommandContext>
             .RrAddField("Active Consumables", string.Join('\n', dbUser.UsedConsumables.Where(c => c.Value > 0).Select(c => $"**{c.Key}**: {c.Value}x")));
 
         StringBuilder counts = new($"**Achievements**: {dbUser.Achievements.Count}");
-        int cooldowns = 0;
-        foreach (string cmd in CmdsWithCooldown)
-        {
-            long cooldownSecs = (long)dbUser[$"{cmd}Cooldown"] - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            if (cooldownSecs > 0)
-                cooldowns++;
-        }
+        int cooldowns = CmdsWithCooldown.Select(cmd => (long)dbUser[$"{cmd}Cooldown"] - DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            .Count(cooldownSecs => cooldownSecs > 0);
         counts.AppendLine($"\n**Commands On Cooldown**: {cooldowns}");
 
         embed.RrAddField("Counts", counts.ToString());
@@ -169,7 +163,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Remarks("$sauce Mateo 1000")]
     public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
     {
-        if (amount < Constants.TransactionMin || double.IsNaN(amount))
+        if (amount is < Constants.TransactionMin or double.NaN)
             return CommandResult.FromError($"You need to sauce at least {Constants.TransactionMin:C2}.");
         if (Context.User == user)
             return CommandResult.FromError("You can't sauce yourself money. Don't even know how you would.");

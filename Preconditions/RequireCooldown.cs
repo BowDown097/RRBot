@@ -2,8 +2,8 @@
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
 public class RequireCooldownAttribute : PreconditionAttribute
 {
-    public string CooldownNode { get; set; }
-    public string Message { get; set; }
+    private string CooldownNode { get; set; }
+    private string Message { get; set; }
 
     public RequireCooldownAttribute(string cooldownNode, string message)
     {

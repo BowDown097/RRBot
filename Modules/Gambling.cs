@@ -95,7 +95,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
             if (pot.EndTime < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             {
                 pot.EndTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(86400);
-                pot.Members = new();
+                pot.Members = new Dictionary<string, double>();
                 pot.Value = 0;
             }
 
@@ -115,7 +115,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
     [RequireCash]
     public async Task<RuntimeResult> Slots(double bet)
     {
-        if (bet < Constants.TransactionMin || double.IsNaN(bet))
+        if (bet is < Constants.TransactionMin or double.NaN)
             return CommandResult.FromError($"You need to bet at least {Constants.TransactionMin:C2}.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
@@ -214,7 +214,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
         culture.NumberFormat.CurrencyNegativePattern = 2;
         if (success)
         {
-            user.AddToStats(new()
+            user.AddToStats(new Dictionary<string, string>
             {
                 { "Gambles Won", "1" },
                 { "Money Gained from Gambling", gain.ToString("C2", culture) },
@@ -223,7 +223,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
         }
         else
         {
-            user.AddToStats(new()
+            user.AddToStats(new Dictionary<string, string>
             {
                 { "Gambles Lost", "1" },
                 { "Money Lost to Gambling", gain.ToString("C2", culture) },
@@ -234,7 +234,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
     private async Task<RuntimeResult> GenericGamble(double bet, double odds, double mult, bool exactRoll = false)
     {
-        if (bet < Constants.TransactionMin || double.IsNaN(bet))
+        if (bet is < Constants.TransactionMin or double.NaN)
             return CommandResult.FromError($"You need to bet at least {Constants.TransactionMin:C2}.");
 
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);

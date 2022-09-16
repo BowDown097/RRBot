@@ -10,7 +10,7 @@ public static class ItemSystem
         new("Diamond", 25000, 10, 3)
     };
 
-    public static readonly Collectible[] Collectibles =
+    private static readonly Collectible[] Collectibles =
     {
         new("Ape NFT", "Who actually likes these? Why does this have value?", 1000, "https://i.ibb.co/w0syJ61/nft.png"),
         new("Bank Cheque", "Hey hey hey, we got ourselves some free money!", -1, "https://i.ibb.co/wCYcrP7/Blank-Cheque.png"),
@@ -90,43 +90,39 @@ public static class ItemSystem
         if (dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 3 && !(perk.Name is "Pacicist" or "Multiperk"))
             return CommandResult.FromError("You already have 2 perks.");
 
-        if (!dbUser.Perks.ContainsKey(perk.Name))
+        if (dbUser.Perks.ContainsKey(perk.Name))
+            return CommandResult.FromError($"You already have {perk}!");
+
+        if (perk.Name == "Pacifist")
         {
-            if (perk.Name == "Pacifist")
+            if (dbUser.PacifistCooldown != 0)
             {
-                if (dbUser.PacifistCooldown != 0)
-                {
-                    long cooldownSecs = dbUser.PacifistCooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    if (cooldownSecs > 0)
-                        return CommandResult.FromError("You bought the Pacifist perk later than 3 days ago. You still have to wait {TimeSpan.FromSeconds(cooldownSecs).FormatCompound()}.");
-                    dbUser.PacifistCooldown = 0;
-                }
+                long cooldownSecs = dbUser.PacifistCooldown - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                if (cooldownSecs > 0)
+                    return CommandResult.FromError("You bought the Pacifist perk later than 3 days ago. You still have to wait {TimeSpan.FromSeconds(cooldownSecs).FormatCompound()}.");
+                dbUser.PacifistCooldown = 0;
+            }
 
-                foreach (string key in dbUser.Perks.Keys)
-                {
-                    Perk keyPerk = GetItem(key) as Perk;
+            foreach (string key in dbUser.Perks.Keys)
+            {
+                if (GetItem(key) is Perk keyPerk) 
                     dbUser.Cash += keyPerk.Price;
-                    dbUser.Perks.Remove(key);
-                }
+                dbUser.Perks.Remove(key);
             }
-
-            if (perk.Price <= dbUser.Cash)
-            {
-                dbUser.Perks.Add(perk.Name, DateTimeOffset.UtcNow.ToUnixTimeSeconds(perk.Duration));
-                await dbUser.SetCash(user, dbUser.Cash - perk.Price);
-
-                StringBuilder notification = new($"You got yourself the {perk} perk for **{perk.Price:C2}**!");
-                if (perk.Name == "Pacifist")
-                    notification.Append(" Additionally, as you bought the Pacifist perk, any perks you previously had have been refunded.");
-
-                await user.NotifyAsync(channel, notification.ToString());
-                return CommandResult.FromSuccess();
-            }
-
-            return CommandResult.FromError($"You do not have enough to buy {perk}!");
         }
 
-        return CommandResult.FromError($"You already have {perk}!");
+        if (perk.Price > dbUser.Cash) 
+            return CommandResult.FromError($"You do not have enough to buy {perk}!");
+
+        dbUser.Perks.Add(perk.Name, DateTimeOffset.UtcNow.ToUnixTimeSeconds(perk.Duration));
+        await dbUser.SetCash(user, dbUser.Cash - perk.Price);
+
+        StringBuilder notification = new($"You got yourself the {perk} perk for **{perk.Price:C2}**!");
+        if (perk.Name == "Pacifist")
+            notification.Append(" Additionally, as you bought the Pacifist perk, any perks you previously had have been refunded.");
+
+        await user.NotifyAsync(channel, notification.ToString());
+        return CommandResult.FromSuccess();
     }
 
     public static async Task<RuntimeResult> BuyTool(Tool tool, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
@@ -135,25 +131,23 @@ public static class ItemSystem
         if (dbUser.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-        if (!dbUser.Tools.Contains(tool.Name))
-        {
-            if (tool.Price <= dbUser.Cash)
-            {
-                dbUser.Tools.Add(tool.Name);
-                await dbUser.SetCash(user, dbUser.Cash - tool.Price);
-                await user.NotifyAsync(channel, $"You got yourself a fresh {tool} for **{tool.Price:C2}**!");
-                return CommandResult.FromSuccess();
-            }
+        if (dbUser.Tools.Contains(tool.Name))
+            return CommandResult.FromError($"You already have a {tool}!");
 
+        if (tool.Price > dbUser.Cash)
             return CommandResult.FromError($"You do not have enough to buy a {tool}!");
-        }
 
-        return CommandResult.FromError($"You already have a {tool}!");
+        dbUser.Tools.Add(tool.Name);
+        await dbUser.SetCash(user, dbUser.Cash - tool.Price);
+        await user.NotifyAsync(channel, $"You got yourself a fresh {tool} for **{tool.Price:C2}**!");
+        return CommandResult.FromSuccess();
     }
 
     public static async Task GiveCollectible(string name, IMessageChannel channel, DbUser user)
     {
-        Collectible collectible = GetItem(name) as Collectible;
+        if (GetItem(name) is not Collectible collectible)
+            return;
+
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithThumbnailUrl(collectible.Image)
@@ -168,7 +162,7 @@ public static class ItemSystem
         await channel.SendMessageAsync(embed: embed.Build());
     }
 
-    public static string GetBestTool(List<string> tools, string type)
+    public static string GetBestTool(IEnumerable<string> tools, string type)
     {
         IEnumerable<string> toolsOfType = tools.Where(tool => tool.EndsWith(type));
         return toolsOfType.OrderByDescending(tool => GetItem(tool).Price).First();

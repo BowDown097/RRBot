@@ -3,7 +3,8 @@ public class EmoteTypeReader : TypeReader
 {
     public override Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
     {
-        if (context.Guild.Emotes.Any(e => e.ToString() == input) && Emote.TryParse(input, out Emote result)) return Task.FromResult(TypeReaderResult.FromSuccess(result));
+        if (context.Guild.Emotes.Any(e => e.ToString() == input) && Emote.TryParse(input, out Emote result))
+            return Task.FromResult(TypeReaderResult.FromSuccess(result));
 
         try
         {

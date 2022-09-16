@@ -41,10 +41,9 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
             if (val < Constants.InvestmentMinAmount)
                 break;
 
-            if (currency == "Cash")
-                lb.AppendLine($"{start + processedUsers}: **{guildUser.Sanitize()}**: {val:C2}");
-            else
-                lb.AppendLine($"{start + processedUsers}: **{guildUser.Sanitize()}**: {val:0.####} ({cryptoValue * val:C2})");
+            lb.AppendLine(currency == "Cash"
+                ? $"{start + processedUsers}: **{guildUser.Sanitize()}**: {val:C2}"
+                : $"{start + processedUsers}: **{guildUser.Sanitize()}**: {val:0.####} ({cryptoValue * val:C2})");
 
             processedUsers++;
         }

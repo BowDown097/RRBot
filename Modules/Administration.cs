@@ -210,11 +210,11 @@ public class Administration : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> SetVotes(int electionId, IGuildUser user, int votes)
     {
         QuerySnapshot elections = await Program.Database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
-        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && !elections.Any(r => r.Id == electionId.ToString()))
+        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && elections.All(r => r.Id != electionId.ToString()))
             return CommandResult.FromError("There is no election with that ID!");
 
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
-        if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsAnnounceChannel))
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsAnnounceChannel))
             return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
 
         DbElection election = await DbElection.GetById(Context.Guild.Id, electionId);

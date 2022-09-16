@@ -33,16 +33,18 @@ public static class LoggingSystem
 
     public static async Task Client_ChannelUpdated(SocketChannel before, SocketChannel after)
     {
-        SocketTextChannel beforeText = before as SocketTextChannel;
-        SocketTextChannel afterText = after as SocketTextChannel;
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription($"**Channel Updated**\n*(If nothing here appears changed, then the channel permissions were updated)*\n{after.Mention()}")
             .AddUpdateCompField("Name", before, after)
-            .AddUpdateCompField("Topic", beforeText.Topic, afterText.Topic)
-            .AddUpdateCompField("Position", beforeText.Position, afterText.Position)
             .AddUpdateCompField("Member Count", before.Users.Count, after.Users.Count);
 
-        await WriteToLogs(beforeText.Guild, embed);
+        if (before is SocketTextChannel beforeText && after is SocketTextChannel afterText)
+        {
+            embed.AddUpdateCompField("Topic", beforeText.Topic, afterText.Topic)
+                .AddUpdateCompField("Position", beforeText.Position, afterText.Position);
+        }
+
+        await WriteToLogs((before as SocketGuildChannel)?.Guild, embed);
     }
 
     public static async Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> userBeforeCached,
@@ -507,16 +509,17 @@ public static class LoggingSystem
     public static async Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
     {
         StringBuilder msgLogs = new();
-        foreach (IMessage message in messages)
+        List<IMessage> messageList = messages.ToList();
+        foreach (IMessage message in messageList)
             msgLogs.AppendLine($"{message.Author} @ {message.Timestamp}: {message.Content}");
 
         using HttpClient client = new();
         HttpContent content = new StringContent(msgLogs.ToString());
         HttpResponseMessage response = await client.PostAsync("https://hastebin.com/documents", content);
-        string hbKey = JObject.Parse(await response.Content.ReadAsStringAsync())["key"].ToString();
+        string hbKey = JObject.Parse(await response.Content.ReadAsStringAsync())["key"]?.ToString();
 
         EmbedBuilder embed = new EmbedBuilder()
-            .WithDescription($"**{messages.Count() - 1} Messages Purged**\nSee them [here](https://hastebin.com/{hbKey})");
+            .WithDescription($"**{messageList.Count() - 1} Messages Purged**\nSee them [here](https://hastebin.com/{hbKey})");
 
         await WriteToLogs(guild, embed);
     }

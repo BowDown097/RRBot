@@ -3,7 +3,7 @@
 namespace RRBot;
 internal static class Program
 {
-    public static FirestoreDb Database = FirestoreDb.Create("rushrebornbot",
+    public static readonly FirestoreDb Database = FirestoreDb.Create("rushrebornbot",
         new FirestoreClientBuilder { CredentialsPath = Credentials.CredentialsPath }.Build());
 
     private static async Task Main()

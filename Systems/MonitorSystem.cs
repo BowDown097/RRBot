@@ -155,26 +155,26 @@ public class MonitorSystem
             foreach (SocketGuild guild in _client.Guilds)
             {
                 DbPot pot = await DbPot.GetById(guild.Id);
-                if (pot.EndTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && pot.EndTime != -1)
+                if (pot.EndTime > DateTimeOffset.UtcNow.ToUnixTimeSeconds() || pot.EndTime == -1) 
+                    continue;
+
+                ulong luckyGuy = pot.DrawMember();
+                SocketGuildUser luckyUser = guild.GetUser(luckyGuy);
+                DbUser luckyDbUser = await DbUser.GetById(guild.Id, luckyGuy);
+
+                double winnings = pot.Value * (1 - (Constants.PotFee / 100));
+                await luckyDbUser.SetCash(luckyUser, luckyDbUser.Cash + winnings);
+
+                DbConfigChannels channelsConfig = await DbConfigChannels.GetById(guild.Id);
+                if (channelsConfig.PotChannel != default)
                 {
-                    ulong luckyGuy = pot.DrawMember();
-                    SocketGuildUser luckyUser = guild.GetUser(luckyGuy);
-                    DbUser luckyDbUser = await DbUser.GetById(guild.Id, luckyGuy);
-
-                    double winnings = pot.Value * (1 - (Constants.PotFee / 100));
-                    await luckyDbUser.SetCash(luckyUser, luckyDbUser.Cash + winnings);
-
-                    DbConfigChannels channelsConfig = await DbConfigChannels.GetById(guild.Id);
-                    if (channelsConfig.PotChannel != default)
-                    {
-                        SocketTextChannel channel = guild.GetTextChannel(channelsConfig.PotChannel);
-                        await channel.SendMessageAsync($"The pot has been drawn, and our LUCKY WINNER is {luckyUser.Mention}!!! After a fee of {Constants.PotFee}%, they have won {winnings:C2} with a {pot.GetMemberOdds(luckyGuy.ToString())}% chance of winning the pot!");
-                    }
-
-                    pot.EndTime = -1;
-                    pot.Members = new();
-                    pot.Value = 0;
+                    SocketTextChannel channel = guild.GetTextChannel(channelsConfig.PotChannel);
+                    await channel.SendMessageAsync($"The pot has been drawn, and our LUCKY WINNER is {luckyUser.Mention}!!! After a fee of {Constants.PotFee}%, they have won {winnings:C2} with a {pot.GetMemberOdds(luckyGuy.ToString())}% chance of winning the pot!");
                 }
+
+                pot.EndTime = -1;
+                pot.Members = new Dictionary<string, double>();
+                pot.Value = 0;
             }
         }
     }
@@ -185,13 +185,13 @@ public class MonitorSystem
         foreach (DocumentSnapshot snap in usersWConsumable.Documents)
         {
             DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
-            if ((long)user[timeKey] <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-            {
-                if (recoveryTime)
-                    user[name] = 0;
-                else
-                    user.UsedConsumables[name] = 0;
-            }
+            if ((long)user[timeKey] > DateTimeOffset.UtcNow.ToUnixTimeSeconds()) 
+                continue;
+
+            if (recoveryTime)
+                user[name] = 0;
+            else
+                user.UsedConsumables[name] = 0;
         }
     }
 }

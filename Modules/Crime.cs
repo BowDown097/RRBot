@@ -57,7 +57,7 @@ public class Crime : ModuleBase<SocketCommandContext>
     [RequireCooldown("HackCooldown", "You exhausted all your brain power bro, you're gonna have to wait {0}.")]
     public async Task<RuntimeResult> Hack(IGuildUser user, string crypto, double amount)
     {
-        if (amount < Constants.InvestmentMinAmount || double.IsNaN(amount))
+        if (amount is < Constants.InvestmentMinAmount or double.NaN)
             return CommandResult.FromError($"You must hack {Constants.InvestmentMinAmount} or more.");
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("How are you supposed to hack yourself?");
@@ -257,7 +257,11 @@ public class Crime : ModuleBase<SocketCommandContext>
     {
         using HttpClient client = new();
         string response = await client.GetStringAsync("https://www.thegamegal.com/wordgenerator/generator.php?game=2&category=6");
-        JToken[] words = JObject.Parse(response)["words"].ToArray();
+        JToken wordsToken = JObject.Parse(response)["words"];
+        if (wordsToken is null)
+            return;
+
+        JToken[] words = wordsToken.ToArray();
         string originalWord = words[RandomUtil.Next(words.Length)].ToString();
         DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         if (originalWord.Any(c => !char.IsLetter(c) && !char.IsWhiteSpace(c)))
@@ -269,7 +273,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         switch (RandomUtil.Next(2))
         {
             case 0:
-                string scrambled = Regex.Replace(originalWord, @"\w+", new MatchEvaluator(ScrambleWord), RegexOptions.IgnorePatternWhitespace);
+                string scrambled = Regex.Replace(originalWord, @"\w+", ScrambleWord, RegexOptions.IgnorePatternWhitespace);
                 if (scrambled != "egg" && scrambled.Equals(originalWord, StringComparison.OrdinalIgnoreCase))
                 {
                     await Scavenge();
@@ -291,7 +295,8 @@ public class Crime : ModuleBase<SocketCommandContext>
                     x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
                     timeout: TimeSpan.FromSeconds(Constants.ScavengeTimeout)
                 );
-                await HandleScavenge(scrambleMsg, scrambleResult, user, scrambleResult.Value.Content.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
+                string scrambleContent = scrambleResult.Value?.Content ?? string.Empty;
+                await HandleScavenge(scrambleMsg, scrambleResult, user, scrambleContent.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
                     $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
                     $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{originalWord}**.",
                     $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{originalWord}**.");
@@ -304,7 +309,12 @@ public class Crime : ModuleBase<SocketCommandContext>
                     { "target", "es" }
                 });
                 HttpResponseMessage message = await client.PostAsync("https://libretranslate.de/translate", content);
-                string translatedText = JObject.Parse(await message.Content.ReadAsStringAsync())["translatedText"].ToString();
+
+                JToken translatedToken = JObject.Parse(await message.Content.ReadAsStringAsync())["translatedText"];
+                if (translatedToken is null)
+                    return;
+
+                string translatedText = translatedToken.ToString();
                 if (translatedText.Equals(originalWord, StringComparison.OrdinalIgnoreCase))
                 {
                     await Scavenge();
@@ -321,7 +331,8 @@ public class Crime : ModuleBase<SocketCommandContext>
                     x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
                     timeout: TimeSpan.FromSeconds(Constants.ScavengeTimeout)
                 );
-                await HandleScavenge(translateMsg, translateResult, user, translateResult.Value.Content.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
+                string translateContent = translateResult.Value?.Content ?? string.Empty;
+                await HandleScavenge(translateMsg, translateResult, user, translateContent.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
                     $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
                     $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{originalWord}**.",
                     $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{originalWord}**.");
@@ -412,7 +423,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    private async Task HandleScavenge(IUserMessage msg, InteractiveResult<SocketMessage> result, DbUser user, bool successCondition, string successResponse, string timeoutResponse, string failureResponse)
+    private async Task HandleScavenge(IUserMessage msg, InteractiveResult result, DbUser user, bool successCondition, string successResponse, string timeoutResponse, string failureResponse)
     {
         if (!result.IsSuccess)
         {
@@ -454,7 +465,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             letters[ctr] = match.Value[ctr];
         }
         Array.Sort(keys, letters, 0, match.Value.Length);
-        return new(letters);
+        return new string(letters);
     }
 
     private static void StatUpdate(DbUser user, bool success, double gain)
@@ -463,7 +474,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         culture.NumberFormat.CurrencyNegativePattern = 2;
         if (success)
         {
-            user.AddToStats(new()
+            user.AddToStats(new Dictionary<string, string>
             {
                 { "Crimes Succeeded", "1" },
                 { "Money Gained from Crimes", gain.ToString("C2", culture) },
@@ -472,7 +483,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         }
         else
         {
-            user.AddToStats(new()
+            user.AddToStats(new Dictionary<string, string>
             {
                 { "Crimes Failed", "1" },
                 { "Money Lost to Crimes", gain.ToString("C2", culture) },

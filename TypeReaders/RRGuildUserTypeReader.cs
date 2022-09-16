@@ -1,6 +1,6 @@
 namespace RRBot.TypeReaders;
 /// <summary>
-///     A <see cref="UserTypeReader"/>, but StartsWith is used instead of Equals for usernames/nicknames
+///     A UserTypeReader, but StartsWith is used instead of Equals for usernames/nicknames
 /// </summary>
 public class RrGuildUserTypeReader : TypeReader
 {
@@ -71,18 +71,15 @@ public class RrGuildUserTypeReader : TypeReader
                 AddResult(results, guildUser, guildUser.Nickname == input ? 0.60f : 0.50f);
         }
 
-        if (results.Count == 1)
+        return results.Count switch
         {
-            return TypeReaderResult.FromSuccess(results.Values.ToImmutableArray());
-        }
-        else if (results.Count > 1)
-        {
-            return TypeReaderResult.FromError((CommandError)9, "Your user input is ambiguous. " +
+            1 => TypeReaderResult.FromSuccess(results.Values.ToImmutableArray()),
+            > 1 => TypeReaderResult.FromError((CommandError)9,
+                "Your user input is ambiguous. " +
                 $"Run the command again, but this time with the user being one of these {results.Values.Count} results:\n" +
-                string.Join(", ", results.Values.Select(trv => "**" + trv.ToString() + "**")));
-        }
-
-        return TypeReaderResult.FromError(CommandError.ObjectNotFound, "User not found.");
+                string.Join(", ", results.Values.Select(trv => "**" + trv.ToString() + "**"))),
+            _ => TypeReaderResult.FromError(CommandError.ObjectNotFound, "User not found.")
+        };
     }
 
     private static void AddResult(Dictionary<ulong, TypeReaderValue> results, IGuildUser user, float score)

@@ -1,6 +1,6 @@
 namespace RRBot.Preconditions;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-public class RequirePerkAttribute : PreconditionAttribute
+public abstract class RequirePerkAttribute : PreconditionAttribute
 {
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {

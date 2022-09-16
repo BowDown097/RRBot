@@ -10,7 +10,7 @@ public class General : ModuleBase<SocketCommandContext>
     [Remarks("$achievements toes69ing")]
     public async Task Achievements([Remainder] IGuildUser user = null)
     {
-        ulong userId = user != null ? user.Id : Context.User.Id;
+        ulong userId = user?.Id ?? Context.User.Id;
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
         StringBuilder description = new();
         foreach (KeyValuePair<string, string> achievement in dbUser.Achievements)
@@ -46,7 +46,7 @@ public class General : ModuleBase<SocketCommandContext>
                 return CommandResult.FromError("NSFW commands are disabled!");
         }
         if (commandInfo.TryGetPrecondition<RequireRushRebornAttribute>()
-            && !(Context.Guild.Id is RequireRushRebornAttribute.RrMain or RequireRushRebornAttribute.RrTest))
+            && Context.Guild.Id is not (RequireRushRebornAttribute.RrMain or RequireRushRebornAttribute.RrTest))
         {
             return CommandResult.FromError("You have specified a nonexistent command!");
         }
@@ -125,10 +125,8 @@ public class General : ModuleBase<SocketCommandContext>
     public async Task Modules()
     {
         List<string> modulesList = Commands.Modules.Select(x => x.Name).ToList();
-        if (!(Context.Guild.Id is RequireRushRebornAttribute.RrMain or RequireRushRebornAttribute.RrTest))
-        {
+        if (Context.Guild.Id is not (RequireRushRebornAttribute.RrMain or RequireRushRebornAttribute.RrTest))
             modulesList.Remove("Support");
-        }
 
         EmbedBuilder modulesEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -217,7 +215,7 @@ public class General : ModuleBase<SocketCommandContext>
             .RrAddField("ID", user.Id, true)
             .RrAddField("Nickname", user.Nickname, true)
             .AddSeparatorField()
-            .RrAddField("Joined At", user.JoinedAt.Value, true)
+            .RrAddField("Joined At", user.JoinedAt ?? DateTimeOffset.MinValue, true)
             .RrAddField("Created At", user.CreatedAt, true)
             .AddSeparatorField()
             .RrAddField("Permissions", string.Join(", ", perms.Where(p => p != null)))

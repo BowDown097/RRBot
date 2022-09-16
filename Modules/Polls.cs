@@ -10,7 +10,7 @@ public class Polls : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> CreatePoll(string title, [Remainder] string choices)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
-        if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.PollsChannel))
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.PollsChannel))
             return CommandResult.FromError("This server's polls channel has yet to be set or no longer exists.");
 
         SocketTextChannel pollsChannel = Context.Guild.GetTextChannel(channels.PollsChannel);
@@ -43,13 +43,13 @@ public class Polls : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> EndElection(int electionId)
     {
         QuerySnapshot elections = await Program.Database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
-        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && !elections.Any(r => r.Id == electionId.ToString()))
+        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && elections.All(r => r.Id != electionId.ToString()))
             return CommandResult.FromError("There is no election with that ID!");
 
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
-        if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsAnnounceChannel))
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsAnnounceChannel))
             return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
-        if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsVotingChannel))
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsVotingChannel))
             return CommandResult.FromError("This server's election voting channel has yet to be set or no longer exists.");
 
         DbElection election = await DbElection.GetById(Context.Guild.Id, electionId);
@@ -65,13 +65,13 @@ public class Polls : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> StartElection(IGuildUser firstCandidate, string role, long hours = Constants.ElectionDuration / 3600, int numWinners = 1)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
-        if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsAnnounceChannel))
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsAnnounceChannel))
             return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
-        if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsVotingChannel))
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsVotingChannel))
             return CommandResult.FromError("This server's election voting channel has yet to be set or no longer exists.");
 
         DbElection election = await DbElection.GetById(Context.Guild.Id);
-        election.Candidates = new() { { firstCandidate.Id.ToString(), 0 } };
+        election.Candidates = new Dictionary<string, int> { { firstCandidate.Id.ToString(), 0 } };
         election.EndTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)TimeSpan.FromHours(hours).TotalSeconds);
         election.NumWinners = numWinners;
 
@@ -104,14 +104,14 @@ public class Polls : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You can't vote for yourself!");
 
         QuerySnapshot elections = await Program.Database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
-        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && !elections.Any(r => r.Id == electionId.ToString()))
+        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && elections.All(r => r.Id != electionId.ToString()))
             return CommandResult.FromError("There is no election with that ID!");
 
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         int ageDays = (DateTimeOffset.UtcNow - (Context.User as IGuildUser)?.JoinedAt).GetValueOrDefault().Days;
         if (ageDays < channels.MinimumVotingAgeDays)
             return CommandResult.FromError($"You need to be in the server for at least {channels.MinimumVotingAgeDays} days to vote.");
-        if (!Context.Guild.TextChannels.Any(channel => channel.Id == channels.ElectionsAnnounceChannel))
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsAnnounceChannel))
             return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
         if (Context.Channel.Id != channels.ElectionsVotingChannel)
             return CommandResult.FromError($"You must vote in {MentionUtils.MentionChannel(channels.ElectionsVotingChannel)}.");
@@ -136,7 +136,7 @@ public class Polls : ModuleBase<SocketCommandContext>
             election.Candidates[user.Id.ToString()]++;
 
         if (!election.Voters.ContainsKey(Context.User.Id.ToString()))
-            election.Voters.Add(Context.User.Id.ToString(), new() { user.Id });
+            election.Voters.Add(Context.User.Id.ToString(), new List<ulong> { user.Id });
         else
             election.Voters[Context.User.Id.ToString()].Add(user.Id);
 
@@ -151,19 +151,21 @@ public class Polls : ModuleBase<SocketCommandContext>
     {
         SocketTextChannel announcementsChannel = guild.GetTextChannel(channels.ElectionsAnnounceChannel);
         SocketTextChannel votingChannel = guild.GetTextChannel(channels.ElectionsVotingChannel);
-        IUserMessage announcementMessage = await announcementsChannel.GetMessageAsync(election.AnnouncementMessage) as IUserMessage;
+        if (await announcementsChannel.GetMessageAsync(election.AnnouncementMessage) is not IUserMessage announcementMessage)
+            return;
 
-        IEnumerable<IGuildUser> winners = election.Candidates
+        List<SocketGuildUser> winners = election.Candidates
             .OrderByDescending(kvp => kvp.Value)
             .Take(election.NumWinners)
-            .Select(kvp => guild.GetUser(Convert.ToUInt64(kvp.Key)));
-        string winnerList = string.Join(", ", winners.Take(winners.Count() - 1).Select(u => u.Sanitize())) +
-            (winners.Count() > 1 ? " and " : "") + winners.LastOrDefault().Sanitize();
+            .Select(kvp => guild.GetUser(Convert.ToUInt64(kvp.Key)))
+            .ToList();
+        string winnerList = string.Join(", ", winners.Take(winners.Count - 1).Select(u => u.Sanitize())) +
+            (winners.Count > 1 ? " and " : "") + winners.LastOrDefault().Sanitize();
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle(announcementMessage.Embeds.First().Title)
-            .WithDescription(winners.Count() > 1
+            .WithDescription(winners.Count > 1
                 ? $"Election concluded! **{winnerList}** were the winners!"
                 : $"Election concluded! **{winnerList}** was the winner!")
             .WithFooter($"Original ID • {election.Reference.Id} • Ended at")
@@ -178,7 +180,8 @@ public class Polls : ModuleBase<SocketCommandContext>
     public static async Task UpdateElection(DbElection election, DbConfigChannels channels, SocketGuild guild)
     {
         SocketTextChannel announcementsChannel = guild.GetTextChannel(channels.ElectionsAnnounceChannel);
-        IUserMessage announcementMessage = await announcementsChannel.GetMessageAsync(election.AnnouncementMessage) as IUserMessage;
+        if (await announcementsChannel.GetMessageAsync(election.AnnouncementMessage) is not IUserMessage announcementMessage)
+            return;
 
         StringBuilder description = new();
         int processedUsers = 0;

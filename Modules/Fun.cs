@@ -15,7 +15,7 @@ public class Fun : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Found one!")
-            .WithImageUrl(JArray.Parse(response)[0]["url"].Value<string>());
+            .WithImageUrl(JArray.Parse(response)[0]["url"]?.Value<string>());
         await ReplyAsync(embed: embed.Build());
     }
 
@@ -31,7 +31,7 @@ public class Fun : ModuleBase<SocketCommandContext>
         using HttpClient client = new();
         string response = await client.GetStringAsync($"https://api.pearson.com/v2/dictionaries/ldoce5/entries?headword={term}");
         DefinitionResponse def = JsonConvert.DeserializeObject<DefinitionResponse>(response);
-        if (def.Count == 0)
+        if (def is null || def.Count == 0)
             return CommandResult.FromError("Couldn't find anything for that term, chief.");
 
         StringBuilder description = new();
@@ -72,7 +72,7 @@ public class Fun : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Found one!")
-            .WithImageUrl(JObject.Parse(response)["message"].Value<string>());
+            .WithImageUrl(JObject.Parse(response)["message"]?.Value<string>());
         await ReplyAsync(embed: embed.Build());
     }
 
@@ -139,7 +139,7 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Remarks("$minesweeper 2")]
     public async Task<RuntimeResult> Minesweeper(int difficulty = 1)
     {
-        if (difficulty < 1 || difficulty > 3)
+        if (difficulty is < 1 or > 3)
             return CommandResult.FromError($"**{difficulty}** is not a valid difficulty!");
 
         int[,] board = GenerateBoard(difficulty);
@@ -264,18 +264,16 @@ public class Fun : ModuleBase<SocketCommandContext>
         while (mines.Count < totalMines)
         {
             BoardPos pos = (RandomUtil.Next(8), RandomUtil.Next(8));
-            if (pos != BoardPos.Origin && board[pos.X, pos.Y] != -1)
-            {
-                board[pos.X, pos.Y] = -1;
-                mines.Add(pos);
-            }
+            if (pos == BoardPos.Origin || board[pos.X, pos.Y] == -1) continue;
+            board[pos.X, pos.Y] = -1;
+            mines.Add(pos);
         }
 
         foreach (BoardPos mine in mines)
         {
             foreach (BoardPos adjacent in Adjacents.Select(adj => mine + adj))
             {
-                if (adjacent.X < 0 || adjacent.X >= 8 || adjacent.Y < 0 || adjacent.Y >= 8 || board[adjacent.X, adjacent.Y] == -1)
+                if (adjacent.X is < 0 or >= 8 || adjacent.Y is < 0 or >= 8 || board[adjacent.X, adjacent.Y] == -1)
                     continue;
                 board[adjacent.X, adjacent.Y]++;
             }
