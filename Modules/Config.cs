@@ -212,17 +212,16 @@ public class Config : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> FilterWord(string word)
     {
         StringBuilder regexString = new();
-        foreach (char c in word)
+        foreach (char c in word.ToLower())
         {
-            string cStr = c.ToString();
-            if (!FilterSystem.Homoglyphs.ContainsKey(cStr))
-                return CommandResult.FromError($"Invalid character found in input: '{cStr}'.");
-            regexString.Append($"[{cStr}{string.Concat(FilterSystem.Homoglyphs[cStr])}]");
+            if (!FilterSystem.Homoglyphs.ContainsKey(c))
+                return CommandResult.FromError($"Invalid character found in input: '{c}'.");
+            regexString.Append($"[{c}{string.Concat(FilterSystem.Homoglyphs[c])}]");
         }
 
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
         optionals.FilterRegexes.Add(regexString.ToString());
-        optionals.FilteredWords.Add(word);
+        optionals.FilteredWords.Add(word.ToLower());
         await Context.User.NotifyAsync(Context.Channel, $"Added \"{word}\" as a filtered word.");
         return CommandResult.FromSuccess();
     }
@@ -384,6 +383,22 @@ public class Config : ModuleBase<SocketCommandContext>
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
         optionals.ScamFilterEnabled = !optionals.ScamFilterEnabled;
         await Context.User.NotifyAsync(Context.Channel, $"Toggled scam filter {(optionals.ScamFilterEnabled ? "ON" : "OFF")}.");
+    }
+    
+    [Command("unfilterword")]
+    [Summary("Remove a word from the filter system.")]
+    [Remarks("$unfilterword niggardly")]
+    public async Task<RuntimeResult> UnfilterWord(string word)
+    {
+        DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
+        Regex regex = optionals.FilterRegexes.Select(rs => new Regex(rs)).FirstOrDefault(r => r.IsMatch(word.ToLower()));
+        if (regex is null)
+            return CommandResult.FromError("That word appears to not be in the filter system.");
+
+        optionals.FilterRegexes.Remove(regex.ToString());
+        optionals.FilteredWords.Remove(word.ToLower());
+        await Context.User.NotifyAsync(Context.Channel, $"Removed \"{word}\" from the filter system.");
+        return CommandResult.FromSuccess();
     }
 
     [Alias("blacklistchannel")]
