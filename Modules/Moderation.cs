@@ -182,11 +182,12 @@ public class Moderation : ModuleBase<SocketCommandContext>
         if (count <= 0)
             return CommandResult.FromError("You want me to delete NO messages? Are you dense?");
 
-        IEnumerable<IMessage> messages = await Context.Channel.GetMessagesAsync(count + 1).FlattenAsync();
-        messages = user == null
-            ? messages.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14)
-            : messages.Where(msg => msg.Author.Id == user.Id && (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
+        IEnumerable<IMessage> messagesEnum = await Context.Channel.GetMessagesAsync(count + 1).FlattenAsync();
+        messagesEnum = user == null
+            ? messagesEnum.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14)
+            : messagesEnum.Where(msg => msg.Author.Id == user.Id && (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
 
+        IMessage[] messages = messagesEnum.ToArray();
         if (!messages.Any())
             return CommandResult.FromError("There are no messages to delete given your input.");
 

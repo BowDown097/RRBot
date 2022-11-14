@@ -26,23 +26,6 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Command("cleartextchannel")]
-    [Summary("Deletes and recreates a text channel, effectively wiping its messages.")]
-    [Remarks("$cleartextchannel \\#furry-rp")]
-    public async Task ClearTextChannel(ITextChannel channel)
-    {
-        await channel.DeleteAsync();
-        await Context.Guild.CreateTextChannelAsync(channel.Name, properties => {
-            properties.CategoryId = channel.CategoryId;
-            properties.IsNsfw = channel.IsNsfw;
-            properties.Name = channel.Name;
-            properties.PermissionOverwrites = new Optional<IEnumerable<Overwrite>>(channel.PermissionOverwrites.AsEnumerable());
-            properties.Position = channel.Position;
-            properties.SlowModeInterval = channel.SlowModeInterval;
-            properties.Topic = channel.Topic;
-        });
-    }
-
     [Command("disablecmdglobal")]
     [Summary("Globally disable a command.")]
     [Remarks("$disablecmdglobal eval")]

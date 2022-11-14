@@ -9,6 +9,6 @@ public static class RandomUtil
         byte[] buf = RandomNumberGenerator.GetBytes(8);
         ulong shiftedRand = BitConverter.ToUInt64(buf, 0) >> 11;
         double doubleRand = shiftedRand / (double)(1UL << 53);
-        return min + (doubleRand * (max - 1 - min));
+        return min + doubleRand * (max - 1 - min);
     }
 }

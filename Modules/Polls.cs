@@ -204,8 +204,8 @@ public class Polls : ModuleBase<SocketCommandContext>
             .WithColor(Color.Red)
             .WithTitle(ogEmbed.Title)
             .WithDescription(description.ToString())
-            .WithFooter(ogEmbed.Footer.Value.Text)
-            .WithTimestamp(ogEmbed.Timestamp.Value);
+            .WithFooter(ogEmbed.Footer.GetValueOrDefault().Text)
+            .WithTimestamp(ogEmbed.Timestamp.GetValueOrDefault());
         await announcementMessage.ModifyAsync(msg => msg.Embed = embed.Build());
     }
     #endregion

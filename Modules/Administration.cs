@@ -4,6 +4,23 @@
 public class Administration : ModuleBase<SocketCommandContext>
 {
     public InteractiveService Interactive { get; set; }
+    
+    [Command("cleartextchannel")]
+    [Summary("Deletes and recreates a text channel, effectively wiping its messages.")]
+    [Remarks("$cleartextchannel \\#furry-rp")]
+    public async Task ClearTextChannel(ITextChannel channel)
+    {
+        await channel.DeleteAsync();
+        await Context.Guild.CreateTextChannelAsync(channel.Name, properties => {
+            properties.CategoryId = channel.CategoryId;
+            properties.IsNsfw = channel.IsNsfw;
+            properties.Name = channel.Name;
+            properties.PermissionOverwrites = new Optional<IEnumerable<Overwrite>>(channel.PermissionOverwrites.AsEnumerable());
+            properties.Position = channel.Position;
+            properties.SlowModeInterval = channel.SlowModeInterval;
+            properties.Topic = channel.Topic;
+        });
+    }
 
     [Command("drawpot")]
     [Summary("Draw the pot before it ends.")]
@@ -82,7 +99,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     public async Task RemoveCrates([Remainder] IGuildUser user)
     {
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-        dbUser.Crates = new();
+        dbUser.Crates = new List<string>();
         await Context.User.NotifyAsync(Context.Channel, $"Removed **{user.Sanitize()}**'s crates.");
     }
 
@@ -170,7 +187,7 @@ public class Administration : ModuleBase<SocketCommandContext>
         string cUp = crypto.ToUpper();
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-        if (!(cUp is "BTC" or "ETH" or "LTC" or "XRP"))
+        if (cUp is not ("BTC" or "ETH" or "LTC" or "XRP"))
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
@@ -184,7 +201,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$setprestige Justin 10")]
     public async Task<RuntimeResult> SetPrestige(IGuildUser user, int level)
     {
-        if (level < 0 || level > Constants.MaxPrestige)
+        if (level is < 0 or > Constants.MaxPrestige)
             return CommandResult.FromError("Invalid prestige level!");
 
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
