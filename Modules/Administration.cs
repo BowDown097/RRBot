@@ -168,13 +168,13 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$setcash BowDown097 0.01")]
     public async Task<RuntimeResult> SetCash(IGuildUser user, double amount)
     {
-        if (double.IsNaN(amount) || amount < 0)
+        if (double.IsNaN(amount) || double.IsInfinity(amount) || amount < 0)
             return CommandResult.FromError("You can't set someone's cash to a negative value or NaN!");
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-
+        
         DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
-        await dbUser.SetCash(user, amount);
+        await dbUser.SetCashWithoutAdjustment(user, Math.Round(amount, 2));
         await ReplyAsync($"Set **{user.Sanitize()}**'s cash to **{amount:C2}**.", allowedMentions: Constants.Mentions);
         return CommandResult.FromSuccess();
     }

@@ -181,7 +181,6 @@ public class DbUser : DbObject
         if (amount < 0)
             amount = 0;
 
-        IGuildUser guildUser = user as IGuildUser;
         amount = Math.Round(amount, 2) * Constants.CashMultiplier;
 
         double difference = amount - Cash;
@@ -193,8 +192,14 @@ public class DbUser : DbObject
                 message += $"\n*(+{prestigeCash:C2} from Prestige)*";
         }
 
-        Cash += difference;
+        await SetCashWithoutAdjustment(user, Cash + difference, channel, message);
+    }
 
+    public async Task SetCashWithoutAdjustment(IUser user, double amount, IMessageChannel channel = null, string message = "")
+    {
+        IGuildUser guildUser = user as IGuildUser;
+        Cash = amount;
+        
         if (channel != null)
             await user.NotifyAsync(channel, message);
 
