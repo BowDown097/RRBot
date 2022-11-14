@@ -30,7 +30,7 @@ public static class AudioServiceExt
         {
             DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
             if (!optionals.NsfwEnabled)
-                return new LavalinkTrack("restricted", "", TimeSpan.Zero, false, false, "", "", "", StreamProvider.Unknown);
+                return new LavalinkTrack("restricted", "", TimeSpan.Zero, false, false, null, "", TimeSpan.Zero, "", "");
             return await service.YtdlpGetTrackAsync(uri, requester);
         }
         else

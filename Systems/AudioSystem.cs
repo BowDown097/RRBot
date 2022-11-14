@@ -79,7 +79,7 @@ public sealed class AudioSystem
         {
             LavalinkTrack track = tracks[i];
             TrackMetadata metadata = track.Context as TrackMetadata;
-            playlist.Append($"**{i+1}**: [\"{metadata.Title}\" by {metadata.Author}]({track.Source})");
+            playlist.Append($"**{i+1}**: [\"{metadata.Title}\" by {metadata.Author}]({track.Uri})");
             if (!track.IsLiveStream)
             {
                 playlist.Append($" ({track.Duration.Round()})");
@@ -174,7 +174,7 @@ public sealed class AudioSystem
             await context.Channel.SendMessageAsync($"**{metadata.Title}** has been added to the queue.", allowedMentions: Constants.Mentions);
         }
 
-        await LoggingSystem.Custom_TrackStarted(user, track.Source);
+        await LoggingSystem.Custom_TrackStarted(user, track.Uri.ToString());
         return CommandResult.FromSuccess();
     }
 
