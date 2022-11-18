@@ -8,8 +8,11 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Command("cleartextchannel")]
     [Summary("Deletes and recreates a text channel, effectively wiping its messages.")]
     [Remarks("$cleartextchannel \\#furry-rp")]
-    public async Task ClearTextChannel(ITextChannel channel)
+    public async Task<RuntimeResult> ClearTextChannel(ITextChannel channel)
     {
+        if (channel.Id == Context.Channel.Id)
+            return CommandResult.FromError("You cannot clear the channel this command is executed in.");
+
         await channel.DeleteAsync();
         await Context.Guild.CreateTextChannelAsync(channel.Name, properties => {
             properties.CategoryId = channel.CategoryId;
@@ -20,6 +23,9 @@ public class Administration : ModuleBase<SocketCommandContext>
             properties.SlowModeInterval = channel.SlowModeInterval;
             properties.Topic = channel.Topic;
         });
+
+        await Context.User.NotifyAsync(Context.Channel, $"Cleared {channel}.");
+        return CommandResult.FromSuccess();
     }
 
     [Command("drawpot")]

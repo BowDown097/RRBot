@@ -5,6 +5,9 @@ public class RequireDjAttribute : PreconditionAttribute
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
         DbConfigRoles roles = await DbConfigRoles.GetById(context.Guild.Id);
+        if (roles.DjRole == default || context.Guild.Roles.All(r => r.Id != roles.DjRole))
+            return PreconditionResult.FromError("There is no DJ role set or the role no longer exists. An admin needs to set it with $setdjrole.");
+
         return context.User.GetRoleIds().Contains(roles.DjRole)
             ? PreconditionResult.FromSuccess()
             : PreconditionResult.FromError("You must be a DJ.");

@@ -13,7 +13,7 @@ public static class CommandExceptionExt
                 List<GuildPermissions> rolePerms = context.Guild.CurrentUser.Roles.Select(r => r.Permissions).ToList();
                 ChannelPermissions channelPerms = context.Guild.CurrentUser.GetPermissions(context.Channel as IGuildChannel);
 
-                StringBuilder missingPerms = new("I need the following permission(s):\n");
+                StringBuilder missingPerms = new("I need the following permission(s) for full functionality:\n");
                 if (!rolePerms.Any(perm => perm.BanMembers)) missingPerms.AppendLine("Ban Members");
                 if (!rolePerms.Any(perm => perm.KickMembers)) missingPerms.AppendLine("Kick Members");
                 if (!rolePerms.Any(perm => perm.ManageChannels)) missingPerms.AppendLine("Manage Channels");

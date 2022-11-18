@@ -10,7 +10,7 @@ public class RequireRankLevelAttribute : PreconditionAttribute
     {
         DbConfigRanks ranks = await DbConfigRanks.GetById(context.Guild.Id);
         if (!ranks.Costs.ContainsKey(RankLevel))
-            return PreconditionResult.FromError($"No rank is configured at level {RankLevel}!");
+            return PreconditionResult.FromError($"No rank is configured at level {RankLevel}. An admin needs to set it with $addrank.");
 
         ulong roleId = ranks.Ids[RankLevel];
         IRole role = context.Guild.GetRole(roleId);
