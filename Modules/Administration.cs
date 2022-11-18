@@ -24,7 +24,7 @@ public class Administration : ModuleBase<SocketCommandContext>
             properties.Topic = channel.Topic;
         });
 
-        await Context.User.NotifyAsync(Context.Channel, $"Cleared {channel}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Cleared {channel.Mention}.");
         return CommandResult.FromSuccess();
     }
 

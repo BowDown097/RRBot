@@ -171,11 +171,11 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("disablefiltersinchannel")]
     [Summary("Disable filters for a specific channel.")]
     [Remarks("$disablefiltersinchannel \\#extremely-funny")]
-    public async Task DisableFiltersInChannel(IChannel channel)
+    public async Task DisableFiltersInChannel(ITextChannel channel)
     {
         DbConfigOptionals optionals = await DbConfigOptionals.GetById(Context.Guild.Id);
         optionals.NoFilterChannels.Add(channel.Id);
-        await Context.User.NotifyAsync(Context.Channel, $"Disabled filters in {channel.Mention()}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Disabled filters in {channel.Mention}.");
     }
 
     [Command("enablecmd")]
@@ -259,51 +259,51 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("setelectionannouncementschannel")]
     [Summary("Register the ID for the election announcements channel in your server so that elections work properly.")]
     [Remarks("$setelectionannouncementschannel \\#elections")]
-    public async Task SetElectionAnnouncementsChannel(IChannel channel)
+    public async Task SetElectionAnnouncementsChannel(ITextChannel channel)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         channels.ElectionsAnnounceChannel = channel.Id;
-        await Context.User.NotifyAsync(Context.Channel, $"Set election announcements channel to {channel.Mention()}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Set election announcements channel to {channel.Mention}.");
     }
 
     [Command("setelectionvotingchannel")]
     [Summary("Register the ID for the election voting channel in your server so that elections work properly.")]
     [Remarks("$setelectionvotingchannel \\#vote")]
-    public async Task SetElectionVotingChannel(IChannel channel)
+    public async Task SetElectionVotingChannel(ITextChannel channel)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         channels.ElectionsVotingChannel = channel.Id;
-        await Context.User.NotifyAsync(Context.Channel, $"Set election voting channel to {channel.Mention()}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Set election voting channel to {channel.Mention}.");
     }
 
     [Command("setlogschannel")]
     [Summary("Register the ID for the logs channel in your server so that logging works properly.")]
     [Remarks("$setlogschannel \\#logs")]
-    public async Task SetLogsChannel(IChannel channel)
+    public async Task SetLogsChannel(ITextChannel channel)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         channels.LogsChannel = channel.Id;
-        await Context.User.NotifyAsync(Context.Channel, $"Set logs channel to {channel.Mention()}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Set logs channel to {channel.Mention}.");
     }
 
     [Command("setpollschannel")]
     [Summary("Register the ID for the polls channel in your server so that polls work properly.")]
     [Remarks("$setpollschannel \\#polls")]
-    public async Task SetPollsChannel(IChannel channel)
+    public async Task SetPollsChannel(ITextChannel channel)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         channels.PollsChannel = channel.Id;
-        await Context.User.NotifyAsync(Context.Channel, $"Set polls channel to {channel.Mention()}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Set polls channel to {channel.Mention}.");
     }
 
     [Command("setpotchannel")]
     [Summary("Register the ID for the pot channel in your server so that pot winnings are announced.")]
     [Remarks("$setpotchannel \\#bot-commands")]
-    public async Task SetPotChannel(IChannel channel)
+    public async Task SetPotChannel(ITextChannel channel)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         channels.PotChannel = channel.Id;
-        await Context.User.NotifyAsync(Context.Channel, $"Set pot channel to {channel.Mention()}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Set pot channel to {channel.Mention}.");
     }
 
     [Command("setselfrolesmsg")]
@@ -405,23 +405,23 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("unwhitelistchannel")]
     [Summary("Removes a channel from the whitelist.")]
     [Remarks("$unwhitelistchannel \\#general")]
-    public async Task<RuntimeResult> UnwhitelistChannel(IChannel channel)
+    public async Task<RuntimeResult> UnwhitelistChannel(ITextChannel channel)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         if (!channels.WhitelistedChannels.Remove(channel.Id))
-            return CommandResult.FromError($"{channel.Mention()} is not in the whitelist!");
-        await Context.User.NotifyAsync(Context.Channel, $"Removed {channel.Mention()} from the whitelist.");
+            return CommandResult.FromError($"{channel.Mention} is not in the whitelist.");
+        await Context.User.NotifyAsync(Context.Channel, $"Removed {channel.Mention} from the whitelist.");
         return CommandResult.FromSuccess();
     }
 
     [Command("whitelistchannel")]
     [Summary("Adds a channel to a list of whitelisted channels for bot commands. All moderation and music commands will still work in every channel.")]
     [Remarks("$whitelistchannel 837306775987683368")]
-    public async Task WhitelistChannel(IChannel channel)
+    public async Task WhitelistChannel(ITextChannel channel)
     {
         DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
         channels.WhitelistedChannels.Add(channel.Id);
-        await Context.User.NotifyAsync(Context.Channel, $"Whitelisted {channel.Mention()}.");
+        await Context.User.NotifyAsync(Context.Channel, $"Whitelisted {channel.Mention}.");
     }
     #endregion Commands
 

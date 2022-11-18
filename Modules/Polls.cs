@@ -81,7 +81,7 @@ public class Polls : ModuleBase<SocketCommandContext>
         EmbedBuilder announcementEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle($"{role} Election")
-            .WithDescription($"**1**: {firstCandidate.Sanitize()} - 0 votes\n\n*Vote for members with $vote in {votingChannel.Mention()}.*")
+            .WithDescription($"**1**: {firstCandidate.Sanitize()} - 0 votes\n\n*Vote for members with $vote in {votingChannel.Mention}.*")
             .WithFooter($"# Winners • {election.NumWinners} • ID • {election.Reference.Id} • Ends at")
             .WithTimestamp(DateTimeOffset.FromUnixTimeSeconds(election.EndTime));
         RestUserMessage announcementMessage = await announcementsChannel.SendMessageAsync(embed: announcementEmbed.Build());

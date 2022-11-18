@@ -329,7 +329,7 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(user)
-            .WithDescription($"**Speaker Added to Stage**\n{stage.Mention()}");
+            .WithDescription($"**Speaker Added to Stage**\n{stage.Mention}");
 
         await WriteToLogs(user.Guild, embed);
     }
@@ -338,7 +338,7 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(user)
-            .WithDescription($"**Speaker Removed from Stage**\n{stage.Mention()}");
+            .WithDescription($"**Speaker Removed from Stage**\n{stage.Mention}");
 
         await WriteToLogs(user.Guild, embed);
     }
@@ -347,7 +347,7 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Stage Ended**")
-            .RrAddField("Channel", stage.Mention())
+            .RrAddField("Channel", stage.Mention)
             .RrAddField("Topic", stage.Topic);
 
         await WriteToLogs(stage.Guild, embed);
@@ -357,7 +357,7 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Stage Started**")
-            .RrAddField("Channel", stage.Mention())
+            .RrAddField("Channel", stage.Mention)
             .RrAddField("Topic", stage.Topic);
 
         await WriteToLogs(stage.Guild, embed);
