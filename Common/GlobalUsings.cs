@@ -38,7 +38,6 @@ global using System.Globalization;
 global using System.Net;
 global using System.Numerics;
 global using System.Reflection;
-global using System.Runtime.Caching;
 global using System.Runtime.InteropServices;
 global using System.Security.Cryptography;
 global using System.Text;

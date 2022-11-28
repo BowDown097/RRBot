@@ -107,9 +107,8 @@ public class Gangs : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You are not the leader of your gang!");
 
         await MongoManager.DeleteObjectAsync(gang);
-        MemoryCache.Default.Remove($"gang-{Context.Guild.Id}-{user.Gang.ToLower()}");
-
         user.Gang = null;
+
         foreach (KeyValuePair<ulong, string> kvp in gang.Members.Where(m => m.Key != user.UserId))
         {
             DbUser member = await MongoManager.FetchUserAsync(kvp.Key, Context.Guild.Id);
