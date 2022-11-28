@@ -1,6 +1,4 @@
-﻿using RRBot.Entities;
-
-namespace RRBot.Modules;
+﻿namespace RRBot.Modules;
 [Summary("Invest in our selection of coins, Bit or Shit. The prices here are updated in REAL TIME with the REAL LIFE values. Experience the fast, entrepreneural life without going broke, having your house repossessed, and having your girlfriend leave you.")]
 public class Investments : ModuleBase<SocketCommandContext>
 {

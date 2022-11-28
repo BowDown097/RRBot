@@ -1,5 +1,3 @@
-using RRBot.Entities.Goods;
-
 namespace RRBot.Systems;
 public class MonitorSystem
 {

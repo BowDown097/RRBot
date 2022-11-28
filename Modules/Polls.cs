@@ -1,6 +1,4 @@
-﻿using RRBot.Entities;
-
-namespace RRBot.Modules;
+﻿namespace RRBot.Modules;
 [Summary("Polling and elections.")]
 public class Polls : ModuleBase<SocketCommandContext>
 {

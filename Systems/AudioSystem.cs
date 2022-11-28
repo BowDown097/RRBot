@@ -1,6 +1,4 @@
-﻿using RRBot.Entities;
-
-namespace RRBot.Systems;
+﻿namespace RRBot.Systems;
 public sealed class AudioSystem
 {
     private readonly IAudioService _audioService;

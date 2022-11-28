@@ -1,5 +1,3 @@
-using RRBot.Entities;
-
 namespace RRBot.Database.Entities;
 
 [BsonCollection("users")]

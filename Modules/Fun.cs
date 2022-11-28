@@ -1,6 +1,3 @@
-using RRBot.Entities;
-using RRBot.Entities.Fun;
-
 namespace RRBot.Modules;
 [Summary("Commands that don't do anything related to the bot's systems: they just exist for fun (hence the name).")]
 public class Fun : ModuleBase<SocketCommandContext>

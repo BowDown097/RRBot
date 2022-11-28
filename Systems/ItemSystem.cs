@@ -1,7 +1,4 @@
-﻿using RRBot.Entities;
-using RRBot.Entities.Goods;
-
-namespace RRBot.Systems;
+﻿namespace RRBot.Systems;
 public static class ItemSystem
 {
     public static readonly Crate[] Crates =
