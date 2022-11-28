@@ -6,7 +6,7 @@ public class UserSettings : ModuleBase<SocketCommandContext>
     [Summary("List your user settings.")]
     public async Task MySettings()
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Your Settings")
@@ -20,9 +20,10 @@ public class UserSettings : ModuleBase<SocketCommandContext>
     [Summary("Toggle whether or not you will be DM'd by commands/general notifications that support it. *(default: false)*")]
     public async Task ToggleDmNotifications()
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         user.DmNotifs = !user.DmNotifs;
         await Context.User.NotifyAsync(Context.Channel, $"You will {(user.DmNotifs ? "now see" : "no longer see")} DM notifications.");
+        await MongoManager.UpdateObjectAsync(user);
     }
 
     [Command("togglereplypings")]
@@ -30,8 +31,9 @@ public class UserSettings : ModuleBase<SocketCommandContext>
     [Remarks("$togglereplypings")]
     public async Task ToggleReplyPings()
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         user.WantsReplyPings = !user.WantsReplyPings;
         await Context.User.NotifyAsync(Context.Channel, $"You will {(user.WantsReplyPings ? "now be" : "no longer be")} pinged in command responses.");
+        await MongoManager.UpdateObjectAsync(user);
     }
 }

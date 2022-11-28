@@ -7,7 +7,7 @@ public static class UserExt
 
     public static async Task<IUserMessage> NotifyAsync(this IUser user, IMessageChannel channel, string message, bool doDm = false)
     {
-        DbUser dbUser = await DbUser.GetById(user.GetGuild().Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, user.GetGuild().Id);
         if (doDm && dbUser.DmNotifs)
             return await user.SendMessageAsync(message);
         if (dbUser.WantsReplyPings)

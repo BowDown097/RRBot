@@ -18,6 +18,6 @@ public class TriviaQuestion
     {
         Question = HttpUtility.HtmlDecode(Question);
         CorrectAnswer = HttpUtility.HtmlDecode(CorrectAnswer);
-        IncorrectAnswers = IncorrectAnswers.Select(a => HttpUtility.HtmlDecode(a)).ToArray();
+        IncorrectAnswers = IncorrectAnswers.Select(HttpUtility.HtmlDecode).ToArray();
     }
 }

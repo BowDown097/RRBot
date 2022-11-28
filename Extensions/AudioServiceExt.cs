@@ -1,3 +1,5 @@
+using RRBot.Database.Entities;
+
 namespace RRBot.Extensions;
 public static class AudioServiceExt
 {
@@ -28,8 +30,8 @@ public static class AudioServiceExt
         string response = await resMsg.Content.ReadAsStringAsync();
         if (JObject.Parse(response)["playabilityStatus"]?["reason"]?.ToString() == "Sign in to confirm your age")
         {
-            DbConfigOptionals optionals = await DbConfigOptionals.GetById(guild.Id);
-            if (!optionals.NsfwEnabled)
+            DbConfig config = await MongoManager.FetchConfigAsync(guild.Id);
+            if (!config.Miscellaneous.NsfwEnabled)
                 return new LavalinkTrack("restricted", "", TimeSpan.Zero, false, false, null, "", TimeSpan.Zero, "", "");
             return await service.YtdlpGetTrackAsync(uri, requester);
         }

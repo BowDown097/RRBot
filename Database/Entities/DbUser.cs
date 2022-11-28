@@ -1,112 +1,66 @@
-namespace RRBot.Entities.Database;
-[FirestoreData]
+namespace RRBot.Database.Entities;
+
+[BsonCollection("users")]
+[BsonIgnoreExtraElements]
 public class DbUser : DbObject
 {
-    #region Variables
-    [FirestoreDocumentId]
-    public override DocumentReference Reference { get; set; }
-    [FirestoreProperty]
-    public Dictionary<string, string> Achievements { get; set; } = new();
-    [FirestoreProperty]
+    public override ObjectId Id { get; set; }
+    
+    public ulong GuildId { get; init; }
+    public ulong UserId { get; init; }
+
+    public Dictionary<string, string> Achievements { get; } = new();
     public long BlackHatTime { get; set; }
-    [FirestoreProperty]
-    public double Btc { get; set; }
-    [FirestoreProperty]
+    public decimal Btc { get; set; }
     public long BullyCooldown { get; set; }
-    [FirestoreProperty]
-    public double Cash { get; set; }
-    [FirestoreProperty]
+    public decimal Cash { get; set; } = 100;
     public long ChopCooldown { get; set; }
-    [FirestoreProperty]
     public long CocaineRecoveryTime { get; set; }
-    [FirestoreProperty]
     public long CocaineTime { get; set; }
-    [FirestoreProperty]
-    public Dictionary<string, int> Collectibles { get; set; } = new();
-    [FirestoreProperty]
-    public Dictionary<string, int> Consumables { get; set; } = new();
-    [FirestoreProperty]
+    public Dictionary<string, int> Collectibles { get; } = new();
+    public Dictionary<string, int> Consumables { get; } = new();
     public List<string> Crates { get; set; } = new();
-    [FirestoreProperty]
     public long DailyCooldown { get; set; }
-    [FirestoreProperty]
     public long DealCooldown { get; set; }
-    [FirestoreProperty]
     public long DigCooldown { get; set; }
-    [FirestoreProperty]
     public bool DmNotifs { get; set; }
-    [FirestoreProperty]
-    public double Eth { get; set; }
-    [FirestoreProperty]
+    public decimal Eth { get; set; }
     public long FarmCooldown { get; set; }
-    [FirestoreProperty]
     public long FishCooldown { get; set; }
-    [FirestoreProperty]
-    public double GamblingMultiplier { get; set; } = 1.0;
-    [FirestoreProperty]
+    public decimal GamblingMultiplier { get; set; } = 1;
     public string Gang { get; set; }
-    [FirestoreProperty]
     public long HackCooldown { get; set; }
-    [FirestoreProperty]
     public bool HasReachedAMilli { get; set; }
-    [FirestoreProperty]
     public int Health { get; set; } = 100;
-    [FirestoreProperty]
     public long HuntCooldown { get; set; }
-    [FirestoreProperty]
     public long LootCooldown { get; set; }
-    [FirestoreProperty]
-    public double Ltc { get; set; }
-    [FirestoreProperty]
+    public decimal Ltc { get; set; }
     public long MineCooldown { get; set; }
-    [FirestoreProperty]
     public long PacifistCooldown { get; set; }
-    [FirestoreProperty]
-    public List<string> PendingGangInvites { get; set; } = new();
-    [FirestoreProperty]
-    public Dictionary<string, long> Perks { get; set; } = new();
-    [FirestoreProperty]
+    public List<string> PendingGangInvites { get; } = new();
+    public Dictionary<string, long> Perks { get; } = new();
     public int Prestige { get; set; }
-    [FirestoreProperty]
     public long PrestigeCooldown { get; set; }
-    [FirestoreProperty]
     public long RapeCooldown { get; set; }
-    [FirestoreProperty]
     public long RomanianFlagTime { get; set; }
-    [FirestoreProperty]
     public long RobCooldown { get; set; }
-    [FirestoreProperty]
     public long ScavengeCooldown { get; set; }
-    [FirestoreProperty]
     public Dictionary<string, string> Stats { get; set; } = new();
-    [FirestoreProperty]
     public long SlaveryCooldown { get; set; }
-    [FirestoreProperty]
-    public long SupportCooldown { get; set; }
-    [FirestoreProperty]
     public long TimeTillCash { get; set; }
-    [FirestoreProperty]
     public List<string> Tools { get; set; } = new();
-    [FirestoreProperty]
-    public Dictionary<string, int> UsedConsumables { get; set; } = new() {
+    public Dictionary<string, int> UsedConsumables { get; } = new() {
         { "Black Hat", 0 },
         { "Cocaine", 0 },
         { "Romanian Flag", 0 },
         { "Viagra", 0 }
     };
-    [FirestoreProperty]
     public bool UsingSlots { get; set; }
-    [FirestoreProperty]
     public bool WantsReplyPings { get; set; } = true;
-    [FirestoreProperty]
     public long ViagraTime { get; set; }
-    [FirestoreProperty]
     public long WhoreCooldown { get; set; }
-    [FirestoreProperty]
-    public double Xrp { get; set; }
-    #endregion
+    public decimal Xrp { get; set; }
 
-    #region Methods
     public object this[string name]
     {
         get
@@ -125,25 +79,6 @@ public class DbUser : DbObject
         }
     }
 
-    public static async Task<DbUser> GetById(ulong guildId, ulong userId, bool useCache = true)
-    {
-        if (useCache && MemoryCache.Default.Contains($"user-{guildId}-{userId}"))
-            return (DbUser)MemoryCache.Default.Get($"user-{guildId}-{userId}");
-
-        DocumentReference doc = Program.Database.Collection($"servers/{guildId}/users").Document(userId.ToString());
-        DocumentSnapshot snap = await doc.GetSnapshotAsync();
-        if (!snap.Exists)
-        {
-            await doc.CreateAsync(new { Cash = 100.0 });
-            return await GetById(guildId, userId);
-        }
-
-        DbUser user = snap.ConvertTo<DbUser>();
-        if (useCache)
-            MemoryCache.Default.CacheDatabaseObject($"user-{guildId}-{userId}", user);
-        return user;
-    }
-
     public void AddToStat(string stat, string value) => AddToStats(new Dictionary<string, string> {{ stat, value }});
 
     public void AddToStats(Dictionary<string, string> statsToAddTo)
@@ -156,14 +91,14 @@ public class DbUser : DbObject
             {
                 if (kvp.Value[0] == '$')
                 {
-                    double oldValue = double.Parse(Stats[kvp.Key][1..]);
-                    double toAdd = double.Parse(kvp.Value[1..]);
+                    decimal oldValue = decimal.Parse(Stats[kvp.Key][1..]);
+                    decimal toAdd = decimal.Parse(kvp.Value[1..]);
                     Stats[kvp.Key] = (oldValue + toAdd).ToString("C2", culture);
                 }
                 else
                 {
-                    double oldValue = double.Parse(Stats[kvp.Key]);
-                    double toAdd = double.Parse(kvp.Value);
+                    decimal oldValue = decimal.Parse(Stats[kvp.Key]);
+                    decimal toAdd = decimal.Parse(kvp.Value);
                     Stats[kvp.Key] = (oldValue + toAdd).ToString("0.####");
                 }
             }
@@ -174,7 +109,7 @@ public class DbUser : DbObject
         }
     }
 
-    public async Task SetCash(IUser user, double amount, IMessageChannel channel = null, string message = "", bool showPrestigeMessage = true)
+    public async Task SetCash(IUser user, decimal amount, IMessageChannel channel = null, string message = "", bool showPrestigeMessage = true)
     {
         if (user.IsBot)
             return;
@@ -183,10 +118,10 @@ public class DbUser : DbObject
 
         amount = Math.Round(amount, 2) * Constants.CashMultiplier;
 
-        double difference = amount - Cash;
+        decimal difference = amount - Cash;
         if (Prestige > 0 && difference > 0 && channel != null)
         {
-            double prestigeCash = difference * (0.20 * Prestige);
+            decimal prestigeCash = difference * 0.20m * Prestige;
             difference += prestigeCash;
             if (showPrestigeMessage)
                 message += $"\n*(+{prestigeCash:C2} from Prestige)*";
@@ -195,7 +130,7 @@ public class DbUser : DbObject
         await SetCashWithoutAdjustment(user, Cash + difference, channel, message);
     }
 
-    public async Task SetCashWithoutAdjustment(IUser user, double amount, IMessageChannel channel = null, string message = "")
+    public async Task SetCashWithoutAdjustment(IUser user, decimal amount, IMessageChannel channel = null, string message = "")
     {
         IGuildUser guildUser = user as IGuildUser;
         Cash = amount;
@@ -203,11 +138,11 @@ public class DbUser : DbObject
         if (channel != null)
             await user.NotifyAsync(channel, message);
 
-        DbConfigRanks ranks = await DbConfigRanks.GetById(guildUser.GuildId);
-        foreach (KeyValuePair<string, double> kvp in ranks.Costs)
+        DbConfig config = await MongoManager.FetchConfigAsync(guildUser.GuildId);
+        foreach (KeyValuePair<int, decimal> kvp in config.Ranks.Costs)
         {
-            double neededCash = kvp.Value * (1 + (0.5 * Prestige));
-            ulong roleId = ranks.Ids[kvp.Key];
+            decimal neededCash = kvp.Value * (1 + 0.5m * Prestige);
+            ulong roleId = config.Ranks.Ids[kvp.Key];
             if (Cash >= neededCash && !guildUser.RoleIds.Contains(roleId))
                 await guildUser.AddRoleAsync(roleId);
             else if (Cash <= neededCash && guildUser.RoleIds.Contains(roleId))
@@ -221,12 +156,12 @@ public class DbUser : DbObject
         if (Perks.ContainsKey("Speed Demon"))
             secs = (long)(secs * 0.85);
         // highest rank cooldown reducer
-        DbConfigRanks ranks = await DbConfigRanks.GetById(guild.Id);
-        ulong highest = ranks.Ids.OrderByDescending(kvp => int.Parse(kvp.Key)).FirstOrDefault().Value;
+        DbConfig config = await MongoManager.FetchConfigAsync(guild.Id);
+        ulong highest = config.Ranks.Ids.OrderByDescending(kvp => kvp.Key).FirstOrDefault().Value;
         if (user.GetRoleIds().Contains(highest))
             secs = (long)(secs * 0.80);
         // cocaine cooldown reducer
-        secs = (long)(secs * (1 - (0.10 * UsedConsumables["Cocaine"])));
+        secs = (long)(secs * (1 - 0.10 * UsedConsumables["Cocaine"]));
 
         this[name] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(secs);
     }
@@ -251,11 +186,10 @@ public class DbUser : DbObject
             .WithDescription(description);
         await channel.SendMessageAsync(embed: embed.Build());
 
-        if (GamblingMultiplier == 1.0 && Constants.GamblingAchievements.All(a => Achievements.ContainsKey(a)))
+        if (GamblingMultiplier == 1.0m && Constants.GamblingAchievements.All(a => Achievements.ContainsKey(a)))
         {
-            GamblingMultiplier = 1.1;
+            GamblingMultiplier = 1.1m;
             await user.NotifyAsync(channel, "Congratulations! You've acquired every gambling achievement. Enjoy this **1.1x gambling multiplier**!");
         }
     }
-    #endregion
 }

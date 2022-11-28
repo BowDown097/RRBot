@@ -44,12 +44,12 @@ In order to build the bot, you will need to create a file named Credentials.cs i
 namespace RRBot;
 public static class Credentials
 {
-    public const string CREDENTIALS_PATH = "[PATH TO FIRESTORE CREDENTIALS]";
-    public const string TOKEN = "[DISCORD BOT TOKEN]";
+    public const string ConnectionString = "[CONNECTION STRING]";
+    public const string Token = "[DISCORD BOT TOKEN]";
 }
 ```
-You can get the bot token from your instance of the bot's application at https://discord.com/developers, under the "Bot" tab. 
+``Token`` is the bot token, which you can get from your instance of the bot's application at https://discord.com/developers, under the "Bot" tab. 
 
-As the bot uses Firestore as its database, you will need to create your own database and generate a credentials file. For information on how to, see [this page for creating the database](https://firebase.google.com/docs/firestore/quickstart) and/or [this page for authentication](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account).
+``ConnectionString`` is a MongoDB connection string. If you don't know what that is and how to get it, get Googling. By the way, I highly recommend you use a self-hosted database.
 
 In order to use the music features of the bot, you will need to get the [latest release of Lavalink](https://github.com/freyacodes/Lavalink/releases) and throw it in the bot's main directory. You will need to run it alongside the bot. [yt-dlp](https://github.com/yt-dlp/yt-dlp) is also optionally required for support for more platforms than just YouTube and SoundCloud. Keep in mind that not everything that works with yt-dlp will work with Lavalink (ie. Pornhub, Vimeo).

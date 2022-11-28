@@ -13,7 +13,7 @@ public class EventSystem
 
     public EventSystem(ServiceProvider serviceProvider)
     {
-        this._serviceProvider = serviceProvider;
+        _serviceProvider = serviceProvider;
         _audioService = serviceProvider.GetRequiredService<IAudioService>();
         _commands = serviceProvider.GetRequiredService<CommandService>();
         _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
@@ -84,12 +84,12 @@ public class EventSystem
             return;
 
         // selfroles check
-        DbConfigSelfRoles selfRoles = await DbConfigSelfRoles.GetById(channel.GetGuild().Id);
+        DbConfig config = await MongoManager.FetchConfigAsync(channel.GetGuild().Id);
         string emote = reaction.Emote.ToString() ?? string.Empty;
-        if (reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(emote))
+        if (reaction.MessageId != config.SelfRoles.Message || !config.SelfRoles.SelfRoles.ContainsKey(emote))
             return;
 
-        ulong roleId = selfRoles.SelfRoles[emote];
+        ulong roleId = config.SelfRoles.SelfRoles[emote];
         if (addedReaction)
             await user.AddRoleAsync(roleId);
         else
@@ -158,29 +158,28 @@ public class EventSystem
             Discord.Commands.SearchResult search = _commands.Search(msg.Content[argPos..]);
             if (search.Error == CommandError.UnknownCommand)
                 return;
-
-            DbConfigChannels channelsConfig = await DbConfigChannels.GetById(context.Guild.Id);
+            
+            DbConfig config = await MongoManager.FetchConfigAsync(context.Guild.Id);
             CommandInfo command = search.Commands[0].Command;
             if (command.Module.Name is not ("Administration" or "BotOwner" or "Moderation" or "Music" or "Polls")
-                && channelsConfig.WhitelistedChannels.Count > 0 && !channelsConfig.WhitelistedChannels.Contains(context.Channel.Id))
+                && config.Channels.WhitelistedChannels.Count > 0 && !config.Channels.WhitelistedChannels.Contains(context.Channel.Id))
             {
                 await context.User.NotifyAsync(context.Channel, "Commands are disabled in this channel!");
                 return;
             }
 
-            DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
-            DbConfigOptionals optionals = await DbConfigOptionals.GetById(context.Guild.Id);
+            DbGlobalConfig globalConfig = await MongoManager.FetchGlobalConfigAsync();
             if (globalConfig.BannedUsers.Contains(context.User.Id))
             {
                 await context.User.NotifyAsync(context.Channel, "You are banned from using the bot!");
                 return;
             }
-            if (globalConfig.DisabledCommands.Contains(command.Name) || optionals.DisabledCommands.Contains(command.Name))
+            if (globalConfig.DisabledCommands.Contains(command.Name) || config.Miscellaneous.DisabledCommands.Contains(command.Name))
             {
                 await context.User.NotifyAsync(context.Channel, "This command is disabled!");
                 return;
             }
-            if (optionals.DisabledModules.Contains(command.Module.Name, StringComparer.OrdinalIgnoreCase))
+            if (config.Miscellaneous.DisabledModules.Contains(command.Module.Name, StringComparer.OrdinalIgnoreCase))
             {
                 await context.User.NotifyAsync(context.Channel, "The module for this command is disabled!");
                 return;
@@ -190,7 +189,7 @@ public class EventSystem
         }
         else
         {
-            DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
+            DbUser user = await MongoManager.FetchUserAsync(context.User.Id, context.Guild.Id);
 
             if (user.TimeTillCash == 0)
             {
@@ -198,11 +197,11 @@ public class EventSystem
             }
             else if (user.TimeTillCash <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             {
-                double messageCash = Constants.MessageCash * (1 + (0.20 * user.Prestige));
+                decimal messageCash = Constants.MessageCash * (1 + 0.20m * user.Prestige);
                 await user.SetCash(context.User, user.Cash + messageCash);
-                DbConfigOptionals optionals = await DbConfigOptionals.GetById(context.Guild.Id);
+                DbConfig config = await MongoManager.FetchConfigAsync(context.Guild.Id);
 
-                if (!optionals.DropsDisabled && RandomUtil.Next(70) == 1)
+                if (!config.Miscellaneous.DropsDisabled && RandomUtil.Next(70) == 1)
                     await ItemSystem.GiveCollectible("Bank Cheque", context.Channel, user);
                 if (user.Cash >= 1000000 && !user.HasReachedAMilli)
                 {
@@ -212,6 +211,8 @@ public class EventSystem
 
                 user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MessageCashCooldown);
             }
+
+            await MongoManager.UpdateObjectAsync(user);
         }
     }
 
@@ -234,13 +235,8 @@ public class EventSystem
     private async Task Client_Ready()
     {
         // reset usingSlots if someone happened to be using slots during bot restart
-        foreach (SocketGuild guild in _client.Guilds)
-        {
-            QuerySnapshot slotsQuery = await Program.Database.Collection($"servers/{guild.Id}/users")
-                .WhereEqualTo("UsingSlots", true).GetSnapshotAsync();
-            foreach (DocumentSnapshot user in slotsQuery.Documents)
-                await user.Reference.SetAsync(new { UsingSlots = FieldValue.Delete }, SetOptions.MergeAll);
-        }
+        await MongoManager.Users.UpdateManyAsync(u => u.UsingSlots,
+            Builders<DbUser>.Update.Set(u => u.UsingSlots, false));
 
         await new MonitorSystem(_client).Initialise();
         await _audioService.InitializeAsync();
@@ -266,7 +262,8 @@ public class EventSystem
             await user.KickAsync();
     }
 
-    private static async Task Commands_CommandExecuted(Optional<CommandInfo> command, ICommandContext context, Discord.Commands.IResult result)
+    private static async Task Commands_CommandExecuted(Discord.Optional<CommandInfo> command,
+        ICommandContext context, Discord.Commands.IResult result)
     {
         string reason = Format.Sanitize(result.ErrorReason).Replace("\\*", "*").Replace("\\.", ".").Replace("\\:", ":");
         if (await FilterSystem.ContainsFilteredWord(context.Guild, reason))

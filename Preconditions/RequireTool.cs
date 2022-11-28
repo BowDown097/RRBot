@@ -8,7 +8,7 @@ public class RequireToolAttribute : PreconditionAttribute
 
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
-        DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(context.User.Id, context.Guild.Id);
         if (user.Tools.Count > 0)
         {
             return string.IsNullOrEmpty(ToolType) || user.Tools.Any(t => t.EndsWith(ToolType))

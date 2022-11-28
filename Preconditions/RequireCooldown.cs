@@ -13,7 +13,7 @@ public class RequireCooldownAttribute : PreconditionAttribute
 
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
-        DbUser user = await DbUser.GetById(context.Guild.Id, context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(context.User.Id, context.Guild.Id);
         if (user.CocaineRecoveryTime > 0)
         {
             long recoverySecs = user.CocaineRecoveryTime - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -25,6 +25,7 @@ public class RequireCooldownAttribute : PreconditionAttribute
             return PreconditionResult.FromError(string.Format(Message, TimeSpan.FromSeconds(cooldownSecs).FormatCompound()));
 
         user[CooldownNode] = 0;
+        await MongoManager.UpdateObjectAsync(user);
         return PreconditionResult.FromSuccess();
     }
 }

@@ -15,7 +15,7 @@ public static class ItemSystem
         new("Ape NFT", "Who actually likes these? Why does this have value?", 1000, "https://i.ibb.co/w0syJ61/nft.png"),
         new("Bank Cheque", "Hey hey hey, we got ourselves some free money!", -1, "https://i.ibb.co/wCYcrP7/Blank-Cheque.png"),
         new("Coconut", "Well this is cool, I guess.", 3, "https://i.ibb.co/svxvLKP/coconut.png"),
-        new("V Card", "Here you go, ya fuckin' virgin. Get a life bro", 69696969.69, "https://i.ibb.co/rvKXgb5/vcard.png", false)
+        new("V Card", "Here you go, ya fuckin' virgin. Get a life bro", 69696969.69m, "https://i.ibb.co/rvKXgb5/vcard.png", false)
     };
 
     public static readonly Consumable[] Consumables =
@@ -40,30 +40,29 @@ public static class ItemSystem
         new("Stone Pickaxe", 6000, mult: Constants.MineStoneMultiplier),
         new("Iron Pickaxe", 7500, mult: Constants.MineIronMultiplier),
         new("Diamond Pickaxe", 9000, mult: Constants.MineDiamondMultiplier),
-        new("Wooden Sword", 4500, Constants.GenericTaskWoodMin * 2.5, Constants.GenericTaskWoodMax * 2.5),
-        new("Stone Sword", 6000, Constants.GenericTaskStoneMin * 2.5, Constants.GenericTaskStoneMax * 2.5),
-        new("Iron Sword", 7500, Constants.GenericTaskIronMin * 2.5, Constants.GenericTaskIronMax * 2.5),
-        new("Diamond Sword", 9000, Constants.GenericTaskDiamondMin * 2.5, Constants.GenericTaskDiamondMax * 2.5),
-        new("Wooden Shovel", 4500, Constants.GenericTaskWoodMin * 2.5, Constants.GenericTaskWoodMax * 2.5),
-        new("Stone Shovel", 6000, Constants.GenericTaskStoneMin * 2.5, Constants.GenericTaskStoneMax * 2.5),
-        new("Iron Shovel", 7500, Constants.GenericTaskIronMin * 2.5, Constants.GenericTaskIronMax * 2.5),
-        new("Diamond Shovel", 9000, Constants.GenericTaskDiamondMin * 2.5, Constants.GenericTaskDiamondMax * 2.5),
-        new("Wooden Axe", 4500, Constants.GenericTaskWoodMin * 2.5, Constants.GenericTaskWoodMax * 2.5),
-        new("Stone Axe", 6000, Constants.GenericTaskStoneMin * 2.5, Constants.GenericTaskStoneMax * 2.5),
-        new("Iron Axe", 7500, Constants.GenericTaskIronMin * 2.5, Constants.GenericTaskIronMax * 2.5),
-        new("Diamond Axe", 9000, Constants.GenericTaskDiamondMin * 2.5, Constants.GenericTaskDiamondMax * 2.5),
-        new("Wooden Hoe", 4500, Constants.GenericTaskWoodMin * 2.5, Constants.GenericTaskWoodMax * 2.5),
-        new("Stone Hoe", 6000, Constants.GenericTaskStoneMin * 2.5, Constants.GenericTaskStoneMax * 2.5),
-        new("Iron Hoe", 7500, Constants.GenericTaskIronMin * 2.5, Constants.GenericTaskIronMax * 2.5),
-        new("Diamond Hoe", 9000, Constants.GenericTaskDiamondMin * 2.5, Constants.GenericTaskDiamondMax * 2.5),
+        new("Wooden Sword", 4500, Constants.GenericTaskWoodMin * 2.5m, Constants.GenericTaskWoodMax * 2.5m),
+        new("Stone Sword", 6000, Constants.GenericTaskStoneMin * 2.5m, Constants.GenericTaskStoneMax * 2.5m),
+        new("Iron Sword", 7500, Constants.GenericTaskIronMin * 2.5m, Constants.GenericTaskIronMax * 2.5m),
+        new("Diamond Sword", 9000, Constants.GenericTaskDiamondMin * 2.5m, Constants.GenericTaskDiamondMax * 2.5m),
+        new("Wooden Shovel", 4500, Constants.GenericTaskWoodMin * 2.5m, Constants.GenericTaskWoodMax * 2.5m),
+        new("Stone Shovel", 6000, Constants.GenericTaskStoneMin * 2.5m, Constants.GenericTaskStoneMax * 2.5m),
+        new("Iron Shovel", 7500, Constants.GenericTaskIronMin * 2.5m, Constants.GenericTaskIronMax * 2.5m),
+        new("Diamond Shovel", 9000, Constants.GenericTaskDiamondMin * 2.5m, Constants.GenericTaskDiamondMax * 2.5m),
+        new("Wooden Axe", 4500, Constants.GenericTaskWoodMin * 2.5m, Constants.GenericTaskWoodMax * 2.5m),
+        new("Stone Axe", 6000, Constants.GenericTaskStoneMin * 2.5m, Constants.GenericTaskStoneMax * 2.5m),
+        new("Iron Axe", 7500, Constants.GenericTaskIronMin * 2.5m, Constants.GenericTaskIronMax * 2.5m),
+        new("Diamond Axe", 9000, Constants.GenericTaskDiamondMin * 2.5m, Constants.GenericTaskDiamondMax * 2.5m),
+        new("Wooden Hoe", 4500, Constants.GenericTaskWoodMin * 2.5m, Constants.GenericTaskWoodMax * 2.5m),
+        new("Stone Hoe", 6000, Constants.GenericTaskStoneMin * 2.5m, Constants.GenericTaskStoneMax * 2.5m),
+        new("Iron Hoe", 7500, Constants.GenericTaskIronMin * 2.5m, Constants.GenericTaskIronMax * 2.5m),
+        new("Diamond Hoe", 9000, Constants.GenericTaskDiamondMin * 2.5m, Constants.GenericTaskDiamondMax * 2.5m),
         new("Fishing Rod", 7500, Constants.Fish.First().Value * 7, Constants.Fish.Last().Value * 15)
     };
 
     public static Item GetItem(string name) => Array.Find(Crates.Cast<Item>().Concat(Collectibles).Concat(Consumables).Concat(Perks).Concat(Tools).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 
-    public static async Task<RuntimeResult> BuyCrate(Crate crate, SocketUser user, SocketGuild guild, ISocketMessageChannel channel, bool notify = true)
+    public static async Task<RuntimeResult> BuyCrate(Crate crate, IUser user, DbUser dbUser, ISocketMessageChannel channel, bool notify = true)
     {
-        DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
         if (dbUser.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (dbUser.Crates.Count(s => s == crate.Name) == 10)
@@ -78,9 +77,8 @@ public static class ItemSystem
         return CommandResult.FromSuccess();
     }
 
-    public static async Task<RuntimeResult> BuyPerk(Perk perk, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
+    public static async Task<RuntimeResult> BuyPerk(Perk perk, SocketUser user, DbUser dbUser, ISocketMessageChannel channel)
     {
-        DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
         if (dbUser.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (dbUser.Perks.ContainsKey("Pacifist"))
@@ -125,9 +123,8 @@ public static class ItemSystem
         return CommandResult.FromSuccess();
     }
 
-    public static async Task<RuntimeResult> BuyTool(Tool tool, SocketUser user, SocketGuild guild, ISocketMessageChannel channel)
+    public static async Task<RuntimeResult> BuyTool(Tool tool, SocketUser user, DbUser dbUser, ISocketMessageChannel channel)
     {
-        DbUser dbUser = await DbUser.GetById(guild.Id, user.Id);
         if (dbUser.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 

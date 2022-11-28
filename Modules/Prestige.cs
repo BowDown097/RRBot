@@ -9,12 +9,13 @@ public class Prestige : ModuleBase<SocketCommandContext>
     [RequireCooldown("PrestigeCooldown", "​I can't let you go on and prestige so quickly! Wait {0}.")]
     public async Task<RuntimeResult> DoPrestige()
     {
-        DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
-        if (ranks.Ids.Count == 0)
+        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+        if (config.Ranks.Ids.Count == 0)
             return CommandResult.FromError("No ranks are configured.");
-
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        double prestigeCost = ranks.Costs.OrderBy(kvp => kvp.Value).Select(a => a.Value).Last() * (1 + (0.5 * user.Prestige));
+        
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        decimal prestigeCost = config.Ranks.Costs.OrderBy(kvp => kvp.Value)
+            .Select(a => a.Value).Last() * (1 + 0.5m * user.Prestige);
         if (user.Cash < prestigeCost)
             return CommandResult.FromError($"You don't have enough to prestige! You need {prestigeCost:C2}.");
         if (user.Prestige == Constants.MaxPrestige)
@@ -32,12 +33,12 @@ public class Prestige : ModuleBase<SocketCommandContext>
         user.BullyCooldown = user.ChopCooldown = user.DailyCooldown = user.DealCooldown
             = user.DigCooldown = user.FarmCooldown = user.FishCooldown = user.HackCooldown
             = user.HuntCooldown = user.LootCooldown = user.MineCooldown = user.PacifistCooldown
-            = user.RapeCooldown = user.RobCooldown = user.ScavengeCooldown = user.SlaveryCooldown
-            = user.SupportCooldown = user.TimeTillCash = user.WhoreCooldown = 0;
-        user.Consumables = new Dictionary<string, int>();
-        user.Crates = new List<string>();
-        user.Perks = new Dictionary<string, long>();
-        user.Tools = new List<string>();
+            = user.RapeCooldown = user.RobCooldown = user.ScavengeCooldown = user.SlaveryCooldown 
+            = user.TimeTillCash = user.WhoreCooldown = 0;
+        user.Consumables.Clear();
+        user.Crates.Clear();
+        user.Perks.Clear();
+        user.Tools.Clear();
         user.Prestige++;
 
         await user.SetCooldown("PrestigeCooldown", Constants.PrestigeCooldown, Context.Guild, Context.User);
@@ -45,6 +46,8 @@ public class Prestige : ModuleBase<SocketCommandContext>
         await user.UnlockAchievement("Prestiged!", Context.User, Context.Channel);
         if (user.Prestige == Constants.MaxPrestige)
             await user.UnlockAchievement("Maxed!", Context.User, Context.Channel);
+
+        await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
 
@@ -52,7 +55,7 @@ public class Prestige : ModuleBase<SocketCommandContext>
     [Summary("Check out the perks you're getting from prestige and other info.")]
     public async Task<RuntimeResult> PrestigePerks()
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (user.Prestige < 1)
             return CommandResult.FromError("You haven't prestiged yet!");
 
@@ -61,8 +64,8 @@ public class Prestige : ModuleBase<SocketCommandContext>
             .WithDescription("**Prestige Perks**")
             .WithThumbnailUrl(Constants.PrestigeImages[user.Prestige])
             .RrAddField("Prestige Level", user.Prestige)
-            .RrAddField("Cash Multiplier", (1 + (0.2 * user.Prestige)).ToString("0.#") + "x")
-            .RrAddField("Rank Cost Multiplier", (1 + (0.5 * user.Prestige)).ToString("0.#") + "x");
+            .RrAddField("Cash Multiplier", (1 + 0.2 * user.Prestige).ToString("0.#") + "x")
+            .RrAddField("Rank Cost Multiplier", (1 + 0.5 * user.Prestige).ToString("0.#") + "x");
 
         await ReplyAsync(embed: embed.Build());
         return CommandResult.FromSuccess();

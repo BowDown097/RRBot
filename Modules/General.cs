@@ -1,4 +1,6 @@
-﻿namespace RRBot.Modules;
+﻿using RRBot.Database.Entities;
+
+namespace RRBot.Modules;
 [Summary("The name really explains it all. Fun fact, you used one of the commands under this module to view info about this module.")]
 public class General : ModuleBase<SocketCommandContext>
 {
@@ -10,8 +12,7 @@ public class General : ModuleBase<SocketCommandContext>
     [Remarks("$achievements toes69ing")]
     public async Task Achievements([Remainder] IGuildUser user = null)
     {
-        ulong userId = user?.Id ?? Context.User.Id;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, userId);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
         StringBuilder description = new();
         foreach (KeyValuePair<string, string> achievement in dbUser.Achievements)
             description.AppendLine($"**{achievement.Key}**: {achievement.Value}");
@@ -41,14 +42,9 @@ public class General : ModuleBase<SocketCommandContext>
         CommandInfo commandInfo = search.Commands[0].Command;
         if (commandInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
         {
-            DbConfigOptionals modules = await DbConfigOptionals.GetById(Context.Guild.Id);
-            if (!modules.NsfwEnabled)
+            DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+            if (!config.Miscellaneous.NsfwEnabled || config.Miscellaneous.DisabledModules.Contains("Nsfw"))
                 return CommandResult.FromError("NSFW commands are disabled!");
-        }
-        if (commandInfo.TryGetPrecondition<RequireRushRebornAttribute>()
-            && Context.Guild.Id is not (RequireRushRebornAttribute.RrMain or RequireRushRebornAttribute.RrTest))
-        {
-            return CommandResult.FromError("You have specified a nonexistent command!");
         }
 
         StringBuilder preconditions = new();
@@ -62,8 +58,6 @@ public class General : ModuleBase<SocketCommandContext>
             preconditions.AppendLine("Must be in NSFW channel");
         if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>())
             preconditions.AppendLine("Requires Bot Owner");
-        if (commandInfo.TryGetPrecondition<RequireRushRebornAttribute>())
-            preconditions.AppendLine("Exclusive to Rush Reborn");
         if (commandInfo.TryGetPrecondition<RequirePerkAttribute>())
             preconditions.AppendLine("Requires a perk");
         if (commandInfo.TryGetPrecondition(out RequireRankLevelAttribute rankLevelAttr))
@@ -100,15 +94,11 @@ public class General : ModuleBase<SocketCommandContext>
         if (moduleInfo == default)
             return CommandResult.FromError("You have specified a nonexistent module!");
 
-        if (moduleInfo.Name == "NSFW")
+        if (moduleInfo.Name == "Nsfw")
         {
-            DbConfigOptionals modules = await DbConfigOptionals.GetById(Context.Guild.Id);
-            if (!modules.NsfwEnabled)
+            DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+            if (!config.Miscellaneous.NsfwEnabled || config.Miscellaneous.DisabledModules.Contains("Nsfw"))
                 return CommandResult.FromError("NSFW commands are disabled!");
-        }
-        if (moduleInfo.Name == "Support")
-        {
-            return CommandResult.FromError("You have specified a nonexistent module!");
         }
 
         EmbedBuilder moduleEmbed = new EmbedBuilder()
@@ -124,14 +114,10 @@ public class General : ModuleBase<SocketCommandContext>
     [Summary("View info about the bot's modules.")]
     public async Task Modules()
     {
-        List<string> modulesList = Commands.Modules.Select(x => x.Name).ToList();
-        if (Context.Guild.Id is not (RequireRushRebornAttribute.RrMain or RequireRushRebornAttribute.RrTest))
-            modulesList.Remove("Support");
-
         EmbedBuilder modulesEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Modules")
-            .WithDescription(string.Join(", ", modulesList));
+            .WithDescription(string.Join(", ", Commands.Modules.Select(x => x.Name).ToList()));
         await ReplyAsync(embed: modulesEmbed.Build());
     }
 
@@ -182,8 +168,8 @@ public class General : ModuleBase<SocketCommandContext>
     {
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
-
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
+        
+        DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
         if (dbUser.Stats.Count == 0)
             return CommandResult.FromError(user == null ? "You have no available stats!" : $"**{user.Sanitize()}** has no available stats!");
 

@@ -7,32 +7,33 @@ public class Investments : ModuleBase<SocketCommandContext>
     [Summary("Invest in a cryptocurrency. Currently accepted currencies are BTC, ETH, LTC, and XRP. Here, the amount you put in should be RR Cash.")]
     [Remarks("$invest ethereum 600")]
     [RequireCash]
-    public async Task<RuntimeResult> Invest(string crypto, double amount)
+    public async Task<RuntimeResult> Invest(string crypto, decimal amount)
     {
-        if (amount is < Constants.TransactionMin or double.NaN)
+        if (amount < Constants.TransactionMin)
             return CommandResult.FromError($"You need to invest at least {Constants.TransactionMin:C2}.");
 
         string abbreviation = ResolveAbbreviation(crypto);
         if (abbreviation is null)
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
-
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (user.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (user.Cash < amount)
             return CommandResult.FromError("You can't invest more than what you have!");
 
-        double cryptoAmount = amount / await QueryCryptoValue(abbreviation);
+        decimal cryptoValue = await QueryCryptoValue(abbreviation);
+        decimal cryptoAmount = amount / cryptoValue;
         if (cryptoAmount < Constants.InvestmentMinAmount)
         {
             return CommandResult.FromError($"The amount you specified converts to less than {Constants.InvestmentMinAmount} of {abbreviation}, which is not permitted.\n"
-                + $"You'll need to invest at least **{await QueryCryptoValue(abbreviation) * Constants.InvestmentMinAmount:C2}**.");
+                + $"You'll need to invest at least **{cryptoValue * Constants.InvestmentMinAmount:C2}**.");
         }
 
         CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
         culture.NumberFormat.CurrencyNegativePattern = 2;
         await user.SetCash(Context.User, user.Cash - amount);
-        user[abbreviation] = (double)user[abbreviation] + Math.Round(cryptoAmount, 4);
+        user[abbreviation] = (decimal)user[abbreviation] + Math.Round(cryptoAmount, 4);
         user.AddToStats(new Dictionary<string, string>
         {
             { $"Money Put Into {abbreviation}", amount.ToString("C2", culture) },
@@ -40,6 +41,7 @@ public class Investments : ModuleBase<SocketCommandContext>
         });
 
         await Context.User.NotifyAsync(Context.Channel, $"You have invested in **{cryptoAmount:0.####}** {abbreviation}, currently valued at **{amount:C2}**.");
+        await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
 
@@ -50,8 +52,8 @@ public class Investments : ModuleBase<SocketCommandContext>
     {
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
-
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
+            
+        DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
 
         StringBuilder investments = new();
         if (dbUser.Btc >= Constants.InvestmentMinAmount)
@@ -76,10 +78,10 @@ public class Investments : ModuleBase<SocketCommandContext>
     [Summary("Check the values of currently available cryptocurrencies.")]
     public async Task Prices()
     {
-        double btc = await QueryCryptoValue("BTC");
-        double eth = await QueryCryptoValue("ETH");
-        double ltc = await QueryCryptoValue("LTC");
-        double xrp = await QueryCryptoValue("XRP");
+        decimal btc = await QueryCryptoValue("BTC");
+        decimal eth = await QueryCryptoValue("ETH");
+        decimal ltc = await QueryCryptoValue("LTC");
+        decimal xrp = await QueryCryptoValue("XRP");
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -94,52 +96,53 @@ public class Investments : ModuleBase<SocketCommandContext>
     [Command("withdraw")]
     [Summary("Withdraw a specified cryptocurrency to RR Cash, with a 2% withdrawal fee. Here, the amount you put in should be in the crypto, not RR Cash. See $invest's help info for currently accepted currencies.")]
     [Remarks("$withdraw ltc 10")]
-    public async Task<RuntimeResult> Withdraw(string crypto, double amount)
+    public async Task<RuntimeResult> Withdraw(string crypto, decimal amount)
     {
-        if (amount is < Constants.InvestmentMinAmount or double.NaN)
+        if (amount < Constants.InvestmentMinAmount)
             return CommandResult.FromError($"You must withdraw {Constants.InvestmentMinAmount} or more of the crypto.");
 
         string abbreviation = ResolveAbbreviation(crypto);
         if (abbreviation is null)
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
-
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (user.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-        double cryptoBal = (double)user[abbreviation];
+        decimal cryptoBal = (decimal)user[abbreviation];
         if (cryptoBal < Constants.InvestmentMinAmount)
             return CommandResult.FromError($"You have no {abbreviation}!");
         if (cryptoBal < amount)
             return CommandResult.FromError($"You don't have {amount} {abbreviation}! You've only got **{cryptoBal:0.####}** of it.");
 
-        double cryptoValue = await QueryCryptoValue(abbreviation) * amount;
-        double finalValue = cryptoValue / 100.0 * (100 - Constants.InvestmentFeePercent);
+        decimal cryptoValue = await QueryCryptoValue(abbreviation) * amount;
+        decimal finalValue = cryptoValue / 100.0m * (100 - Constants.InvestmentFeePercent);
 
         CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
         culture.NumberFormat.CurrencyNegativePattern = 2;
 
         await user.SetCash(Context.User, user.Cash + finalValue);
-        user[abbreviation] = (double)user[abbreviation] - Math.Round(amount, 4);
+        user[abbreviation] = (decimal)user[abbreviation] - Math.Round(amount, 4);
         user.AddToStat($"Money Gained From {abbreviation}", finalValue.ToString("C2", culture));
 
         await Context.User.NotifyAsync(Context.Channel, $"You withdrew **{amount:0.####}** {abbreviation}, currently valued at **{cryptoValue:C2}**.\n" +
             $"A {Constants.InvestmentFeePercent}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
+        await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
     #endregion
 
     #region Helpers
-    public static async Task<double> QueryCryptoValue(string crypto)
+    public static async Task<decimal> QueryCryptoValue(string crypto)
     {
         using HttpClient client = new();
         string current = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm");
         string today = DateTime.UtcNow.ToString("yyyy-MM-dd") + "T00:00";
         string data = await client.GetStringAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
         dynamic obj = JsonConvert.DeserializeObject(data);
-        if (obj is null) return double.MaxValue;
+        if (obj is null) return decimal.MaxValue;
         JToken latestEntry = JArray.FromObject(obj.data.entries).Last;
-        return Math.Round(latestEntry[1]?.Value<double>() ?? double.MaxValue, 2);
+        return Math.Round(latestEntry[1]?.Value<decimal>() ?? decimal.MaxValue, 2);
     }
 
     public static string ResolveAbbreviation(string crypto) => crypto.ToLower() switch

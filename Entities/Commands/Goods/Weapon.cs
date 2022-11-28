@@ -1,13 +1,13 @@
 namespace RRBot.Entities.Commands.Goods;
 public class Weapon : Item
 {
-    public int DamageMin { get; set; }
-    public int DamageMax { get; set; }
-    public string Information { get; set; }
-    public override string Name { get; set; }
-    public override double Price { get; set; }
+    public int DamageMin { get; }
+    public int DamageMax { get; }
+    public string Information { get; }
+    public override string Name { get; protected init; }
+    public override decimal Price { get; protected init; }
 
-    public Weapon(string name, double price, int damageMin, int damageMax, string information) : base(name, price)
+    public Weapon(string name, decimal price, int damageMin, int damageMax, string information) : base(name, price)
     {
         DamageMin = damageMin;
         DamageMax = damageMax;

@@ -7,9 +7,9 @@
 		<NoWarn>RCS1197</NoWarn>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Google.Cloud.Firestore" Version="3.0.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.3.1" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
+		<PackageReference Include="MongoDB.Driver" Version="2.18.0" />
 		<PackageReference Include="NHentaiSharp" Version="1.1.1" />
 		<PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
 		<PackageReference Include="Lavalink4NET.Discord.NET" Version="3.0.0-preview.13" />

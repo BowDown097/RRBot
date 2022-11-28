@@ -20,9 +20,11 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
 
-        DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
+        DbGlobalConfig globalConfig = await MongoManager.FetchGlobalConfigAsync();
         globalConfig.BannedUsers.Add(user.Id);
+
         await Context.User.NotifyAsync(Context.Channel, $"Blacklisted {user.Sanitize()}.");
+        await MongoManager.UpdateObjectAsync(globalConfig);
         return CommandResult.FromSuccess();
     }
 
@@ -38,10 +40,12 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         Discord.Commands.SearchResult search = Commands.Search(cmd);
         if (!search.IsSuccess)
             return CommandResult.FromError($"**${cmdLower}** is not a command!");
-
-        DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
+        
+        DbGlobalConfig globalConfig = await MongoManager.FetchGlobalConfigAsync();
         globalConfig.DisabledCommands.Add(cmdLower);
+
         await Context.User.NotifyAsync(Context.Channel, $"Disabled ${cmdLower}.");
+        await MongoManager.UpdateObjectAsync(globalConfig);
         return CommandResult.FromSuccess();
     }
 
@@ -51,11 +55,12 @@ public class BotOwner : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> EnableCommandGlobal(string cmd)
     {
         string cmdLower = cmd.ToLower();
-        DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
+        DbGlobalConfig globalConfig = await MongoManager.FetchGlobalConfigAsync();
         if (!globalConfig.DisabledCommands.Remove(cmdLower))
             return CommandResult.FromError($"**{cmdLower}** is not disabled!");
 
         await Context.User.NotifyAsync(Context.Channel, $"Enabled ${cmdLower}.");
+        await MongoManager.UpdateObjectAsync(globalConfig);
         return CommandResult.FromSuccess();
     }
 
@@ -104,11 +109,12 @@ public class BotOwner : ModuleBase<SocketCommandContext>
     [Remarks("$setuserproperty Dragonpreet Cash NaN")]
     public async Task<RuntimeResult> SetUserProperty(IGuildUser user, string property, [Remainder] string value)
     {
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         try
         {
             dbUser[property] = Convert.ChangeType(value, dbUser[property].GetType());
             await Context.User.NotifyAsync(Context.Channel, $"Set {property} to ``{value}`` for {user.Sanitize()}.");
+            await MongoManager.UpdateObjectAsync(dbUser);
             return CommandResult.FromSuccess();
         }
         catch (Exception e)
@@ -125,31 +131,12 @@ public class BotOwner : ModuleBase<SocketCommandContext>
     {
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-
-        DbGlobalConfig globalConfig = await DbGlobalConfig.Get();
+        
+        DbGlobalConfig globalConfig = await MongoManager.FetchGlobalConfigAsync();
         globalConfig.BannedUsers.Remove(user.Id);
+
         await Context.User.NotifyAsync(Context.Channel, $"Unblacklisted {user.Sanitize()}.");
+        await MongoManager.UpdateObjectAsync(globalConfig);
         return CommandResult.FromSuccess();
-    }
-
-    [Command("updatedb")]
-    [Summary("Pushes all cached data to the database.")]
-    public async Task UpdateDb()
-    {
-        long count = MemoryCache.Default.GetCount();
-        foreach (string key in MemoryCache.Default.Select(kvp => kvp.Key))
-        {
-            try
-            {
-                if (MemoryCache.Default.Get(key) is not DbObject item)
-                    continue;
-
-                await item.Reference.SetAsync(item);
-                MemoryCache.Default.Remove(key);
-            }
-            catch (NullReferenceException) {}
-        }
-
-        await Context.User.NotifyAsync(Context.Channel, $"Pushed all **{count}** items in the cache to the database.");
     }
 }

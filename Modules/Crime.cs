@@ -20,21 +20,23 @@ public class Crime : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("No masochism here!");
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-
-        DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
+        
+        DbUser target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         if (target.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError($"You cannot bully **{user.Sanitize()}** as they have the Pacifist perk equipped.");
-
-        DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
+        
+        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+        if (user.RoleIds.Contains(config.Roles.StaffLvl1Role) || user.RoleIds.Contains(config.Roles.StaffLvl2Role))
             return CommandResult.FromError($"You cannot bully **{user.Sanitize()}** as they are a staff member.");
 
         await user.ModifyAsync(props => props.Nickname = nickname);
         await LoggingSystem.Custom_UserBullied(user, Context.User, nickname);
         await Context.User.NotifyAsync(Context.Channel, $"You BULLIED **{user.Sanitize()}** to ``{nickname}``!");
-
-        DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        
+        DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         await author.SetCooldown("BullyCooldown", Constants.BullyCooldown, Context.Guild, Context.User);
+        await MongoManager.UpdateObjectAsync(author);
+
         return CommandResult.FromSuccess();
     }
 
@@ -55,9 +57,9 @@ public class Crime : ModuleBase<SocketCommandContext>
     [Summary("Hack into someone's crypto wallet.")]
     [Remarks("$hack LYNESTAR XRP 10000")]
     [RequireCooldown("HackCooldown", "You exhausted all your brain power bro, you're gonna have to wait {0}.")]
-    public async Task<RuntimeResult> Hack(IGuildUser user, string crypto, double amount)
+    public async Task<RuntimeResult> Hack(IGuildUser user, string crypto, decimal amount)
     {
-        if (amount is < Constants.InvestmentMinAmount or double.NaN)
+        if (amount < Constants.InvestmentMinAmount)
             return CommandResult.FromError($"You must hack {Constants.InvestmentMinAmount} or more.");
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("How are you supposed to hack yourself?");
@@ -67,24 +69,24 @@ public class Crime : ModuleBase<SocketCommandContext>
         string abbreviation = Investments.ResolveAbbreviation(crypto);
         if (abbreviation is null)
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
-
-        DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
+        
+        DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        DbUser target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         if (author.UsingSlots || target.UsingSlots)
             return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
         if (target.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError($"You cannot hack **{user.Sanitize()}** as they have the Pacifist perk equipped.");
 
-        double authorBal = (double)author[abbreviation];
-        double targetBal = (double)target[abbreviation];
-        double robMax = Math.Round(targetBal / 100.0 * Constants.RobMaxPercent, 4);
+        decimal authorBal = (decimal)author[abbreviation];
+        decimal targetBal = (decimal)target[abbreviation];
+        decimal robMax = Math.Round(targetBal / 100.0m * Constants.RobMaxPercent, 4);
         if (authorBal < amount)
             return CommandResult.FromError($"You don't have that much {abbreviation}!");
         if (amount > robMax)
             return CommandResult.FromError($"You can only hack {Constants.RobMaxPercent}% of **{user.Sanitize()}**'s {abbreviation}, that being **{robMax}**.");
 
-        int roll = RandomUtil.Next(1, 101);
-        double cryptoValue = await Investments.QueryCryptoValue(abbreviation) * amount;
+        int roll = RandomUtil.Next(100);
+        decimal cryptoValue = await Investments.QueryCryptoValue(abbreviation) * amount;
         double odds = author.UsedConsumables.GetValueOrDefault("Black Hat") > 0 ? Constants.HackOdds + 10 : Constants.HackOdds;
         if (author.Perks.ContainsKey("Speed Demon"))
             odds *= 0.95;
@@ -106,7 +108,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         }
         else
         {
-            author[abbreviation] = authorBal - (amount / 4);
+            author[abbreviation] = authorBal - amount / 4;
             StatUpdate(author, false, amount / 4);
             switch (RandomUtil.Next(2))
             {
@@ -120,6 +122,8 @@ public class Crime : ModuleBase<SocketCommandContext>
         }
 
         await author.SetCooldown("HackCooldown", Constants.HackCooldown, Context.Guild, Context.User);
+        await MongoManager.UpdateObjectAsync(author);
+        await MongoManager.UpdateObjectAsync(target);
         return CommandResult.FromSuccess();
     }
 
@@ -148,36 +152,38 @@ public class Crime : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("How are you supposed to rape yourself?");
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-
-        DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
+        
+        DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        DbUser target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         if (author.UsingSlots || target.UsingSlots)
             return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
         if (target.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError($"You cannot rape **{user.Sanitize()}** as they have the Pacifist perk equipped.");
-        if (target.Cash < 0.01)
+        if (target.Cash < 0.01m)
             return CommandResult.FromError($"Dear Lord, talk about kicking them while they're down! **{user.Sanitize()}** is broke! Have some decency.");
 
-        double rapePercent = RandomUtil.NextDouble(Constants.RapeMinPercent, Constants.RapeMaxPercent);
+        decimal rapePercent = RandomUtil.NextDecimal(Constants.RapeMinPercent, Constants.RapeMaxPercent);
         double odds = author.UsedConsumables.GetValueOrDefault("Viagra") > 0 ? Constants.RapeOdds + 10 : Constants.RapeOdds;
         if (author.Perks.ContainsKey("Speed Demon"))
             odds *= 0.95;
         if (RandomUtil.NextDouble(1, 101) < odds)
         {
-            double repairs = target.Cash / 100.0 * rapePercent;
+            decimal repairs = target.Cash / 100.0m * rapePercent;
             StatUpdate(target, false, repairs);
             await target.SetCash(user, target.Cash - repairs);
             await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user.Sanitize()}**'s asshole! They just paid **{repairs:C2}** in asshole repairs.");
         }
         else
         {
-            double repairs = author.Cash / 100.0 * rapePercent;
+            decimal repairs = author.Cash / 100.0m * rapePercent;
             StatUpdate(author, false, repairs);
             await author.SetCash(Context.User, author.Cash - repairs);
             await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user.Sanitize()}**! You just paid **{repairs:C2}** in asshole repairs.");
         }
 
         await author.SetCooldown("RapeCooldown", Constants.RapeCooldown, Context.Guild, Context.User);
+        await MongoManager.UpdateObjectAsync(author);
+        await MongoManager.UpdateObjectAsync(target);
         return CommandResult.FromSuccess();
     }
 
@@ -185,7 +191,7 @@ public class Crime : ModuleBase<SocketCommandContext>
     [Summary("Yoink money from a user.")]
     [Remarks("$rob Romanian 160")]
     [RequireCooldown("RobCooldown", "It's best to avoid getting caught if you don't go out for {0}.")]
-    public async Task<RuntimeResult> Rob(IGuildUser user, double amount)
+    public async Task<RuntimeResult> Rob(IGuildUser user, decimal amount)
     {
         if (amount < Constants.RobMinCash)
             return CommandResult.FromError($"There's no point in robbing for less than {Constants.RobMinCash:C2}!");
@@ -193,21 +199,21 @@ public class Crime : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("How are you supposed to rob yourself?");
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-
-        DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
+        
+        DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        DbUser target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         if (author.UsingSlots || target.UsingSlots)
             return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
         if (target.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError($"You cannot rob **{user.Sanitize()}** as they have the Pacifist perk equipped.");
 
-        double robMax = Math.Round(target.Cash / 100.0 * Constants.RobMaxPercent, 2);
+        decimal robMax = Math.Round(target.Cash / 100.0m * Constants.RobMaxPercent, 2);
         if (author.Cash < amount)
             return CommandResult.FromError("You don't have that much money!");
         if (amount > robMax)
             return CommandResult.FromError($"You can only rob {Constants.RobMaxPercent}% of **{user.Sanitize()}**'s cash, that being **{robMax:C2}**.");
 
-        int roll = RandomUtil.Next(1, 101);
+        int roll = RandomUtil.Next(100);
         double odds = author.UsedConsumables.GetValueOrDefault("Romanian Flag") > 0 ? Constants.RobOdds + 10 : Constants.RobOdds;
         if (author.Perks.ContainsKey("Speed Demon"))
             odds *= 0.95;
@@ -247,6 +253,8 @@ public class Crime : ModuleBase<SocketCommandContext>
         }
 
         await author.SetCooldown("RobCooldown", Constants.RobCooldown, Context.Guild, Context.User);
+        await MongoManager.UpdateObjectAsync(author);
+        await MongoManager.UpdateObjectAsync(target);
         return CommandResult.FromSuccess();
     }
 
@@ -263,7 +271,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 
         JToken[] words = wordsToken.ToArray();
         string originalWord = words[RandomUtil.Next(words.Length)].ToString();
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (originalWord.Any(c => !char.IsLetter(c) && !char.IsWhiteSpace(c)))
         {
             await Scavenge();
@@ -344,12 +352,13 @@ public class Crime : ModuleBase<SocketCommandContext>
             await ItemSystem.GiveCollectible("Ape NFT", Context.Channel, user);
 
         await user.SetCooldown("ScavengeCooldown", Constants.ScavengeCooldown, Context.Guild, Context.User);
+        await MongoManager.UpdateObjectAsync(user);
     }
 
     [Command("slavery")]
     [Summary("Get some slave labor goin'.")]
     [RequireCooldown("SlaveryCooldown", "The slaves will die if you keep going like this! You should wait {0}.")]
-    [RequireRankLevel("2")]
+    [RequireRankLevel(2)]
     public async Task<RuntimeResult> Slavery()
     {
         string[] successes = { "You got loads of newfags to tirelessly mine ender chests on the Oldest Anarchy Server in Minecraft. You made **{0}** selling the newfound millions of obsidian to an interested party.",
@@ -363,7 +372,7 @@ public class Crime : ModuleBase<SocketCommandContext>
     [Command("whore")]
     [Summary("Sell your body for quick cash.")]
     [RequireCooldown("WhoreCooldown", "You cannot whore yourself out for {0}.")]
-    [RequireRankLevel("1")]
+    [RequireRankLevel(1)]
     public async Task<RuntimeResult> Whore()
     {
         string[] successes = { "You went to the club and some weird fat dude sauced you **{0}**.",
@@ -379,19 +388,19 @@ public class Crime : ModuleBase<SocketCommandContext>
     private async Task<RuntimeResult> GenericCrime(string[] successOutcomes, string[] failOutcomes, string cdKey,
         long duration, bool hasMehOutcome = false)
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (user.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
         double winOdds = user.Perks.ContainsKey("Speed Demon") ? Constants.GenericCrimeWinOdds * 0.95 : Constants.GenericCrimeWinOdds;
-        if (RandomUtil.NextDouble(1, 101) < winOdds)
+        if (RandomUtil.NextDouble(100) < winOdds)
         {
             int outcomeNum = RandomUtil.Next(successOutcomes.Length);
             string outcome = successOutcomes[outcomeNum];
-            double moneyEarned = RandomUtil.NextDouble(Constants.GenericCrimeWinMin, Constants.GenericCrimeWinMax);
+            decimal moneyEarned = RandomUtil.NextDecimal(Constants.GenericCrimeWinMin, Constants.GenericCrimeWinMax);
             if (hasMehOutcome && outcomeNum == successOutcomes.Length - 1)
                 moneyEarned /= 5;
-            double totalCash = user.Cash + moneyEarned;
+            decimal totalCash = user.Cash + moneyEarned;
 
             StatUpdate(user, true, moneyEarned);
             await user.SetCash(Context.User, totalCash, Context.Channel, string.Format($"{outcome}\nBalance: {totalCash:C2}", moneyEarned.ToString("C2")));
@@ -399,9 +408,9 @@ public class Crime : ModuleBase<SocketCommandContext>
         else
         {
             string outcome = failOutcomes[RandomUtil.Next(failOutcomes.Length)];
-            double lostCash = RandomUtil.NextDouble(Constants.GenericCrimeLossMin, Constants.GenericCrimeLossMax);
-            lostCash = (user.Cash - lostCash) < 0 ? lostCash - Math.Abs(user.Cash - lostCash) : lostCash;
-            double totalCash = (user.Cash - lostCash) > 0 ? user.Cash - lostCash : 0;
+            decimal lostCash = RandomUtil.NextDecimal(Constants.GenericCrimeLossMin, Constants.GenericCrimeLossMax);
+            lostCash = user.Cash - lostCash < 0 ? lostCash - Math.Abs(user.Cash - lostCash) : lostCash;
+            decimal totalCash = user.Cash - lostCash > 0 ? user.Cash - lostCash : 0;
 
             StatUpdate(user, false, lostCash);
             await user.SetCash(Context.User, totalCash);
@@ -420,6 +429,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         }
 
         await user.SetCooldown(cdKey, duration, Context.Guild, Context.User);
+        await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
 
@@ -435,9 +445,9 @@ public class Crime : ModuleBase<SocketCommandContext>
         }
         else if (successCondition)
         {
-            double rewardCash = RandomUtil.NextDouble(Constants.ScavengeMinCash, Constants.ScavengeMaxCash);
-            double prestigeCash = rewardCash * (0.20 * user.Prestige);
-            double totalCash = user.Cash + rewardCash + prestigeCash;
+            decimal rewardCash = RandomUtil.NextDecimal(Constants.ScavengeMinCash, Constants.ScavengeMaxCash);
+            decimal prestigeCash = rewardCash * 0.20m * user.Prestige;
+            decimal totalCash = user.Cash + rewardCash + prestigeCash;
             EmbedBuilder successEmbed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle(msg.Embeds.First().Title)
@@ -461,14 +471,14 @@ public class Crime : ModuleBase<SocketCommandContext>
         char[] letters = new char[match.Value.Length];
         for (int ctr = 0; ctr < match.Value.Length; ctr++)
         {
-            keys[ctr] = RandomUtil.NextDouble(0, 2);
+            keys[ctr] = RandomUtil.NextDouble(2);
             letters[ctr] = match.Value[ctr];
         }
         Array.Sort(keys, letters, 0, match.Value.Length);
         return new string(letters);
     }
 
-    private static void StatUpdate(DbUser user, bool success, double gain)
+    private static void StatUpdate(DbUser user, bool success, decimal gain)
     {
         CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
         culture.NumberFormat.CurrencyNegativePattern = 2;

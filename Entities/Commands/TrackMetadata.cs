@@ -1,10 +1,10 @@
 namespace RRBot.Entities.Commands;
 public class TrackMetadata
 {
-    public Uri Artwork { get; set; }
-    public string Author { get; set; }
-    public string Requester { get; set; }
-    public string Title { get; set; }
+    public Uri Artwork { get; }
+    public string Author { get; }
+    public string Requester { get; }
+    public string Title { get; }
 
     public TrackMetadata(LavalinkTrack track, IUser requester)
     {

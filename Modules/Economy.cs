@@ -1,10 +1,10 @@
-﻿namespace RRBot.Modules;
+﻿
+namespace RRBot.Modules;
 [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
 public class Economy : ModuleBase<SocketCommandContext>
 {
     public static readonly string[] CmdsWithCooldown = { "Deal", "Loot", "Rape", "Rob", "Scavenge",
-        "Slavery", "Whore", "Bully",  "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Support", "Hack",
-        "Daily", "Prestige" };
+        "Slavery", "Whore", "Bully",  "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Hack", "Daily", "Prestige" };
 
     #region Commands
     [Alias("bal", "cash")]
@@ -15,9 +15,9 @@ public class Economy : ModuleBase<SocketCommandContext>
     {
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
-
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
-        if (dbUser.Cash < 0.01)
+        
+        DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
+        if (dbUser.Cash < 0.01m)
             return CommandResult.FromError(user == null ? "You're broke!" : $"**{user.Sanitize()}** is broke!");
 
         await Context.User.NotifyAsync(Context.Channel, user == null ? $"You have **{dbUser.Cash:C2}**." : $"**{user.Sanitize()}** has **{dbUser.Cash:C2}**.");
@@ -30,7 +30,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Remarks("$cd Lilpumpfan1")]
     public async Task Cooldowns([Remainder] IGuildUser user = null)
     {
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
         StringBuilder description = new();
 
         foreach (string cmd in CmdsWithCooldown)
@@ -57,31 +57,27 @@ public class Economy : ModuleBase<SocketCommandContext>
         if (cUp is not ("Cash" or "BTC" or "ETH" or "LTC" or "XRP"))
             return CommandResult.FromError($"**{currency}** is not a currently accepted currency!");
 
-        double cryptoValue = cUp != "Cash" ? await Investments.QueryCryptoValue(cUp) : 0;
-        QuerySnapshot users = await Program.Database.Collection($"servers/{Context.Guild.Id}/users")
-            .OrderByDescending(cUp).GetSnapshotAsync();
+        decimal cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
+        SortDefinition<DbUser> sort = Builders<DbUser>.Sort.Descending(currency);
+        IAsyncCursor<DbUser> cursor = await MongoManager.Users.FindAsync(u => u.GuildId == Context.Guild.Id,
+            new FindOptions<DbUser> { Sort = sort });
+        List<DbUser> users = await cursor.ToListAsync();
+        
         StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
         int processedUsers = 0, failedUsers = 0;
-        foreach (DocumentSnapshot doc in users.Documents)
+        foreach (DbUser user in users)
         {
             if (processedUsers == 10)
                 break;
 
-            SocketGuildUser guildUser = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
-            if (guildUser == null)
+            SocketGuildUser guildUser = Context.Guild.GetUser(user.UserId);
+            if (guildUser == null || user.Perks.ContainsKey("Pacifist"))
             {
                 failedUsers++;
                 continue;
             }
 
-            DbUser user = await DbUser.GetById(Context.Guild.Id, guildUser.Id, false);
-            if (user.Perks.ContainsKey("Pacifist"))
-            {
-                failedUsers++;
-                continue;
-            }
-
-            double val = (double)user[cUp];
+            decimal val = (decimal)user[cUp];
             if (val < Constants.InvestmentMinAmount)
                 break;
 
@@ -98,7 +94,7 @@ public class Economy : ModuleBase<SocketCommandContext>
             .WithDescription(lb.Length > 0 ? lb.ToString() : "Nothing to see here!");
         ComponentBuilder component = new ComponentBuilder()
             .WithButton("Back", "dddd", disabled: true)
-            .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20-{failedUsers}-False", disabled: processedUsers != 10 || users.Documents.Count < 11);
+            .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20-{failedUsers}-False", disabled: processedUsers != 10 || users.Count < 11);
         await ReplyAsync(embed: embed.Build(), components: component.Build());
         return CommandResult.FromSuccess();
     }
@@ -112,7 +108,7 @@ public class Economy : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("Nope.");
 
         user ??= Context.User as IGuildUser;
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithAuthor(user)
@@ -139,13 +135,13 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Summary("View all the ranks and their costs.")]
     public async Task Ranks()
     {
-        DbConfigRanks ranks = await DbConfigRanks.GetById(Context.Guild.Id);
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         StringBuilder description = new();
-        foreach (KeyValuePair<string, double> kvp in ranks.Costs.OrderBy(kvp => int.Parse(kvp.Key)))
+        foreach (KeyValuePair<int, decimal> kvp in config.Ranks.Costs.OrderBy(kvp => kvp.Key))
         {
-            SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
-            double cost = kvp.Value * (1 + (0.5 * user.Prestige));
+            SocketRole role = Context.Guild.GetRole(config.Ranks.Ids[kvp.Key]);
+            decimal cost = kvp.Value * (1 + 0.5m * user.Prestige);
             if (role == null) continue;
             description.AppendLine($"**{role.Name}**: {cost:C2}");
         }
@@ -161,17 +157,17 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Command("sauce")]
     [Summary("Sauce someone some cash.")]
     [Remarks("$sauce Mateo 1000")]
-    public async Task<RuntimeResult> Sauce(IGuildUser user, double amount)
+    public async Task<RuntimeResult> Sauce(IGuildUser user, decimal amount)
     {
-        if (amount is < Constants.TransactionMin or double.NaN)
+        if (amount < Constants.TransactionMin)
             return CommandResult.FromError($"You need to sauce at least {Constants.TransactionMin:C2}.");
         if (Context.User == user)
             return CommandResult.FromError("You can't sauce yourself money. Don't even know how you would.");
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-
-        DbUser author = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        DbUser target = await DbUser.GetById(Context.Guild.Id, user.Id);
+        
+        DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        DbUser target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         if (author.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (author.Cash < amount)
@@ -181,6 +177,8 @@ public class Economy : ModuleBase<SocketCommandContext>
         await target.SetCash(user, target.Cash + amount);
 
         await Context.User.NotifyAsync(Context.Channel, $"You sauced **{user.Sanitize()}** {amount:C2}.");
+        await MongoManager.UpdateObjectAsync(author);
+        await MongoManager.UpdateObjectAsync(target);
         return CommandResult.FromSuccess();
     }
 
@@ -189,7 +187,7 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Summary("Kill yourself.")]
     public async Task<RuntimeResult> Suicide()
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         DbUser temp = user;
         if (user.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
@@ -204,28 +202,27 @@ public class Economy : ModuleBase<SocketCommandContext>
                 break;
             case 2:
                 await Context.User.NotifyAsync(Context.Channel, "​DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
-                await user.Reference.DeleteAsync();
+                await MongoManager.DeleteObjectAsync(user);
                 await user.SetCash(Context.User, 0);
                 RestoreUserData(user, temp.Btc, temp.Eth, temp.Ltc, temp.Xrp, temp.DmNotifs,
                     temp.Stats, temp.WantsReplyPings, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
-                    temp.HuntCooldown, temp.MineCooldown, temp.SupportCooldown, temp.HackCooldown,
-                    temp.DailyCooldown);
+                    temp.HuntCooldown, temp.MineCooldown, temp.HackCooldown, temp.DailyCooldown);
                 break;
             case 3:
                 await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
-                await user.Reference.DeleteAsync();
+                await MongoManager.DeleteObjectAsync(user);
                 await user.SetCash(Context.User, 0);
                 RestoreUserData(user, temp.Btc, temp.Eth, temp.Ltc, temp.Xrp, temp.DmNotifs,
                     temp.Stats, temp.WantsReplyPings, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
-                    temp.HuntCooldown, temp.MineCooldown, temp.SupportCooldown, temp.HackCooldown,
-                    temp.DailyCooldown);
+                    temp.HuntCooldown, temp.MineCooldown, temp.HackCooldown, temp.DailyCooldown);
                 break;
         }
 
+        await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
     #endregion
@@ -245,10 +242,10 @@ public class Economy : ModuleBase<SocketCommandContext>
                 case System.Collections.ICollection col:
                     if (col.Count > 0) builder.AppendLine($"**{propS}**: {col.Count}");
                     break;
-                case double d:
+                case decimal d:
                     if (prop == "GamblingMultiplier" && d > 1)
                         builder.AppendLine($"**{propS}**: {obj}x");
-                    else if (prop != "GamblingMultiplier" && d > 0.01)
+                    else if (prop != "GamblingMultiplier" && d > 0.01m)
                         builder.AppendLine($"**{propS}**: {(prop == "Cash" ? d.ToString("C2") : d.ToString("0.####"))}");
                     break;
                 case int i:
@@ -263,10 +260,10 @@ public class Economy : ModuleBase<SocketCommandContext>
         return builder.ToString();
     }
 
-    private static void RestoreUserData(DbUser user, double btc, double eth, double ltc, double xrp,
+    private static void RestoreUserData(DbUser user, decimal btc, decimal eth, decimal ltc, decimal xrp,
         bool dmNotifs, Dictionary<string, string> stats, bool wantsReplyPings, long dealCd, long lootCd,
         long rapeCd, long robCd, long scavengeCd, long slaveryCd, long whoreCd, long bullyCd, long chopCd, long digCd,
-        long farmCd, long fishCd, long huntCd, long mineCd, long supportCd, long hackCd, long dailyCd)
+        long farmCd, long fishCd, long huntCd, long mineCd, long hackCd, long dailyCd)
     {
         user.Btc = btc;
         user.Eth = eth;
@@ -289,7 +286,6 @@ public class Economy : ModuleBase<SocketCommandContext>
         user.FishCooldown = fishCd;
         user.HuntCooldown = huntCd;
         user.MineCooldown = mineCd;
-        user.SupportCooldown = supportCd;
         user.HackCooldown = hackCd;
         user.DailyCooldown = dailyCd;
     }

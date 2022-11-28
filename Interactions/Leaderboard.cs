@@ -13,31 +13,28 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
         }
 
         Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault();
-        double cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
-        QuerySnapshot users = await Program.Database.Collection($"servers/{Context.Guild.Id}/users")
-            .OrderByDescending(currency).GetSnapshotAsync();
+        decimal cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
+
+        SortDefinition<DbUser> sort = Builders<DbUser>.Sort.Descending(currency);
+        IAsyncCursor<DbUser> cursor = await MongoManager.Users.FindAsync(u => u.GuildId == Context.Guild.Id,
+            new FindOptions<DbUser> { Sort = sort });
+        List<DbUser> users = await cursor.ToListAsync();
+
         StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
         int processedUsers = 0;
-        foreach (DocumentSnapshot doc in users.Documents.Skip(start - 1 + failedUsers))
+        foreach (DbUser user in users)
         {
             if (processedUsers == 10)
                 break;
 
-            IGuildUser guildUser = Context.Guild.GetUser(Convert.ToUInt64(doc.Id));
-            if (guildUser == null)
+            IGuildUser guildUser = Context.Guild.GetUser(user.UserId);
+            if (guildUser == null || user.Perks.ContainsKey("Pacifist")) 
             {
                 if (!back) failedUsers++;
                 continue;
             }
 
-            DbUser dbUser = await DbUser.GetById(Context.Guild.Id, guildUser.Id, false);
-            if (dbUser.Perks.ContainsKey("Pacifist"))
-            {
-                if (!back) failedUsers++;
-                continue;
-            }
-
-            double val = (double)dbUser[currency];
+            decimal val = (decimal)user[currency];
             if (val < Constants.InvestmentMinAmount)
                 break;
 
@@ -52,7 +49,8 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
             .WithDescription(lb.Length > 0 ? lb.ToString() : "Nothing to see here!");
         ComponentBuilder componentBuilder = new ComponentBuilder()
             .WithButton("Back", $"lbnext-{executorId}-{currency}-{start-10}-{end-10}-0-True", disabled: end <= 10)
-            .WithButton("Next", $"lbnext-{executorId}-{currency}-{end+1}-{end+10}-{failedUsers}-False", disabled: processedUsers != 10 || users.Documents.Count < end + 1);
+            .WithButton("Next", $"lbnext-{executorId}-{currency}-{end+1}-{end+10}-{failedUsers}-False", 
+                disabled: processedUsers != 10 || users.Count < end + 1);
         await Context.Interaction.UpdateAsync(resp => {
             resp.Embed = embedBuilder.Build();
             resp.Components = componentBuilder.Build();
@@ -69,19 +67,18 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
         }
 
         Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault();
-        QuerySnapshot gangs = await Program.Database.Collection($"servers/{Context.Guild.Id}/gangs")
-            .OrderByDescending("VaultBalance").GetSnapshotAsync();
+        
+        SortDefinition<DbGang> sort = Builders<DbGang>.Sort.Descending(g => g.VaultBalance);
+        IAsyncCursor<DbGang> cursor = await MongoManager.Gangs.FindAsync(u => u.GuildId == Context.Guild.Id,
+            new FindOptions<DbGang> { Sort = sort });
+        List<DbGang> gangs = await cursor.ToListAsync();
+
         StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
         int processedGangs = 0;
-        foreach (DocumentSnapshot doc in gangs.Documents)
+        foreach (DbGang gang in gangs)
         {
-            if (processedGangs == 10)
+            if (processedGangs == 10 || gang.VaultBalance < Constants.InvestmentMinAmount)
                 break;
-
-            DbGang gang = await DbGang.GetByName(Context.Guild.Id, doc.Id, false);
-            if (gang.VaultBalance < Constants.InvestmentMinAmount)
-                break;
-
             lb.AppendLine($"{processedGangs + 1}: **{Format.Sanitize(gang.Name).Replace("\\:", ":").Replace("\\/", "/").Replace("\\.", ".")}**: {gang.VaultBalance:C2}");
             processedGangs++;
         }
@@ -90,7 +87,8 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
             .WithDescription(lb.Length > 0 ? lb.ToString() : "Nothing to see here!");
         ComponentBuilder componentBuilder = new ComponentBuilder()
             .WithButton("Back", $"ganglbnext-{executorId}-{start-10}-{end-10}", disabled: end <= 10)
-            .WithButton("Next", $"ganglbnext-{executorId}-{end+1}-{end+10}", disabled: processedGangs != 10 || gangs.Documents.Count < end + 1);
+            .WithButton("Next", $"ganglbnext-{executorId}-{end+1}-{end+10}",
+                disabled: processedGangs != 10 || gangs.Count < end + 1);
         await Context.Interaction.UpdateAsync(resp => {
             resp.Embed = embedBuilder.Build();
             resp.Components = componentBuilder.Build();

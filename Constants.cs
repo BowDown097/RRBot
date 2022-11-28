@@ -40,35 +40,35 @@ public static class Constants
     // ********************
     //     CASH SYSTEM
     // ********************
-    public const double CashMultiplier = 1.0;
-    public const double MessageCash = 30;
+    public const decimal CashMultiplier = 1.0m;
+    public const decimal MessageCash = 30;
     public const long MessageCashCooldown = 60;
-    public const double TransactionMin = 100;
+    public const decimal TransactionMin = 100;
     // ********************
     //        CRIME
     // ********************
     public const long BullyCooldown = 900;
     public const long DealCooldown = 3600;
     public const double GenericCrimeWinOdds = 80;
-    public const double GenericCrimeLossMax = 461;
-    public const double GenericCrimeLossMin = 69;
+    public const decimal GenericCrimeLossMax = 461;
+    public const decimal GenericCrimeLossMin = 69;
     public const double GenericCrimeToolOdds = 4;
-    public const double GenericCrimeWinMax = 691;
-    public const double GenericCrimeWinMin = 69;
+    public const decimal GenericCrimeWinMax = 691;
+    public const decimal GenericCrimeWinMin = 69;
     public const long HackCooldown = 7200;
     public const double HackOdds = 10;
     public const long LootCooldown = 3600;
     public const long RapeCooldown = 7200;
     public const double RapeOdds = 50;
-    public const double RapeMaxPercent = 9;
-    public const double RapeMinPercent = 5;
+    public const decimal RapeMaxPercent = 9;
+    public const decimal RapeMinPercent = 5;
     public const long RobCooldown = 7200;
     public const double RobOdds = 40;
-    public const double RobMaxPercent = 20;
-    public const double RobMinCash = 100;
+    public const decimal RobMaxPercent = 20;
+    public const decimal RobMinCash = 100;
     public const long ScavengeCooldown = 60;
-    public const double ScavengeMinCash = 50;
-    public const double ScavengeMaxCash = 100;
+    public const decimal ScavengeMinCash = 50;
+    public const decimal ScavengeMaxCash = 100;
     public const double ScavengeTimeout = 15;
     public const long SlaveryCooldown = 3600;
     public const long WhoreCooldown = 3600;
@@ -139,19 +139,19 @@ public static class Constants
     //       GAMBLING
     // ********************
     public const double DoubleOdds = 45;
-    public const double PotFee = 3;
-    public const double SlotsMultThreeinarow = 4;
-    public const double SlotsMultThreesevens = 21;
-    public const double SlotsMultTwoinarow = 1.75;
+    public const decimal PotFee = 3;
+    public const decimal SlotsMultThreeinarow = 4;
+    public const decimal SlotsMultThreesevens = 21;
+    public const decimal SlotsMultTwoinarow = 1.75m;
     // ********************
     //       GANGS
     // ********************
-    public const double GangCreationCost = 5000;
+    public const decimal GangCreationCost = 5000;
     public const int GangMaxMembers = 10;
-    public const double GangVaultCost = 10000;
+    public const decimal GangVaultCost = 10000;
     public static readonly string[] GangPositions = { "Leader", "Elder", "Member" };
     public const int MaxGangsPerGuild = 50;
-    public const double VaultTaxPercent = 1.5;
+    public const decimal VaultTaxPercent = 1.5m;
     // ********************
     //       GOODS
     // ********************
@@ -162,8 +162,8 @@ public static class Constants
     // ********************
     //     INVESTMENTS
     // ********************
-    public const double InvestmentFeePercent = 1.5;
-    public const double InvestmentMinAmount = 0.01;
+    public const decimal InvestmentFeePercent = 1.5m;
+    public const decimal InvestmentMinAmount = 0.01m;
     // ********************
     //      MODERATION
     // ********************
@@ -210,7 +210,7 @@ public static class Constants
     public const long ChopCooldown = 3600;
     public const long DigCooldown = 3600;
     public const long FarmCooldown = 3600;
-    public static readonly Dictionary<string, double> Fish = new()
+    public static readonly Dictionary<string, decimal> Fish = new()
     {
         { "carp", 24 },
         { "trout", 27 },
@@ -228,7 +228,7 @@ public static class Constants
     public const int GenericTaskDiamondMin = 161;
     public const long HuntCooldown = 3600;
     public const long MineCooldown = 3600;
-    public const double MineStoneMultiplier = 1.33;
-    public const double MineIronMultiplier = 1.66;
-    public const double MineDiamondMultiplier = 2.00;
+    public const decimal MineStoneMultiplier = 1.33m;
+    public const decimal MineIronMultiplier = 1.66m;
+    public const decimal MineDiamondMultiplier = 2;
 }

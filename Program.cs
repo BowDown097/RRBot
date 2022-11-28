@@ -3,9 +3,6 @@
 namespace RRBot;
 internal static class Program
 {
-    public static readonly FirestoreDb Database = FirestoreDb.Create("rushrebornbot",
-        new FirestoreClientBuilder { CredentialsPath = Credentials.CredentialsPath }.Build());
-
     private static async Task Main()
     {
         DiscordSocketClient client = new(new DiscordSocketConfig
@@ -40,14 +37,17 @@ internal static class Program
             .BuildServiceProvider();
 
         CommandService commands = serviceProvider.GetRequiredService<CommandService>();
-        commands.AddTypeReader<double>(new DoubleTypeReader());
+        commands.AddTypeReader<decimal>(new DecimalTypeReader());
         commands.AddTypeReader<IEmote>(new EmoteTypeReader());
         commands.AddTypeReader<IGuildUser>(new RrGuildUserTypeReader());
         commands.AddTypeReader<SocketGuildUser>(new RrGuildUserTypeReader());
         commands.AddTypeReader<string>(new SanitizedStringTypeReader());
         await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
+
         InteractionService interactions = serviceProvider.GetRequiredService<InteractionService>();
         await interactions.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
+
+        await MongoManager.InitializeAsync(Credentials.ConnectionString);
         new EventSystem(serviceProvider).SubscribeEvents();
 
         await client.LoginAsync(TokenType.Bot, Credentials.Token);

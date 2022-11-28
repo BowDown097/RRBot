@@ -8,9 +8,9 @@ public static class LoggingSystem
         embed.Timestamp = DateTime.Now;
         if (embed.Fields.Count != 0 && embed.Fields.Last().Name == "\u200b")
             embed.Fields.RemoveAt(embed.Fields.Count - 1);
-
-        DbConfigChannels channels = await DbConfigChannels.GetById(guild.Id);
-        ITextChannel textChannel = await guild.GetTextChannelAsync(channels.LogsChannel);
+        
+        DbConfig config = await MongoManager.FetchConfigAsync(guild.Id);
+        ITextChannel textChannel = await guild.GetTextChannelAsync(config.Channels.LogsChannel);
         if (textChannel != null)
             await textChannel.SendMessageAsync(embed: embed.Build());
     }

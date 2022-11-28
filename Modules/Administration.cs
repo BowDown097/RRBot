@@ -18,7 +18,7 @@ public class Administration : ModuleBase<SocketCommandContext>
             properties.CategoryId = channel.CategoryId;
             properties.IsNsfw = channel.IsNsfw;
             properties.Name = channel.Name;
-            properties.PermissionOverwrites = new Optional<IEnumerable<Overwrite>>(channel.PermissionOverwrites.AsEnumerable());
+            properties.PermissionOverwrites = new Discord.Optional<IEnumerable<Overwrite>>(channel.PermissionOverwrites.AsEnumerable());
             properties.Position = channel.Position;
             properties.SlowModeInterval = channel.SlowModeInterval;
             properties.Topic = channel.Topic;
@@ -32,11 +32,12 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Summary("Draw the pot before it ends.")]
     public async Task<RuntimeResult> DrawPot()
     {
-        DbPot pot = await DbPot.GetById(Context.Guild.Id);
+        DbPot pot = await MongoManager.FetchPotAsync(Context.Guild.Id);
         if (pot.EndTime < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             return CommandResult.FromError("The pot is currently empty.");
 
         pot.EndTime = 69;
+        await MongoManager.UpdateObjectAsync(pot);
         await Context.User.NotifyAsync(Context.Channel, "Done! The pot should be drawn soon.");
         return CommandResult.FromSuccess();
     }
@@ -49,8 +50,8 @@ public class Administration : ModuleBase<SocketCommandContext>
         name = name.Replace(" crate", "");
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         Item item = ItemSystem.GetItem(name);
         switch (item)
         {
@@ -81,6 +82,7 @@ public class Administration : ModuleBase<SocketCommandContext>
         }
 
         await Context.User.NotifyAsync(Context.Channel, $"Gave **{user.Sanitize()}** a(n) {item}.");
+        await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
     }
 
@@ -90,11 +92,12 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$removeachievement AceOfSevens I Just Feel Bad")]
     public async Task<RuntimeResult> RemoveAchievement(IGuildUser user, [Remainder] string name)
     {
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         if (!dbUser.Achievements.Remove(name))
             return CommandResult.FromError($"**{user.Sanitize()}** doesn't have that achievement!");
 
         await Context.User.NotifyAsync(Context.Channel, $"Successfully removed the achievement from **{user.Sanitize()}**.");
+        await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
     }
 
@@ -104,9 +107,10 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$removecrates cashmere")]
     public async Task RemoveCrates([Remainder] IGuildUser user)
     {
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         dbUser.Crates = new List<string>();
         await Context.User.NotifyAsync(Context.Channel, $"Removed **{user.Sanitize()}**'s crates.");
+        await MongoManager.UpdateObjectAsync(dbUser);
     }
 
     [Alias("delstat", "rmstat")]
@@ -115,11 +119,12 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$removestat cashmere Bitches")]
     public async Task<RuntimeResult> RemoveStat(IGuildUser user, [Remainder] string stat)
     {
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         if (!dbUser.Stats.Remove(stat))
             return CommandResult.FromError("They do not have that stat!");
 
         await Context.User.NotifyAsync(Context.Channel, $"Removed the **{stat}** stat from {user.Sanitize()}.");
+        await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
     }
 
@@ -128,10 +133,11 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$resetcd \\*Jazzy Hands\\*")]
     public async Task ResetCooldowns([Remainder] IGuildUser user)
     {
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         foreach (string cmd in Economy.CmdsWithCooldown)
             dbUser[$"{cmd}Cooldown"] = 0;
         await Context.User.NotifyAsync(Context.Channel, $"Reset **{user.Sanitize()}**'s cooldowns.");
+        await MongoManager.UpdateObjectAsync(dbUser);
     }
 
     [Alias("greatreset")]
@@ -148,22 +154,8 @@ public class Administration : ModuleBase<SocketCommandContext>
         if (!iResult.IsSuccess || !iResult.Value.Content.Equals("yes", StringComparison.OrdinalIgnoreCase))
             return CommandResult.FromError("Reset canceled.");
 
-        await Context.User.NotifyAsync(Context.Channel, "Doing as you say! This will probably take a while.");
-        foreach (string key in MemoryCache.Default.Select(kvp => kvp.Key))
-        {
-            try
-            {
-                if (MemoryCache.Default.Get(key) is not DbUser)
-                    continue;
-
-                MemoryCache.Default.Remove(key);
-            }
-            catch (NullReferenceException) {}
-        }
-
-        QuerySnapshot users = await Program.Database.Collection($"servers/{Context.Guild.Id}/users").GetSnapshotAsync();
-        foreach (DocumentSnapshot document in users.Documents)
-            await document.Reference.DeleteAsync();
+        await Context.User.NotifyAsync(Context.Channel, "Doing as you say! This may take a while.");
+        await MongoManager.Users.DeleteManyAsync(u => u.GuildId == Context.Guild.Id);
 
         await Context.User.NotifyAsync(Context.Channel, "Well, there you go. Everything was reset. GG.");
         return CommandResult.FromSuccess();
@@ -172,23 +164,24 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Command("setcash")]
     [Summary("Set a user's cash.")]
     [Remarks("$setcash BowDown097 0.01")]
-    public async Task<RuntimeResult> SetCash(IGuildUser user, double amount)
+    public async Task<RuntimeResult> SetCash(IGuildUser user, decimal amount)
     {
-        if (double.IsNaN(amount) || double.IsInfinity(amount) || amount < 0)
-            return CommandResult.FromError("You can't set someone's cash to a negative value or NaN!");
+        if (decimal.IsNegative(amount))
+            return CommandResult.FromError("You can't set someone's cash to a negative value!");
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
         
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         await dbUser.SetCashWithoutAdjustment(user, Math.Round(amount, 2));
         await ReplyAsync($"Set **{user.Sanitize()}**'s cash to **{amount:C2}**.", allowedMentions: Constants.Mentions);
+        await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
     }
 
     [Command("setcrypto")]
     [Summary("Set a user's cryptocurrency amount. See $invest's help info for currently accepted currencies.")]
     [Remarks("$setcrypto Shrimp BTC 69000")]
-    public async Task<RuntimeResult> SetCrypto(IGuildUser user, string crypto, double amount)
+    public async Task<RuntimeResult> SetCrypto(IGuildUser user, string crypto, decimal amount)
     {
         string cUp = crypto.ToUpper();
         if (user.IsBot)
@@ -196,9 +189,10 @@ public class Administration : ModuleBase<SocketCommandContext>
         if (cUp is not ("BTC" or "ETH" or "LTC" or "XRP"))
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         dbUser[cUp] = Math.Round(amount, 4);
         await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s {cUp} to **{amount:0.####}**.");
+        await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
     }
 
@@ -210,9 +204,10 @@ public class Administration : ModuleBase<SocketCommandContext>
         if (level is < 0 or > Constants.MaxPrestige)
             return CommandResult.FromError("Invalid prestige level!");
 
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         dbUser.Prestige = level;
         await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s prestige level to **{level}**.");
+        await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
     }
 
@@ -221,9 +216,10 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$setstat BowDown097 Mutes 100")]
     public async Task SetStat(IGuildUser user, string stat, string value)
     {
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         dbUser.Stats[stat] = value;
         await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s **{stat}** to **{value}**.");
+        await MongoManager.UpdateObjectAsync(dbUser);
     }
 
     [Command("setvotes")]
@@ -232,18 +228,17 @@ public class Administration : ModuleBase<SocketCommandContext>
     [RequireServerOwner]
     public async Task<RuntimeResult> SetVotes(int electionId, IGuildUser user, int votes)
     {
-        QuerySnapshot elections = await Program.Database.Collection($"servers/{Context.Guild.Id}/elections").GetSnapshotAsync();
-        if (!MemoryCache.Default.Any(k => k.Key.StartsWith("election") && k.Key.EndsWith(electionId.ToString())) && elections.All(r => r.Id != electionId.ToString()))
+        DbElection election = await MongoManager.FetchElectionAsync(Context.Guild.Id, electionId, false);
+        if (election == null)
             return CommandResult.FromError("There is no election with that ID!");
-
-        DbConfigChannels channels = await DbConfigChannels.GetById(Context.Guild.Id);
-        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsAnnounceChannel))
+        
+        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+        if (Context.Guild.TextChannels.All(channel => channel.Id != config.Channels.ElectionsAnnounceChannel))
             return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
 
-        DbElection election = await DbElection.GetById(Context.Guild.Id, electionId);
-        election.Candidates[user.Id.ToString()] = votes;
-        await Polls.UpdateElection(election, channels, Context.Guild);
-
+        election.Candidates[user.Id] = votes;
+        await Polls.UpdateElection(election, config.Channels, Context.Guild);
+        await MongoManager.UpdateObjectAsync(election);
         return CommandResult.FromSuccess();
     }
 
@@ -252,7 +247,8 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$unlockachievement AceOfSevens I Just Feel Bad")]
     public async Task UnlockAchievement(IGuildUser user, [Remainder] string name)
     {
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         await dbUser.UnlockAchievement(name, user, Context.Channel);
+        await MongoManager.UpdateObjectAsync(dbUser);
     }
 }

@@ -20,26 +20,19 @@ public class MonitorSystem
         while (true)
         {
             await Task.Delay(TimeSpan.FromSeconds(30));
-            foreach (SocketGuild guild in _client.Guilds)
+            foreach (DbBan ban in await MongoManager.Bans.Aggregate().ToListAsync())
             {
-                QuerySnapshot bans = await Program.Database.Collection($"servers/{guild.Id}/bans").GetSnapshotAsync();
-                foreach (DocumentSnapshot banDoc in bans.Documents)
+                SocketGuild guild = _client.GetGuild(ban.GuildId);
+                if (await guild.GetBanAsync(ban.UserId) is null)
                 {
-                    ulong userId = Convert.ToUInt64(banDoc.Id);
-                    DbBan ban = await DbBan.GetById(guild.Id, userId);
-
-                    if (await guild.GetBanAsync(userId) is null)
-                    {
-                        await ban.Reference.DeleteAsync();
-                        continue;
-                    }
-
-                    if (ban.Time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                    {
-                        await guild.RemoveBanAsync(userId);
-                        await ban.Reference.DeleteAsync();
-                    }
+                    await MongoManager.DeleteObjectAsync(ban);
+                    continue;
                 }
+
+                if (ban.Time > DateTimeOffset.UtcNow.ToUnixTimeSeconds()) 
+                    continue;
+                await guild.RemoveBanAsync(ban.UserId);
+                await MongoManager.DeleteObjectAsync(ban);
             }
         }
     }
@@ -49,29 +42,23 @@ public class MonitorSystem
         while (true)
         {
             await Task.Delay(TimeSpan.FromSeconds(30));
-            foreach (SocketGuild guild in _client.Guilds)
+            foreach (DbChill chill in await MongoManager.Chills.Aggregate().ToListAsync())
             {
-                QuerySnapshot chills = await Program.Database.Collection($"servers/{guild.Id}/chills").GetSnapshotAsync();
-                foreach (DocumentSnapshot chillDoc in chills.Documents)
+                SocketGuild guild = _client.GetGuild(chill.GuildId);
+                SocketTextChannel channel = guild.GetTextChannel(chill.ChannelId);
+                OverwritePermissions perms = channel.GetPermissionOverwrite(guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
+
+                if (perms.SendMessages != PermValue.Deny)
                 {
-                    ulong channelId = Convert.ToUInt64(chillDoc.Id);
-                    DbChill chill = await DbChill.GetById(guild.Id, channelId);
-                    SocketTextChannel channel = guild.GetTextChannel(channelId);
-                    OverwritePermissions perms = channel.GetPermissionOverwrite(guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
-
-                    if (perms.SendMessages != PermValue.Deny)
-                    {
-                        await chill.Reference.DeleteAsync();
-                        continue;
-                    }
-
-                    if (chill.Time <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                    {
-                        await channel.AddPermissionOverwriteAsync(guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Inherit));
-                        await channel.SendMessageAsync("This channel has thawed out! Continue the chaos!");
-                        await chill.Reference.DeleteAsync();
-                    }
+                    await MongoManager.DeleteObjectAsync(chill);
+                    continue;
                 }
+
+                if (chill.Time > DateTimeOffset.UtcNow.ToUnixTimeSeconds()) 
+                    continue;
+                await channel.AddPermissionOverwriteAsync(guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Inherit));
+                await channel.SendMessageAsync("This channel has thawed out! Continue the chaos!");
+                await MongoManager.DeleteObjectAsync(chill);
             }
         }
     }
@@ -81,14 +68,11 @@ public class MonitorSystem
         while (true)
         {
             await Task.Delay(TimeSpan.FromSeconds(30));
-            foreach (SocketGuild guild in _client.Guilds)
-            {
-                await ConsumableCheck("Black Hat", "BlackHatTime", guild);
-                await ConsumableCheck("Cocaine", "CocaineTime", guild);
-                await ConsumableCheck("CocaineRecoveryTime", "CocaineRecoveryTime", guild, true);
-                await ConsumableCheck("Romanian Flag", "RomanianFlagTime", guild);
-                await ConsumableCheck("Viagra", "ViagraTime", guild);
-            }
+            await ConsumableCheck("Black Hat", "BlackHatTime");
+            await ConsumableCheck("Cocaine", "CocaineTime");
+            await ConsumableCheck("CocaineRecoveryTime", "CocaineRecoveryTime", true);
+            await ConsumableCheck("Romanian Flag", "RomanianFlagTime");
+            await ConsumableCheck("Viagra", "ViagraTime");
         }
     }
 
@@ -97,21 +81,15 @@ public class MonitorSystem
         while (true)
         {
             await Task.Delay(TimeSpan.FromSeconds(30));
-            foreach (SocketGuild guild in _client.Guilds)
+            IAsyncCursor<DbElection> elections = await MongoManager.Elections.FindAsync(e =>
+                e.EndTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && e.EndTime != -1);
+            await elections.ForEachAsync(async election =>
             {
-                QuerySnapshot elections = await Program.Database.Collection($"servers/{guild.Id}/elections").GetSnapshotAsync();
-                foreach (DocumentSnapshot doc in elections.Documents)
-                {
-                    int id = Convert.ToInt32(doc.Id);
-                    DbConfigChannels channels = await DbConfigChannels.GetById(guild.Id);
-                    DbElection election = await DbElection.GetById(guild.Id, id);
-                    if (election.EndTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                    {
-                        await Polls.ConcludeElection(election, channels, guild);
-                        await doc.Reference.DeleteAsync();
-                    }
-                }
-            }
+                SocketGuild guild = _client.GetGuild(election.GuildId);
+                DbConfig config = await MongoManager.FetchConfigAsync(election.GuildId);
+                await Polls.ConcludeElection(election, config.Channels, guild);
+                await MongoManager.UpdateObjectAsync(election);
+            });
         }
     }
 
@@ -120,30 +98,28 @@ public class MonitorSystem
         while (true)
         {
             await Task.Delay(TimeSpan.FromSeconds(30));
-            foreach (SocketGuild guild in _client.Guilds)
+            IAsyncCursor<DbUser> users = await MongoManager.Users.FindAsync(u =>
+                u.Perks.Any(kvp => kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist"));
+            await users.ForEachAsync(async user =>
             {
-                QuerySnapshot usersWPerks = await Program.Database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo("Perks", new Dictionary<string, long>()).GetSnapshotAsync();
-                foreach (DocumentSnapshot snap in usersWPerks.Documents)
+                foreach (KeyValuePair<string, long> kvp in user.Perks
+                             .Where(kvp => kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist"))
                 {
-                    ulong userId = Convert.ToUInt64(snap.Id);
-                    DbUser user = await DbUser.GetById(guild.Id, userId);
-                    foreach (KeyValuePair<string, long> kvp in user.Perks)
-                    {
-                        if (kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist")
-                        {
-                            user.Perks.Remove(kvp.Key);
-                            if (kvp.Key == "Multiperk" && user.Perks.Count >= 2)
-                            {
-                                string lastPerk = user.Perks.Last().Key;
-                                Perk perk = ItemSystem.GetItem(lastPerk) as Perk;
-                                SocketUser socketUser = guild.GetUser(userId);
-                                await user.SetCash(socketUser, user.Cash + perk.Price);
-                                user.Perks.Remove(lastPerk);
-                            }
-                        }
-                    }
+                    user.Perks.Remove(kvp.Key);
+                    if (kvp.Key != "Multiperk" || user.Perks.Count < 2)
+                        continue;
+ 
+                    string lastPerk = user.Perks.Last().Key;
+                    Perk perk = ItemSystem.GetItem(lastPerk) as Perk;
+
+                    SocketGuild guild = _client.GetGuild(user.GuildId);
+                    SocketUser socketUser = guild.GetUser(user.UserId);
+                    await user.SetCash(socketUser, user.Cash + perk.Price);
+                    user.Perks.Remove(lastPerk);
                 }
-            }
+                
+                await MongoManager.UpdateObjectAsync(user);
+            });
         }
     }
 
@@ -152,46 +128,46 @@ public class MonitorSystem
         while (true)
         {
             await Task.Delay(TimeSpan.FromSeconds(30));
-            foreach (SocketGuild guild in _client.Guilds)
+            IAsyncCursor<DbPot> pots = await MongoManager.Pots.FindAsync(p =>
+                p.EndTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && p.EndTime != -1);
+            await pots.ForEachAsync(async pot =>
             {
-                DbPot pot = await DbPot.GetById(guild.Id);
-                if (pot.EndTime > DateTimeOffset.UtcNow.ToUnixTimeSeconds() || pot.EndTime == -1) 
-                    continue;
-
                 ulong luckyGuy = pot.DrawMember();
+                SocketGuild guild = _client.GetGuild(pot.GuildId);
                 SocketGuildUser luckyUser = guild.GetUser(luckyGuy);
-                DbUser luckyDbUser = await DbUser.GetById(guild.Id, luckyGuy);
+                DbUser luckyDbUser = await MongoManager.FetchUserAsync(luckyGuy, guild.Id);
 
-                double winnings = pot.Value * (1 - (Constants.PotFee / 100));
+                decimal winnings = pot.Value * (1 - Constants.PotFee / 100);
                 await luckyDbUser.SetCash(luckyUser, luckyDbUser.Cash + winnings);
-
-                DbConfigChannels channelsConfig = await DbConfigChannels.GetById(guild.Id);
-                if (channelsConfig.PotChannel != default)
+                
+                DbConfig config = await MongoManager.FetchConfigAsync(guild.Id);
+                if (config.Channels.PotChannel != default)
                 {
-                    SocketTextChannel channel = guild.GetTextChannel(channelsConfig.PotChannel);
-                    await channel.SendMessageAsync($"The pot has been drawn, and our LUCKY WINNER is {luckyUser.Mention}!!! After a fee of {Constants.PotFee}%, they have won {winnings:C2} with a {pot.GetMemberOdds(luckyGuy.ToString())}% chance of winning the pot!");
+                    SocketTextChannel channel = guild.GetTextChannel(config.Channels.PotChannel);
+                    await channel.SendMessageAsync($"The pot has been drawn, and our LUCKY WINNER is {luckyUser.Mention}!!! After a fee of {Constants.PotFee}%, they have won {winnings:C2} with a {pot.GetMemberOdds(luckyGuy)}% chance of winning the pot!");
                 }
 
                 pot.EndTime = -1;
-                pot.Members = new Dictionary<string, double>();
+                pot.Members.Clear();
                 pot.Value = 0;
-            }
+
+                await MongoManager.UpdateObjectAsync(pot);
+            });
         }
     }
 
-    private static async Task ConsumableCheck(string name, string timeKey, SocketGuild guild, bool recoveryTime = false)
+    private static async Task ConsumableCheck(string name, string timeKey, bool recoveryTime = false)
     {
-        QuerySnapshot usersWConsumable = await Program.Database.Collection($"servers/{guild.Id}/users").WhereNotEqualTo(!recoveryTime ? $"UsedConsumables.{name}" : name, 0).GetSnapshotAsync();
-        foreach (DocumentSnapshot snap in usersWConsumable.Documents)
+        IAsyncCursor<DbUser> usersWConsumable = await MongoManager.Users.FindAsync(u =>
+            (long)u[timeKey] <= DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            && (recoveryTime ? u.CocaineRecoveryTime > 0 : u.UsedConsumables[name] > 0));
+        await usersWConsumable.ForEachAsync(async user =>
         {
-            DbUser user = await DbUser.GetById(guild.Id, Convert.ToUInt64(snap.Id));
-            if ((long)user[timeKey] > DateTimeOffset.UtcNow.ToUnixTimeSeconds()) 
-                continue;
-
             if (recoveryTime)
                 user[name] = 0;
             else
                 user.UsedConsumables[name] = 0;
-        }
+            await MongoManager.UpdateObjectAsync(user);
+        });
     }
 }

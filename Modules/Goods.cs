@@ -14,12 +14,13 @@ public class Goods : ModuleBase<SocketCommandContext>
         Item item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
         if (item?.Name == "Daily")
             return CommandResult.FromError("You cannot buy the Daily crate!");
-
+        
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         return item switch
         {
-            Crate crate => await ItemSystem.BuyCrate(crate, Context.User, Context.Guild, Context.Channel),
-            Perk perk => await ItemSystem.BuyPerk(perk, Context.User, Context.Guild, Context.Channel),
-            Tool tool => await ItemSystem.BuyTool(tool, Context.User, Context.Guild, Context.Channel),
+            Crate crate => await ItemSystem.BuyCrate(crate, Context.User, user, Context.Channel),
+            Perk perk => await ItemSystem.BuyPerk(perk, Context.User, user, Context.Channel),
+            Tool tool => await ItemSystem.BuyTool(tool, Context.User, user, Context.Channel),
             _ => CommandResult.FromError($"**{itemName}** is not an item!"),
         };
     }
@@ -27,16 +28,18 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Command("daily")]
     [Summary("Get a daily reward.")]
     [RequireCooldown("DailyCooldown", "Slow down there, turbo! It hasn't been a day yet. You've still got {0} left.")]
-    [RequireRankLevel("3")]
+    [RequireRankLevel(3)]
     public async Task<RuntimeResult> Daily()
     {
-        RuntimeResult result = await ItemSystem.BuyCrate(ItemSystem.GetItem("Daily") as Crate, Context.User, Context.Guild, Context.Channel, false);
-        if (result.IsSuccess)
-        {
-            await Context.User.NotifyAsync(Context.Channel, "Here's a Daily crate, my good man! Best of luck.");
-            DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-            await user.SetCooldown("DailyCooldown", Constants.DailyCooldown, Context.Guild, Context.User);
-        }
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        RuntimeResult result = await ItemSystem.BuyCrate(ItemSystem.GetItem("Daily") as Crate, Context.User,
+            user, Context.Channel, false);
+        if (!result.IsSuccess) 
+            return result;
+
+        await Context.User.NotifyAsync(Context.Channel, "Here's a Daily crate, my good man! Best of luck.");
+        await user.SetCooldown("DailyCooldown", Constants.DailyCooldown, Context.Guild, Context.User);
+        await MongoManager.UpdateObjectAsync(user);
 
         return result;
     }
@@ -47,7 +50,7 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Remarks("$discard Pacifist")]
     public async Task<RuntimeResult> Discard([Remainder] string itemName)
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (user.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
@@ -62,11 +65,11 @@ public class Goods : ModuleBase<SocketCommandContext>
                 if (!collectible.Discardable)
                     return CommandResult.FromError($"You cannot discard your {item}.");
 
-                double price = item.Price != -1 ? item.Price : RandomUtil.NextDouble(100, 1500);
+                decimal price = item.Price != -1 ? item.Price : RandomUtil.NextDecimal(100, 1500);
                 await user.SetCash(Context.User, user.Cash + price);
                 user.Collectibles[item.Name]--;
                 await Context.User.NotifyAsync(Context.Channel, $"You gave your {item} to some dude for **{price:C2}**.");
-                return CommandResult.FromSuccess();
+                break;
             case Perk:
                 if (item.Name != "Pacifist")
                     return CommandResult.FromError("No perks other than Pacifist can be discarded!");
@@ -75,17 +78,20 @@ public class Goods : ModuleBase<SocketCommandContext>
 
                 await user.SetCooldown("PacifistCooldown", 259200, Context.Guild, Context.User);
                 await Context.User.NotifyAsync(Context.Channel, "You discarded your Pacifist perk. If you wish to buy it again, you will have to wait 3 days.");
-                return CommandResult.FromSuccess();
+                break;
             case Tool:
                 if (!user.Tools.Remove(item.Name))
                     return CommandResult.FromError($"You do not have a(n) {item}!");
 
-                await user.SetCash(Context.User, user.Cash + (item.Price * 0.9));
-                await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{item.Price * 0.9:C2}**.");
-                return CommandResult.FromSuccess();
+                await user.SetCash(Context.User, user.Cash + item.Price * 0.9m);
+                await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{item.Price * 0.9m:C2}**.");
+                break;
             default:
                 return CommandResult.FromError($"**{itemName}** is not an item!");
         }
+
+        await MongoManager.UpdateObjectAsync(user);
+        return CommandResult.FromSuccess();
     }
 
     [Command("item")]
@@ -144,8 +150,7 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Remarks("$items Zurmii#2208")]
     public async Task<RuntimeResult> Items([Remainder] IGuildUser user = null)
     {
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user?.Id ?? Context.User.Id);
-
+        DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
         List<string> sortedPerks = dbUser.Perks.Where(k => k.Value > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(p => p.Key).ToList();
         string collectibles = string.Join('\n', dbUser.Collectibles.Where(k => k.Value > 0).Select(c => $"{c.Key} ({c.Value}x)"));
         string consumables = string.Join('\n', dbUser.Consumables.Where(k => k.Value > 0).Select(c => $"{c.Key} ({c.Value}x)"));
@@ -184,8 +189,8 @@ public class Goods : ModuleBase<SocketCommandContext>
         crateName = crateName.Replace(" crate", "");
         if (ItemSystem.GetItem(crateName) is not Crate crate)
             return CommandResult.FromError($"**{crateName}** is not a crate!");
-
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (!user.Crates.Remove(crate.Name))
             return CommandResult.FromError($"You don't have a {crate} crate!");
         user.Cash += crate.Cash;
@@ -218,6 +223,8 @@ public class Goods : ModuleBase<SocketCommandContext>
             .WithTitle($"{crate} Crate")
             .WithDescription($"You got:\n{description}");
         await ReplyAsync(embed: embed.Build());
+
+        await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
 
@@ -252,8 +259,8 @@ public class Goods : ModuleBase<SocketCommandContext>
             return CommandResult.FromError($"**{name}** is not an item!");
         if (item is not Consumable con)
             return CommandResult.FromError($"**{item}** is not a consumable!");
-
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (!user.Consumables.TryGetValue(con.Name, out int amount) || amount == 0)
             return CommandResult.FromError($"You don't have any {con}(s)!");
         if (user.UsedConsumables.TryGetValue(con.Name, out int used) && used == con.Max)
@@ -271,7 +278,7 @@ public class Goods : ModuleBase<SocketCommandContext>
                 await GenericUse(con, user, Context,
                     "Oh yeah. Hacker mode activated. 10% greater $hack chance.",
                     "Dammit! The feds caught onto you! You were fined **{0:C2}**.",
-                    "BlackHatTime", Constants.BlackHatDuration, 1.5, 3);
+                    "BlackHatTime", Constants.BlackHatDuration, 1.5m, 3);
                 break;
             case "Cocaine":
                 if (RandomUtil.Next(6 - user.UsedConsumables.GetValueOrDefault("Cocaine")) == 1)
@@ -309,18 +316,19 @@ public class Goods : ModuleBase<SocketCommandContext>
                 break;
         }
 
+        await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
     #endregion
 
     #region Helpers
-    private static async Task GenericUse(Consumable con, DbUser user, SocketCommandContext context, string successMsg, string loseMsg, string cdKey, long cdDuration, double divMin = 2, double divMax = 5)
+    private static async Task GenericUse(Consumable con, DbUser user, SocketCommandContext context, string successMsg, string loseMsg, string cdKey, long cdDuration, decimal divMin = 2, decimal divMax = 5)
     {
         if (RandomUtil.Next(5) == 1)
         {
             user.Consumables[con.Name] = 0;
             user.UsedConsumables[con.Name] = 0;
-            double lostCash = user.Cash / RandomUtil.NextDouble(divMin, divMax);
+            decimal lostCash = user.Cash / RandomUtil.NextDecimal(divMin, divMax);
             await user.SetCash(context.User, user.Cash - lostCash);
             await context.User.NotifyAsync(context.Channel, string.Format(loseMsg, lostCash));
             return;

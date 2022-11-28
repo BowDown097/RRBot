@@ -1,13 +1,13 @@
 namespace RRBot.Entities.Commands.Goods;
 public class Crate : Item
 {
-    public double Cash { get; set; }
-    public int ConsumableCount { get; set; }
-    public int ToolCount { get; set; }
-    public override string Name { get; set; }
-    public override double Price { get; set; }
+    public decimal Cash { get; }
+    public int ConsumableCount { get; }
+    public int ToolCount { get; }
+    public override string Name { get; protected init; }
+    public override decimal Price { get; protected init; }
 
-    public Crate(string name, double price, int consumableCount = 0, int toolCount = 0, double cash = 0) : base(name, price)
+    public Crate(string name, decimal price, int consumableCount = 0, int toolCount = 0, decimal cash = 0) : base(name, price)
     {
         Cash = cash;
         ConsumableCount = consumableCount;

@@ -2,17 +2,17 @@
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
 public class RequireRankLevelAttribute : PreconditionAttribute
 {
-    public string RankLevel { get; }
+    public int RankLevel { get; }
 
-    public RequireRankLevelAttribute(string level) => RankLevel = level;
+    public RequireRankLevelAttribute(int level) => RankLevel = level;
 
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
-        DbConfigRanks ranks = await DbConfigRanks.GetById(context.Guild.Id);
-        if (!ranks.Costs.ContainsKey(RankLevel))
+        DbConfig config = await MongoManager.FetchConfigAsync(context.Guild.Id);
+        if (!config.Ranks.Costs.ContainsKey(RankLevel))
             return PreconditionResult.FromError($"No rank is configured at level {RankLevel}. An admin needs to set it with $addrank.");
 
-        ulong roleId = ranks.Ids[RankLevel];
+        ulong roleId = config.Ranks.Ids[RankLevel];
         IRole role = context.Guild.GetRole(roleId);
         if (role == null)
             return PreconditionResult.FromError($"A rank is configured at level {RankLevel}, but its role no longer exists.");

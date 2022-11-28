@@ -27,8 +27,8 @@ public class Tasks : ModuleBase<SocketCommandContext>
     [RequireTool("Fishing Rod")]
     public async Task Fish()
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        KeyValuePair<string, double> fish = Constants.Fish.ElementAt(RandomUtil.Next(Constants.Fish.Count));
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        KeyValuePair<string, decimal> fish = Constants.Fish.ElementAt(RandomUtil.Next(Constants.Fish.Count));
         int numCaught = RandomUtil.Next(7, 15);
 
         if (user.Perks.ContainsKey("Enchanter"))
@@ -44,10 +44,10 @@ public class Tasks : ModuleBase<SocketCommandContext>
             numCaught = (int)(numCaught * 1.2);
         }
 
-        double cashGained = numCaught * fish.Value;
-        double totalCash = user.Cash + cashGained;
+        decimal cashGained = numCaught * fish.Value;
+        decimal totalCash = user.Cash + cashGained;
 
-        if (RandomUtil.NextDouble(1, 101) < Constants.FishCoconutOdds)
+        if (RandomUtil.NextDouble(100) < Constants.FishCoconutOdds)
             await ItemSystem.GiveCollectible("Coconut", Context.Channel, user);
 
         user.AddToStats(new Dictionary<string, string>
@@ -58,6 +58,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
 
         await user.SetCash(Context.User, totalCash, Context.Channel, $"You caught {numCaught} {fish.Key} with your rod and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
         await user.SetCooldown("FishCooldown", Constants.FishCooldown, Context.Guild, Context.User);
+        await MongoManager.UpdateObjectAsync(user);
     }
 
     [Command("hunt")]
@@ -72,7 +73,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
     [RequireTool("Pickaxe")]
     public async Task Mine()
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         string toolName = ItemSystem.GetBestTool(user.Tools, "Pickaxe");
         Tool tool = ItemSystem.GetItem(toolName) as Tool;
 
@@ -90,8 +91,8 @@ public class Tasks : ModuleBase<SocketCommandContext>
             numMined = (int)(numMined * 1.2);
         }
 
-        double cashGained = numMined * 4 * tool.Mult;
-        double totalCash = user.Cash + cashGained;
+        decimal cashGained = numMined * 4 * tool.Mult;
+        decimal totalCash = user.Cash + cashGained;
         string response = toolName switch
         {
             "Wooden Pickaxe" => $"You mined {numMined} stone with your {toolName} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
@@ -109,13 +110,14 @@ public class Tasks : ModuleBase<SocketCommandContext>
 
         await user.SetCash(Context.User, totalCash, Context.Channel, response);
         await user.SetCooldown("MineCooldown", Constants.MineCooldown, Context.Guild, Context.User);
+        await MongoManager.UpdateObjectAsync(user);
     }
     #endregion
 
     #region Helpers
     private async Task GenericTask(string toolType, string activity, string thing, string cooldown, long duration)
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         string tool = ItemSystem.GetBestTool(user.Tools, toolType);
         int numMined = 0;
 
@@ -141,8 +143,8 @@ public class Tasks : ModuleBase<SocketCommandContext>
             numMined = (int)(numMined * 1.2);
         }
 
-        double cashGained = numMined * 2.5;
-        double totalCash = user.Cash + cashGained;
+        decimal cashGained = numMined * 2.5m;
+        decimal totalCash = user.Cash + cashGained;
 
         user.AddToStats(new Dictionary<string, string>
         {
@@ -152,6 +154,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
 
         await user.SetCash(Context.User, totalCash, Context.Channel, $"You {activity} {numMined} {thing} with your {tool} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
         await user.SetCooldown(cooldown, duration, Context.Guild, Context.User);
+        await MongoManager.UpdateObjectAsync(user);
     }
     #endregion
 }

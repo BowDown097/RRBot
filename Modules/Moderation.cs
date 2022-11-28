@@ -11,21 +11,23 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [RequireUserPermission(GuildPermission.BanMembers)]
     public async Task<RuntimeResult> Ban(IGuildUser user, string duration = "", [Remainder] string reason = "")
     {
-        DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role) || user.IsBot)
+        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+        if (user.RoleIds.Contains(config.Roles.StaffLvl1Role) || user.RoleIds.Contains(config.Roles.StaffLvl2Role) || user.IsBot)
             return CommandResult.FromError($"You cannot ban **{user.Sanitize()}** because they are a staff member.");
-
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
         {
             Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"Banned **{user.Sanitize()}**", reason);
             if (resolved.Item1 == TimeSpan.Zero)
                 return CommandResult.FromError("You specified an invalid amount of time!");
-
-            DbBan ban = await DbBan.GetById(Context.Guild.Id, user.Id);
+            
+            DbBan ban = await MongoManager.FetchBanAsync(user.Id, Context.Guild.Id);
             ban.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)resolved.Item1.TotalSeconds);
+
             await user.BanAsync(reason: reason);
             await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
+            await MongoManager.UpdateObjectAsync(ban);
         }
         else
         {
@@ -34,20 +36,8 @@ public class Moderation : ModuleBase<SocketCommandContext>
         }
 
         dbUser.AddToStat("Bans", "1");
+        await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
-    }
-
-    [Command("cancelticket")]
-    [Summary("Pre-emptively cancel a user's support ticket, if they have one that is opened.")]
-    [Remarks("$cancelticket JamByte")]
-    [RequireBeInChannel("help-requests")]
-    [RequireRushReborn]
-    public async Task<RuntimeResult> CancelTicket([Remainder] IGuildUser user)
-    {
-        DbSupportTicket ticket = await DbSupportTicket.GetById(Context.Guild.Id, user.Id);
-        if (string.IsNullOrWhiteSpace(ticket.Request))
-            return CommandResult.FromError("That user does not have an open support ticket!");
-        return await Support.CloseTicket(Context, Context.User, ticket, $"Support ticket by {user.Sanitize()} deleted successfully!");
     }
 
     [Command("chill")]
@@ -61,10 +51,13 @@ public class Moderation : ModuleBase<SocketCommandContext>
         Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, "Chilled the chat", "");
         if (resolved.Item1 == TimeSpan.Zero)
             return CommandResult.FromError("You specified an invalid amount of time!");
-        if (resolved.Item1.TotalSeconds < Constants.ChillMinSeconds)
-            return CommandResult.FromError($"You cannot chill the chat for less than {Constants.ChillMinSeconds} seconds.");
-        if (resolved.Item1.TotalSeconds > Constants.ChillMaxSeconds)
-            return CommandResult.FromError($"You cannot chill the chat for more than {Constants.ChillMaxSeconds} seconds.");
+        switch (resolved.Item1.TotalSeconds)
+        {
+            case < Constants.ChillMinSeconds:
+                return CommandResult.FromError($"You cannot chill the chat for less than {Constants.ChillMinSeconds} seconds.");
+            case > Constants.ChillMaxSeconds:
+                return CommandResult.FromError($"You cannot chill the chat for more than {Constants.ChillMaxSeconds} seconds.");
+        }
 
         SocketTextChannel channel = Context.Channel as SocketTextChannel;
         OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
@@ -73,9 +66,11 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
         await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
         await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
-
-        DbChill chill = await DbChill.GetById(Context.Guild.Id, Context.Channel.Id);
+        
+        DbChill chill = await MongoManager.FetchChillAsync(Context.Channel.Id, Context.Guild.Id);
         chill.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)resolved.Item1.TotalSeconds);
+
+        await MongoManager.UpdateObjectAsync(chill);
         return CommandResult.FromSuccess();
     }
 
@@ -88,19 +83,21 @@ public class Moderation : ModuleBase<SocketCommandContext>
     {
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-
-        DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
+        
+        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+        if (user.RoleIds.Contains(config.Roles.StaffLvl1Role) || user.RoleIds.Contains(config.Roles.StaffLvl2Role))
             return CommandResult.FromError($"You cannot kick **{user.Sanitize()}** because they are a staff member.");
 
         await user.KickAsync(reason);
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         dbUser.AddToStat("Kicks", "1");
 
         string response = $"Kicked **{user.Sanitize()}**";
         if (!string.IsNullOrWhiteSpace(reason))
             response += $"for \"{reason}\"";
+
         await Context.User.NotifyAsync(Context.Channel, response + ".");
+        await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
     }
 
@@ -112,9 +109,9 @@ public class Moderation : ModuleBase<SocketCommandContext>
     {
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-
-        DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
+        
+        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+        if (user.RoleIds.Contains(config.Roles.StaffLvl1Role) || user.RoleIds.Contains(config.Roles.StaffLvl2Role))
             return CommandResult.FromError($"You cannot meme ban **{user.Sanitize()}** because they are a staff member.");
 
         IInviteMetadata invite = await Context.Guild.DefaultChannel.CreateInviteAsync(null, 1);
@@ -132,11 +129,12 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
         await user.KickAsync();
         await LoggingSystem.Custom_UserMemeBanned(user, Context.User);
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         dbUser.AddToStat("Meme Bans", "1");
 
         await Context.User.NotifyAsync(Context.Channel, $"Meme banned **{user.Sanitize()}**!");
         await ReplyAsync("https://tenor.com/view/rip-pack-bozo-dead-gif-20309754");
+        await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
     }
 
@@ -150,9 +148,9 @@ public class Moderation : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You specified an invalid amount of time!");
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-
-        DbConfigRoles roles = await DbConfigRoles.GetById(Context.Guild.Id);
-        if (user.TimedOutUntil.GetValueOrDefault() > DateTimeOffset.UtcNow || user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
+        
+        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+        if (user.TimedOutUntil.GetValueOrDefault() > DateTimeOffset.UtcNow || user.RoleIds.Contains(config.Roles.StaffLvl1Role) || user.RoleIds.Contains(config.Roles.StaffLvl2Role))
             return CommandResult.FromError($"You cannot mute **{user.Sanitize()}** because they are either already muted or a staff member.");
 
         Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"Muted **{user.Sanitize()}**", reason);
@@ -163,12 +161,13 @@ public class Moderation : ModuleBase<SocketCommandContext>
 
         await user.SetTimeOutAsync(resolved.Item1);
         await LoggingSystem.Custom_UserMuted(user, Context.User, duration, reason);
-
-        DbUser dbUser = await DbUser.GetById(Context.Guild.Id, user.Id);
+        
+        DbUser dbUser = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         dbUser.AddToStat("Mutes", "1");
         await dbUser.UnlockAchievement("Literally 1984", user, Context.Channel);
 
         await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
+        await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
     }
 

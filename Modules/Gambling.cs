@@ -10,36 +10,36 @@ public class Gambling : ModuleBase<SocketCommandContext>
     [Summary("Roll 55 or higher on a 100 sided die, get 2x what you put in.")]
     [Remarks("$55x2 1000")]
     [RequireCash]
-    public async Task<RuntimeResult> Roll55(double bet) => await GenericGamble(bet, 55, 1);
+    public async Task<RuntimeResult> Roll55(decimal bet) => await GenericGamble(bet, 55, 1);
 
     [Command("6969")]
     [Summary("Roll 69.69 on a 100 sided die, get 6969x what you put in.")]
     [Remarks("$6969 all")]
     [RequireCash]
-    public async Task<RuntimeResult> Roll6969(double bet) => await GenericGamble(bet, 69.69, 6968, true);
+    public async Task<RuntimeResult> Roll6969(decimal bet) => await GenericGamble(bet, 69.69, 6968, true);
 
     [Command("75+")]
     [Summary("Roll 75 or higher on a 100 sided die, get 3.6x what you put in.")]
     [Remarks("$75+ all")]
     [RequireCash]
-    public async Task<RuntimeResult> Roll75(double bet) => await GenericGamble(bet, 75, 2.6);
+    public async Task<RuntimeResult> Roll75(decimal bet) => await GenericGamble(bet, 75, 2.6m);
 
     [Command("99+")]
     [Summary("Roll 99 or higher on a 100 sided die, get 90x whatyou put in.")]
     [Remarks("$99+ 120")]
     [RequireCash]
-    public async Task<RuntimeResult> Roll99(double bet) => await GenericGamble(bet, 99, 89);
+    public async Task<RuntimeResult> Roll99(decimal bet) => await GenericGamble(bet, 99, 89);
 
     [Command("double")]
     [Summary("Double your cash...?")]
     [RequireCash]
     public async Task<RuntimeResult> Double()
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (user.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
 
-        if (RandomUtil.Next(1, 101) < Constants.DoubleOdds)
+        if (RandomUtil.Next(100) < Constants.DoubleOdds)
         {
             StatUpdate(user, true, user.Cash);
             await user.SetCash(Context.User, user.Cash * 2);
@@ -51,18 +51,19 @@ public class Gambling : ModuleBase<SocketCommandContext>
         }
 
         await Context.User.NotifyAsync(Context.Channel, "​I have doubled your cash.");
+        await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
 
     [Command("pot")]
     [Summary("View the pot or add money into the pot.")]
     [Remarks("$pot 2000")]
-    public async Task<RuntimeResult> Pot(double amount = double.NaN)
+    public async Task<RuntimeResult> Pot(decimal amount = -1)
     {
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-        DbPot pot = await DbPot.GetById(Context.Guild.Id);
+        DbPot pot = await MongoManager.FetchPotAsync(Context.Guild.Id);
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
 
-        if (double.IsNaN(amount))
+        if (decimal.IsNegative(amount))
         {
             if (pot.EndTime < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                 return CommandResult.FromError("The pot is currently empty.");
@@ -74,9 +75,9 @@ public class Gambling : ModuleBase<SocketCommandContext>
                 .RrAddField("Draws At", $"<t:{pot.EndTime}>");
 
             StringBuilder memberInfo = new();
-            foreach (KeyValuePair<string, double> mem in pot.Members)
+            foreach (KeyValuePair<ulong, decimal> mem in pot.Members)
             {
-                SocketGuildUser guildUser = Context.Guild.GetUser(Convert.ToUInt64(mem.Key));
+                SocketGuildUser guildUser = Context.Guild.GetUser(mem.Key);
                 memberInfo.AppendLine($"**{guildUser.Sanitize()}**: {mem.Value:C2} ({pot.GetMemberOdds(mem.Key)}%)");
             }
 
@@ -95,15 +96,18 @@ public class Gambling : ModuleBase<SocketCommandContext>
             if (pot.EndTime < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             {
                 pot.EndTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(86400);
-                pot.Members = new Dictionary<string, double>();
+                pot.Members.Clear();
                 pot.Value = 0;
             }
 
-            string userId = Context.User.Id.ToString();
-            pot.Members[userId] = pot.Members.TryGetValue(userId, out double value) ? value + amount : amount;
+            pot.Members[Context.User.Id] = pot.Members.TryGetValue(Context.User.Id, out decimal value) ? value + amount : amount;
             pot.Value += amount;
+
             await Context.User.NotifyAsync(Context.Channel, $"Added **{amount:C2}** into the pot.");
             await user.SetCash(Context.User, user.Cash - amount);
+
+            await MongoManager.UpdateObjectAsync(pot);
+            await MongoManager.UpdateObjectAsync(user);
         }
 
         return CommandResult.FromSuccess();
@@ -113,13 +117,12 @@ public class Gambling : ModuleBase<SocketCommandContext>
     [Summary("Take the slot machine for a spin!")]
     [Remarks("$slots 4391039")]
     [RequireCash]
-    public async Task<RuntimeResult> Slots(double bet)
+    public async Task<RuntimeResult> Slots(decimal bet)
     {
-        if (bet is < Constants.TransactionMin or double.NaN)
+        if (bet < Constants.TransactionMin)
             return CommandResult.FromError($"You need to bet at least {Constants.TransactionMin:C2}.");
-
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
-
+        
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (user.Cash < bet)
             return CommandResult.FromError("You can't bet more than what you have!");
         if (user.UsingSlots)
@@ -127,7 +130,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
         user.UsingSlots = true;
 
-        double payoutMult = 1;
+        decimal payoutMult = 1;
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Slots");
@@ -158,12 +161,11 @@ public class Gambling : ModuleBase<SocketCommandContext>
         else if (TwoInARow(results))
             payoutMult = Constants.SlotsMultTwoinarow;
 
-        user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
         user.UsingSlots = false;
         if (payoutMult > 1)
         {
-            double payout = (bet * payoutMult) - bet;
-            double totalCash = user.Cash + payout;
+            decimal payout = bet * payoutMult - bet;
+            decimal totalCash = user.Cash + payout;
             StatUpdate(user, true, payout);
             string message = $"Nicely done! You won **{payout:C2}**.\nBalance: {totalCash:C2}";
 
@@ -175,7 +177,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
             if (user.GamblingMultiplier > 1)
             {
-                double multiplierCash = (payout * user.GamblingMultiplier) - payout;
+                decimal multiplierCash = payout * user.GamblingMultiplier - payout;
                 message += $"\n*(+{multiplierCash:C2} from gambling multiplier)*";
                 totalCash += multiplierCash;
             }
@@ -185,7 +187,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
         }
         else
         {
-            double totalCash = (user.Cash - bet) > 0 ? user.Cash - bet : 0;
+            decimal totalCash = user.Cash - bet > 0 ? user.Cash - bet : 0;
             StatUpdate(user, false, bet);
             await user.SetCash(Context.User, totalCash);
             if (bet >= 1000000)
@@ -194,6 +196,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
                 $"\nBalance: {totalCash:C2}");
         }
 
+        await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
     #endregion
@@ -208,7 +211,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
             (results[0] + 1 == results[1] && results[1] == results[2] - 1);
     }
 
-    private static void StatUpdate(DbUser user, bool success, double gain)
+    private static void StatUpdate(DbUser user, bool success, decimal gain)
     {
         CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
         culture.NumberFormat.CurrencyNegativePattern = 2;
@@ -232,12 +235,12 @@ public class Gambling : ModuleBase<SocketCommandContext>
         }
     }
 
-    private async Task<RuntimeResult> GenericGamble(double bet, double odds, double mult, bool exactRoll = false)
+    private async Task<RuntimeResult> GenericGamble(decimal bet, double odds, decimal mult, bool exactRoll = false)
     {
-        if (bet is < Constants.TransactionMin or double.NaN)
+        if (bet < Constants.TransactionMin)
             return CommandResult.FromError($"You need to bet at least {Constants.TransactionMin:C2}.");
-
-        DbUser user = await DbUser.GetById(Context.Guild.Id, Context.User.Id);
+            
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (user.UsingSlots)
             return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (user.Cash < bet)
@@ -250,19 +253,19 @@ public class Gambling : ModuleBase<SocketCommandContext>
 
         if (success)
         {
-            double payout = bet * mult;
-            double totalCash = user.Cash + payout;
+            decimal payout = bet * mult;
+            decimal totalCash = user.Cash + payout;
             StatUpdate(user, true, payout);
             string message = $"Good shit my guy! You rolled a {roll} and got yourself **{payout:C2}**!\nBalance: {totalCash:C2}";
 
-            if (odds == 99)
+            if (roll == 99)
                 await user.UnlockAchievement("Pretty Damn Lucky", Context.User, Context.Channel);
             else if (odds == 69.69)
                 await user.UnlockAchievement("Luckiest Dude Alive", Context.User, Context.Channel);
 
             if (user.GamblingMultiplier > 1)
             {
-                double multiplierCash = (payout * user.GamblingMultiplier) - payout;
+                decimal multiplierCash = payout * user.GamblingMultiplier - payout;
                 message += $"\n*(+{multiplierCash:C2} from gambling multiplier)*";
                 totalCash += multiplierCash;
             }
@@ -272,7 +275,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
         }
         else
         {
-            double totalCash = (user.Cash - bet) > 0 ? user.Cash - bet : 0;
+            decimal totalCash = user.Cash - bet > 0 ? user.Cash - bet : 0;
             StatUpdate(user, false, bet);
             await user.SetCash(Context.User, totalCash);
             if (bet >= 1000000)
@@ -280,6 +283,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
             await Context.User.NotifyAsync(Context.Channel, $"Well damn, you rolled a {roll}, which wasn't enough. You lost **{bet:C2}**.\nBalance: {totalCash:C2}");
         }
 
+        await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
     #endregion

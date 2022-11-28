@@ -1,13 +1,13 @@
 namespace RRBot.Entities.Commands.Goods;
 public class Collectible : Item
 {
-    public string Description { get; set; }
-    public bool Discardable { get; set; }
-    public string Image { get; set; }
-    public override string Name { get; set; }
-    public override double Price { get; set; }
+    public string Description { get; }
+    public bool Discardable { get; }
+    public string Image { get; }
+    public override string Name { get; protected init; }
+    public override decimal Price { get; protected init; }
 
-    public Collectible(string name, string description, double price, string image, bool discardable = true)
+    public Collectible(string name, string description, decimal price, string image, bool discardable = true)
         : base(name, price)
     {
         Description = description;

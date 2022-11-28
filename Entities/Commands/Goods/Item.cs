@@ -1,10 +1,10 @@
 namespace RRBot.Entities.Commands.Goods;
 public abstract class Item
 {
-    public abstract string Name { get; set; }
-    public abstract double Price { get; set; }
+    public abstract string Name { get; protected init; }
+    public abstract decimal Price { get; protected init; }
 
-    protected Item(string name, double price)
+    protected Item(string name, decimal price)
     {
         Name = name;
         Price = price;
