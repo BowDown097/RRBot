@@ -1,4 +1,4 @@
-namespace RRBot.Entities.Commands.Goods;
+namespace RRBot.Entities.Goods;
 public class Collectible : Item
 {
     public string Description { get; }

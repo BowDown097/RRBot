@@ -1,4 +1,6 @@
-﻿namespace RRBot.Modules;
+﻿using RRBot.Entities;
+
+namespace RRBot.Modules;
 [Summary("Degenerates and retards with no significant other (and probably no friends either) unite!")]
 [RequireNsfwEnabled]
 [RequireNsfw]

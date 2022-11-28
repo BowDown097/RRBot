@@ -8,11 +8,11 @@ public class RequireRankLevelAttribute : PreconditionAttribute
 
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(context.Guild.Id);
-        if (!config.Ranks.Costs.ContainsKey(RankLevel))
+        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(context.Guild.Id);
+        if (!ranks.Costs.ContainsKey(RankLevel))
             return PreconditionResult.FromError($"No rank is configured at level {RankLevel}. An admin needs to set it with $addrank.");
 
-        ulong roleId = config.Ranks.Ids[RankLevel];
+        ulong roleId = ranks.Ids[RankLevel];
         IRole role = context.Guild.GetRole(roleId);
         if (role == null)
             return PreconditionResult.FromError($"A rank is configured at level {RankLevel}, but its role no longer exists.");

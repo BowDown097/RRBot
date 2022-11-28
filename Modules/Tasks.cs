@@ -1,4 +1,6 @@
-﻿namespace RRBot.Modules;
+﻿using RRBot.Entities.Goods;
+
+namespace RRBot.Modules;
 [Summary("The best way to earn money by far, at least for those lucky or rich enough to get themselves a tool.")]
 public class Tasks : ModuleBase<SocketCommandContext>
 {

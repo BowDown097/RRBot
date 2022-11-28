@@ -1,3 +1,5 @@
+using RRBot.Entities;
+
 namespace RRBot.Database.Entities;
 
 [BsonCollection("users")]
@@ -138,11 +140,11 @@ public class DbUser : DbObject
         if (channel != null)
             await user.NotifyAsync(channel, message);
 
-        DbConfig config = await MongoManager.FetchConfigAsync(guildUser.GuildId);
-        foreach (KeyValuePair<int, decimal> kvp in config.Ranks.Costs)
+        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(guildUser.GuildId);
+        foreach (KeyValuePair<int, decimal> kvp in ranks.Costs)
         {
             decimal neededCash = kvp.Value * (1 + 0.5m * Prestige);
-            ulong roleId = config.Ranks.Ids[kvp.Key];
+            ulong roleId = ranks.Ids[kvp.Key];
             if (Cash >= neededCash && !guildUser.RoleIds.Contains(roleId))
                 await guildUser.AddRoleAsync(roleId);
             else if (Cash <= neededCash && guildUser.RoleIds.Contains(roleId))
@@ -156,8 +158,8 @@ public class DbUser : DbObject
         if (Perks.ContainsKey("Speed Demon"))
             secs = (long)(secs * 0.85);
         // highest rank cooldown reducer
-        DbConfig config = await MongoManager.FetchConfigAsync(guild.Id);
-        ulong highest = config.Ranks.Ids.OrderByDescending(kvp => kvp.Key).FirstOrDefault().Value;
+        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(guild.Id);
+        ulong highest = ranks.Ids.OrderByDescending(kvp => kvp.Key).FirstOrDefault().Value;
         if (user.GetRoleIds().Contains(highest))
             secs = (long)(secs * 0.80);
         // cocaine cooldown reducer

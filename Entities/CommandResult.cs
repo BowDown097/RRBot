@@ -1,4 +1,4 @@
-namespace RRBot.Entities.Commands;
+namespace RRBot.Entities;
 public class CommandResult : RuntimeResult
 {
     private CommandResult(CommandError? error, string reason) : base(error, reason) { }

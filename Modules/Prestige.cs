@@ -9,12 +9,12 @@ public class Prestige : ModuleBase<SocketCommandContext>
     [RequireCooldown("PrestigeCooldown", "​I can't let you go on and prestige so quickly! Wait {0}.")]
     public async Task<RuntimeResult> DoPrestige()
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (config.Ranks.Ids.Count == 0)
+        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(Context.Guild.Id);
+        if (ranks.Ids.Count == 0)
             return CommandResult.FromError("No ranks are configured.");
         
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        decimal prestigeCost = config.Ranks.Costs.OrderBy(kvp => kvp.Value)
+        decimal prestigeCost = ranks.Costs.OrderBy(kvp => kvp.Value)
             .Select(a => a.Value).Last() * (1 + 0.5m * user.Prestige);
         if (user.Cash < prestigeCost)
             return CommandResult.FromError($"You don't have enough to prestige! You need {prestigeCost:C2}.");

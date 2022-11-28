@@ -25,8 +25,8 @@ public class Crime : ModuleBase<SocketCommandContext>
         if (target.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError($"You cannot bully **{user.Sanitize()}** as they have the Pacifist perk equipped.");
         
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (user.RoleIds.Contains(config.Roles.StaffLvl1Role) || user.RoleIds.Contains(config.Roles.StaffLvl2Role))
+        DbConfigRoles roles = await MongoManager.FetchConfigAsync<DbConfigRoles>(Context.Guild.Id);
+        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
             return CommandResult.FromError($"You cannot bully **{user.Sanitize()}** as they are a staff member.");
 
         await user.ModifyAsync(props => props.Nickname = nickname);

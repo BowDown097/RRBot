@@ -11,8 +11,8 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [RequireUserPermission(GuildPermission.BanMembers)]
     public async Task<RuntimeResult> Ban(IGuildUser user, string duration = "", [Remainder] string reason = "")
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (user.RoleIds.Contains(config.Roles.StaffLvl1Role) || user.RoleIds.Contains(config.Roles.StaffLvl2Role) || user.IsBot)
+        DbConfigRoles roles = await MongoManager.FetchConfigAsync<DbConfigRoles>(Context.Guild.Id);
+        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role) || user.IsBot)
             return CommandResult.FromError($"You cannot ban **{user.Sanitize()}** because they are a staff member.");
         
         DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
@@ -84,8 +84,8 @@ public class Moderation : ModuleBase<SocketCommandContext>
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
         
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (user.RoleIds.Contains(config.Roles.StaffLvl1Role) || user.RoleIds.Contains(config.Roles.StaffLvl2Role))
+        DbConfigRoles roles = await MongoManager.FetchConfigAsync<DbConfigRoles>(Context.Guild.Id);
+        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
             return CommandResult.FromError($"You cannot kick **{user.Sanitize()}** because they are a staff member.");
 
         await user.KickAsync(reason);
@@ -110,8 +110,8 @@ public class Moderation : ModuleBase<SocketCommandContext>
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
         
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (user.RoleIds.Contains(config.Roles.StaffLvl1Role) || user.RoleIds.Contains(config.Roles.StaffLvl2Role))
+        DbConfigRoles roles = await MongoManager.FetchConfigAsync<DbConfigRoles>(Context.Guild.Id);
+        if (user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
             return CommandResult.FromError($"You cannot meme ban **{user.Sanitize()}** because they are a staff member.");
 
         IInviteMetadata invite = await Context.Guild.DefaultChannel.CreateInviteAsync(null, 1);
@@ -149,9 +149,12 @@ public class Moderation : ModuleBase<SocketCommandContext>
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
         
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (user.TimedOutUntil.GetValueOrDefault() > DateTimeOffset.UtcNow || user.RoleIds.Contains(config.Roles.StaffLvl1Role) || user.RoleIds.Contains(config.Roles.StaffLvl2Role))
+        DbConfigRoles roles = await MongoManager.FetchConfigAsync<DbConfigRoles>(Context.Guild.Id);
+        if (user.TimedOutUntil.GetValueOrDefault() > DateTimeOffset.UtcNow
+            || user.RoleIds.Contains(roles.StaffLvl1Role) || user.RoleIds.Contains(roles.StaffLvl2Role))
+        {
             return CommandResult.FromError($"You cannot mute **{user.Sanitize()}** because they are either already muted or a staff member.");
+        }
 
         Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"Muted **{user.Sanitize()}**", reason);
         if (resolved.Item1 == TimeSpan.Zero)

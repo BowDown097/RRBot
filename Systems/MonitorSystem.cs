@@ -1,3 +1,5 @@
+using RRBot.Entities.Goods;
+
 namespace RRBot.Systems;
 public class MonitorSystem
 {
@@ -86,8 +88,8 @@ public class MonitorSystem
             await elections.ForEachAsync(async election =>
             {
                 SocketGuild guild = _client.GetGuild(election.GuildId);
-                DbConfig config = await MongoManager.FetchConfigAsync(election.GuildId);
-                await Polls.ConcludeElection(election, config.Channels, guild);
+                DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(election.GuildId);
+                await Polls.ConcludeElection(election, channels, guild);
                 await MongoManager.UpdateObjectAsync(election);
             });
         }
@@ -140,10 +142,10 @@ public class MonitorSystem
                 decimal winnings = pot.Value * (1 - Constants.PotFee / 100);
                 await luckyDbUser.SetCash(luckyUser, luckyDbUser.Cash + winnings);
                 
-                DbConfig config = await MongoManager.FetchConfigAsync(guild.Id);
-                if (config.Channels.PotChannel != default)
+                DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(guild.Id);
+                if (channels.PotChannel != default)
                 {
-                    SocketTextChannel channel = guild.GetTextChannel(config.Channels.PotChannel);
+                    SocketTextChannel channel = guild.GetTextChannel(channels.PotChannel);
                     await channel.SendMessageAsync($"The pot has been drawn, and our LUCKY WINNER is {luckyUser.Mention}!!! After a fee of {Constants.PotFee}%, they have won {winnings:C2} with a {pot.GetMemberOdds(luckyGuy)}% chance of winning the pot!");
                 }
 

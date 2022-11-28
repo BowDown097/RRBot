@@ -1,3 +1,6 @@
+using RRBot.Entities;
+using RRBot.Entities.Goods;
+
 namespace RRBot.Modules;
 [Summary("Items, crates, and everything about em.")]
 public class Goods : ModuleBase<SocketCommandContext>

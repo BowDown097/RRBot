@@ -1,3 +1,5 @@
+using RRBot.Entities;
+
 namespace RRBot.Modules;
 [Summary("All about that gang shit.")]
 public class Gangs : ModuleBase<SocketCommandContext>

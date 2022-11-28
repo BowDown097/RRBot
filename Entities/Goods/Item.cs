@@ -1,4 +1,4 @@
-namespace RRBot.Entities.Commands.Goods;
+namespace RRBot.Entities.Goods;
 public abstract class Item
 {
     public abstract string Name { get; protected init; }

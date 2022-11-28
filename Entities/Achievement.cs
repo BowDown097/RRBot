@@ -1,4 +1,4 @@
-namespace RRBot.Entities.Commands;
+namespace RRBot.Entities;
 public struct Achievement
 {
     public readonly string Name;

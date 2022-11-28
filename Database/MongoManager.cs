@@ -6,12 +6,22 @@ public class MongoManager
 
     public static IMongoCollection<DbBan> Bans => Database.GetCollection<DbBan>("bans");
     public static IMongoCollection<DbChill> Chills => Database.GetCollection<DbChill>("chills");
-    public static IMongoCollection<DbConfig> Configs => Database.GetCollection<DbConfig>("configs");
     public static IMongoCollection<DbElection> Elections => Database.GetCollection<DbElection>("elections");
     public static IMongoCollection<DbGang> Gangs => Database.GetCollection<DbGang>("gangs");
     private static IMongoCollection<DbGlobalConfig> GlobalConfig => Database.GetCollection<DbGlobalConfig>("globalconfig");
     public static IMongoCollection<DbPot> Pots => Database.GetCollection<DbPot>("pots");
     public static IMongoCollection<DbUser> Users => Database.GetCollection<DbUser>("users");
+    
+    public static IMongoCollection<DbConfigChannels> ChannelConfigs 
+        => Database.GetCollection<DbConfigChannels>("channelconfigs");
+    public static IMongoCollection<DbConfigMisc> MiscConfigs
+        => Database.GetCollection<DbConfigMisc>("miscconfigs");
+    public static IMongoCollection<DbConfigRanks> RankConfigs
+        => Database.GetCollection<DbConfigRanks>("rankconfigs");
+    public static IMongoCollection<DbConfigRoles> RoleConfigs
+        => Database.GetCollection<DbConfigRoles>("roleconfigs");
+    public static IMongoCollection<DbConfigSelfRoles> SelfRoleConfigs
+        => Database.GetCollection<DbConfigSelfRoles>("selfroleconfigs");
 
     public static async Task<DbBan> FetchBanAsync(ulong userId, ulong guildId)
     {
@@ -37,15 +47,16 @@ public class MongoManager
         return newChill;
     }
 
-    public static async Task<DbConfig> FetchConfigAsync(ulong guildId)
+    public static async Task<T> FetchConfigAsync<T>(ulong guildId) where T : DbConfig, new()
     {
-        IAsyncCursor<DbConfig> cursor = await Configs.FindAsync(c => c.GuildId == guildId);
-        DbConfig config = await cursor.FirstOrDefaultAsync();
+        string collection = typeof(T).GetCustomAttribute<BsonCollectionAttribute>(true).CollectionName;
+        IAsyncCursor<T> cursor = await Database.GetCollection<T>(collection).FindAsync(c => c.GuildId == guildId);
+        T config = await cursor.FirstOrDefaultAsync();
         if (config != null)
             return config;
 
-        DbConfig newConfig = new() { GuildId = guildId };
-        await Configs.InsertOneAsync(newConfig);
+        T newConfig = new() { GuildId = guildId };
+        await Database.GetCollection<T>(collection).InsertOneAsync(newConfig);
         return newConfig;
     }
 

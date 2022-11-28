@@ -11,12 +11,12 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$addrank 1 10000 809512753081483294")]
     public async Task AddRank(int level, decimal cost, [Remainder] IRole role)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Ranks.Costs.Add(level, cost);
-        config.Ranks.Ids.Add(level, role.Id);
+        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(Context.Guild.Id);
+        ranks.Costs.Add(level, cost);
+        ranks.Ids.Add(level, role.Id);
 
         await Context.User.NotifyAsync(Context.Channel, $"Added {role} as a level {level} rank that costs {cost:C2}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(ranks);
     }
 
     [Command("addselfrole")]
@@ -28,18 +28,18 @@ public class Config : ModuleBase<SocketCommandContext>
         if (authorHighest != null && role.Position >= authorHighest.Position)
             return CommandResult.FromError("Cannot create this selfrole because it is higher than or is the same as your highest role.");
         
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (config.SelfRoles.Channel == default)
+        DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(Context.Guild.Id);
+        if (selfRoles.Channel == default)
             return CommandResult.FromError("The self roles message has not been set. Please set it using ``$setselfrolesmsg``.");
 
-        SocketTextChannel channel = Context.Guild.GetTextChannel(config.SelfRoles.Channel);
-        IMessage message = await channel.GetMessageAsync(config.SelfRoles.Message);
+        SocketTextChannel channel = Context.Guild.GetTextChannel(selfRoles.Channel);
+        IMessage message = await channel.GetMessageAsync(selfRoles.Message);
         await message.AddReactionAsync(emote);
 
-        config.SelfRoles.SelfRoles.Add(emote.ToString() ?? "", role.Id);
+        selfRoles.SelfRoles.Add(emote.ToString() ?? "", role.Id);
 
         await Context.User.NotifyAsync(Context.Channel, $"Added {role} as a self role bound to {emote}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(selfRoles);
         return CommandResult.FromSuccess();
     }
 
@@ -47,7 +47,11 @@ public class Config : ModuleBase<SocketCommandContext>
     [Summary("Clear all configuration that has been set.")]
     public async Task ClearConfig()
     {
-        await MongoManager.Configs.DeleteOneAsync(c => c.GuildId == Context.Guild.Id);
+        await MongoManager.ChannelConfigs.DeleteOneAsync(c => c.GuildId == Context.Guild.Id);
+        await MongoManager.MiscConfigs.DeleteOneAsync(c => c.GuildId == Context.Guild.Id);
+        await MongoManager.RankConfigs.DeleteOneAsync(c => c.GuildId == Context.Guild.Id);
+        await MongoManager.RoleConfigs.DeleteOneAsync(c => c.GuildId == Context.Guild.Id);
+        await MongoManager.SelfRoleConfigs.DeleteOneAsync(c => c.GuildId == Context.Guild.Id);
         await Context.User.NotifyAsync(Context.Channel, "All configuration cleared!");
     }
 
@@ -55,59 +59,62 @@ public class Config : ModuleBase<SocketCommandContext>
     [Summary("Clear the self roles that are registered, if any.")]
     public async Task ClearSelfRoles()
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.SelfRoles.SelfRoles.Clear();
+        DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(Context.Guild.Id);
+        selfRoles.SelfRoles.Clear();
         await Context.User.NotifyAsync(Context.Channel, "Any registered self roles removed!");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(selfRoles);
     }
 
     [Command("currentconfig")]
     [Summary("List the current configuration that has been set for the bot.")]
     public async Task CurrentConfig()
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
         StringBuilder description = new();
 
         description.AppendLine("***Channels***");
-        IEnumerable<string> whitelisted = config.Channels.WhitelistedChannels.Select(MentionUtils.MentionChannel);
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        IEnumerable<string> whitelisted = channels.WhitelistedChannels.Select(MentionUtils.MentionChannel);
         description.AppendLine(Pair("Command Whitelisted Channels", string.Join(", ", whitelisted)));
-        description.AppendLine($"Election Announcements Channel: {MentionUtils.MentionChannel(config.Channels.ElectionsAnnounceChannel)}");
-        description.AppendLine($"Election Voting Channel: {MentionUtils.MentionChannel(config.Channels.ElectionsVotingChannel)}");
-        description.AppendLine($"Logs Channel: {MentionUtils.MentionChannel(config.Channels.LogsChannel)}");
-        description.AppendLine($"Polls Channel: {MentionUtils.MentionChannel(config.Channels.PollsChannel)}");
-        description.AppendLine($"Pot Channel: {MentionUtils.MentionChannel(config.Channels.PotChannel)}");
+        description.AppendLine($"Election Announcements Channel: {MentionUtils.MentionChannel(channels.ElectionsAnnounceChannel)}");
+        description.AppendLine($"Election Voting Channel: {MentionUtils.MentionChannel(channels.ElectionsVotingChannel)}");
+        description.AppendLine($"Logs Channel: {MentionUtils.MentionChannel(channels.LogsChannel)}");
+        description.AppendLine($"Polls Channel: {MentionUtils.MentionChannel(channels.PollsChannel)}");
+        description.AppendLine($"Pot Channel: {MentionUtils.MentionChannel(channels.PotChannel)}");
 
         description.AppendLine("***Miscellaneous***");
-        IEnumerable<string> noFilter = config.Miscellaneous.NoFilterChannels.Select(MentionUtils.MentionChannel);
-        description.AppendLine(Pair("Disabled Commands", string.Join(", ", config.Miscellaneous.DisabledCommands)));
-        description.AppendLine(Pair("Disabled Modules", string.Join(", ", config.Miscellaneous.DisabledModules)));
-        description.AppendLine(Pair("Filtered Words", string.Join(", ", config.Miscellaneous.FilteredWords)));
-        description.AppendLine($"Invite Filter Enabled: {config.Miscellaneous.InviteFilterEnabled}");
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        IEnumerable<string> noFilter = misc.NoFilterChannels.Select(MentionUtils.MentionChannel);
+        description.AppendLine(Pair("Disabled Commands", string.Join(", ", misc.DisabledCommands)));
+        description.AppendLine(Pair("Disabled Modules", string.Join(", ", misc.DisabledModules)));
+        description.AppendLine(Pair("Filtered Words", string.Join(", ", misc.FilteredWords)));
+        description.AppendLine($"Invite Filter Enabled: {misc.InviteFilterEnabled}");
         description.AppendLine(Pair("No Filter Channels", string.Join(", ", noFilter)));
-        description.AppendLine($"NSFW Enabled: {config.Miscellaneous.NsfwEnabled}");
-        description.AppendLine($"Scam Filter Enabled: {config.Miscellaneous.ScamFilterEnabled}");
+        description.AppendLine($"NSFW Enabled: {misc.NsfwEnabled}");
+        description.AppendLine($"Scam Filter Enabled: {misc.ScamFilterEnabled}");
 
         description.AppendLine("***Ranks***");
-        foreach (KeyValuePair<int, decimal> kvp in config.Ranks.Costs.OrderBy(kvp => kvp.Key))
+        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(Context.Guild.Id);
+        foreach (KeyValuePair<int, decimal> kvp in ranks.Costs.OrderBy(kvp => kvp.Key))
         {
-            SocketRole role = Context.Guild.GetRole(config.Ranks.Ids[kvp.Key]);
+            SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
             description.AppendLine($"Level {kvp.Key}: {role?.ToString() ?? "(deleted role)"}: {kvp.Value:C2}");
         }
 
         description.AppendLine("***Roles***");
-        SocketRole djRole = Context.Guild.GetRole(config.Roles.DjRole);
-        SocketRole staffLvl1Role = Context.Guild.GetRole(config.Roles.StaffLvl1Role);
-        SocketRole staffLvl2Role = Context.Guild.GetRole(config.Roles.StaffLvl2Role);
+        DbConfigRoles roles = await MongoManager.FetchConfigAsync<DbConfigRoles>(Context.Guild.Id);
+        SocketRole djRole = Context.Guild.GetRole(roles.DjRole);
+        SocketRole staffLvl1Role = Context.Guild.GetRole(roles.StaffLvl1Role);
+        SocketRole staffLvl2Role = Context.Guild.GetRole(roles.StaffLvl2Role);
         description.AppendLine($"DJ Role: {djRole?.ToString() ?? "(deleted role)"}");
         description.AppendLine($"Staff Level 1 Role: {staffLvl1Role?.ToString() ?? "(deleted role)"}");
         description.AppendLine($"Staff Level 2 Role: {staffLvl2Role?.ToString() ?? "(deleted role)"}");
 
         description.AppendLine("***Self Roles***");
-        IMessage message = await Context.Guild.GetTextChannel(config.SelfRoles.Channel)
-            .GetMessageAsync(config.SelfRoles.Message);
+        DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(Context.Guild.Id);
+        IMessage message = await Context.Guild.GetTextChannel(selfRoles.Channel).GetMessageAsync(selfRoles.Message);
         string messageContent = message != null ? $"[Jump]({message.GetJumpUrl()})" : "(deleted)";
         description.AppendLine($"Message: {messageContent}");
-        foreach (KeyValuePair<string, ulong> kvp in config.SelfRoles.SelfRoles)
+        foreach (KeyValuePair<string, ulong> kvp in selfRoles.SelfRoles)
         {
             SocketRole role = Context.Guild.GetRole(kvp.Value);
             description.AppendLine($"{kvp.Key}: {role?.ToString() ?? "(deleted role)"}");
@@ -132,12 +139,12 @@ public class Config : ModuleBase<SocketCommandContext>
         Discord.Commands.SearchResult search = Commands.Search(cmd);
         if (!search.IsSuccess)
             return CommandResult.FromError($"**${cmdLower}** is not a command!");
-        
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Miscellaneous.DisabledCommands.Add(cmdLower);
+
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        misc.DisabledCommands.Add(cmdLower);
 
         await Context.User.NotifyAsync(Context.Channel, $"Disabled ${cmdLower}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(misc);
         return CommandResult.FromSuccess();
     }
 
@@ -154,11 +161,11 @@ public class Config : ModuleBase<SocketCommandContext>
         if (moduleInfo == default)
             return CommandResult.FromError($"\"{module}\" is not a module.");
         
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Miscellaneous.DisabledModules.Add(moduleLower);
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        misc.DisabledModules.Add(moduleLower);
 
         await Context.User.NotifyAsync(Context.Channel, $"Disabled the {module.ToTitleCase()} module.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(misc);
         return CommandResult.FromSuccess();
     }
 
@@ -167,10 +174,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$disablefiltersinchannel \\#extremely-funny")]
     public async Task DisableFiltersInChannel(ITextChannel channel)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Miscellaneous.NoFilterChannels.Add(channel.Id);
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        misc.NoFilterChannels.Add(channel.Id);
         await Context.User.NotifyAsync(Context.Channel, $"Disabled filters in {channel.Mention}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(misc);
     }
 
     [Command("enablecmd")]
@@ -179,12 +186,12 @@ public class Config : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> EnableCommand(string cmd)
     {
         string cmdLower = cmd.ToLower();
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (!config.Miscellaneous.DisabledCommands.Remove(cmdLower))
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        if (!misc.DisabledCommands.Remove(cmdLower))
             return CommandResult.FromError($"**{cmdLower}** is not disabled!");
 
         await Context.User.NotifyAsync(Context.Channel, $"Enabled ${cmdLower}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(misc);
         return CommandResult.FromSuccess();
     }
 
@@ -194,12 +201,12 @@ public class Config : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> EnableModule(string module)
     {
         string moduleLower = module.ToLower();
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (!config.Miscellaneous.DisabledModules.Remove(moduleLower))
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        if (!misc.DisabledModules.Remove(moduleLower))
             return CommandResult.FromError($"\"{module}\" is not disabled!");
 
         await Context.User.NotifyAsync(Context.Channel, $"Enabled the {module.ToTitleCase()} module.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(misc);
         return CommandResult.FromSuccess();
     }
 
@@ -216,12 +223,12 @@ public class Config : ModuleBase<SocketCommandContext>
             regexString.Append($"[{c}{string.Concat(FilterSystem.Homoglyphs[c])}]");
         }
         
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Miscellaneous.FilterRegexes.Add(regexString.ToString());
-        config.Miscellaneous.FilteredWords.Add(word.ToLower());
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        misc.FilterRegexes.Add(regexString.ToString());
+        misc.FilteredWords.Add(word.ToLower());
 
         await Context.User.NotifyAsync(Context.Channel, $"Added \"{word}\" as a filtered word.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(misc);
         return CommandResult.FromSuccess();
     }
 
@@ -231,18 +238,18 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$removeselfrole :Sperg:")]
     public async Task<RuntimeResult> RemoveSelfRole(IEmote emote)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (config.SelfRoles.Channel == 0UL)
+        DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(Context.Guild.Id);
+        if (selfRoles.Channel == 0UL)
             return CommandResult.FromError("The self roles message has not been set. Please set it using ``$setselfrolesmsg``.");
-        if (!config.SelfRoles.SelfRoles.Remove(emote.ToString() ?? ""))
+        if (!selfRoles.SelfRoles.Remove(emote.ToString() ?? ""))
             return CommandResult.FromError("There is no selfrole bound to that emote.");
 
-        SocketTextChannel channel = Context.Guild.GetTextChannel(config.SelfRoles.Channel);
-        IMessage message = await channel.GetMessageAsync(config.SelfRoles.Message);
+        SocketTextChannel channel = Context.Guild.GetTextChannel(selfRoles.Channel);
+        IMessage message = await channel.GetMessageAsync(selfRoles.Message);
         await message.RemoveAllReactionsForEmoteAsync(emote);
 
         await Context.User.NotifyAsync(Context.Channel, $"Successfully removed the selfrole bound to {emote}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(selfRoles);
         return CommandResult.FromSuccess();
     }
 
@@ -251,10 +258,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$setdjrole 850827023982395413")]
     public async Task SetDjRole([Remainder] IRole role)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Roles.DjRole = role.Id;
+        DbConfigRoles roles = await MongoManager.FetchConfigAsync<DbConfigRoles>(Context.Guild.Id);
+        roles.DjRole = role.Id;
         await Context.User.NotifyAsync(Context.Channel, $"Set {role} as the DJ role.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(roles);
     }
 
     [Command("setelectionannouncementschannel")]
@@ -262,10 +269,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$setelectionannouncementschannel \\#elections")]
     public async Task SetElectionAnnouncementsChannel(ITextChannel channel)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Channels.ElectionsAnnounceChannel = channel.Id;
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        channels.ElectionsAnnounceChannel = channel.Id;
         await Context.User.NotifyAsync(Context.Channel, $"Set election announcements channel to {channel.Mention}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(channels);
     }
 
     [Command("setelectionvotingchannel")]
@@ -273,10 +280,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$setelectionvotingchannel \\#vote")]
     public async Task SetElectionVotingChannel(ITextChannel channel)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Channels.ElectionsVotingChannel = channel.Id;
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        channels.ElectionsVotingChannel = channel.Id;
         await Context.User.NotifyAsync(Context.Channel, $"Set election voting channel to {channel.Mention}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(channels);
     }
 
     [Command("setlogschannel")]
@@ -284,10 +291,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$setlogschannel \\#logs")]
     public async Task SetLogsChannel(ITextChannel channel)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Channels.LogsChannel = channel.Id;
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        channels.LogsChannel = channel.Id;
         await Context.User.NotifyAsync(Context.Channel, $"Set logs channel to {channel.Mention}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(channels);
     }
 
     [Command("setpollschannel")]
@@ -295,10 +302,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$setpollschannel \\#polls")]
     public async Task SetPollsChannel(ITextChannel channel)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Channels.PollsChannel = channel.Id;
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        channels.PollsChannel = channel.Id;
         await Context.User.NotifyAsync(Context.Channel, $"Set polls channel to {channel.Mention}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(channels);
     }
 
     [Command("setpotchannel")]
@@ -306,10 +313,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$setpotchannel \\#bot-commands")]
     public async Task SetPotChannel(ITextChannel channel)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Channels.PotChannel = channel.Id;
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        channels.PotChannel = channel.Id;
         await Context.User.NotifyAsync(Context.Channel, $"Set pot channel to {channel.Mention}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(channels);
     }
 
     [Command("setselfrolesmsg")]
@@ -318,12 +325,12 @@ public class Config : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> SetSelfRolesMsg(ITextChannel channel, ulong msgId)
     {
         IMessage msg = await channel.GetMessageAsync(msgId);
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.SelfRoles.Channel = channel.Id;
-        config.SelfRoles.Message = msg.Id;
+        DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(Context.Guild.Id);
+        selfRoles.Channel = channel.Id;
+        selfRoles.Message = msg.Id;
 
         await Context.User.NotifyAsync(Context.Channel, $"Set self roles message to the one at {msg.GetJumpUrl()}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(selfRoles);
         return CommandResult.FromSuccess();
     }
 
@@ -332,10 +339,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$setstafflvl1role House")]
     public async Task SetStaffLvl1Role([Remainder] IRole role)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Roles.StaffLvl1Role = role.Id;
+        DbConfigRoles roles = await MongoManager.FetchConfigAsync<DbConfigRoles>(Context.Guild.Id);
+        roles.StaffLvl1Role = role.Id;
         await Context.User.NotifyAsync(Context.Channel, $"Set first level Staff role to {role}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(roles);
     }
 
     [Command("setstafflvl2role")]
@@ -343,10 +350,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$setstafflvl2role Senate")]
     public async Task SetStaffLvl2Role([Remainder] IRole role)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Roles.StaffLvl2Role = role.Id;
+        DbConfigRoles roles = await MongoManager.FetchConfigAsync<DbConfigRoles>(Context.Guild.Id);
+        roles.StaffLvl2Role = role.Id;
         await Context.User.NotifyAsync(Context.Channel, $"Set second level Staff role to {role}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(roles);
     }
 
     [Command("setvotingage")]
@@ -354,54 +361,50 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$setvotingage 14")]
     public async Task SetVotingAge(int days)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Channels.MinimumVotingAgeDays = days;
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        channels.MinimumVotingAgeDays = days;
         await Context.User.NotifyAsync(Context.Channel, $"Set minimum voting age to **{days} days**.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(channels);
     }
 
     [Command("toggledrops")]
     [Summary("Toggles random drops, such as Bank Cheques.")]
     public async Task ToggleDrops()
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Miscellaneous.DropsDisabled = !config.Miscellaneous.DropsDisabled;
-        await Context.User.NotifyAsync(Context.Channel,
-            $"Toggled random drops {(config.Miscellaneous.DropsDisabled ? "OFF" : "ON")}.");
-        await MongoManager.UpdateObjectAsync(config);
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        misc.DropsDisabled = !misc.DropsDisabled;
+        await Context.User.NotifyAsync(Context.Channel, $"Toggled random drops {(misc.DropsDisabled ? "OFF" : "ON")}.");
+        await MongoManager.UpdateObjectAsync(misc);
     }
 
     [Command("toggleinvitefilter")]
     [Summary("Toggle the invite filter.")]
     public async Task ToggleInviteFilter()
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Miscellaneous.InviteFilterEnabled = !config.Miscellaneous.InviteFilterEnabled;
-        await Context.User.NotifyAsync(Context.Channel,
-            $"Toggled invite filter {(config.Miscellaneous.InviteFilterEnabled ? "ON" : "OFF")}.");
-        await MongoManager.UpdateObjectAsync(config);
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        misc.InviteFilterEnabled = !misc.InviteFilterEnabled;
+        await Context.User.NotifyAsync(Context.Channel, $"Toggled invite filter {(misc.InviteFilterEnabled ? "ON" : "OFF")}.");
+        await MongoManager.UpdateObjectAsync(misc);
     }
 
     [Command("togglensfw")]
     [Summary("Toggle the NSFW module.")]
     public async Task ToggleNsfw()
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Miscellaneous.NsfwEnabled = !config.Miscellaneous.NsfwEnabled;
-        await Context.User.NotifyAsync(Context.Channel,
-            $"Toggled NSFW enabled {(config.Miscellaneous.NsfwEnabled ? "ON" : "OFF")}.");
-        await MongoManager.UpdateObjectAsync(config);
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        misc.NsfwEnabled = !misc.NsfwEnabled;
+        await Context.User.NotifyAsync(Context.Channel, $"Toggled NSFW enabled {(misc.NsfwEnabled ? "ON" : "OFF")}.");
+        await MongoManager.UpdateObjectAsync(misc);
     }
 
     [Command("togglescamfilter")]
     [Summary("Toggle the scam filter.")]
     public async Task ToggleScamFilter()
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Miscellaneous.ScamFilterEnabled = !config.Miscellaneous.ScamFilterEnabled;
-        await Context.User.NotifyAsync(Context.Channel,
-            $"Toggled scam filter {(config.Miscellaneous.ScamFilterEnabled ? "ON" : "OFF")}.");
-        await MongoManager.UpdateObjectAsync(config);
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        misc.ScamFilterEnabled = !misc.ScamFilterEnabled;
+        await Context.User.NotifyAsync(Context.Channel, $"Toggled scam filter {(misc.ScamFilterEnabled ? "ON" : "OFF")}.");
+        await MongoManager.UpdateObjectAsync(misc);
     }
     
     [Command("unfilterword")]
@@ -409,16 +412,16 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$unfilterword niggardly")]
     public async Task<RuntimeResult> UnfilterWord(string word)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        Regex regex = config.Miscellaneous.FilterRegexes.Select(rs => new Regex(rs)).FirstOrDefault(r => r.IsMatch(word.ToLower()));
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        Regex regex = misc.FilterRegexes.Select(rs => new Regex(rs)).FirstOrDefault(r => r.IsMatch(word.ToLower()));
         if (regex is null)
             return CommandResult.FromError("That word appears to not be in the filter system.");
 
-        config.Miscellaneous.FilterRegexes.Remove(regex.ToString());
-        config.Miscellaneous.FilteredWords.Remove(word.ToLower());
+        misc.FilterRegexes.Remove(regex.ToString());
+        misc.FilteredWords.Remove(word.ToLower());
 
         await Context.User.NotifyAsync(Context.Channel, $"Removed \"{word}\" from the filter system.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(misc);
         return CommandResult.FromSuccess();
     }
 
@@ -428,12 +431,12 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$unwhitelistchannel \\#general")]
     public async Task<RuntimeResult> UnwhitelistChannel(ITextChannel channel)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (!config.Channels.WhitelistedChannels.Remove(channel.Id))
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        if (!channels.WhitelistedChannels.Remove(channel.Id))
             return CommandResult.FromError($"{channel.Mention} is not in the whitelist.");
 
         await Context.User.NotifyAsync(Context.Channel, $"Removed {channel.Mention} from the whitelist.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(channels);
         return CommandResult.FromSuccess();
     }
 
@@ -442,10 +445,10 @@ public class Config : ModuleBase<SocketCommandContext>
     [Remarks("$whitelistchannel 837306775987683368")]
     public async Task WhitelistChannel(ITextChannel channel)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        config.Channels.WhitelistedChannels.Add(channel.Id);
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        channels.WhitelistedChannels.Add(channel.Id);
         await Context.User.NotifyAsync(Context.Channel, $"Whitelisted {channel.Mention}.");
-        await MongoManager.UpdateObjectAsync(config);
+        await MongoManager.UpdateObjectAsync(channels);
     }
     #endregion Commands
 

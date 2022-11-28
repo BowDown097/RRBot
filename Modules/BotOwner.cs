@@ -1,3 +1,5 @@
+using RRBot.Entities;
+
 namespace RRBot.Modules;
 public class FunnyContext
 {

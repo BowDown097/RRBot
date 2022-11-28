@@ -44,11 +44,11 @@ public static class FilterSystem
     };
     private static readonly Regex InviteRegex = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
 
-    public static async Task<bool> ContainsFilteredWord(IGuild guild, string input, DbConfig conf = null)
+    public static async Task<bool> ContainsFilteredWord(IGuild guild, string input, DbConfigMisc misc = null)
     {
         string cleaned = new string(input.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToLower();
-        DbConfig config = conf ?? await MongoManager.FetchConfigAsync(guild.Id);
-        return config.Miscellaneous.FilterRegexes.Select(regexStr => new Regex(regexStr)).Any(regex => regex.IsMatch(cleaned));
+        DbConfigMisc miscConfig = misc ?? await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
+        return miscConfig.FilterRegexes.Select(regexStr => new Regex(regexStr)).Any(regex => regex.IsMatch(cleaned));
     }
 
     public static async Task DoInviteCheckAsync(SocketUserMessage message, IGuild guild, DiscordSocketClient client)
@@ -56,8 +56,8 @@ public static class FilterSystem
         if (string.IsNullOrWhiteSpace(message.Content))
             return;
         
-        DbConfig config = await MongoManager.FetchConfigAsync(guild.Id);
-        if (!config.Miscellaneous.InviteFilterEnabled || config.Miscellaneous.NoFilterChannels.Contains(message.Channel.Id))
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
+        if (!misc.InviteFilterEnabled || misc.NoFilterChannels.Contains(message.Channel.Id))
             return;
 
         foreach (Match match in InviteRegex.Matches(message.Content).Cast<Match>())
@@ -74,11 +74,11 @@ public static class FilterSystem
         if (string.IsNullOrWhiteSpace(message.Content))
             return;
         
-        DbConfig config = await MongoManager.FetchConfigAsync(guild.Id);
-        if (config.Miscellaneous.NoFilterChannels.Contains(message.Channel.Id))
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
+        if (misc.NoFilterChannels.Contains(message.Channel.Id))
             return;
 
-        if (await ContainsFilteredWord(guild, message.Content, config))
+        if (await ContainsFilteredWord(guild, message.Content, misc))
         {
             if (message.Author is SocketGuildUser guildUser) 
                 await guildUser.SetTimeOutAsync(TimeSpan.FromMinutes(1));
@@ -91,8 +91,8 @@ public static class FilterSystem
         if (string.IsNullOrWhiteSpace(message.Content))
             return;
         
-        DbConfig config = await MongoManager.FetchConfigAsync(guild.Id);
-        if (!config.Miscellaneous.ScamFilterEnabled || config.Miscellaneous.NoFilterChannels.Contains(message.Channel.Id))
+        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
+        if (!misc.ScamFilterEnabled || misc.NoFilterChannels.Contains(message.Channel.Id))
             return;
 
         string content = message.Content.ToLower();

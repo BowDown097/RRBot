@@ -232,12 +232,12 @@ public class Administration : ModuleBase<SocketCommandContext>
         if (election == null)
             return CommandResult.FromError("There is no election with that ID!");
         
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (Context.Guild.TextChannels.All(channel => channel.Id != config.Channels.ElectionsAnnounceChannel))
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsAnnounceChannel))
             return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
 
         election.Candidates[user.Id] = votes;
-        await Polls.UpdateElection(election, config.Channels, Context.Guild);
+        await Polls.UpdateElection(election, channels, Context.Guild);
         await MongoManager.UpdateObjectAsync(election);
         return CommandResult.FromSuccess();
     }

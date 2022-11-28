@@ -1,4 +1,6 @@
-﻿namespace RRBot.Modules;
+﻿using RRBot.Entities;
+
+namespace RRBot.Modules;
 [Summary("Polling and elections.")]
 public class Polls : ModuleBase<SocketCommandContext>
 {
@@ -13,8 +15,8 @@ public class Polls : ModuleBase<SocketCommandContext>
         if (pollChoices.Length > 9)
             return CommandResult.FromError("A maximum of 9 choices are allowed.");
         
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (Context.Guild.TextChannels.All(channel => channel.Id != config.Channels.PollsChannel))
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.PollsChannel))
             return CommandResult.FromError("This server's polls channel has yet to be set or no longer exists.");
 
         StringBuilder choicesStr = new();
@@ -26,7 +28,7 @@ public class Polls : ModuleBase<SocketCommandContext>
             .WithTitle(title)
             .WithDescription(choicesStr.ToString());
         
-        SocketTextChannel pollsChannel = Context.Guild.GetTextChannel(config.Channels.PollsChannel);
+        SocketTextChannel pollsChannel = Context.Guild.GetTextChannel(channels.PollsChannel);
         RestUserMessage pollMsg = await pollsChannel.SendMessageAsync(embed: pollEmbed.Build());
         for (int i = 1; i <= pollChoices.Length; i++)
             await pollMsg.AddReactionAsync(new Emoji(Constants.PollEmotes[i]));
@@ -45,13 +47,13 @@ public class Polls : ModuleBase<SocketCommandContext>
         if (election == null)
             return CommandResult.FromError("There is no election with that ID!");
         
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (Context.Guild.TextChannels.All(channel => channel.Id != config.Channels.ElectionsAnnounceChannel))
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsAnnounceChannel))
             return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
-        if (Context.Guild.TextChannels.All(channel => channel.Id != config.Channels.ElectionsVotingChannel))
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsVotingChannel))
             return CommandResult.FromError("This server's election voting channel has yet to be set or no longer exists.");
 
-        await ConcludeElection(election, config.Channels, Context.Guild);
+        await ConcludeElection(election, channels, Context.Guild);
         await Context.User.NotifyAsync(Context.Channel, "Election ended.");
         await MongoManager.UpdateObjectAsync(election);
         return CommandResult.FromSuccess();
@@ -63,10 +65,10 @@ public class Polls : ModuleBase<SocketCommandContext>
     [RequireUserPermission(GuildPermission.Administrator)]
     public async Task<RuntimeResult> StartElection(IGuildUser firstCandidate, string role, long hours = Constants.ElectionDuration / 3600, int numWinners = 1)
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-        if (Context.Guild.TextChannels.All(channel => channel.Id != config.Channels.ElectionsAnnounceChannel))
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsAnnounceChannel))
             return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
-        if (Context.Guild.TextChannels.All(channel => channel.Id != config.Channels.ElectionsVotingChannel))
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsVotingChannel))
             return CommandResult.FromError("This server's election voting channel has yet to be set or no longer exists.");
         
         DbElection election = await MongoManager.FetchElectionAsync(Context.Guild.Id);
@@ -74,8 +76,8 @@ public class Polls : ModuleBase<SocketCommandContext>
         election.EndTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)TimeSpan.FromHours(hours).TotalSeconds);
         election.NumWinners = numWinners;
 
-        SocketTextChannel announcementsChannel = Context.Guild.GetTextChannel(config.Channels.ElectionsAnnounceChannel);
-        SocketTextChannel votingChannel = Context.Guild.GetTextChannel(config.Channels.ElectionsVotingChannel);
+        SocketTextChannel announcementsChannel = Context.Guild.GetTextChannel(channels.ElectionsAnnounceChannel);
+        SocketTextChannel votingChannel = Context.Guild.GetTextChannel(channels.ElectionsVotingChannel);
 
         EmbedBuilder announcementEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -107,15 +109,15 @@ public class Polls : ModuleBase<SocketCommandContext>
         DbElection election = await MongoManager.FetchElectionAsync(Context.Guild.Id, electionId, false);
         if (election == null)
             return CommandResult.FromError("There is no election with that ID!");
-
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+        
+        DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
         int ageDays = (DateTimeOffset.UtcNow - (Context.User as IGuildUser)?.JoinedAt).GetValueOrDefault().Days;
-        if (ageDays < config.Channels.MinimumVotingAgeDays)
-            return CommandResult.FromError($"You need to be in the server for at least {config.Channels.MinimumVotingAgeDays} days to vote.");
-        if (Context.Guild.TextChannels.All(channel => channel.Id != config.Channels.ElectionsAnnounceChannel))
+        if (ageDays < channels.MinimumVotingAgeDays)
+            return CommandResult.FromError($"You need to be in the server for at least {channels.MinimumVotingAgeDays} days to vote.");
+        if (Context.Guild.TextChannels.All(channel => channel.Id != channels.ElectionsAnnounceChannel))
             return CommandResult.FromError("This server's election announcement channel has yet to be set or no longer exists.");
-        if (Context.Channel.Id != config.Channels.ElectionsVotingChannel)
-            return CommandResult.FromError($"You must vote in {MentionUtils.MentionChannel(config.Channels.ElectionsVotingChannel)}.");
+        if (Context.Channel.Id != channels.ElectionsVotingChannel)
+            return CommandResult.FromError($"You must vote in {MentionUtils.MentionChannel(channels.ElectionsVotingChannel)}.");
 
         if (election.Voters.TryGetValue(Context.User.Id, out List<ulong> votes))
         {
@@ -140,7 +142,7 @@ public class Polls : ModuleBase<SocketCommandContext>
         else
             election.Voters[Context.User.Id].Add(user.Id);
 
-        await UpdateElection(election, config.Channels, Context.Guild);
+        await UpdateElection(election, channels, Context.Guild);
         await Context.User.NotifyAsync(Context.Channel, $"Voted for {user.Sanitize()}.");
         await MongoManager.UpdateObjectAsync(election);
         return CommandResult.FromSuccess();
@@ -148,7 +150,7 @@ public class Polls : ModuleBase<SocketCommandContext>
     #endregion
 
     #region Helpers
-    public static async Task ConcludeElection(DbElection election, ChannelsConfig channels, SocketGuild guild)
+    public static async Task ConcludeElection(DbElection election, DbConfigChannels channels, SocketGuild guild)
     {
         SocketTextChannel announcementsChannel = guild.GetTextChannel(channels.ElectionsAnnounceChannel);
         SocketTextChannel votingChannel = guild.GetTextChannel(channels.ElectionsVotingChannel);
@@ -178,7 +180,7 @@ public class Polls : ModuleBase<SocketCommandContext>
         election.EndTime = -1;
     }
 
-    public static async Task UpdateElection(DbElection election, ChannelsConfig channels, SocketGuild guild)
+    public static async Task UpdateElection(DbElection election, DbConfigChannels channels, SocketGuild guild)
     {
         SocketTextChannel announcementsChannel = guild.GetTextChannel(channels.ElectionsAnnounceChannel);
         if (await announcementsChannel.GetMessageAsync(election.AnnouncementMessage) is not IUserMessage announcementMessage)

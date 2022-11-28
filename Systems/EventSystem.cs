@@ -84,12 +84,12 @@ public class EventSystem
             return;
 
         // selfroles check
-        DbConfig config = await MongoManager.FetchConfigAsync(channel.GetGuild().Id);
+        DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(channel.GetGuild().Id);
         string emote = reaction.Emote.ToString() ?? string.Empty;
-        if (reaction.MessageId != config.SelfRoles.Message || !config.SelfRoles.SelfRoles.ContainsKey(emote))
+        if (reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(emote))
             return;
 
-        ulong roleId = config.SelfRoles.SelfRoles[emote];
+        ulong roleId = selfRoles.SelfRoles[emote];
         if (addedReaction)
             await user.AddRoleAsync(roleId);
         else
@@ -159,27 +159,28 @@ public class EventSystem
             if (search.Error == CommandError.UnknownCommand)
                 return;
             
-            DbConfig config = await MongoManager.FetchConfigAsync(context.Guild.Id);
+            DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(context.Guild.Id);
             CommandInfo command = search.Commands[0].Command;
             if (command.Module.Name is not ("Administration" or "BotOwner" or "Moderation" or "Music" or "Polls")
-                && config.Channels.WhitelistedChannels.Count > 0 && !config.Channels.WhitelistedChannels.Contains(context.Channel.Id))
+                && channels.WhitelistedChannels.Count > 0 && !channels.WhitelistedChannels.Contains(context.Channel.Id))
             {
                 await context.User.NotifyAsync(context.Channel, "Commands are disabled in this channel!");
                 return;
             }
 
             DbGlobalConfig globalConfig = await MongoManager.FetchGlobalConfigAsync();
+            DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(context.Guild.Id);
             if (globalConfig.BannedUsers.Contains(context.User.Id))
             {
                 await context.User.NotifyAsync(context.Channel, "You are banned from using the bot!");
                 return;
             }
-            if (globalConfig.DisabledCommands.Contains(command.Name) || config.Miscellaneous.DisabledCommands.Contains(command.Name))
+            if (globalConfig.DisabledCommands.Contains(command.Name) || misc.DisabledCommands.Contains(command.Name))
             {
                 await context.User.NotifyAsync(context.Channel, "This command is disabled!");
                 return;
             }
-            if (config.Miscellaneous.DisabledModules.Contains(command.Module.Name, StringComparer.OrdinalIgnoreCase))
+            if (misc.DisabledModules.Contains(command.Module.Name, StringComparer.OrdinalIgnoreCase))
             {
                 await context.User.NotifyAsync(context.Channel, "The module for this command is disabled!");
                 return;
@@ -199,10 +200,11 @@ public class EventSystem
             {
                 decimal messageCash = Constants.MessageCash * (1 + 0.20m * user.Prestige);
                 await user.SetCash(context.User, user.Cash + messageCash);
-                DbConfig config = await MongoManager.FetchConfigAsync(context.Guild.Id);
 
-                if (!config.Miscellaneous.DropsDisabled && RandomUtil.Next(70) == 1)
+                DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(context.Guild.Id);
+                if (!misc.DropsDisabled && RandomUtil.Next(70) == 1)
                     await ItemSystem.GiveCollectible("Bank Cheque", context.Channel, user);
+
                 if (user.Cash >= 1000000 && !user.HasReachedAMilli)
                 {
                     user.HasReachedAMilli = true;

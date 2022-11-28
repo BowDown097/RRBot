@@ -1,3 +1,5 @@
+using RRBot.Entities;
+
 namespace RRBot;
 // Note: Win odds will always be out of 100, so if you want an 80% win chance, set the respective constant to 80.
 // Cooldowns are in seconds, so if you want a 5 minute cooldown for something, set the respective constant to 300.

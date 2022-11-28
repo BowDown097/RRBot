@@ -1,7 +1,13 @@
 namespace RRBot.Database.Entities.Config;
 
-public class MiscellaneousConfig
+[BsonCollection("miscconfigs")]
+[BsonIgnoreExtraElements]
+public class DbConfigMisc : DbConfig
 {
+    public override ObjectId Id { get; set; }
+    
+    public override ulong GuildId { get; init; }
+
     public List<string> DisabledCommands { get; set; } = new();
     public List<string> DisabledModules { get; set; } = new();
     public bool DropsDisabled { get; set; }

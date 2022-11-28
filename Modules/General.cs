@@ -1,6 +1,4 @@
-﻿using RRBot.Database.Entities;
-
-namespace RRBot.Modules;
+﻿namespace RRBot.Modules;
 [Summary("The name really explains it all. Fun fact, you used one of the commands under this module to view info about this module.")]
 public class General : ModuleBase<SocketCommandContext>
 {
@@ -42,8 +40,8 @@ public class General : ModuleBase<SocketCommandContext>
         CommandInfo commandInfo = search.Commands[0].Command;
         if (commandInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
         {
-            DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-            if (!config.Miscellaneous.NsfwEnabled || config.Miscellaneous.DisabledModules.Contains("Nsfw"))
+            DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+            if (!misc.NsfwEnabled || misc.DisabledModules.Contains("Nsfw"))
                 return CommandResult.FromError("NSFW commands are disabled!");
         }
 
@@ -96,8 +94,8 @@ public class General : ModuleBase<SocketCommandContext>
 
         if (moduleInfo.Name == "Nsfw")
         {
-            DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
-            if (!config.Miscellaneous.NsfwEnabled || config.Miscellaneous.DisabledModules.Contains("Nsfw"))
+            DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+            if (!misc.NsfwEnabled || misc.DisabledModules.Contains("Nsfw"))
                 return CommandResult.FromError("NSFW commands are disabled!");
         }
 

@@ -1,5 +1,4 @@
-﻿
-namespace RRBot.Modules;
+﻿namespace RRBot.Modules;
 [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
 public class Economy : ModuleBase<SocketCommandContext>
 {
@@ -135,12 +134,12 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Summary("View all the ranks and their costs.")]
     public async Task Ranks()
     {
-        DbConfig config = await MongoManager.FetchConfigAsync(Context.Guild.Id);
+        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(Context.Guild.Id);
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         StringBuilder description = new();
-        foreach (KeyValuePair<int, decimal> kvp in config.Ranks.Costs.OrderBy(kvp => kvp.Key))
+        foreach (KeyValuePair<int, decimal> kvp in ranks.Costs.OrderBy(kvp => kvp.Key))
         {
-            SocketRole role = Context.Guild.GetRole(config.Ranks.Ids[kvp.Key]);
+            SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
             decimal cost = kvp.Value * (1 + 0.5m * user.Prestige);
             if (role == null) continue;
             description.AppendLine($"**{role.Name}**: {cost:C2}");
