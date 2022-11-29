@@ -97,7 +97,7 @@ public class Config : ModuleBase<SocketCommandContext>
         foreach (KeyValuePair<int, decimal> kvp in ranks.Costs.OrderBy(kvp => kvp.Key))
         {
             SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
-            description.AppendLine($"Level {kvp.Key}: {role?.ToString() ?? "(deleted role)"}: {kvp.Value:C2}");
+            description.AppendLine($"Level {kvp.Key} - {role?.ToString() ?? "(deleted role)"}: {kvp.Value:C2}");
         }
 
         description.AppendLine("***Roles***");

@@ -143,9 +143,11 @@ public class EventSystem
 
     private async Task Client_MessageReceived(SocketMessage msg)
     {
-        SocketUserMessage userMsg = msg as SocketUserMessage;
+        if (msg is not SocketUserMessage userMsg)
+            return;
+
         SocketCommandContext context = new(_client, userMsg);
-        if (context.User.IsBot || userMsg is null || string.IsNullOrWhiteSpace(userMsg.Content))
+        if (context.User.IsBot || string.IsNullOrWhiteSpace(userMsg.Content))
             return;
 
         await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, _client);
