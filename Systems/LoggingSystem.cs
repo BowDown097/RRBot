@@ -278,8 +278,10 @@ public static class LoggingSystem
     public static async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msgCached,
         Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction)
     {
-        IUserMessage msg = await msgCached.GetOrDownloadAsync();
+        if (!reaction.User.IsSpecified)
+            return;
 
+        IUserMessage msg = await msgCached.GetOrDownloadAsync();
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(reaction.User.Value)
             .WithDescription($"**Reaction Removed in {reaction.Channel.Mention()}**")

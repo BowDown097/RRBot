@@ -16,11 +16,17 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
         decimal cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
 
         SortDefinition<DbUser> sort = Builders<DbUser>.Sort.Descending(currency);
-        IAsyncCursor<DbUser> cursor = await MongoManager.Users.FindAsync(u => u.GuildId == Context.Guild.Id,
-            new FindOptions<DbUser> { Sort = sort });
+        FindOptions<DbUser> opts = new()
+        {
+            Collation = new Collation("en", numericOrdering: true),
+            Skip = start - 1 + failedUsers,
+            Sort = sort
+        };
+        IAsyncCursor<DbUser> cursor = 
+            await MongoManager.Users.FindAsync(u => u.GuildId == Context.Guild.Id, opts);
         List<DbUser> users = await cursor.ToListAsync();
 
-        StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
+        StringBuilder lb = new();
         int processedUsers = 0;
         foreach (DbUser user in users)
         {
@@ -69,11 +75,17 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
         Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault();
         
         SortDefinition<DbGang> sort = Builders<DbGang>.Sort.Descending(g => g.VaultBalance);
-        IAsyncCursor<DbGang> cursor = await MongoManager.Gangs.FindAsync(u => u.GuildId == Context.Guild.Id,
-            new FindOptions<DbGang> { Sort = sort });
+        FindOptions<DbGang> opts = new()
+        {
+            Collation = new Collation("en", numericOrdering: true),
+            Skip = start - 1,
+            Sort = sort
+        };
+        IAsyncCursor<DbGang> cursor = 
+            await MongoManager.Gangs.FindAsync(u => u.GuildId == Context.Guild.Id, opts);
         List<DbGang> gangs = await cursor.ToListAsync();
 
-        StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
+        StringBuilder lb = new();
         int processedGangs = 0;
         foreach (DbGang gang in gangs)
         {

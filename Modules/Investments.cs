@@ -123,7 +123,7 @@ public class Investments : ModuleBase<SocketCommandContext>
 
         await user.SetCash(Context.User, user.Cash + finalValue);
         user[abbreviation] = (decimal)user[abbreviation] - Math.Round(amount, 4);
-        user.AddToStat($"Money Gained From {abbreviation.ToUpper()}", finalValue.ToString("C2", culture));
+        user.AddToStat($"Money Gained from {abbreviation.ToUpper()}", finalValue.ToString("C2", culture));
 
         await Context.User.NotifyAsync(Context.Channel, $"You withdrew **{amount:0.####}** {abbreviation.ToUpper()}, currently valued at **{cryptoValue:C2}**.\n" +
             $"A {Constants.InvestmentFeePercent}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");

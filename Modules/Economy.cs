@@ -56,13 +56,18 @@ public class Economy : ModuleBase<SocketCommandContext>
         if (cUp is not ("Cash" or "Btc" or "Eth" or "Ltc" or "Xrp"))
             return CommandResult.FromError($"**{currency}** is not a currently accepted currency!");
 
-        decimal cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
+        decimal cryptoValue = cUp != "Cash" ? await Investments.QueryCryptoValue(cUp.ToUpper()) : 0;
         SortDefinition<DbUser> sort = Builders<DbUser>.Sort.Descending(cUp);
-        IAsyncCursor<DbUser> cursor = await MongoManager.Users.FindAsync(u => u.GuildId == Context.Guild.Id,
-            new FindOptions<DbUser> { Sort = sort });
+        FindOptions<DbUser> opts = new()
+        {
+            Collation = new Collation("en", numericOrdering: true),
+            Sort = sort
+        };
+        IAsyncCursor<DbUser> cursor = 
+            await MongoManager.Users.FindAsync(u => u.GuildId == Context.Guild.Id, opts);
         List<DbUser> users = await cursor.ToListAsync();
-        
-        StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
+
+        StringBuilder lb = new();
         int processedUsers = 0, failedUsers = 0;
         foreach (DbUser user in users)
         {
@@ -89,12 +94,14 @@ public class Economy : ModuleBase<SocketCommandContext>
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle($"{cUp.ToUpper()} Leaderboard")
+            .WithTitle(cUp == "Cash" ? "Leaderboard" : $"{cUp.ToUpper()} Leaderboard")
             .WithDescription(lb.Length > 0 ? lb.ToString() : "Nothing to see here!");
         ComponentBuilder component = new ComponentBuilder()
             .WithButton("Back", "dddd", disabled: true)
-            .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20-{failedUsers}-False", disabled: processedUsers != 10 || users.Count < 11);
+            .WithButton("Next", $"lbnext-{Context.User.Id}-{cUp}-11-20-{failedUsers}-False",
+                disabled: processedUsers != 10 || users.Count < 11);
         await ReplyAsync(embed: embed.Build(), components: component.Build());
+
         return CommandResult.FromSuccess();
     }
 

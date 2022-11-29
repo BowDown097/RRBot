@@ -162,17 +162,23 @@ public class Gangs : ModuleBase<SocketCommandContext>
     public async Task GangLb()
     {
         SortDefinition<DbGang> sort = Builders<DbGang>.Sort.Descending(g => g.VaultBalance);
-        IAsyncCursor<DbGang> cursor = await MongoManager.Gangs.FindAsync(u => u.GuildId == Context.Guild.Id,
-            new FindOptions<DbGang> { Sort = sort });
+        FindOptions<DbGang> opts = new()
+        {
+            Collation = new Collation("en", numericOrdering: true),
+            Sort = sort
+        };
+        IAsyncCursor<DbGang> cursor = 
+            await MongoManager.Gangs.FindAsync(u => u.GuildId == Context.Guild.Id, opts);
         List<DbGang> gangs = await cursor.ToListAsync();
 
-        StringBuilder lb = new("*Note: The leaderboard updates every 10 minutes, so stuff may not be up to date.*\n");
+        StringBuilder lb = new();
         int processedGangs = 0;
         foreach (DbGang gang in gangs)
         {
             if (processedGangs == 10 || gang.VaultBalance < Constants.InvestmentMinAmount)
                 break;
-            lb.AppendLine($"{processedGangs + 1}: **{Format.Sanitize(gang.Name).Replace("\\:", ":").Replace("\\/", "/").Replace("\\.", ".")}**: {gang.VaultBalance:C2}");
+            lb.AppendLine(
+                $"{processedGangs + 1}: **{Format.Sanitize(gang.Name).Replace("\\:", ":").Replace("\\/", "/").Replace("\\.", ".")}**: {gang.VaultBalance:C2}");
             processedGangs++;
         }
 
@@ -182,7 +188,8 @@ public class Gangs : ModuleBase<SocketCommandContext>
             .WithDescription(lb.Length > 0 ? lb.ToString() : "Nothing to see here!");
         ComponentBuilder component = new ComponentBuilder()
             .WithButton("Back", "dddd", disabled: true)
-            .WithButton("Next", $"ganglbnext-{Context.User.Id}-11-20", disabled: processedGangs != 10 || gangs.Count < 11);
+            .WithButton("Next", $"ganglbnext-{Context.User.Id}-11-20",
+                disabled: processedGangs != 10 || gangs.Count < 11);
         await ReplyAsync(embed: embed.Build(), components: component.Build());
     }
 
