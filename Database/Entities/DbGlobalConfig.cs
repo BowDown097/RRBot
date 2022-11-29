@@ -6,6 +6,6 @@ public class DbGlobalConfig : DbObject
 {
     public override ObjectId Id { get; set; }
 
-    public List<ulong> BannedUsers { get; } = new();
-    public List<string> DisabledCommands { get; } = new();
+    public List<ulong> BannedUsers { get; set; } = new();
+    public List<string> DisabledCommands { get; set; } = new();
 }

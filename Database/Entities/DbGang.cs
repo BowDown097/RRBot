@@ -10,7 +10,8 @@ public class DbGang : DbObject
 
     public bool IsPublic { get; set; }
     public ulong Leader { get; set; }
-    public Dictionary<ulong, string> Members { get; init; } = new();
+    [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfArrays)]
+    public Dictionary<ulong, string> Members { get; set; } = new();
     public string Name { get; init; }
     public decimal VaultBalance { get; set; }
     public bool VaultUnlocked { get; set; }

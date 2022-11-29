@@ -81,9 +81,9 @@ public class Crime : ModuleBase<SocketCommandContext>
         decimal targetBal = (decimal)target[abbreviation];
         decimal robMax = Math.Round(targetBal / 100.0m * Constants.RobMaxPercent, 4);
         if (authorBal < amount)
-            return CommandResult.FromError($"You don't have that much {abbreviation}!");
+            return CommandResult.FromError($"You don't have that much {abbreviation.ToUpper()}!");
         if (amount > robMax)
-            return CommandResult.FromError($"You can only hack {Constants.RobMaxPercent}% of **{user.Sanitize()}**'s {abbreviation}, that being **{robMax}**.");
+            return CommandResult.FromError($"You can only hack {Constants.RobMaxPercent}% of **{user.Sanitize()}**'s {abbreviation.ToUpper()}, that being **{robMax}**.");
 
         int roll = RandomUtil.Next(100);
         decimal cryptoValue = await Investments.QueryCryptoValue(abbreviation) * amount;
@@ -99,10 +99,10 @@ public class Crime : ModuleBase<SocketCommandContext>
             switch (RandomUtil.Next(2))
             {
                 case 0:
-                    await Context.User.NotifyAsync(Context.Channel, $"The dumbass pushed his private keys to GitHub LMFAO! You sniped that shit and got **{amount:0.####} {abbreviation}**.");
+                    await Context.User.NotifyAsync(Context.Channel, $"The dumbass pushed his private keys to GitHub LMFAO! You sniped that shit and got **{amount:0.####} {abbreviation.ToUpper()}**.");
                     break;
                 case 1:
-                    await Context.User.NotifyAsync(Context.Channel, $"You did an ol' SIM swap on {user.Sanitize()}'s phone while they weren't looking and yoinked **{amount:0.####} {abbreviation}** right off their Coinbase. Easy claps!");
+                    await Context.User.NotifyAsync(Context.Channel, $"You did an ol' SIM swap on {user.Sanitize()}'s phone while they weren't looking and yoinked **{amount:0.####} {abbreviation.ToUpper()}** right off their Coinbase. Easy claps!");
                     break;
             }
         }
@@ -113,10 +113,10 @@ public class Crime : ModuleBase<SocketCommandContext>
             switch (RandomUtil.Next(2))
             {
                 case 0:
-                    await Context.User.NotifyAsync(Context.Channel, $"**{user.Sanitize()}** actually secured their shit properly, got your info, and sent it off to the feds. You got raided and lost **{amount / 4:0.####} {abbreviation}** in the process.");
+                    await Context.User.NotifyAsync(Context.Channel, $"**{user.Sanitize()}** actually secured their shit properly, got your info, and sent it off to the feds. You got raided and lost **{amount / 4:0.####} {abbreviation.ToUpper()}** in the process.");
                     break;
                 case 1:
-                    await Context.User.NotifyAsync(Context.Channel, $"That hacker dude on Instagram scammed your ass! You only had to pay 1/4 of what you were promising starting off, but still sucks. There goes **{amount / 4:0.####} {abbreviation}**.");
+                    await Context.User.NotifyAsync(Context.Channel, $"That hacker dude on Instagram scammed your ass! You only had to pay 1/4 of what you were promising starting off, but still sucks. There goes **{amount / 4:0.####} {abbreviation.ToUpper()}**.");
                     break;
             }
         }

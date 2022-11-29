@@ -9,7 +9,8 @@ public class DbPot : DbObject
     public ulong GuildId { get; init; }
 
     public long EndTime { get; set; } = -1;
-    public Dictionary<ulong, decimal> Members { get; } = new();
+    [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfArrays)]
+    public Dictionary<ulong, decimal> Members { get; set; } = new();
     public decimal Value { get; set; }
 
     public ulong DrawMember()

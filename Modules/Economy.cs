@@ -52,12 +52,12 @@ public class Economy : ModuleBase<SocketCommandContext>
     [Remarks("$lb btc")]
     public async Task<RuntimeResult> Leaderboard(string currency = "cash")
     {
-        string cUp = currency.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : currency.ToUpper();
-        if (cUp is not ("Cash" or "BTC" or "ETH" or "LTC" or "XRP"))
+        string cUp = currency.Equals("cash", StringComparison.OrdinalIgnoreCase) ? "Cash" : currency.ToTitleCase();
+        if (cUp is not ("Cash" or "Btc" or "Eth" or "Ltc" or "Xrp"))
             return CommandResult.FromError($"**{currency}** is not a currently accepted currency!");
 
         decimal cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
-        SortDefinition<DbUser> sort = Builders<DbUser>.Sort.Descending(currency);
+        SortDefinition<DbUser> sort = Builders<DbUser>.Sort.Descending(cUp);
         IAsyncCursor<DbUser> cursor = await MongoManager.Users.FindAsync(u => u.GuildId == Context.Guild.Id,
             new FindOptions<DbUser> { Sort = sort });
         List<DbUser> users = await cursor.ToListAsync();
@@ -89,7 +89,7 @@ public class Economy : ModuleBase<SocketCommandContext>
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
-            .WithTitle($"{cUp} Leaderboard")
+            .WithTitle($"{cUp.ToUpper()} Leaderboard")
             .WithDescription(lb.Length > 0 ? lb.ToString() : "Nothing to see here!");
         ComponentBuilder component = new ComponentBuilder()
             .WithButton("Back", "dddd", disabled: true)

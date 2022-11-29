@@ -183,15 +183,15 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Remarks("$setcrypto Shrimp BTC 69000")]
     public async Task<RuntimeResult> SetCrypto(IGuildUser user, string crypto, decimal amount)
     {
-        string cUp = crypto.ToUpper();
+        string cUp = crypto.ToTitleCase();
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
-        if (cUp is not ("BTC" or "ETH" or "LTC" or "XRP"))
+        if (cUp is not ("Btc" or "Eth" or "Ltc" or "Xrp"))
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
 
         DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         dbUser[cUp] = Math.Round(amount, 4);
-        await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s {cUp} to **{amount:0.####}**.");
+        await Context.User.NotifyAsync(Context.Channel, $"Set **{user.Sanitize()}**'s {cUp.ToUpper()} to **{amount:0.####}**.");
         await MongoManager.UpdateObjectAsync(dbUser);
         return CommandResult.FromSuccess();
     }

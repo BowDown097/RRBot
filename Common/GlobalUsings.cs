@@ -16,6 +16,7 @@ global using Microsoft.CodeAnalysis.Scripting;
 global using Microsoft.Extensions.DependencyInjection;
 global using MongoDB.Bson;
 global using MongoDB.Bson.Serialization.Attributes;
+global using MongoDB.Bson.Serialization.Options;
 global using MongoDB.Driver;
 global using Newtonsoft.Json;
 global using Newtonsoft.Json.Linq;

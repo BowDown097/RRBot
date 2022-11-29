@@ -9,7 +9,7 @@ public class DbUser : DbObject
     public ulong GuildId { get; init; }
     public ulong UserId { get; init; }
 
-    public Dictionary<string, string> Achievements { get; } = new();
+    public Dictionary<string, string> Achievements { get; set; } = new();
     public long BlackHatTime { get; set; }
     public decimal Btc { get; set; }
     public long BullyCooldown { get; set; }
@@ -17,8 +17,8 @@ public class DbUser : DbObject
     public long ChopCooldown { get; set; }
     public long CocaineRecoveryTime { get; set; }
     public long CocaineTime { get; set; }
-    public Dictionary<string, int> Collectibles { get; } = new();
-    public Dictionary<string, int> Consumables { get; } = new();
+    public Dictionary<string, int> Collectibles { get; set; } = new();
+    public Dictionary<string, int> Consumables { get; set;  } = new();
     public List<string> Crates { get; set; } = new();
     public long DailyCooldown { get; set; }
     public long DealCooldown { get; set; }
@@ -37,8 +37,8 @@ public class DbUser : DbObject
     public decimal Ltc { get; set; }
     public long MineCooldown { get; set; }
     public long PacifistCooldown { get; set; }
-    public List<string> PendingGangInvites { get; } = new();
-    public Dictionary<string, long> Perks { get; } = new();
+    public List<string> PendingGangInvites { get; set; } = new();
+    public Dictionary<string, long> Perks { get; set; } = new();
     public int Prestige { get; set; }
     public long PrestigeCooldown { get; set; }
     public long RapeCooldown { get; set; }
@@ -49,7 +49,7 @@ public class DbUser : DbObject
     public long SlaveryCooldown { get; set; }
     public long TimeTillCash { get; set; }
     public List<string> Tools { get; set; } = new();
-    public Dictionary<string, int> UsedConsumables { get; } = new() {
+    public Dictionary<string, int> UsedConsumables { get; set; } = new() {
         { "Black Hat", 0 },
         { "Cocaine", 0 },
         { "Romanian Flag", 0 },

@@ -16,13 +16,16 @@ public class Goods : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You cannot buy the Daily crate!");
         
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        return item switch
+        RuntimeResult result = item switch
         {
             Crate crate => await ItemSystem.BuyCrate(crate, Context.User, user, Context.Channel),
             Perk perk => await ItemSystem.BuyPerk(perk, Context.User, user, Context.Channel),
             Tool tool => await ItemSystem.BuyTool(tool, Context.User, user, Context.Channel),
             _ => CommandResult.FromError($"**{itemName}** is not an item!"),
         };
+
+        await MongoManager.UpdateObjectAsync(user);
+        return result;
     }
 
     [Command("daily")]

@@ -26,7 +26,7 @@ public class Investments : ModuleBase<SocketCommandContext>
         decimal cryptoAmount = amount / cryptoValue;
         if (cryptoAmount < Constants.InvestmentMinAmount)
         {
-            return CommandResult.FromError($"The amount you specified converts to less than {Constants.InvestmentMinAmount} of {abbreviation}, which is not permitted.\n"
+            return CommandResult.FromError($"The amount you specified converts to less than {Constants.InvestmentMinAmount} of {abbreviation.ToUpper()}, which is not permitted.\n"
                 + $"You'll need to invest at least **{cryptoValue * Constants.InvestmentMinAmount:C2}**.");
         }
 
@@ -36,11 +36,11 @@ public class Investments : ModuleBase<SocketCommandContext>
         user[abbreviation] = (decimal)user[abbreviation] + Math.Round(cryptoAmount, 4);
         user.AddToStats(new Dictionary<string, string>
         {
-            { $"Money Put Into {abbreviation}", amount.ToString("C2", culture) },
-            { $"{abbreviation} Purchased", cryptoAmount.ToString("0.####") }
+            { $"Money Put Into {abbreviation.ToUpper()}", amount.ToString("C2", culture) },
+            { $"{abbreviation.ToUpper()} Purchased", cryptoAmount.ToString("0.####") }
         });
 
-        await Context.User.NotifyAsync(Context.Channel, $"You have invested in **{cryptoAmount:0.####}** {abbreviation}, currently valued at **{amount:C2}**.");
+        await Context.User.NotifyAsync(Context.Channel, $"You invested in **{cryptoAmount:0.####}** {abbreviation.ToUpper()}, currently valued at **{amount:C2}**.");
         await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
@@ -111,9 +111,9 @@ public class Investments : ModuleBase<SocketCommandContext>
 
         decimal cryptoBal = (decimal)user[abbreviation];
         if (cryptoBal < Constants.InvestmentMinAmount)
-            return CommandResult.FromError($"You have no {abbreviation}!");
+            return CommandResult.FromError($"You have no {abbreviation.ToUpper()}!");
         if (cryptoBal < amount)
-            return CommandResult.FromError($"You don't have {amount} {abbreviation}! You've only got **{cryptoBal:0.####}** of it.");
+            return CommandResult.FromError($"You don't have {amount} {abbreviation.ToUpper()}! You've only got **{cryptoBal:0.####}** of it.");
 
         decimal cryptoValue = await QueryCryptoValue(abbreviation) * amount;
         decimal finalValue = cryptoValue / 100.0m * (100 - Constants.InvestmentFeePercent);
@@ -123,9 +123,9 @@ public class Investments : ModuleBase<SocketCommandContext>
 
         await user.SetCash(Context.User, user.Cash + finalValue);
         user[abbreviation] = (decimal)user[abbreviation] - Math.Round(amount, 4);
-        user.AddToStat($"Money Gained From {abbreviation}", finalValue.ToString("C2", culture));
+        user.AddToStat($"Money Gained From {abbreviation.ToUpper()}", finalValue.ToString("C2", culture));
 
-        await Context.User.NotifyAsync(Context.Channel, $"You withdrew **{amount:0.####}** {abbreviation}, currently valued at **{cryptoValue:C2}**.\n" +
+        await Context.User.NotifyAsync(Context.Channel, $"You withdrew **{amount:0.####}** {abbreviation.ToUpper()}, currently valued at **{cryptoValue:C2}**.\n" +
             $"A {Constants.InvestmentFeePercent}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
         await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
@@ -138,7 +138,7 @@ public class Investments : ModuleBase<SocketCommandContext>
         using HttpClient client = new();
         string current = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm");
         string today = DateTime.UtcNow.ToString("yyyy-MM-dd") + "T00:00";
-        string data = await client.GetStringAsync($"https://production.api.coindesk.com/v2/price/values/{crypto}?start_date={today}&end_date={current}");
+        string data = await client.GetStringAsync($"https://production.api.coindesk.com/v2/price/values/{crypto.ToUpper()}?start_date={today}&end_date={current}");
         dynamic obj = JsonConvert.DeserializeObject(data);
         if (obj is null) return decimal.MaxValue;
         JToken latestEntry = JArray.FromObject(obj.data.entries).Last;
@@ -147,10 +147,10 @@ public class Investments : ModuleBase<SocketCommandContext>
 
     public static string ResolveAbbreviation(string crypto) => crypto.ToLower() switch
     {
-        "bitcoin" or "btc" => "BTC",
-        "ethereum" or "eth" => "ETH",
-        "litecoin" or "ltc" => "LTC",
-        "xrp" => "XRP",
+        "bitcoin" or "btc" => "Btc",
+        "ethereum" or "eth" => "Eth",
+        "litecoin" or "ltc" => "Ltc",
+        "xrp" => "Xrp",
         _ => null,
     };
     #endregion
