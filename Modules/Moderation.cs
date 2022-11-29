@@ -73,6 +73,33 @@ public class Moderation : ModuleBase<SocketCommandContext>
         await MongoManager.UpdateObjectAsync(chill);
         return CommandResult.FromSuccess();
     }
+    
+    [Command("hackban")]
+    [Summary("Ban any member, even if they are not in the server.")]
+    [Remarks("$hackban 554057150066982937 Being cringe")]
+    [RequireUserPermission(GuildPermission.BanMembers)]
+    public async Task<RuntimeResult> HackBan(ulong userId, [Remainder] string reason = "")
+    {
+        if (userId == 0) // for some reason the ID 0 is not a user but also doesn't throw unknown user lol
+            return CommandResult.FromError("Failed to hackban with that ID: Unknown User.");
+
+        try
+        {
+            await Context.Guild.AddBanAsync(userId, 0, reason);
+
+            IUser user = await Context.Client.GetUserAsync(userId);
+            string userPart = user != null ? $"**{user.Sanitize()}**" : "the user with that ID";
+            if (!string.IsNullOrWhiteSpace(reason))
+                userPart += $" for \"{reason}\"";
+
+            await Context.User.NotifyAsync(Context.Channel, $"Hackbanned {userPart}.");
+            return CommandResult.FromSuccess();
+        }
+        catch (HttpException e)
+        {
+            return CommandResult.FromError($"Failed to hackban with that ID: {e.Reason}.");
+        }
+    }
 
     [Alias("cope")]
     [Command("kick")]
