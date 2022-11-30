@@ -103,6 +103,15 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context));
     }
 
+    [Command("resetuser")]
+    [Summary("Completely reset a user.")]
+    [Remarks("$resetuser SmushyTaco")]
+    public async Task ResetUser(IGuildUser user)
+    {
+        await MongoManager.Users.DeleteOneAsync(u => u.GuildId == user.GuildId && u.UserId == user.Id);
+        await Context.User.NotifyAsync(Context.Channel, $"Reset **{user.Sanitize()}**.");
+    }
+
     [Alias("setuserproperty")]
     [Command("setuserproperty")]
     [Summary("Set a property for a specific user in the database.")]

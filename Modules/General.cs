@@ -48,8 +48,8 @@ public class General : ModuleBase<SocketCommandContext>
         StringBuilder preconditions = new();
         if (commandInfo.TryGetPrecondition<CheckPacifistAttribute>())
             preconditions.AppendLine("Requires not having the Pacifist perk equipped");
-        if (commandInfo.TryGetPrecondition<RequireCashAttribute>())
-            preconditions.AppendLine("Requires any amount of cash");
+        if (commandInfo.TryGetPrecondition(out RequireCashAttribute requireCashAttr))
+            preconditions.AppendLine($"Requires {(requireCashAttr.Cash > 0.01m ? requireCashAttr.Cash.ToString("C2") : "any amount of cash")}");
         if (commandInfo.TryGetPrecondition<RequireDjAttribute>())
             preconditions.AppendLine("Requires DJ");
         if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>())

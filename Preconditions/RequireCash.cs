@@ -2,7 +2,7 @@
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
 public class RequireCashAttribute : PreconditionAttribute
 {
-    private decimal Cash { get; }
+    public decimal Cash { get; }
 
     public RequireCashAttribute(double cash = 0.01) => Cash = (decimal)cash;
 

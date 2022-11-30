@@ -215,6 +215,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
                     temp.HuntCooldown, temp.MineCooldown, temp.HackCooldown, temp.DailyCooldown);
+                await MongoManager.UpdateObjectAsync(user);
                 break;
             case 3:
                 await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
@@ -225,6 +226,7 @@ public class Economy : ModuleBase<SocketCommandContext>
                     temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
                     temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
                     temp.HuntCooldown, temp.MineCooldown, temp.HackCooldown, temp.DailyCooldown);
+                await MongoManager.UpdateObjectAsync(user);
                 break;
         }
 

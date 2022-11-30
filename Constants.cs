@@ -47,7 +47,7 @@ public static class Constants
     // ********************
     //        CRIME
     // ********************
-    public const long BullyCooldown = 900;
+    public const long BullyCooldown = 600;
     public const long DealCooldown = 3600;
     public const double GenericCrimeWinOdds = 80;
     public const decimal GenericCrimeLossMax = 461;
@@ -55,14 +55,14 @@ public static class Constants
     public const double GenericCrimeToolOdds = 4;
     public const decimal GenericCrimeWinMax = 691;
     public const decimal GenericCrimeWinMin = 69;
-    public const long HackCooldown = 7200;
+    public const long HackCooldown = 3600;
     public const double HackOdds = 10;
     public const long LootCooldown = 3600;
-    public const long RapeCooldown = 7200;
+    public const long RapeCooldown = 3600;
     public const double RapeOdds = 50;
     public const decimal RapeMaxPercent = 9;
     public const decimal RapeMinPercent = 5;
-    public const long RobCooldown = 7200;
+    public const long RobCooldown = 3600;
     public const double RobOdds = 40;
     public const decimal RobMaxPercent = 20;
     public const decimal RobMinCash = 100;
@@ -146,9 +146,9 @@ public static class Constants
     // ********************
     //       GANGS
     // ********************
-    public const decimal GangCreationCost = 5000;
+    public const decimal GangCreationCost = 4000;
     public const int GangMaxMembers = 10;
-    public const decimal GangVaultCost = 10000;
+    public const decimal GangVaultCost = 5000;
     public static readonly string[] GangPositions = { "Leader", "Elder", "Member" };
     public const int MaxGangsPerGuild = 50;
     public const decimal VaultTaxPercent = 1.5m;
