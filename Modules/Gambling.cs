@@ -25,7 +25,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Roll75(decimal bet) => await GenericGamble(bet, 75, 2.6m);
 
     [Command("99+")]
-    [Summary("Roll 99 or higher on a 100 sided die, get 90x whatyou put in.")]
+    [Summary("Roll 99 or higher on a 100 sided die, get 90x what you put in.")]
     [Remarks("$99+ 120")]
     [RequireCash]
     public async Task<RuntimeResult> Roll99(decimal bet) => await GenericGamble(bet, 99, 89);

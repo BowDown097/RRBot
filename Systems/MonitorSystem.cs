@@ -151,6 +151,7 @@ public class MonitorSystem
                 pot.Members.Clear();
                 pot.Value = 0;
 
+                await MongoManager.UpdateObjectAsync(luckyDbUser);
                 await MongoManager.UpdateObjectAsync(pot);
             });
         }

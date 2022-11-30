@@ -94,10 +94,17 @@ public class Config : ModuleBase<SocketCommandContext>
 
         description.AppendLine("***Ranks***");
         DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(Context.Guild.Id);
-        foreach (KeyValuePair<int, decimal> kvp in ranks.Costs.OrderBy(kvp => kvp.Key))
+        if (ranks.Costs.Count != 0)
         {
-            SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
-            description.AppendLine($"Level {kvp.Key}: {role?.ToString() ?? "(deleted role)"} - {kvp.Value:C2}");
+            foreach (KeyValuePair<int, decimal> kvp in ranks.Costs.OrderBy(kvp => kvp.Key))
+            {
+                SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
+                description.AppendLine($"Level {kvp.Key}: {role?.ToString() ?? "(deleted role)"} - {kvp.Value:C2}");
+            }
+        }
+        else
+        {
+            description.AppendLine("None");
         }
 
         description.AppendLine("***Roles***");
@@ -111,13 +118,21 @@ public class Config : ModuleBase<SocketCommandContext>
 
         description.AppendLine("***Self Roles***");
         DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(Context.Guild.Id);
-        IMessage message = await Context.Guild.GetTextChannel(selfRoles.Channel).GetMessageAsync(selfRoles.Message);
-        string messageContent = message != null ? $"[Jump]({message.GetJumpUrl()})" : "(deleted)";
-        description.AppendLine($"Message: {messageContent}");
-        foreach (KeyValuePair<string, ulong> kvp in selfRoles.SelfRoles)
+        if (selfRoles.Channel != default)
         {
-            SocketRole role = Context.Guild.GetRole(kvp.Value);
-            description.AppendLine($"{kvp.Key}: {role?.ToString() ?? "(deleted role)"}");
+            IMessage message = await Context.Guild.GetTextChannel(selfRoles.Channel)?
+                .GetMessageAsync(selfRoles.Message);
+            string messageContent = message != null ? $"[Jump]({message.GetJumpUrl()})" : "(deleted)";
+            description.AppendLine($"Message: {messageContent}");
+            foreach (KeyValuePair<string, ulong> kvp in selfRoles.SelfRoles)
+            {
+                SocketRole role = Context.Guild.GetRole(kvp.Value);
+                description.AppendLine($"{kvp.Key}: {role?.ToString() ?? "(deleted role)"}");
+            }
+        }
+        else
+        {
+            description.AppendLine("None");
         }
 
         EmbedBuilder embed = new EmbedBuilder()

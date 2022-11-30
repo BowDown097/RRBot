@@ -9,7 +9,7 @@ public class Polls : ModuleBase<SocketCommandContext>
     [RequireStaff]
     public async Task<RuntimeResult> CreatePoll(string title, [Remainder] string choices)
     {
-        string[] pollChoices = choices.Split('|');
+        string[] pollChoices = choices.Replace("\\", "").Split('|');
         if (pollChoices.Length > 9)
             return CommandResult.FromError("A maximum of 9 choices are allowed.");
         
@@ -31,7 +31,7 @@ public class Polls : ModuleBase<SocketCommandContext>
         for (int i = 1; i <= pollChoices.Length; i++)
             await pollMsg.AddReactionAsync(new Emoji(Constants.PollEmotes[i]));
 
-        await Context.User.NotifyAsync(Context.Channel, $"Created a poll [here]({pollMsg.GetJumpUrl()}).");
+        await Context.User.NotifyAsync(Context.Channel, $"Created a poll in {pollsChannel.Mention}.");
         return CommandResult.FromSuccess();
     }
 

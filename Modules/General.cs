@@ -42,7 +42,7 @@ public class General : ModuleBase<SocketCommandContext>
         {
             DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
             if (!misc.NsfwEnabled || misc.DisabledModules.Contains("Nsfw"))
-                return CommandResult.FromError("NSFW commands are disabled!");
+                return CommandResult.FromError("​NSFW commands are disabled!");
         }
 
         StringBuilder preconditions = new();
@@ -96,7 +96,7 @@ public class General : ModuleBase<SocketCommandContext>
         {
             DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
             if (!misc.NsfwEnabled || misc.DisabledModules.Contains("Nsfw"))
-                return CommandResult.FromError("NSFW commands are disabled!");
+                return CommandResult.FromError("​NSFW commands are disabled!");
         }
 
         EmbedBuilder moduleEmbed = new EmbedBuilder()

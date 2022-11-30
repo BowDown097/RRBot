@@ -217,6 +217,9 @@ public static class LoggingSystem
     {
         IMessage msg = await msgCached.GetOrDownloadAsync();
         IMessageChannel channel = await channelCached.GetOrDownloadAsync();
+        if (channel == null || msg == null) // they're not cached sometimes :(
+            return;
+
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(msg.Author)
             .WithDescription($"**Message Deleted in {channel.Mention()}**\n{msg.Content}")

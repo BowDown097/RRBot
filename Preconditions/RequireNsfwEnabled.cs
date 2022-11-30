@@ -7,6 +7,6 @@ public class RequireNsfwEnabledAttribute : PreconditionAttribute
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(context.Guild.Id);
         return misc.NsfwEnabled || !misc.DisabledModules.Contains("Nsfw")
             ? PreconditionResult.FromSuccess()
-            : PreconditionResult.FromError("NSFW commands are disabled.");
+            : PreconditionResult.FromError("​NSFW commands are disabled.");
     }
 }
