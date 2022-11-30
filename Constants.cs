@@ -146,7 +146,7 @@ public static class Constants
     // ********************
     //       GANGS
     // ********************
-    public const decimal GangCreationCost = 4000;
+    public const decimal GangCreationCost = 5000;
     public const int GangMaxMembers = 10;
     public const decimal GangVaultCost = 5000;
     public static readonly string[] GangPositions = { "Leader", "Elder", "Member" };

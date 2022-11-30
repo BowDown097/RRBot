@@ -187,52 +187,6 @@ public class Economy : ModuleBase<SocketCommandContext>
         await MongoManager.UpdateObjectAsync(target);
         return CommandResult.FromSuccess();
     }
-
-    [Alias("kms", "selfend")]
-    [Command("suicide")]
-    [Summary("Kill yourself.")]
-    public async Task<RuntimeResult> Suicide()
-    {
-        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        DbUser temp = user;
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-
-        switch (RandomUtil.Next(4))
-        {
-            case 0:
-                await Context.User.NotifyAsync(Context.Channel, "You attempted to hang yourself, but the rope snapped. You did not die.");
-                break;
-            case 1:
-                await Context.User.NotifyAsync(Context.Channel, "You shot yourself, but somehow the bullet didn't kill you. Lucky or unlucky?");
-                break;
-            case 2:
-                await Context.User.NotifyAsync(Context.Channel, "​DAMN that shotgun made a fucking mess out of you! You're DEAD DEAD, and lost everything.");
-                await MongoManager.DeleteObjectAsync(user);
-                await user.SetCash(Context.User, 0);
-                RestoreUserData(user, temp.Btc, temp.Eth, temp.Ltc, temp.Xrp, temp.DmNotifs,
-                    temp.Stats, temp.WantsReplyPings, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
-                    temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
-                    temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
-                    temp.HuntCooldown, temp.MineCooldown, temp.HackCooldown, temp.DailyCooldown);
-                await MongoManager.UpdateObjectAsync(user);
-                break;
-            case 3:
-                await Context.User.NotifyAsync(Context.Channel, "It was quite a struggle, but the noose put you out of your misery. You lost everything.");
-                await MongoManager.DeleteObjectAsync(user);
-                await user.SetCash(Context.User, 0);
-                RestoreUserData(user, temp.Btc, temp.Eth, temp.Ltc, temp.Xrp, temp.DmNotifs,
-                    temp.Stats, temp.WantsReplyPings, temp.DealCooldown, temp.LootCooldown, temp.RapeCooldown,
-                    temp.RobCooldown, temp.ScavengeCooldown, temp.SlaveryCooldown, temp.WhoreCooldown, temp.BullyCooldown,
-                    temp.ChopCooldown, temp.DigCooldown, temp.FarmCooldown, temp.FishCooldown,
-                    temp.HuntCooldown, temp.MineCooldown, temp.HackCooldown, temp.DailyCooldown);
-                await MongoManager.UpdateObjectAsync(user);
-                break;
-        }
-
-        await MongoManager.UpdateObjectAsync(user);
-        return CommandResult.FromSuccess();
-    }
     #endregion
 
     #region Helpers
