@@ -32,10 +32,11 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [RequireCash((double)Constants.GangCreationCost)]
     public async Task<RuntimeResult> CreateGang([Remainder] string name)
     {
-        IAsyncCursor<DbGang> cursor = await MongoManager.Gangs.FindAsync(g => g.GuildId == Context.Guild.Id);
-        List<DbGang> gangs = await cursor.ToListAsync();
         if (name.Length is <= 2 or > 32 || !Regex.IsMatch(name, "^[a-zA-Z0-9\x20]*$") || await FilterSystem.ContainsFilteredWord(Context.Guild, name))
             return CommandResult.FromError("That gang name is not allowed.");
+
+        IAsyncCursor<DbGang> cursor = await MongoManager.Gangs.FindAsync(g => g.GuildId == Context.Guild.Id);
+        List<DbGang> gangs = await cursor.ToListAsync();
         if (gangs.Any(r => r.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
             return CommandResult.FromError("There is already a gang with that name.");
         if (gangs.Count == Constants.MaxGangsPerGuild)
@@ -304,6 +305,45 @@ public class Gangs : ModuleBase<SocketCommandContext>
         user.Gang = null;
 
         await Context.User.NotifyAsync(Context.Channel, "You left your gang.");
+        await MongoManager.UpdateObjectAsync(gang);
+        await MongoManager.UpdateObjectAsync(user);
+        return CommandResult.FromSuccess();
+    }
+
+    [Command("renamegang")]
+    [Summary("Rename your gang.")]
+    [Remarks("$renamegang BSD Cucks")]
+    [RequireCash((double)Constants.GangRenameCost)]
+    public async Task<RuntimeResult> RenameGang([Remainder] string name)
+    {
+        if (name.Length is <= 2 or > 32 || !Regex.IsMatch(name, "^[a-zA-Z0-9\x20]*$") || await FilterSystem.ContainsFilteredWord(Context.Guild, name))
+            return CommandResult.FromError("That gang name is not allowed.");
+        
+        // ReSharper disable once SpecifyStringComparison
+        IAsyncCursor<DbGang> cursor = await MongoManager.Gangs.FindAsync(g => g.GuildId == Context.Guild.Id
+            && g.Name.ToLower() == name.ToLower());
+        if (await cursor.AnyAsync())
+            return CommandResult.FromError("There is already a gang with that name.");
+
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        if (string.IsNullOrWhiteSpace(user.Gang))
+            return CommandResult.FromError("You are not in a gang!");
+        
+        DbGang gang = await MongoManager.FetchGangAsync(user.Gang, Context.Guild.Id);
+        if (gang.Leader != Context.User.Id)
+            return CommandResult.FromError("You are not the leader of your gang!");
+
+        gang.Name = name;
+        user.Gang = name;
+
+        foreach (KeyValuePair<ulong, string> kvp in gang.Members.Where(m => m.Key != user.UserId))
+        {
+            DbUser member = await MongoManager.FetchUserAsync(kvp.Key, Context.Guild.Id);
+            member.Gang = name;
+            await MongoManager.UpdateObjectAsync(member);
+        }
+
+        await Context.User.NotifyAsync(Context.Channel, $"Your gang has been renamed to **{name}**.");
         await MongoManager.UpdateObjectAsync(gang);
         await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
