@@ -192,7 +192,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
         await user.SetTimeOutAsync(resolved.Item1);
         await LoggingSystem.Custom_UserMuted(user, Context.User, duration, reason);
         
-        DbUser dbUser = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         dbUser.AddToStat("Mutes", "1");
         await dbUser.UnlockAchievement("Literally 1984", user, Context.Channel);
 
