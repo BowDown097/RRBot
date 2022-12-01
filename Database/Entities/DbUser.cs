@@ -39,6 +39,7 @@ public class DbUser : DbObject
     public long PacifistCooldown { get; set; }
     public List<string> PendingGangInvites { get; set; } = new();
     public Dictionary<string, long> Perks { get; set; } = new();
+    public string PreferredBibleTranslation { get; set; }
     public int Prestige { get; set; }
     public long PrestigeCooldown { get; set; }
     public long RapeCooldown { get; set; }

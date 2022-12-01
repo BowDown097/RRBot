@@ -180,6 +180,25 @@ public class Fun : ModuleBase<SocketCommandContext>
         await ReplyAsync(embed: embed.Build());
     }
 
+    [Command("prefertranslation")]
+    [Summary("Set a preferred translation of The Holy Bible.")]
+    public async Task<RuntimeResult> PreferTranslation(string translation)
+    {
+        string tLower = translation.ToLower();
+        if (tLower is not ("cherokee" or "bbe" or "kjv" or "web" or "oeb-us" or "clementine" or "almeida" or "rccv"))
+        {
+            return CommandResult.FromError("That translation is not supported: Supported translations are " +
+                                           "Cherokee, BBE, KJV, WEB, OEB-US, Clementine, Almeida, and RCCV.");
+        }
+
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        user.PreferredBibleTranslation = tLower;
+        await MongoManager.UpdateObjectAsync(user);
+
+        await Context.User.NotifyAsync(Context.Channel, "Successfully updated your preferred Bible translation.");
+        return CommandResult.FromSuccess();
+    }
+
     [Command("sneed")]
     [Summary("Sneed")]
     public async Task Sneed() => await ReplyAsync("https://static.wikia.nocookie.net/simpsons/images/1/14/Al_Sneed.png/revision/latest?cb=20210430000431");
@@ -217,20 +236,44 @@ public class Fun : ModuleBase<SocketCommandContext>
             .WithDescription(description.ToString());
         await ReplyAsync(embed: embed.Build(), components: components.Build());
     }
-
+    
+    [Alias("bible")]
     [Command("verse")]
-    [Summary("Random bible verse!")]
-    public async Task Verse()
+    [Summary("Get a verse or a range of verses from The Holy Bible.")]
+    public async Task<RuntimeResult> Verse([Remainder] string verse)
     {
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        string translation = !string.IsNullOrEmpty(user.PreferredBibleTranslation)
+            ? user.PreferredBibleTranslation : "kjv"; // KJV best translation don't @ me
+
         using HttpClient client = new();
-        string response = await client.GetStringAsync("https://labs.bible.org/api/?passage=random&type=json");
-        dynamic verse = JArray.Parse(response)[0];
+        string response = await client.GetStringAsync($"https://bible-api.com/{verse}?translation={translation}");
+        if (response.Contains("not found"))
+            return CommandResult.FromError("Invalid verse input! Here's an example to help you out: ``John 3:16-19``");
+
+        JObject responseObj = JObject.Parse(response);
+        string reference = responseObj["reference"].ToString();
+        string translationName = responseObj["translation_name"].ToString();
+        JArray verses = responseObj["verses"] as JArray;
+
+        StringBuilder description = new();
+        foreach (JToken verseObj in verses)
+        {
+            string text = verseObj["text"].ToString().Trim().ReplaceLineEndings("") + " ";
+            int verseNum = verseObj["verse"]?.Value<int>() ?? 0;
+            if (verses.Count > 1)
+                text = $"**[{verseNum}]** " + text;
+            description.Append(text);
+        }
 
         EmbedBuilder embed = new EmbedBuilder()
-            .WithColor(Color.Red)
-            .WithTitle($"{verse.bookname} {verse.chapter}:{verse.verse}")
-            .WithDescription(verse.text);
+            .WithColor(Color.Gold)
+            .WithTitle(reference)
+            .WithDescription(description.ToString())
+            .WithFooter($"Translation: {translationName}");
         await ReplyAsync(embed: embed.Build());
+
+        return CommandResult.FromSuccess();
     }
 
     [Command("waifu")]
