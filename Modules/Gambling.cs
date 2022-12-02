@@ -129,6 +129,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You are already using the slot machine!");
 
         user.UsingSlots = true;
+        await MongoManager.UpdateObjectAsync(user);
 
         decimal payoutMult = 1;
         EmbedBuilder embed = new EmbedBuilder()
@@ -162,6 +163,8 @@ public class Gambling : ModuleBase<SocketCommandContext>
             payoutMult = Constants.SlotsMultTwoinarow;
 
         user.UsingSlots = false;
+        await MongoManager.UpdateObjectAsync(user);
+
         if (payoutMult > 1)
         {
             decimal payout = bet * payoutMult - bet;
