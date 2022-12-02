@@ -99,10 +99,11 @@ public class Fun : ModuleBase<SocketCommandContext>
     }
 
     [Command("gay")]
-    [Summary("See how gay a user is.")]
+    [Summary("See how gay you or another user is.")]
     [Remarks("$gay luner")]
-    public async Task Gay([Remainder] IGuildUser user)
+    public async Task Gay([Remainder] IGuildUser user = null)
     {
+        user ??= Context.User as IGuildUser;
         int gay = !user.IsBot ? RandomUtil.Next(1, 101) : 0;
         string title = gay switch
         {
@@ -115,7 +116,9 @@ public class Fun : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle(title)
-            .WithDescription($"{user.Sanitize()} is {gay}% gay.");
+            .WithDescription(user.Id == Context.User.Id
+                ? $"You are {gay}% gay."
+                : $"{user.Sanitize()} is {gay}% gay.");
         await ReplyAsync(embed: embed.Build());
     }
 
@@ -160,10 +163,11 @@ public class Fun : ModuleBase<SocketCommandContext>
     }
 
     [Command("penis")]
-    [Summary("See how big a user's penis is.")]
+    [Summary("See how big a user's penis is, or your own.")]
     [Remarks("$penis Arctic Hawk")]
-    public async Task Penis([Remainder] IGuildUser user)
+    public async Task Penis([Remainder] IGuildUser user = null)
     {
+        user ??= Context.User as IGuildUser;
         int equals = !user.IsBot ? RandomUtil.Next(1, 16) : 20;
         string title = equals switch
         {
@@ -176,7 +180,9 @@ public class Fun : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle(title)
-            .WithDescription($"{user.Sanitize()}'s penis: {"8" + new string('=', equals) + "D"}");
+            .WithDescription(user.Id == Context.User.Id
+                ? $"Your penis: {"8" + new string('=', equals) + "D"}"
+                : $"{user.Sanitize()}'s penis: {"8" + new string('=', equals) + "D"}");
         await ReplyAsync(embed: embed.Build());
     }
 

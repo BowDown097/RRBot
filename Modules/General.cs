@@ -185,10 +185,11 @@ public class General : ModuleBase<SocketCommandContext>
 
     [Alias("whois", "profile", "memberinfo")]
     [Command("userinfo")]
-    [Summary("View info about a user.")]
+    [Summary("View info about yourself or another user.")]
     [Remarks("$userinfo Moth")]
-    public async Task UserInfo([Remainder] SocketGuildUser user)
+    public async Task UserInfo([Remainder] SocketGuildUser user = null)
     {
+        user ??= Context.User as SocketGuildUser;
         IEnumerable<string> perms = user.GuildPermissions.ToList().Select(p => Enum.GetName(p).SplitPascalCase());
 
         EmbedBuilder embed = new EmbedBuilder()
