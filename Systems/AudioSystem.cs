@@ -151,7 +151,7 @@ public sealed class AudioSystem
         }
 
         if (track.Identifier == "restricted")
-            return CommandResult.FromError("A result was found, but is age restricted. Age restricted content can only be played if the NSFW module is enabled.");
+            return CommandResult.FromError("A result was found, but is age restricted. Age restricted content can be enabled if an admin runs $togglensfw.");
         if (track is null)
             return CommandResult.FromError("No results were found. Either your search query didn't return anything or your URL is unsupported.");
         if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && !track.IsLiveStream && track.Duration.TotalSeconds > 7200)

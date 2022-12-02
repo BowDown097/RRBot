@@ -403,7 +403,7 @@ public class Config : ModuleBase<SocketCommandContext>
     }
 
     [Command("togglensfw")]
-    [Summary("Toggle the NSFW module.")]
+    [Summary("Enable NSFW content to be played with the music feature.")]
     public async Task ToggleNsfw()
     {
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);

@@ -38,13 +38,6 @@ public class General : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You have specified a nonexistent command!");
 
         CommandInfo commandInfo = search.Commands[0].Command;
-        if (commandInfo.TryGetPrecondition<RequireNsfwEnabledAttribute>())
-        {
-            DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
-            if (!misc.NsfwEnabled || misc.DisabledModules.Contains("Nsfw"))
-                return CommandResult.FromError("​NSFW commands are disabled!");
-        }
-
         StringBuilder preconditions = new();
         if (commandInfo.TryGetPrecondition<CheckPacifistAttribute>())
             preconditions.AppendLine("Requires not having the Pacifist perk equipped");
@@ -52,8 +45,6 @@ public class General : ModuleBase<SocketCommandContext>
             preconditions.AppendLine($"Requires {(requireCashAttr.Cash > 0.01m ? requireCashAttr.Cash.ToString("C2") : "any amount of cash")}");
         if (commandInfo.TryGetPrecondition<RequireDjAttribute>())
             preconditions.AppendLine("Requires DJ");
-        if (commandInfo.TryGetPrecondition<RequireNsfwAttribute>())
-            preconditions.AppendLine("Must be in NSFW channel");
         if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>())
             preconditions.AppendLine("Requires Bot Owner");
         if (commandInfo.TryGetPrecondition<RequirePerkAttribute>())
@@ -91,13 +82,6 @@ public class General : ModuleBase<SocketCommandContext>
         ModuleInfo moduleInfo = Commands.Modules.FirstOrDefault(m => m.Name.Equals(module, StringComparison.OrdinalIgnoreCase));
         if (moduleInfo == default)
             return CommandResult.FromError("You have specified a nonexistent module!");
-
-        if (moduleInfo.Name == "Nsfw")
-        {
-            DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
-            if (!misc.NsfwEnabled || misc.DisabledModules.Contains("Nsfw"))
-                return CommandResult.FromError("​NSFW commands are disabled!");
-        }
 
         EmbedBuilder moduleEmbed = new EmbedBuilder()
             .WithColor(Color.Red)

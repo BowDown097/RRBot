@@ -29,7 +29,6 @@ This bot is JAM-PACKED with features done like no other, such as:
 - 🧹 **Moderation**
 - 📻 **Music**
     - 🥇 Supports literally HUNDREDS of websites, as well as direct links and attachments. Completely unmatched.
-- 🔞 **NSFW** (optional of course)
 - 🗳️ **Polls**
     - 🏛️ Easy to set up elections, perfect for democratic servers
 
