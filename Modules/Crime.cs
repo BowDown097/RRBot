@@ -72,8 +72,8 @@ public class Crime : ModuleBase<SocketCommandContext>
         
         DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         DbUser target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
-        if (author.UsingSlots || target.UsingSlots)
-            return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
+        if (target.UsingSlots)
+            return CommandResult.FromError($"**{user.Sanitize()}** is currently gambling. They cannot do any transactions at the moment.");
         if (target.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError($"You cannot hack **{user.Sanitize()}** as they have the Pacifist perk equipped.");
 
@@ -155,8 +155,8 @@ public class Crime : ModuleBase<SocketCommandContext>
         
         DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         DbUser target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
-        if (author.UsingSlots || target.UsingSlots)
-            return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
+        if (target.UsingSlots)
+            return CommandResult.FromError($"**{user.Sanitize()}** is currently gambling. They cannot do any transactions at the moment.");
         if (target.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError($"You cannot rape **{user.Sanitize()}** as they have the Pacifist perk equipped.");
         if (target.Cash < 0.01m)
@@ -202,8 +202,8 @@ public class Crime : ModuleBase<SocketCommandContext>
         
         DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         DbUser target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
-        if (author.UsingSlots || target.UsingSlots)
-            return CommandResult.FromError("One of you is using the slot machine. I cannot do any transactions at the moment.");
+        if (target.UsingSlots)
+            return CommandResult.FromError($"**{user.Sanitize()}** is currently gambling. They cannot do any transactions at the moment.");
         if (target.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError($"You cannot rob **{user.Sanitize()}** as they have the Pacifist perk equipped.");
 
@@ -389,9 +389,6 @@ public class Crime : ModuleBase<SocketCommandContext>
         long duration, bool hasMehOutcome = false)
     {
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-
         double winOdds = user.Perks.ContainsKey("Speed Demon") ? Constants.GenericCrimeWinOdds * 0.95 : Constants.GenericCrimeWinOdds;
         if (RandomUtil.NextDouble(100) < winOdds)
         {

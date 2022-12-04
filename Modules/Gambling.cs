@@ -36,9 +36,6 @@ public class Gambling : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Double()
     {
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-
         if (RandomUtil.Next(100) < Constants.DoubleOdds)
         {
             StatUpdate(user, true, user.Cash);
@@ -86,8 +83,6 @@ public class Gambling : ModuleBase<SocketCommandContext>
         }
         else
         {
-            if (user.UsingSlots)
-                return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
             if (amount < Constants.TransactionMin)
                 return CommandResult.FromError($"You need to pitch in at least {Constants.TransactionMin:C2}.");
             if (user.Cash < amount)
@@ -125,8 +120,6 @@ public class Gambling : ModuleBase<SocketCommandContext>
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (user.Cash < bet)
             return CommandResult.FromError("You can't bet more than what you have!");
-        if (user.UsingSlots)
-            return CommandResult.FromError("You are already using the slot machine!");
 
         user.UsingSlots = true;
         await MongoManager.UpdateObjectAsync(user);
@@ -163,7 +156,6 @@ public class Gambling : ModuleBase<SocketCommandContext>
             payoutMult = Constants.SlotsMultTwoinarow;
 
         user.UsingSlots = false;
-        await MongoManager.UpdateObjectAsync(user);
 
         if (payoutMult > 1)
         {
@@ -244,8 +236,6 @@ public class Gambling : ModuleBase<SocketCommandContext>
             return CommandResult.FromError($"You need to bet at least {Constants.TransactionMin:C2}.");
             
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (user.Cash < bet)
             return CommandResult.FromError("You can't bet more than what you have!");
 

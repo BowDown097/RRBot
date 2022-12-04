@@ -63,8 +63,6 @@ public static class ItemSystem
 
     public static async Task<RuntimeResult> BuyCrate(Crate crate, IUser user, DbUser dbUser, ISocketMessageChannel channel, bool notify = true)
     {
-        if (dbUser.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (dbUser.Crates.Count(s => s == crate.Name) == 10)
             return CommandResult.FromError($"You already have the maximum amount of {crate} crates (10).");
         if (crate.Price > dbUser.Cash)
@@ -79,8 +77,6 @@ public static class ItemSystem
 
     public static async Task<RuntimeResult> BuyPerk(Perk perk, SocketUser user, DbUser dbUser, ISocketMessageChannel channel)
     {
-        if (dbUser.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (dbUser.Perks.ContainsKey("Pacifist"))
             return CommandResult.FromError("You have the Pacifist perk and cannot buy another.");
         if (!dbUser.Perks.ContainsKey("Multiperk") && dbUser.Perks.Count == 1 && perk.Name is not ("Pacifist" or "Multiperk"))
@@ -125,12 +121,8 @@ public static class ItemSystem
 
     public static async Task<RuntimeResult> BuyTool(Tool tool, SocketUser user, DbUser dbUser, ISocketMessageChannel channel)
     {
-        if (dbUser.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-
         if (dbUser.Tools.Contains(tool.Name))
             return CommandResult.FromError($"You already have a {tool}!");
-
         if (tool.Price > dbUser.Cash)
             return CommandResult.FromError($"You do not have enough to buy a {tool}!");
 

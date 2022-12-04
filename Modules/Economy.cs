@@ -174,8 +174,8 @@ public class Economy : ModuleBase<SocketCommandContext>
         
         DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         DbUser target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
-        if (author.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
+        if (target.UsingSlots)
+            return CommandResult.FromError($"**{user.Sanitize()}** is currently gambling. They cannot do any transactions at the moment.");
         if (author.Cash < amount)
             return CommandResult.FromError("You do not have that much money!");
 

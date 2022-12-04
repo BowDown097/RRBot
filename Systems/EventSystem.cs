@@ -155,6 +155,7 @@ public class EventSystem
         await FilterSystem.DoScamCheckAsync(userMsg, context.Guild);
 
         int argPos = 0;
+        DbUser user = await MongoManager.FetchUserAsync(context.User.Id, context.Guild.Id);
         if (userMsg.HasStringPrefix(Constants.Prefix, ref argPos))
         {
             Discord.Commands.SearchResult search = _commands.Search(msg.Content[argPos..]);
@@ -188,12 +189,16 @@ public class EventSystem
                 return;
             }
 
+            if (user.UsingSlots)
+            {
+                await context.User.NotifyAsync(context.Channel, "You appear to be currently using the slot machine. To be safe, you cannot run any command until it is finished.");
+                return;
+            }
+
             await _commands.ExecuteAsync(context, argPos, _serviceProvider);
         }
         else
         {
-            DbUser user = await MongoManager.FetchUserAsync(context.User.Id, context.Guild.Id);
-
             if (user.TimeTillCash == 0)
             {
                 user.TimeTillCash = DateTimeOffset.UtcNow.ToUnixTimeSeconds(Constants.MessageCashCooldown);

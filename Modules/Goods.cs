@@ -54,9 +54,6 @@ public class Goods : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Discard([Remainder] string itemName)
     {
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-
         Item item = ItemSystem.GetItem(itemName);
         switch (item)
         {

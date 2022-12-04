@@ -10,8 +10,6 @@ public class Gangs : ModuleBase<SocketCommandContext>
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (string.IsNullOrWhiteSpace(user.Gang))
             return CommandResult.FromError("You are not in a gang!");
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         
         DbGang gang = await MongoManager.FetchGangAsync(user.Gang, Context.Guild.Id);
         if (gang.VaultUnlocked)
@@ -45,8 +43,6 @@ public class Gangs : ModuleBase<SocketCommandContext>
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (!string.IsNullOrWhiteSpace(user.Gang))
             return CommandResult.FromError("You are already in a gang!");
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
  
         user.Gang = name;
         await user.SetCash(Context.User, user.Cash - Constants.GangCreationCost);
@@ -75,8 +71,6 @@ public class Gangs : ModuleBase<SocketCommandContext>
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (string.IsNullOrWhiteSpace(user.Gang))
             return CommandResult.FromError("You are not in a gang!");
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (user.Cash < amount)
             return CommandResult.FromError("You do not have that much money!");
         
@@ -463,8 +457,6 @@ public class Gangs : ModuleBase<SocketCommandContext>
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (string.IsNullOrWhiteSpace(user.Gang))
             return CommandResult.FromError("You are not in a gang!");
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         
         DbGang gang = await MongoManager.FetchGangAsync(user.Gang, Context.Guild.Id);
         if (!gang.VaultUnlocked)

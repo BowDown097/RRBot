@@ -17,8 +17,6 @@ public class Investments : ModuleBase<SocketCommandContext>
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
         
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
         if (user.Cash < amount)
             return CommandResult.FromError("You can't invest more than what you have!");
 
@@ -106,9 +104,6 @@ public class Investments : ModuleBase<SocketCommandContext>
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
             
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        if (user.UsingSlots)
-            return CommandResult.FromError("You appear to be currently gambling. I cannot do any transactions at the moment.");
-
         decimal cryptoBal = (decimal)user[abbreviation];
         if (cryptoBal < Constants.InvestmentMinAmount)
             return CommandResult.FromError($"You have no {abbreviation.ToUpper()}!");
