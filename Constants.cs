@@ -191,7 +191,7 @@ public static class Constants
     //      PRESTIGE
     // ********************
     public const int MaxPrestige = 10;
-    public const long PrestigeCooldown = 86400;
+    public const long PrestigeCooldown = 43200;
     public static readonly Dictionary<int, string> PrestigeImages = new()
     {
         { 1, "https://static.wikia.nocookie.net/callofduty/images/e/e8/Prestige_1_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219030716" },

@@ -23,6 +23,7 @@ public class DecimalTypeReader : TypeReader
                     ? TypeReaderResult.FromError(CommandError.ParseFailed, $"**{crypto}** is not a currently accepted currency!")
                     : TypeReaderResult.FromSuccess((decimal)user[abbreviation]);
             case "withdrawvault":
+            case "wv":
                 DbGang gang = await MongoManager.FetchGangAsync(user.Gang, context.Guild.Id);
                 return TypeReaderResult.FromSuccess(gang.VaultBalance);
             default:

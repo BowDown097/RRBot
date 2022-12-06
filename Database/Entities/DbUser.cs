@@ -156,11 +156,11 @@ public class DbUser : DbObject
         // speed demon cooldown reducer
         if (Perks.ContainsKey("Speed Demon"))
             secs = (long)(secs * 0.85);
-        // highest rank cooldown reducer
+        // 4th rank cooldown reducer
         DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(guild.Id);
-        ulong highest = ranks.Ids.OrderByDescending(kvp => kvp.Key).FirstOrDefault().Value;
-        if (user.GetRoleIds().Contains(highest))
-            secs = (long)(secs * 0.80);
+        ulong fourth = ranks.Ids.FirstOrDefault(kvp => kvp.Key == 4).Value;
+        if (user.GetRoleIds().Contains(fourth))
+            secs = (long)(secs * 0.8);
         // cocaine cooldown reducer
         secs = (long)(secs * (1 - 0.10 * UsedConsumables["Cocaine"]));
 
