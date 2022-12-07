@@ -67,6 +67,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
     [Command("eval")]
     [Summary("Execute C# code.")]
     [Remarks("$eval Context.Channel.SendMessageAsync(\"Mods are fat\");")]
+    [DoNotSanitize]
     public async Task<RuntimeResult> Eval([Remainder] string code)
     {
         try
@@ -95,6 +96,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
     [Command("evalsilent")]
     [Summary("Evaluate C# code with no output.")]
     [Remarks("$evalsilent Context.Channel.SendMessageAsync(\"Mods are obese\");")]
+    [DoNotSanitize]
     public async Task EvalSilent([Remainder] string code)
     {
         await Context.Message.DeleteAsync();

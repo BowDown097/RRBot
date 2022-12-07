@@ -91,7 +91,7 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
         {
             if (processedGangs == 10 || gang.VaultBalance < Constants.InvestmentMinAmount)
                 break;
-            lb.AppendLine($"{processedGangs + 1}: **{Format.Sanitize(gang.Name).Replace("\\:", ":").Replace("\\/", "/").Replace("\\.", ".")}**: {gang.VaultBalance:C2}");
+            lb.AppendLine($"{processedGangs + 1}: **{gang.Name}**: {gang.VaultBalance:C2}");
             processedGangs++;
         }
 

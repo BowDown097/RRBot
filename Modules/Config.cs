@@ -228,6 +228,7 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("filterword")]
     [Summary("Add a word to filter using the filter system. Word must only contain the characters abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.")]
     [Remarks("$filterword niggardly")]
+    [DoNotSanitize]
     public async Task<RuntimeResult> FilterWord(string word)
     {
         StringBuilder regexString = new();
@@ -425,6 +426,7 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("unfilterword")]
     [Summary("Remove a word from the filter system.")]
     [Remarks("$unfilterword niggardly")]
+    [DoNotSanitize]
     public async Task<RuntimeResult> UnfilterWord(string word)
     {
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);

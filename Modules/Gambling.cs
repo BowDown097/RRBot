@@ -188,7 +188,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
             if (bet >= 1000000)
                 await user.UnlockAchievement("I Just Feel Bad", Context.User, Context.Channel);
             await Context.User.NotifyAsync(Context.Channel, $"You won nothing! Well, you can't win 'em all. You lost **{bet:C2}**." +
-                $"\nBalance: {totalCash:C2}");
+                                                            $"\nBalance: {totalCash:C2}");
         }
 
         await MongoManager.UpdateObjectAsync(user);

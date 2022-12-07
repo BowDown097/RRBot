@@ -7,9 +7,10 @@ public class Polls : ModuleBase<SocketCommandContext>
     [Summary("Create a poll.")]
     [Remarks("$createpoll \"Is John gay?\" yes|yes|yes|yes|yes|yes|for sure|100%|confident")]
     [RequireStaff]
+    [DoNotSanitize]
     public async Task<RuntimeResult> CreatePoll(string title, [Remainder] string choices)
     {
-        string[] pollChoices = choices.Replace("\\", "").Split('|');
+        string[] pollChoices = choices.Split('|');
         if (pollChoices.Length > 9)
             return CommandResult.FromError("A maximum of 9 choices are allowed.");
         

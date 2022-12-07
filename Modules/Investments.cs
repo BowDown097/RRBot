@@ -14,7 +14,7 @@ public class Investments : ModuleBase<SocketCommandContext>
 
         string abbreviation = ResolveAbbreviation(crypto);
         if (abbreviation is null)
-            return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
+            return CommandResult.FromError("That is not a currently accepted currency!");
         
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (user.Cash < amount)
@@ -101,7 +101,7 @@ public class Investments : ModuleBase<SocketCommandContext>
 
         string abbreviation = ResolveAbbreviation(crypto);
         if (abbreviation is null)
-            return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
+            return CommandResult.FromError("That is not a currently accepted currency!");
             
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         decimal cryptoBal = (decimal)user[abbreviation];
@@ -121,7 +121,7 @@ public class Investments : ModuleBase<SocketCommandContext>
         user.AddToStat($"Money Gained from {abbreviation.ToUpper()}", finalValue.ToString("C2", culture));
 
         await Context.User.NotifyAsync(Context.Channel, $"You withdrew **{amount:0.####}** {abbreviation.ToUpper()}, currently valued at **{cryptoValue:C2}**.\n" +
-            $"A {Constants.InvestmentFeePercent}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
+                                                        $"A {Constants.InvestmentFeePercent}% withdrawal fee was taken from this amount, leaving you **{finalValue:C2}** richer.");
         await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }

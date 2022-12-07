@@ -8,6 +8,7 @@ public class Music : ModuleBase<SocketCommandContext>
     [Summary("Dequeue all tracks with a specific name.")]
     [Remarks("$dequeue kiminosei")]
     [RequireDj]
+    [DoNotSanitize]
     public async Task<RuntimeResult> Dequeue([Remainder] string name) => await AudioSystem.DequeueAllWithNameAsync(Context, name);
 
     [Alias("fs")]
@@ -29,6 +30,7 @@ public class Music : ModuleBase<SocketCommandContext>
     [Command("play")]
     [Summary("Play something from YouTube or SoundCloud.")]
     [Remarks("$play ram ranch 200")]
+    [DoNotSanitize]
     public async Task<RuntimeResult> Play([Remainder] string url = "") => await AudioSystem.PlayAsync(Context, url);
 
     [Alias("list")]

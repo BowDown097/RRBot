@@ -21,7 +21,7 @@ public class Goods : ModuleBase<SocketCommandContext>
             Crate crate => await ItemSystem.BuyCrate(crate, Context.User, user, Context.Channel),
             Perk perk => await ItemSystem.BuyPerk(perk, Context.User, user, Context.Channel),
             Tool tool => await ItemSystem.BuyTool(tool, Context.User, user, Context.Channel),
-            _ => CommandResult.FromError($"**{itemName}** is not an item!"),
+            _ => CommandResult.FromError("That is not an item!"),
         };
 
         await MongoManager.UpdateObjectAsync(user);
@@ -87,7 +87,7 @@ public class Goods : ModuleBase<SocketCommandContext>
                 await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{item.Price * 0.9m:C2}**.");
                 break;
             default:
-                return CommandResult.FromError($"**{itemName}** is not an item!");
+                return CommandResult.FromError("That is not an item!");
         }
 
         await MongoManager.UpdateObjectAsync(user);
@@ -101,7 +101,7 @@ public class Goods : ModuleBase<SocketCommandContext>
     {
         Item item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
         if (item == null)
-            return CommandResult.FromError($"**{itemName}** is not an item!");
+            return CommandResult.FromError("That is not an item!");
 
         EmbedBuilder embed = item switch
         {
@@ -188,7 +188,7 @@ public class Goods : ModuleBase<SocketCommandContext>
     {
         crateName = crateName.Replace(" crate", "");
         if (ItemSystem.GetItem(crateName) is not Crate crate)
-            return CommandResult.FromError($"**{crateName}** is not a crate!");
+            return CommandResult.FromError("That is not a crate!");
         
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (!user.Crates.Remove(crate.Name))
@@ -256,7 +256,7 @@ public class Goods : ModuleBase<SocketCommandContext>
     {
         Item item = ItemSystem.GetItem(name);
         if (item is null)
-            return CommandResult.FromError($"**{name}** is not an item!");
+            return CommandResult.FromError("That is not an item!");
         if (item is not Consumable con)
             return CommandResult.FromError($"**{item}** is not a consumable!");
         

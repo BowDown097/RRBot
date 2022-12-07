@@ -3,7 +3,7 @@ public sealed class AudioSystem
 {
     private readonly IAudioService _audioService;
 
-    public AudioSystem(IAudioService audioService) => this._audioService = audioService;
+    public AudioSystem(IAudioService audioService) => _audioService = audioService;
 
     public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, float volume)
     {
@@ -118,7 +118,6 @@ public sealed class AudioSystem
         if (string.IsNullOrWhiteSpace(query))
             return CommandResult.FromError("You must provide a search query or video attachment.");
 
-        query = query.Replace("\\", "");
         SocketGuildUser user = context.User as SocketGuildUser;
         if (user.VoiceChannel is null)
             return CommandResult.FromError("You must be in a voice channel.");
@@ -149,11 +148,11 @@ public sealed class AudioSystem
         {
             track = await _audioService.RrGetTrackAsync(query, context.User, SearchMode.YouTube);
         }
-
-        if (track.Identifier == "restricted")
-            return CommandResult.FromError("A result was found, but is age restricted. Age restricted content can be enabled if an admin runs $togglensfw.");
+        
         if (track is null)
             return CommandResult.FromError("No results were found. Either your search query didn't return anything or your URL is unsupported.");
+        if (track.Identifier == "restricted")
+            return CommandResult.FromError("A result was found, but is age restricted. Age restricted content can be enabled if an admin runs $togglensfw.");
         if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && !track.IsLiveStream && track.Duration.TotalSeconds > 7200)
             return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
 

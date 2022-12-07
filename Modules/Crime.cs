@@ -10,6 +10,7 @@ public class Crime : ModuleBase<SocketCommandContext>
     [Summary("Change the nickname of any victim you wish!")]
     [Remarks("$bully \"John Boyer#2168\" gay lol")]
     [RequireCooldown("BullyCooldown", "You cannot bully anyone for {0}.")]
+    [DoNotSanitize]
     public async Task<RuntimeResult> Bully(IGuildUser user, [Remainder] string nickname)
     {
         if (await FilterSystem.ContainsFilteredWord(Context.Guild, nickname))
@@ -31,7 +32,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 
         await user.ModifyAsync(props => props.Nickname = nickname);
         await LoggingSystem.Custom_UserBullied(user, Context.User, nickname);
-        await Context.User.NotifyAsync(Context.Channel, $"You BULLIED **{user.Sanitize()}** to ``{nickname}``!");
+        await Context.User.NotifyAsync(Context.Channel, $"You BULLIED **{user.Sanitize()}** to **{StringCleaner.Sanitize(nickname)}**!");
         
         DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         await author.SetCooldown("BullyCooldown", Constants.BullyCooldown, Context.Guild, Context.User);
@@ -227,11 +228,11 @@ public class Crime : ModuleBase<SocketCommandContext>
             {
                 case 0:
                     await Context.User.NotifyAsync(Context.Channel, $"You beat the shit out of **{user.Sanitize()}** and took **{amount:C2}** from their ass!" +
-                        $"\nBalance: {author.Cash:C2}");
+                                                                    $"\nBalance: {author.Cash:C2}");
                     break;
                 case 1:
                     await Context.User.NotifyAsync(Context.Channel, $"You walked up to **{user.Sanitize()}** and yoinked **{amount:C2}** straight from their pocket, without a trace." +
-                        $"\nBalance: {author.Cash:C2}");
+                                                                    $"\nBalance: {author.Cash:C2}");
                     break;
             }
         }
@@ -243,11 +244,11 @@ public class Crime : ModuleBase<SocketCommandContext>
             {
                 case 0:
                     await Context.User.NotifyAsync(Context.Channel, $"You yoinked the money from **{user.Sanitize()}**, but they noticed and shanked you when you were on your way out." +
-                        $" You lost all the resources in the process.\nBalance: {author.Cash:C2}");
+                                                                    $" You lost all the resources in the process.\nBalance: {author.Cash:C2}");
                     break;
                 case 1:
                     await Context.User.NotifyAsync(Context.Channel, "The dude happened to be a fed and threw your ass straight into jail. You lost all the resources in the process." +
-                        $"\nBalance: {author.Cash:C2}");
+                                                                    $"\nBalance: {author.Cash:C2}");
                     break;
             }
         }

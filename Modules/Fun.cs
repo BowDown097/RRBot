@@ -22,7 +22,7 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Alias("definition")]
     [Command("define")]
     [Summary("Define a term.")]
-    [Remarks("$define penis")]
+    [Remarks("$define dog")]
     public async Task<RuntimeResult> Define([Remainder] string term)
     {
         if (await FilterSystem.ContainsFilteredWord(Context.Guild, term))

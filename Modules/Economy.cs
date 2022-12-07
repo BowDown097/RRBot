@@ -221,35 +221,5 @@ public class Economy : ModuleBase<SocketCommandContext>
 
         return builder.ToString();
     }
-
-    private static void RestoreUserData(DbUser user, decimal btc, decimal eth, decimal ltc, decimal xrp,
-        bool dmNotifs, Dictionary<string, string> stats, bool wantsReplyPings, long dealCd, long lootCd,
-        long rapeCd, long robCd, long scavengeCd, long slaveryCd, long whoreCd, long bullyCd, long chopCd, long digCd,
-        long farmCd, long fishCd, long huntCd, long mineCd, long hackCd, long dailyCd)
-    {
-        user.Btc = btc;
-        user.Eth = eth;
-        user.Ltc = ltc;
-        user.Xrp = xrp;
-        user.DmNotifs = dmNotifs;
-        user.WantsReplyPings = wantsReplyPings;
-        user.Stats = stats;
-        user.DealCooldown = dealCd;
-        user.LootCooldown = lootCd;
-        user.RapeCooldown = rapeCd;
-        user.RobCooldown = robCd;
-        user.ScavengeCooldown = scavengeCd;
-        user.SlaveryCooldown = slaveryCd;
-        user.WhoreCooldown = whoreCd;
-        user.BullyCooldown = bullyCd;
-        user.ChopCooldown = chopCd;
-        user.DigCooldown = digCd;
-        user.FarmCooldown = farmCd;
-        user.FishCooldown = fishCd;
-        user.HuntCooldown = huntCd;
-        user.MineCooldown = mineCd;
-        user.HackCooldown = hackCd;
-        user.DailyCooldown = dailyCd;
-    }
     #endregion
 }

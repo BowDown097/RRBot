@@ -117,6 +117,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Command("removestat")]
     [Summary("Removes a user's stat.")]
     [Remarks("$removestat cashmere Bitches")]
+    [DoNotSanitize]
     public async Task<RuntimeResult> RemoveStat(IGuildUser user, [Remainder] string stat)
     {
         DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
@@ -214,6 +215,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     [Command("setstat")]
     [Summary("Set a stat for a user.")]
     [Remarks("$setstat BowDown097 Mutes 100")]
+    [DoNotSanitize]
     public async Task SetStat(IGuildUser user, string stat, string value)
     {
         DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
