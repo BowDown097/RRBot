@@ -14,6 +14,7 @@ public static class Constants
         new("Luckiest Dude Alive", "Win $69.69."),
         new("Literally 1984", "Get muted."),
         new("Maxed!", "Reach the max prestige.", 1420),
+        new("OH BABY A TRIPLE", "Roll triples in $dice."),
         new("Prestiged!", "Get your first prestige.", 1000),
         new("Pretty Damn Lucky", "Win $99+.")
     };
@@ -22,6 +23,7 @@ public static class Constants
         "I Just Feel Bad",
         "Jackpot!",
         "Luckiest Dude Alive",
+        "OH BABY A TRIPLE",
         "Pretty Damn Lucky"
     };
     // ********************
@@ -138,6 +140,7 @@ public static class Constants
     // ********************
     //       GAMBLING
     // ********************
+    public const string DiceEmojis = "⚀⚁⚂⚃⚄⚅";
     public const double DoubleOdds = 45;
     public const decimal PotFee = 3;
     public const decimal SlotsMultThreeinarow = 4;

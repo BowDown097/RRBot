@@ -30,6 +30,65 @@ public class Gambling : ModuleBase<SocketCommandContext>
     [RequireCash]
     public async Task<RuntimeResult> Roll99(decimal bet) => await GenericGamble(bet, 99, 89);
 
+    [Alias("chuckaluck", "birdcage")]
+    [Command("dice")]
+    [Summary("Play a simple game of Chuck-a-luck, AKA Birdcage.\nIf you don't know how it works: The player bets on a number. Three dice are rolled. The number appearing once gives a 1:1 payout, twice a 2:1, and thrice a 10:1.")]
+    [RequireCash]
+    public async Task<RuntimeResult> Dice(decimal bet, int number)
+    {
+        if (bet < Constants.TransactionMin)
+            return CommandResult.FromError($"You need to bet at least {Constants.TransactionMin:C2}.");
+        if (number is < 1 or > 6)
+            return CommandResult.FromError("Your number needs to be between 1 and 6.");
+        
+        DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        if (user.Cash < bet)
+            return CommandResult.FromError("You can't bet more than what you have!");
+
+        int[] rolls = { RandomUtil.Next(1, 7), RandomUtil.Next(1, 7), RandomUtil.Next(1, 7) };
+        int matches = rolls.Count(r => r == number);
+        string rollsText = string.Join(' ', new[]
+        {
+            Constants.DiceEmojis[rolls[0] - 1],
+            Constants.DiceEmojis[rolls[1] - 1],
+            Constants.DiceEmojis[rolls[2] - 1]
+        });
+
+        StringBuilder description = new(rollsText + "\n\n");
+        description.AppendLine(matches switch
+        {
+            1 => "Good stuff! 1 match. You got paid out your bet.",
+            2 => $"DOUBLES! Now we're cooking with gas. You got paid out DOUBLE your bet (**{bet * 2:C2}**).",
+            3 => $"WOOOAAHHH! Good shit, man! That's a fine set of **TRIPLES** you just rolled. You got paid out **TEN TIMES** your bet (**{bet * 10:C2}**).",
+            _ => $"Well damn! There were no matches with your number. Sucks to be you, because you lost **{bet:C2}**."
+        });
+
+        decimal payout = matches >= 1 ? bet * matches : -bet;
+        decimal totalCash = user.Cash + payout;
+        description.AppendLine($"Balance: {totalCash:C2}");
+
+        if (matches == 3)
+            await user.UnlockAchievement("OH BABY A TRIPLE", Context.User, Context.Channel);
+        
+        if (user.GamblingMultiplier > 1)
+        {
+            decimal multiplierCash = payout * user.GamblingMultiplier - payout;
+            description.AppendLine($"*(+{multiplierCash:C2} from gambling multiplier)*");
+            totalCash += multiplierCash;
+        }
+        
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Red)
+            .WithTitle("Let's see your roll...")
+            .WithDescription(description.ToString());
+        await ReplyAsync(embed: embed.Build());
+        
+        StatUpdate(user, matches != 0, matches != 0 ? payout : bet);
+        await user.SetCash(Context.User, totalCash);
+        await MongoManager.UpdateObjectAsync(user);
+        return CommandResult.FromSuccess();
+    }
+
     [Command("double")]
     [Summary("Double your cash...?")]
     [RequireCash]
@@ -156,6 +215,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
             payoutMult = Constants.SlotsMultTwoinarow;
 
         user.UsingSlots = false;
+        await MongoManager.UpdateObjectAsync(user);
 
         if (payoutMult > 1)
         {
