@@ -157,6 +157,10 @@ public static class Constants
     public const int MaxGangsPerGuild = 50;
     public const decimal VaultTaxPercent = 1.5m;
     // ********************
+    //       GENERAL
+    // ********************
+    public static readonly DateTime StartTime = DateTime.Now;
+    // ********************
     //       GOODS
     // ********************
     public const long BlackHatDuration = 3600;

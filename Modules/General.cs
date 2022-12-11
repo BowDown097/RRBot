@@ -74,6 +74,25 @@ public class General : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
+    [Command("info")]
+    [Summary("View info about the bot.")]
+    public async Task Info()
+    {
+        int usersCount = Context.Client.Guilds.Aggregate(0, (total, next) => total + next.MemberCount);
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithAuthor("Rush Reborn Bot", Context.Client.CurrentUser.GetAvatarUrl())
+            .WithColor(Color.Red)
+            .WithDescription("An epic bot with a cash system, music commands, moderation commands, and much, much more.")
+            .AddField("Serving", $"{usersCount} users in {Context.Client.Guilds.Count} guilds", true)
+            .AddField("Uptime", (DateTime.Now - Constants.StartTime).Round(), true)
+            .AddField("Latency", Context.Client.Latency, true)
+            .AddField("Commands", Commands.Commands.Count(), true)
+            .AddField("Modules", Commands.Modules.Count(), true)
+            .AddField("Support Discord", "[Join](https://discord.gg/USpJnaaNap)", true)
+            .WithFooter("Developer: BowDown097#8946 • Please contribute! You will be added to this list.");
+        await ReplyAsync(embed: embed.Build());
+    }
+
     [Command("module")]
     [Summary("View info about a module.")]
     [Remarks("$module administration")]
