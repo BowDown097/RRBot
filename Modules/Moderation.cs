@@ -204,20 +204,22 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Alias("clear")]
     [Command("purge", RunMode = RunMode.Async)]
     [Summary("Purge any amount of messages (Note: messages that are two weeks old or older will fail to delete).")]
-    [Remarks("$purge 30 Woob#3770")]
+    [Remarks("$purge 30 1051632557403410512 Woob#3770")]
     [RequireUserPermission(GuildPermission.ManageMessages)]
-    public async Task<RuntimeResult> Purge(int count, [Remainder] IGuildUser user = null)
+    public async Task<RuntimeResult> Purge(int count, List<ulong> exclude = null, IGuildUser user = null)
     {
         if (count <= 0)
             return CommandResult.FromError("You want me to delete NO messages? Are you dense?");
 
         IEnumerable<IMessage> messagesEnum = await Context.Channel.GetMessagesAsync(count + 1).FlattenAsync();
-        messagesEnum = user == null
-            ? messagesEnum.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14)
-            : messagesEnum.Where(msg => msg.Author.Id == user.Id && (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
-
+        messagesEnum = messagesEnum.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
+        if (user != null)
+            messagesEnum = messagesEnum.Where(msg => msg.Author.Id == user.Id);
+        if (exclude?.Count > 0)
+            messagesEnum = messagesEnum.Where(msg => !exclude.Contains(msg.Id));
+        
         IMessage[] messages = messagesEnum.ToArray();
-        if (!messages.Any())
+        if (messages.Length == 0)
             return CommandResult.FromError("There are no messages to delete given your input.");
 
         await (Context.Channel as SocketTextChannel)?.DeleteMessagesAsync(messages);

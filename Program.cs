@@ -40,7 +40,7 @@ internal static class Program
         commands.AddTypeReader<decimal>(new DecimalTypeReader());
         commands.AddTypeReader<IEmote>(new EmoteTypeReader());
         commands.AddTypeReader<IGuildUser>(new RrGuildUserTypeReader());
-        commands.AddTypeReader<SocketGuildUser>(new RrGuildUserTypeReader());
+        commands.AddTypeReader<List<ulong>>(new ListTypeReader<ulong>());
         commands.AddTypeReader<string>(new SanitizedStringTypeReader());
         await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
 
