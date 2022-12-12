@@ -271,19 +271,20 @@ public class EventSystem
             await user.KickAsync();
     }
 
-    private static async Task Commands_CommandExecuted(Discord.Optional<CommandInfo> command,
+    private static async Task Commands_CommandExecuted(Discord.Optional<CommandInfo> commandOpt,
         ICommandContext context, Discord.Commands.IResult result)
     {
-        string reason = StringCleaner.Sanitize(result.ErrorReason);
+        string reason = StringCleaner.Sanitize(result.ErrorReason, new[] { "_", "`", "~", ">" });
         if (await FilterSystem.ContainsFilteredWord(context.Guild, reason))
             return;
-
-        string args = command.Value.Parameters.Any(p => p.IsOptional)
-            ? $"{command.Value.Parameters.Count(p => !p.IsOptional)}-{command.Value.Parameters.Count}"
-            : command.Value.Parameters.Count.ToString();
+        
+        CommandInfo command = commandOpt.GetValueOrDefault();
+        string args = command.Parameters.Any(p => p.IsOptional)
+            ? $"{command.Parameters.Count(p => !p.IsOptional)}-{command.Parameters.Count}"
+            : command.Parameters.Count.ToString();
         string response = result.Error switch {
-            CommandError.BadArgCount => $"You must specify {args} argument(s)!\nCommand usage: ``{command.Value.GetUsage()}``",
-            CommandError.ParseFailed => $"Couldn't understand something you passed into the command.\nThis error info might help: ``{reason}``\nOr maybe the command usage will: ``{command.Value.GetUsage()}``",
+            CommandError.BadArgCount => $"You must specify {args} argument(s)!\nCommand usage: ``{command.GetUsage()}``",
+            CommandError.ParseFailed => $"Couldn't understand something you passed into the command.\nThis error info might help: ``{reason}``\nOr maybe the command usage will: ``{command.GetUsage()}``",
             CommandError.ObjectNotFound or CommandError.UnmetPrecondition or (CommandError)9 => reason,
             _ => !result.IsSuccess && result is CommandResult ? reason : ""
         };

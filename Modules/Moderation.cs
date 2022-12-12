@@ -204,9 +204,9 @@ public class Moderation : ModuleBase<SocketCommandContext>
     [Alias("clear")]
     [Command("purge", RunMode = RunMode.Async)]
     [Summary("Purge any amount of messages (Note: messages that are two weeks old or older will fail to delete).")]
-    [Remarks("$purge 30 1051632557403410512 Woob#3770")]
+    [Remarks("$purge 30 1051632557403410512,1051638063333380156 Woob#3770")]
     [RequireUserPermission(GuildPermission.ManageMessages)]
-    public async Task<RuntimeResult> Purge(int count, List<ulong> exclude = null, IGuildUser user = null)
+    public async Task<RuntimeResult> Purge(int count, List<ulong> exclude = null, [Remainder] IGuildUser user = null)
     {
         if (count <= 0)
             return CommandResult.FromError("You want me to delete NO messages? Are you dense?");

@@ -11,6 +11,13 @@ public static class StringCleaner
     {
         return string.IsNullOrEmpty(text) ? ""
             : SensitiveCharacters.Aggregate(text,
-                (current, unsafeChar) => current.Replace(unsafeChar, "\\" + unsafeChar));
+                (curr, unsafeChar) => curr.Replace(unsafeChar, "\\" + unsafeChar));
+    }
+
+    public static string Sanitize(string text, IEnumerable<string> characters)
+    {
+        return string.IsNullOrEmpty(text) ? ""
+            : characters.Aggregate(text,
+                (curr, unsafeChar) => curr.Replace(unsafeChar, "\\" + unsafeChar));
     }
 }
