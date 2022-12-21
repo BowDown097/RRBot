@@ -40,8 +40,10 @@ public static class LoggingSystem
 
         if (before is SocketTextChannel beforeText && after is SocketTextChannel afterText)
         {
+            if (beforeText.Position != afterText.Position) // we don't care about position changes those are boring
+                return;
             embed.AddUpdateCompField("Topic", beforeText.Topic, afterText.Topic)
-                .AddUpdateCompField("Position", beforeText.Position, afterText.Position);
+                .AddUpdateCompField("Slow Mode Interval", beforeText.SlowModeInterval, afterText.SlowModeInterval);
         }
 
         await WriteToLogs((before as SocketGuildChannel)?.Guild, embed);
@@ -50,19 +52,23 @@ public static class LoggingSystem
     public static async Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> userBeforeCached,
         SocketGuildUser userAfter)
     {
-        SocketGuildUser userBefore = await userBeforeCached.GetOrDownloadAsync();
-        if (userBefore.Nickname == userAfter.Nickname && userBefore.Roles.SequenceEqual(userAfter.Roles))
-            return;
+        // this event gets hit a lot, so we need to run it in a separate task so the gateway task doesn't get blocked
+        await Task.Run(async () =>
+        {
+            SocketGuildUser userBefore = await userBeforeCached.GetOrDownloadAsync();
+            if (userBefore.Nickname == userAfter.Nickname && userBefore.Roles.SequenceEqual(userAfter.Roles))
+                return;
 
-        string rolesBefore = string.Join(" ", userBefore.Roles.Select(r => r.Mention));
-        string rolesAfter = string.Join(" ", userAfter.Roles.Select(r => r.Mention));
-        EmbedBuilder embed = new EmbedBuilder()
-            .WithAuthor(userAfter)
-            .WithDescription($"**Member Updated**\n{userAfter.Mention}")
-            .AddUpdateCompField("Nickname", userBefore.Nickname, userAfter.Nickname)
-            .AddUpdateCompField("Roles", rolesBefore, rolesAfter);
+            string rolesBefore = string.Join(" ", userBefore.Roles.Select(r => r.Mention));
+            string rolesAfter = string.Join(" ", userAfter.Roles.Select(r => r.Mention));
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithAuthor(userAfter)
+                .WithDescription($"**Member Updated**\n{userAfter.Mention}")
+                .AddUpdateCompField("Nickname", userBefore.Nickname, userAfter.Nickname)
+                .AddUpdateCompField("Roles", rolesBefore, rolesAfter);
 
-        await WriteToLogs(userAfter.Guild, embed);
+            await WriteToLogs(userAfter.Guild, embed);
+        });
     }
 
     public static async Task Client_GuildScheduledEventCancelled(SocketGuildEvent guildEvent)
@@ -259,42 +265,6 @@ public static class LoggingSystem
         }
 
         await WriteToLogs(channel.GetGuild(), embed);
-    }
-
-    public static async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msgCached,
-        Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction)
-    {
-        IUserMessage msg = await msgCached.GetOrDownloadAsync();
-
-        EmbedBuilder embed = new EmbedBuilder()
-            .WithAuthor(reaction.User.Value)
-            .WithDescription($"**Reaction Added in {reaction.Channel.Mention()}**")
-            .RrAddField("Emoji", reaction.Emote.Name)
-            .RrAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
-
-        if (reaction.Emote is Emote emote)
-            embed.WithImageUrl(emote.Url + "?size=40");
-
-        await WriteToLogs(reaction.Channel.GetGuild(), embed);
-    }
-
-    public static async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msgCached,
-        Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction)
-    {
-        if (!reaction.User.IsSpecified)
-            return;
-
-        IUserMessage msg = await msgCached.GetOrDownloadAsync();
-        EmbedBuilder embed = new EmbedBuilder()
-            .WithAuthor(reaction.User.Value)
-            .WithDescription($"**Reaction Removed in {reaction.Channel.Mention()}**")
-            .RrAddField("Emoji", reaction.Emote.Name)
-            .RrAddField("Message", $"[Jump]({msg.GetJumpUrl()})");
-
-        if (reaction.Emote is Emote emote)
-            embed.WithImageUrl(emote.Url + "?size=40");
-
-        await WriteToLogs(reaction.Channel.GetGuild(), embed);
     }
 
     public static async Task Client_RoleCreated(SocketRole role)

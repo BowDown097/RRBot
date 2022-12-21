@@ -3,7 +3,7 @@ public class MonitorSystem
 {
     private readonly DiscordSocketClient _client;
 
-    public MonitorSystem(DiscordSocketClient client) => this._client = client;
+    public MonitorSystem(DiscordSocketClient client) => _client = client;
 
     public async Task Initialise()
     {

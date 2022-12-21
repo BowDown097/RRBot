@@ -29,8 +29,8 @@ public class EventSystem
         _client.Log += Client_Log;
         _client.MessageReceived += Client_MessageReceived;
         _client.MessageUpdated += Client_MessageUpdated;
-        _client.ReactionAdded += Client_ReactionAdded;
-        _client.ReactionRemoved += Client_ReactionRemoved;
+        _client.ReactionAdded += async (_, _, reaction) => await HandleReactionAsync(reaction, true);
+        _client.ReactionRemoved += async (_, _, reaction) => await HandleReactionAsync(reaction, false);
         _client.Ready += Client_Ready;
         _client.ThreadCreated += Client_ThreadCreated;
         _client.ThreadUpdated += Client_ThreadUpdated;
@@ -55,8 +55,6 @@ public class EventSystem
         _client.InviteDeleted += LoggingSystem.Client_InviteDeleted;
         _client.MessageDeleted += LoggingSystem.Client_MessageDeleted;
         _client.MessageUpdated += LoggingSystem.Client_MessageUpdated;
-        _client.ReactionAdded += LoggingSystem.Client_ReactionAdded;
-        _client.ReactionRemoved += LoggingSystem.Client_ReactionRemoved;
         _client.RoleCreated += LoggingSystem.Client_RoleCreated;
         _client.RoleDeleted += LoggingSystem.Client_RoleDeleted;
         _client.RoleUpdated += LoggingSystem.Client_RoleUpdated;
@@ -77,25 +75,6 @@ public class EventSystem
         _client.UserVoiceStateUpdated += LoggingSystem.Client_UserVoiceStateUpdated;
     }
 
-    private static async Task HandleReactionAsync(Cacheable<IMessageChannel, ulong> channelCached, SocketReaction reaction, bool addedReaction)
-    {
-        IMessageChannel channel = await channelCached.GetOrDownloadAsync();
-        if (await channel.GetUserAsync(reaction.UserId) is not SocketGuildUser user || user.IsBot)
-            return;
-
-        // selfroles check
-        DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(channel.GetGuild().Id);
-        string emote = reaction.Emote.ToString() ?? string.Empty;
-        if (reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(emote))
-            return;
-
-        ulong roleId = selfRoles.SelfRoles[emote];
-        if (addedReaction)
-            await user.AddRoleAsync(roleId);
-        else
-            await user.RemoveRoleAsync(roleId);
-    }
-
     private async Task Client_ButtonExecuted(SocketMessageComponent interaction)
     {
         if (interaction.Message.Author.Id != _client.CurrentUser.Id) // don't wanna interfere with other bots' stuff
@@ -108,12 +87,16 @@ public class EventSystem
     private static async Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> userBeforeCached,
         SocketGuildUser userAfter)
     {
-        SocketGuildUser userBefore = await userBeforeCached.GetOrDownloadAsync();
-        if (userBefore.Nickname == userAfter.Nickname)
-            return;
+        // this event gets hit a lot, so we need to run it in a separate task so the gateway task doesn't get blocked
+        await Task.Run(async () =>
+        {
+            SocketGuildUser userBefore = await userBeforeCached.GetOrDownloadAsync();
+            if (userBefore.Nickname == userAfter.Nickname)
+                return;
 
-        if (await FilterSystem.ContainsFilteredWord(userAfter.Guild, userAfter.Nickname))
-            await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
+            if (await FilterSystem.ContainsFilteredWord(userAfter.Guild, userAfter.Nickname))
+                await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
+        });
     }
 
     private static async Task Client_JoinedGuild(SocketGuild guild)
@@ -235,12 +218,6 @@ public class EventSystem
         await FilterSystem.DoScamCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
     }
 
-    private static async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> msg, Cacheable<IMessageChannel, ulong> channel,
-        SocketReaction reaction) => await HandleReactionAsync(channel, reaction, true);
-
-    private static async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> msg, Cacheable<IMessageChannel, ulong> channel,
-        SocketReaction reaction) => await HandleReactionAsync(channel, reaction, false);
-
     private async Task Client_Ready()
     {
         // reset usingSlots if someone happened to be using slots during bot restart
@@ -293,5 +270,23 @@ public class EventSystem
             await context.User.NotifyAsync(context.Channel, response);
         else if (!result.IsSuccess)
             Console.WriteLine(reason);
+    }
+    
+    private static async Task HandleReactionAsync(SocketReaction reaction, bool addedReaction)
+    {
+        if (reaction.User.GetValueOrDefault() is not SocketGuildUser user || user.IsBot)
+            return;
+
+        // selfroles check
+        DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(user.Guild.Id);
+        string emote = reaction.Emote.ToString();
+        if (string.IsNullOrEmpty(emote) || reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(emote))
+            return;
+
+        ulong roleId = selfRoles.SelfRoles[emote];
+        if (addedReaction)
+            await user.AddRoleAsync(roleId);
+        else
+            await user.RemoveRoleAsync(roleId);
     }
 }
