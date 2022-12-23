@@ -100,10 +100,12 @@ public class Crime : ModuleBase<SocketCommandContext>
             switch (RandomUtil.Next(2))
             {
                 case 0:
-                    await Context.User.NotifyAsync(Context.Channel, $"The dumbass pushed his private keys to GitHub LMFAO! You sniped that shit and got **{amount:0.####} {abbreviation.ToUpper()}**.");
+                    await Context.User.NotifyAsync(Context.Channel,
+                        $"The dumbass pushed his private keys to GitHub LMFAO! You sniped that shit and got **{amount:0.####} {abbreviation.ToUpper()}**.");
                     break;
                 case 1:
-                    await Context.User.NotifyAsync(Context.Channel, $"You did an ol' SIM swap on {user.Sanitize()}'s phone while they weren't looking and yoinked **{amount:0.####} {abbreviation.ToUpper()}** right off their Coinbase. Easy claps!");
+                    await Context.User.NotifyAsync(Context.Channel,
+                        $"You did an ol' SIM swap on {user.Sanitize()}'s phone while they weren't looking and yoinked **{amount:0.####} {abbreviation.ToUpper()}** right off their Coinbase. Easy claps!");
                     break;
             }
         }
@@ -114,10 +116,12 @@ public class Crime : ModuleBase<SocketCommandContext>
             switch (RandomUtil.Next(2))
             {
                 case 0:
-                    await Context.User.NotifyAsync(Context.Channel, $"**{user.Sanitize()}** actually secured their shit properly, got your info, and sent it off to the feds. You got raided and lost **{amount / 4:0.####} {abbreviation.ToUpper()}** in the process.");
+                    await Context.User.NotifyAsync(Context.Channel,
+                        $"**{user.Sanitize()}** actually secured their shit properly, got your info, and sent it off to the feds. You got raided and lost **{amount / 4:0.####} {abbreviation.ToUpper()}** in the process.");
                     break;
                 case 1:
-                    await Context.User.NotifyAsync(Context.Channel, $"That hacker dude on Instagram scammed your ass! You only had to pay 1/4 of what you were promising starting off, but still sucks. There goes **{amount / 4:0.####} {abbreviation.ToUpper()}**.");
+                    await Context.User.NotifyAsync(Context.Channel,
+                        $"That hacker dude on Instagram scammed your ass! You only had to pay 1/4 of what you were promising starting off, but still sucks. There goes **{amount / 4:0.####} {abbreviation.ToUpper()}**.");
                     break;
             }
         }
@@ -172,14 +176,16 @@ public class Crime : ModuleBase<SocketCommandContext>
             decimal repairs = target.Cash / 100.0m * rapePercent;
             StatUpdate(target, false, repairs);
             await target.SetCash(user, target.Cash - repairs);
-            await Context.User.NotifyAsync(Context.Channel, $"You DEMOLISHED **{user.Sanitize()}**'s asshole! They just paid **{repairs:C2}** in asshole repairs.");
+            await Context.User.NotifyAsync(Context.Channel,
+                $"You DEMOLISHED **{user.Sanitize()}**'s asshole! They just paid **{repairs:C2}** in asshole repairs.");
         }
         else
         {
             decimal repairs = author.Cash / 100.0m * rapePercent;
             StatUpdate(author, false, repairs);
             await author.SetCash(Context.User, author.Cash - repairs);
-            await Context.User.NotifyAsync(Context.Channel, $"You got COUNTER-RAPED by **{user.Sanitize()}**! You just paid **{repairs:C2}** in asshole repairs.");
+            await Context.User.NotifyAsync(Context.Channel,
+                $"You got COUNTER-RAPED by **{user.Sanitize()}**! You just paid **{repairs:C2}** in asshole repairs.");
         }
 
         await author.SetCooldown("RapeCooldown", Constants.RapeCooldown, Context.Guild, Context.User);
@@ -227,12 +233,12 @@ public class Crime : ModuleBase<SocketCommandContext>
             switch (RandomUtil.Next(2))
             {
                 case 0:
-                    await Context.User.NotifyAsync(Context.Channel, $"You beat the shit out of **{user.Sanitize()}** and took **{amount:C2}** from their ass!" +
-                                                                    $"\nBalance: {author.Cash:C2}");
+                    await Context.User.NotifyAsync(Context.Channel,
+                        $"You beat the shit out of **{user.Sanitize()}** and took **{amount:C2}** from their ass!\nBalance: {author.Cash:C2}");
                     break;
                 case 1:
-                    await Context.User.NotifyAsync(Context.Channel, $"You walked up to **{user.Sanitize()}** and yoinked **{amount:C2}** straight from their pocket, without a trace." +
-                                                                    $"\nBalance: {author.Cash:C2}");
+                    await Context.User.NotifyAsync(Context.Channel,
+                        $"You walked up to **{user.Sanitize()}** and yoinked **{amount:C2}** straight from their pocket, without a trace.\nBalance: {author.Cash:C2}");
                     break;
             }
         }
@@ -243,12 +249,12 @@ public class Crime : ModuleBase<SocketCommandContext>
             switch (RandomUtil.Next(2))
             {
                 case 0:
-                    await Context.User.NotifyAsync(Context.Channel, $"You yoinked the money from **{user.Sanitize()}**, but they noticed and shanked you when you were on your way out." +
-                                                                    $" You lost all the resources in the process.\nBalance: {author.Cash:C2}");
+                    await Context.User.NotifyAsync(Context.Channel, 
+                        $"You yoinked the money from **{user.Sanitize()}**, but they noticed and shanked you when you were on your way out. You lost all the resources in the process.\nBalance: {author.Cash:C2}");
                     break;
                 case 1:
-                    await Context.User.NotifyAsync(Context.Channel, "The dude happened to be a fed and threw your ass straight into jail. You lost all the resources in the process." +
-                                                                    $"\nBalance: {author.Cash:C2}");
+                    await Context.User.NotifyAsync(Context.Channel, 
+                        $"The dude happened to be a fed and threw your ass straight into jail. You lost all the resources in the process.\nBalance: {author.Cash:C2}");
                     break;
             }
         }

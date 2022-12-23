@@ -104,8 +104,8 @@ public sealed class AudioSystem
             return CommandResult.FromError("The bot is not currently being used.");
 
         VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
-        player.IsLooping = !player.IsLooping;
-        await context.Channel.SendMessageAsync($"Looping turned {(player.IsLooping ? "ON" : "OFF")}.");
+        player.LoopMode = player.LoopMode == PlayerLoopMode.Track ? PlayerLoopMode.None : PlayerLoopMode.Track;
+        await context.Channel.SendMessageAsync($"Looping turned {(player.LoopMode == PlayerLoopMode.Track ? "ON" : "OFF")}.");
         return CommandResult.FromSuccess();
     }
 

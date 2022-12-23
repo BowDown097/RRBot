@@ -2,8 +2,8 @@ namespace RRBot.Entities.Fun;
 public readonly struct BoardPos
 {
     public static readonly BoardPos Origin = (0, 0);
-    public readonly int X;
-    public readonly int Y;
+    public int X { get; }
+    public int Y { get; }
 
     private BoardPos(int x, int y)
     {

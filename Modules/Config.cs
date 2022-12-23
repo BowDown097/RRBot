@@ -151,7 +151,7 @@ public class Config : ModuleBase<SocketCommandContext>
         if (cmdLower is "disablecmd" or "enablecmd")
             return CommandResult.FromError("I don't think that's a good idea.");
 
-        Discord.Commands.SearchResult search = Commands.Search(cmd);
+        SearchResult search = Commands.Search(cmd);
         if (!search.IsSuccess)
             return CommandResult.FromError($"**${cmdLower}** is not a command!");
 

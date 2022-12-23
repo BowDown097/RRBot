@@ -33,7 +33,7 @@ public class General : ModuleBase<SocketCommandContext>
             return CommandResult.FromSuccess();
         }
 
-        Discord.Commands.SearchResult search = Commands.Search(command);
+        SearchResult search = Commands.Search(command);
         if (!search.IsSuccess)
             return CommandResult.FromError("You have specified a nonexistent command!");
 

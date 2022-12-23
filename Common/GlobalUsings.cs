@@ -20,7 +20,6 @@ global using MongoDB.Bson.Serialization.Options;
 global using MongoDB.Driver;
 global using Newtonsoft.Json;
 global using Newtonsoft.Json.Linq;
-global using NHentaiSharp.Search;
 global using RRBot.Common;
 global using RRBot.Database;
 global using RRBot.Database.Entities;

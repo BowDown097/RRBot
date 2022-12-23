@@ -141,7 +141,7 @@ public class EventSystem
         DbUser user = await MongoManager.FetchUserAsync(context.User.Id, context.Guild.Id);
         if (userMsg.HasStringPrefix(Constants.Prefix, ref argPos))
         {
-            Discord.Commands.SearchResult search = _commands.Search(msg.Content[argPos..]);
+            SearchResult search = _commands.Search(msg.Content[argPos..]);
             if (search.Error == CommandError.UnknownCommand)
                 return;
             
