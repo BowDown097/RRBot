@@ -9,9 +9,10 @@ public class RrGuildUserTypeReader : TypeReader
     {
         var results = new Dictionary<ulong, TypeReaderValue>();
         IUser[] channelUsers = await context.Channel.GetUsersAsync(CacheMode.CacheOnly).Flatten().ToArrayAsync();
-        IReadOnlyCollection<IGuildUser> guildUsers = context.Guild != null
-            ? await context.Guild.GetUsersAsync(CacheMode.CacheOnly).ConfigureAwait(false)
-            : ImmutableArray.Create<IGuildUser>();
+        IReadOnlyCollection<IGuildUser> guildUsers = ImmutableArray.Create<IGuildUser>();
+
+        if (context.Guild != null)
+            guildUsers = await context.Guild.GetUsersAsync(CacheMode.CacheOnly).ConfigureAwait(false);
 
         //By Mention (1.0)
         if (MentionUtils.TryParseUser(input, out var id))
