@@ -11,6 +11,12 @@ public class Music : ModuleBase<SocketCommandContext>
     [DoNotSanitize]
     public async Task<RuntimeResult> Dequeue([Remainder] string name) => await AudioSystem.DequeueAllWithNameAsync(Context, name);
 
+    [Command("dequeueat")]
+    [Summary("Dequeue a track at a specific index in the queue (excluding the current track).")]
+    [Remarks("$dequeueat 5")]
+    [RequireDj]
+    public async Task<RuntimeResult> DequeueAt(int index) => await AudioSystem.DequeueAtAsync(Context, index);
+
     [Alias("fs")]
     [Command("forceskip")]
     [Summary("Skip the current playing track, ignoring the voting process.")]

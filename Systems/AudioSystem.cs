@@ -32,6 +32,32 @@ public sealed class AudioSystem
         return CommandResult.FromSuccess();
     }
 
+    public async Task<RuntimeResult> DequeueAtAsync(SocketCommandContext context, int index)
+    {
+        switch (index)
+        {
+            case <= 0:
+                return CommandResult.FromError("Invalid index.");
+            case 1:
+                await SkipTrackAsync(context);
+                return CommandResult.FromSuccess();
+        }
+
+        if (!_audioService.HasPlayer(context.Guild))
+            return CommandResult.FromError("The bot is not currently being used.");
+
+        VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
+        if (index - 2 > player.Queue.Count)
+            return CommandResult.FromError("There is less tracks in the queue than your index.");
+
+        LavalinkTrack track = player.Queue.ElementAt(index - 2);
+        player.Queue.Remove(track);
+
+        await context.User.NotifyAsync(context.Channel,
+            $"Successfully removed the track at that index (\"{track.Title}\").");
+        return CommandResult.FromSuccess();
+    }
+
     public async Task<RuntimeResult> GetCurrentlyPlayingAsync(SocketCommandContext context)
     {
         if (!_audioService.HasPlayer(context.Guild))
