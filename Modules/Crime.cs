@@ -439,7 +439,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 
     private async Task HandleScavenge(IUserMessage msg, InteractiveResult result, DbUser user, bool successCondition, string successResponse, string timeoutResponse, string failureResponse)
     {
-        if (!result.IsSuccess)
+        if (!result.IsSuccess || result.IsTimeout)
         {
             EmbedBuilder timeoutEmbed = new EmbedBuilder()
                 .WithColor(Color.Red)

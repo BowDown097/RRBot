@@ -4,6 +4,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
 {
     private static readonly Emoji[] Emojis = { new("\uD83C\uDF4E"), new("\uD83C\uDF47"), new("7️⃣"),  new("\uD83C\uDF52"),
         new("\uD83C\uDF4A"), new("\uD83C\uDF48"), new("\uD83C\uDF4B") }; // apple, grape, seven, cherry, orange, melon, lemon
+    public InteractiveService Interactive { get; set; }
 
     #region Commands
     [Command("55x2")]
@@ -30,6 +31,89 @@ public class Gambling : ModuleBase<SocketCommandContext>
     [RequireCash]
     public async Task<RuntimeResult> Roll99(decimal bet) => await GenericGamble(bet, 99, 89);
 
+    [Command("bet", RunMode = RunMode.Async)]
+    [Summary("Pick a number between 1 and 100 and place a bet on it against another user. The user and the bot will also pick a number between 1 and 100. Whoever is closest to the number the bot picks wins!")]
+    [Remarks("$bet AtomBlade 1000 56")]
+    public async Task<RuntimeResult> Bet(IGuildUser user, decimal bet, int number)
+    {
+        if (bet < Constants.TransactionMin)
+            return CommandResult.FromError($"You need to bet at least {Constants.TransactionMin:C2}.");
+        if (number is < 1 or > 100)
+            return CommandResult.FromError("Your number needs to be between 1 and 100.");
+        if (user.IsBot)
+            return CommandResult.FromError("Nope.");
+
+        DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        DbUser target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
+        if (author.Cash < bet)
+            return CommandResult.FromError($"You don't have {bet:C2}!");
+        if (target.Cash < bet)
+            return CommandResult.FromError($"**{user.Sanitize()}** doesn't have {bet:C2}!");
+        if (target.UsingSlots)
+            return CommandResult.FromError($"**{user.Sanitize()}** is currently gambling. They cannot do any transactions at the moment.");
+
+        EmbedBuilder betEmbed = new EmbedBuilder()
+            .WithColor(Color.Red)
+            .WithTitle("Bet")
+            .WithDescription($@"{Context.User.Mention} is betting **{bet:C2}** against {user.Mention}. 
+                Their number is **{number}**.
+                {user.Mention}, if you want to accept this bet, respond with a number between 1 and 100 in the next 30 seconds.");
+        await ReplyAsync(embed: betEmbed.Build());
+
+        InteractiveResult<SocketMessage> betResult = await Interactive.NextMessageAsync(
+            x => x.Channel.Id == Context.Channel.Id && x.Author.Id == user.Id
+                && int.TryParse(x.Content.Trim(), out int targetNumber) && targetNumber is >= 1 and <= 100,
+            timeout: TimeSpan.FromSeconds(30)
+        );
+        
+        if (!betResult.IsSuccess || betResult.IsTimeout || betResult.Value == null)
+            return CommandResult.FromError($"**{user.Sanitize()}** didn't respond in time.");
+        
+        int targetNumber = int.Parse(betResult.Value.Content);
+        if (targetNumber == number)
+        {
+            await user.NotifyAsync(Context.Channel, "Don't bet the same number, bro. There's no point.");
+            return CommandResult.FromSuccess();
+        }
+
+        author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
+        if (author.Cash < bet)
+            return CommandResult.FromError($"You don't have **{bet:C2}**!");
+        if (author.UsingSlots)
+            return CommandResult.FromError("You appear to be currently using the slot machine. To be safe, you cannot make a bet until it is finished.");
+        
+        target = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
+        if (target.Cash < bet)
+        {
+            await user.NotifyAsync(Context.Channel, $"You don't have **{bet:C2}**!");
+            return CommandResult.FromSuccess();
+        }
+        if (target.UsingSlots)
+        {
+            await user.NotifyAsync(Context.Channel, "You appear to be currently using the slot machine. To be safe, you cannot make a bet until it is finished.");
+            return CommandResult.FromSuccess();
+        }
+
+        int botNumber = RandomUtil.Next(1, 101);
+        int authorDistance = Math.Abs(botNumber - number);
+        int targetDistance = Math.Abs(botNumber - targetNumber);
+        if (authorDistance < targetDistance)
+        {
+            await author.SetCashWithoutAdjustment(Context.User, author.Cash + bet);
+            await target.SetCashWithoutAdjustment(user, target.Cash - bet);
+            await ReplyAsync($"**{Context.User.Sanitize()}** was the closest to my number, **{botNumber}**! They're taking home a fine **{bet:C2}**.");
+            await MongoManager.UpdateObjectAsync(author);
+        }
+        else
+        {
+            await target.SetCashWithoutAdjustment(user, target.Cash + bet);
+            await ReplyAsync($"**{user.Sanitize()}** was the closest to my number, **{botNumber}**! They're taking home a fine **{bet:C2}**.");
+        }
+
+        await MongoManager.UpdateObjectAsync(target);
+        return CommandResult.FromSuccess();
+    }
+    
     [Alias("chuckaluck", "birdcage")]
     [Command("dice")]
     [Summary("Play a simple game of Chuck-a-luck, AKA Birdcage.\nIf you don't know how it works: The player bets on a number. Three dice are rolled. The number appearing once gives a 1:1 payout, twice a 2:1, and thrice a 10:1.")]

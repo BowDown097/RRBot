@@ -12,6 +12,6 @@
 		<PackageReference Include="MongoDB.Driver" Version="2.18.0" />
 		<PackageReference Include="Lavalink4NET.Discord.NET" Version="3.0.0-preview.14" />
 		<PackageReference Include="Fergun.Interactive" Version="1.6.0" />
-		<PackageReference Include="Discord.Net" Version="3.8.1" />
+		<PackageReference Include="Discord.Net" Version="3.9.0" />
 	</ItemGroup>
 </Project>
