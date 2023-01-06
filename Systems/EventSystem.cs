@@ -147,7 +147,7 @@ public class EventSystem
             
             DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(context.Guild.Id);
             CommandInfo command = search.Commands[0].Command;
-            if (command.Module.Name is not ("Administration" or "BotOwner" or "Moderation" or "Music" or "Polls")
+            if (command.Module.Name is not ("Administration" or "BotOwner" or "Config" or "Moderation" or "Music" or "Polls")
                 && channels.WhitelistedChannels.Count > 0 && !channels.WhitelistedChannels.Contains(context.Channel.Id))
             {
                 await context.User.NotifyAsync(context.Channel, "Commands are disabled in this channel!");
