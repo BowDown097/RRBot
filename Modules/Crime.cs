@@ -47,10 +47,10 @@ public class Crime : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Deal()
     {
         string[] successes = { "Border patrol let your cocaine-stuffed dog through! You earned **{0}** from the cartel.",
-            "You continue to capitalize off of some 17 year old's meth addiction, yielding you **{0}**.",
+            "You continue to capitalize off of some 17 year old's amphetamine addiction, yielding you **{0}**.",
             "You sold grass to some elementary schoolers and passed it off as weed. They didn't have a lot of course, only **{0}**, but money's money." };
-        string[] fails = { "You tripped balls on acid with the boys at a party. After waking up, you realize not only did someone take money from your piggy bank, but you also gave out too much free acid, leaving you a whopping **{0}** poorer.",
-            "The Democrats have launched yet another crime bill, leading to your hood being under heavy investigation. You could not escape the feds and paid **{0}** in fines." };
+        string[] fails = { "You tripped balls on acid with the boys at a party. After waking up, you realize someone took all the money from your piggy bank, leaving you a whopping **{0}** poorer.",
+            "The DEA were tipped off about your meth lab and you got caught red handed. You paid **{0}** in fines." };
         return await GenericCrime(successes, fails, "DealCooldown", Constants.DealCooldown, true);
     }
 
@@ -137,7 +137,7 @@ public class Crime : ModuleBase<SocketCommandContext>
     [RequireCooldown("LootCooldown", "You cannot loot for {0}.")]
     public async Task<RuntimeResult> Loot()
     {
-        string[] successes = { "You joined your local BLM protest, looted a Footlocker, and sold what you got. You earned **{0}**.",
+        string[] successes = { "You joined your local protest, looted a Footlocker, and sold what you got. You earned **{0}**.",
             "That mall had a lot of shit! You earned **{0}**.",
             "You stole from a gas station because you're a fucking idiot. You earned **{0}**, basically nothing." };
         string[] fails = { "There happened to be a cop coming out of the donut shop next door. You had to pay **{0}** in fines.",
@@ -196,7 +196,7 @@ public class Crime : ModuleBase<SocketCommandContext>
 
     [Command("rob")]
     [Summary("Yoink money from a user.")]
-    [Remarks("$rob Romanian 160")]
+    [Remarks("$rob Alexandru 160")]
     [RequireCooldown("RobCooldown", "It's best to avoid getting caught if you don't go out for {0}.")]
     public async Task<RuntimeResult> Rob(IGuildUser user, decimal amount)
     {
@@ -254,7 +254,7 @@ public class Crime : ModuleBase<SocketCommandContext>
                     break;
                 case 1:
                     await Context.User.NotifyAsync(Context.Channel, 
-                        $"The dude happened to be a fed and threw your ass straight into jail. You lost all the resources in the process.\nBalance: {author.Cash:C2}");
+                        $"The dude happened to be a cop and threw your ass straight into jail. You lost all the resources in the process.\nBalance: {author.Cash:C2}");
                     break;
             }
         }
@@ -368,10 +368,10 @@ public class Crime : ModuleBase<SocketCommandContext>
     [RequireRankLevel(2)]
     public async Task<RuntimeResult> Slavery()
     {
-        string[] successes = { "You got loads of newfags to tirelessly mine ender chests on the Oldest Anarchy Server in Minecraft. You made **{0}** selling the newfound millions of obsidian to an interested party.",
-            "The innocent Uyghur children working in your labor factory did an especially good job making shoes in the past hour. You made **{0}** from all of them, and lost only like 2 cents paying them their wages.",
+        string[] successes = { "You got loads of 12 year olds to tirelessly mine ender chests on the Oldest Anarchy Server in Minecraft. You made **{0}** selling the newfound millions of obsidian to an interested party.",
+            "The children working in your labor factory did a good job making shoes in the past hour. You made **{0}** from all of them, and lost only like 2 cents paying them their wages.",
             "This cotton is BUSSIN! The Confederacy is proud. You have been awarded **{0}**." };
-        string[] fails = { "Some fucker ratted you out and the police showed up. Thankfully, they're corrupt and you were able to sauce them **{0}** to fuck off. Thank the lord.",
+        string[] fails = { "Some dude died from inhumane working conditions and you had to cobble together **{0}** for his family. As if that's gonna do anything for those losers, though.",
             "A slave got away and yoinked **{0}** from you. Sad day." };
         return await GenericCrime(successes, fails, "SlaveryCooldown", Constants.SlaveryCooldown);
     }
@@ -386,7 +386,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             "The dude you fucked looked super shady, but he did pay up. You earned **{0}**.",
             "You found the Chad Thundercock himself! **{0}** and some amazing sex. What a great night." };
         string[] fails = { "You were too ugly and nobody wanted you. You lost **{0}** buying clothes for the night.",
-            "You didn't give good enough head to the cop! You had to pay **{0}** in fines." };
+            "An undercover cop busted you for prostitution! There goes **{0}**." };
         return await GenericCrime(successes, fails, "WhoreCooldown", Constants.WhoreCooldown);
     }
     #endregion
