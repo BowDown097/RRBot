@@ -141,7 +141,7 @@ public static class ItemSystem
             .WithColor(Color.Red)
             .WithThumbnailUrl(collectible.Image)
             .WithTitle("Collectible found!")
-            .WithDescription($"**{collectible}:** {collectible.Description}\n\nWorth {(collectible.Price != -1 ? collectible.Price.ToString("C2") : "some amount of money")}");
+            .WithDescription($"**{collectible}:** {collectible.Description}\n\nWorth {(collectible.Price != -1 ? collectible.Price.ToString("C2") : "some amount of money")} - $discard this item to cash in!");
 
         if (user.Collectibles.ContainsKey(collectible.Name))
             user.Collectibles[collectible.Name]++;
