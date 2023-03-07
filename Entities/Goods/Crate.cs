@@ -17,10 +17,21 @@ public class Crate : Item
     public List<Item> Open(DbUser user)
     {
         List<Item> items = new();
+
         for (int i = 0; i < ConsumableCount; i++)
+        {
             items.Add(ItemSystem.Consumables[RandomUtil.Next(ItemSystem.Consumables.Length)]);
+        }
+
         for (int i = 0; i < ToolCount; i++)
-            items.Add(ItemSystem.Tools.Where(t => !items.Contains(t)).ElementAt(RandomUtil.Next(ItemSystem.Tools.Length)));
+        {
+            Tool[] availableTools = ItemSystem.Tools
+                .Where(t => Name == "Diamond"
+                    ? !items.Contains(t)
+                    : !items.Contains(t) && !t.Name.StartsWith("Netherite"))
+                .ToArray();
+            items.Add(availableTools[RandomUtil.Next(availableTools.Length)]);
+        }
 
         foreach (Item item in items.ToList().Where(i => user.Tools.Contains(i.Name)))
         {

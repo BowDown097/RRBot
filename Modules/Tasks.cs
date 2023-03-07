@@ -99,6 +99,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
             "Stone Pickaxe" => $"You mined {numMined} iron with your {toolName} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
             "Iron Pickaxe" => $"You mined {numMined} diamonds with your {toolName} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
             "Diamond Pickaxe" => $"You mined {numMined} obsidian with your {toolName} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
+            "Netherite Pickaxe" => $"You mined {numMined} reinforced deepslate with your {toolName} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}",
             _ => ""
         };
 
@@ -122,13 +123,15 @@ public class Tasks : ModuleBase<SocketCommandContext>
         int numMined = 0;
 
         if (tool.StartsWith("Wooden"))
-            numMined = RandomUtil.Next(Constants.GenericTaskWoodMin, Constants.GenericTaskWoodMax); // default for wooden
+            numMined = RandomUtil.Next(Constants.GenericTaskWoodMin, Constants.GenericTaskWoodMax);
         else if (tool.StartsWith("Stone"))
             numMined = RandomUtil.Next(Constants.GenericTaskStoneMin, Constants.GenericTaskStoneMax);
         else if (tool.StartsWith("Iron"))
             numMined = RandomUtil.Next(Constants.GenericTaskIronMin, Constants.GenericTaskIronMax);
         else if (tool.StartsWith("Diamond"))
             numMined = RandomUtil.Next(Constants.GenericTaskDiamondMin, Constants.GenericTaskDiamondMax);
+        else if (tool.StartsWith("Netherite"))
+            numMined = RandomUtil.Next(Constants.GenericTaskNetheriteMin, Constants.GenericTaskNetheriteMax);
 
         if (user.Perks.ContainsKey("Enchanter"))
         {

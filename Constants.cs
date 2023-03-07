@@ -234,9 +234,12 @@ public static class Constants
     public const int GenericTaskIronMin = 113;
     public const int GenericTaskDiamondMax = 209;
     public const int GenericTaskDiamondMin = 161;
+    public const int GenericTaskNetheriteMax = 257;
+    public const int GenericTaskNetheriteMin = 209;
     public const long HuntCooldown = 3600;
     public const long MineCooldown = 3600;
     public const decimal MineStoneMultiplier = 1.33m;
     public const decimal MineIronMultiplier = 1.66m;
     public const decimal MineDiamondMultiplier = 2;
+    public const decimal MineNetheriteMultiplier = 2.33m;
 }

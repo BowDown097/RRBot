@@ -14,6 +14,8 @@ public class Goods : ModuleBase<SocketCommandContext>
         Item item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
         if (item?.Name == "Daily")
             return CommandResult.FromError("You cannot buy the Daily crate!");
+        if (item?.Name.StartsWith("Netherite") == true)
+            return CommandResult.FromError("​Netherite items can only be obtained from Diamond crates!");
         
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         RuntimeResult result = item switch
@@ -102,7 +104,6 @@ public class Goods : ModuleBase<SocketCommandContext>
         Item item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
         if (item == null)
             return CommandResult.FromError("That is not an item!");
-
         EmbedBuilder embed = item switch
         {
             Collectible collectible => new EmbedBuilder()
@@ -136,7 +137,8 @@ public class Goods : ModuleBase<SocketCommandContext>
                 .AddField("Price", tool.Price.ToString("C2"))
                 .AddField("Cash Range", tool.Name.EndsWith("Pickaxe")
                     ? $"{128 * tool.Mult:C2} - {256 * tool.Mult:C2}"
-                    : $"{tool.GenericMin:C2} - {tool.GenericMax:C2}"),
+                    : $"{tool.GenericMin:C2} - {tool.GenericMax:C2}")
+                .AddField("Additional Info", "Only obtainable from Diamond crates", condition: tool.Name.StartsWith("Netherite")),
             _ => new EmbedBuilder()
         };
 
@@ -151,16 +153,21 @@ public class Goods : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Items([Remainder] IGuildUser user = null)
     {
         DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
-        List<string> sortedPerks = dbUser.Perks.Where(k => k.Value > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(p => p.Key).ToList();
+        string[] sortedPerks = dbUser.Perks
+            .Where(k => k.Value > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            .Select(p => p.Key).ToArray();
+
         string collectibles = string.Join('\n', dbUser.Collectibles.Where(k => k.Value > 0).Select(c => $"{c.Key} ({c.Value}x)"));
         string consumables = string.Join('\n', dbUser.Consumables.Where(k => k.Value > 0).Select(c => $"{c.Key} ({c.Value}x)"));
         string crates = string.Join('\n', dbUser.Crates.Distinct().Select(c => $"{c} ({dbUser.Crates.Count(cr => cr == c)}x)"));
+        string perks = string.Join('\n', sortedPerks);
+        string tools = string.Join('\n', dbUser.Tools);
 
         List<PageBuilder> pages = new();
         if (dbUser.Tools.Count > 0)
-            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(string.Join('\n', dbUser.Tools)));
-        if (sortedPerks.Any())
-            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(string.Join('\n', sortedPerks)));
+            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools));
+        if (sortedPerks.Length > 0)
+            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(perks));
         if (!string.IsNullOrWhiteSpace(collectibles))
             pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Collectibles").WithDescription(collectibles));
         if (!string.IsNullOrWhiteSpace(consumables))
@@ -234,7 +241,7 @@ public class Goods : ModuleBase<SocketCommandContext>
     {
         string crates = string.Join('\n', ItemSystem.Crates.Where(c => c.Name != "Daily").Select(c => $"**{c}**: {c.Price:C2}"));
         string perks = string.Join('\n', ItemSystem.Perks.Select(p => $"**{p}**: {p.Description}\nDuration: {TimeSpan.FromSeconds(p.Duration).FormatCompound()}\nPrice: {p.Price:C2}"));
-        string tools = string.Join('\n', ItemSystem.Tools.Select(t => $"**{t}**: {t.Price:C2}"));
+        string tools = string.Join('\n', ItemSystem.Tools.Where(t => !t.Name.StartsWith("Netherite")).Select(t => $"**{t}**: {t.Price:C2}"));
 
         IPageBuilder[] pages = {
             new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools),
