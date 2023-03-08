@@ -186,7 +186,7 @@ public class General : ModuleBase<SocketCommandContext>
         return CommandResult.FromSuccess();
     }
 
-    [Alias("whois", "profile", "memberinfo")]
+    [Alias("whois", "memberinfo")]
     [Command("userinfo")]
     [Summary("View info about yourself or another user.")]
     [Remarks("$userinfo Moth")]

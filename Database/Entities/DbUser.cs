@@ -10,6 +10,7 @@ public class DbUser : DbObject
     public ulong UserId { get; init; }
 
     public Dictionary<string, string> Achievements { get; set; } = new();
+    public Dictionary<string, int> Ammo { get; set; } = new();
     public long BlackHatTime { get; set; }
     public decimal Btc { get; set; }
     public long BullyCooldown { get; set; }
@@ -46,6 +47,7 @@ public class DbUser : DbObject
     public long RomanianFlagTime { get; set; }
     public long RobCooldown { get; set; }
     public long ScavengeCooldown { get; set; }
+    public long ShootCooldown { get; set; }
     public Dictionary<string, string> Stats { get; set; } = new();
     public long SlaveryCooldown { get; set; }
     public long TimeTillCash { get; set; }
@@ -59,6 +61,7 @@ public class DbUser : DbObject
     public bool UsingSlots { get; set; }
     public bool WantsReplyPings { get; set; } = true;
     public long ViagraTime { get; set; }
+    public List<string> Weapons { get; set; } = new();
     public long WhoreCooldown { get; set; }
     public decimal Xrp { get; set; }
 

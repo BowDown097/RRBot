@@ -1,13 +1,22 @@
 ﻿namespace RRBot.Systems;
 public static class ItemSystem
 {
+    // Pistol Round, Rifle Round, Sniper Round, Rocket
+    public static readonly Ammo[] Ammo =
+    {
+        new("Pistol Round", 3),
+        new("Rifle Round", 2),
+        new("Sniper Round", 1),
+        new("Rocket", 0.5)
+    };
+
     public static readonly Crate[] Crates =
     {
-        new("Daily", 0, 1, cash: 1500),
-        new("Bronze", 5000, 2 ),
-        new("Silver", 10000, 3, 1),
-        new("Gold", 15000, 5, 2),
-        new("Diamond", 25000, 10, 3)
+        new("Daily", 0, 0, 1, cash: 1500),
+        new("Bronze", 5000, 1, 2 ),
+        new("Silver", 10000, 2, 3, 1),
+        new("Gold", 15000, 3, 5, 2),
+        new("Diamond", 25000, 4, 10, 3)
     };
 
     private static readonly Collectible[] Collectibles =
@@ -64,7 +73,18 @@ public static class ItemSystem
         new("Fishing Rod", 7500, Constants.Fish.First().Value * 7, Constants.Fish.Last().Value * 15)
     };
 
-    public static Item GetItem(string name) => Array.Find(Crates.Cast<Item>().Concat(Collectibles).Concat(Consumables).Concat(Perks).Concat(Tools).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+    public static readonly Weapon[] Weapons =
+    {
+        new("Glock 17", 30, "Pistol Round", 13, 21, 40, "The classic. Also the weakest. Upgrade when?", new[] { "Bronze", "Silver", "Gold", "Diamond" }, "Gun"),
+        new("Python", 35, "Pistol Round", 20, 25, 30, "Nice, small, and hits like a truck. Like a Glock but it doesn't suck.", new[] { "Silver", "Gold", "Diamond" }, "Gun"),
+        new("AR-15", 50, "Rifle Round", 40, 45, 25, "\"Ummmm.. This is like a full on military weapon, we should ban it\" said some fucking loser no one cares about. This gun is awesome.", new[] { "Gold", "Diamond" }, "Gun"),
+        new("M16", 60, "Rifle Round", 35, 40, 20, "TA-TA-TA! Three round burst. Nice n' accurate. Absolute beauty.", new[] { "Gold", "Diamond" }, "Gun"),
+        new("Intervention", 70, "Sniper Round", 60, 80, 3, "Big dick energy in a weapon. Sexy. Accurate. Hard-hitting. The bros love it, the hoes love it. I love it.", new[] { "Gold", "Diamond" }, "Gun"),
+        new("Barrett M82", 60, "Sniper Round", 50, 70, 7, "Yawn. Gay. It's cool I guess, but why have this when you could have an Intervention?", new[] { "Gold", "Diamond" }, "Gun"),
+        new("RPG", 30, "Rocket", 100, 100, 15, "A FUCKIN' ROCKET LAUNCHER!!!! GUN GO BOOM!", new[] { "Diamond" }, "Gun")
+    };
+
+    public static Item GetItem(string name) => Array.Find(Crates.Cast<Item>().Concat(Collectibles).Concat(Consumables).Concat(Perks).Concat(Tools).Concat(Weapons).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 
     public static async Task<RuntimeResult> BuyCrate(Crate crate, IUser user, DbUser dbUser, ISocketMessageChannel channel, bool notify = true)
     {

@@ -242,4 +242,8 @@ public static class Constants
     public const decimal MineIronMultiplier = 1.66m;
     public const decimal MineDiamondMultiplier = 2;
     public const decimal MineNetheriteMultiplier = 2.33m;
+    // ********************
+    //       WEAPONS
+    // ********************
+    public const long ShootCooldown = 14400;
 }

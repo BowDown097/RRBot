@@ -3,7 +3,7 @@
 public class Economy : ModuleBase<SocketCommandContext>
 {
     public static readonly string[] CmdsWithCooldown = { "Deal", "Loot", "Rape", "Rob", "Scavenge",
-        "Slavery", "Whore", "Bully",  "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Hack", "Daily", "Prestige" };
+        "Slavery", "Whore", "Bully",  "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Hack", "Daily", "Prestige", "Shoot" };
 
     #region Commands
     [Alias("bal", "cash")]

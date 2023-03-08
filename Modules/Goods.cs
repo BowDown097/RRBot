@@ -16,6 +16,8 @@ public class Goods : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You cannot buy the Daily crate!");
         if (item?.Name.StartsWith("Netherite") == true)
             return CommandResult.FromError("​Netherite items can only be obtained from Diamond crates!");
+        if (item is Weapon)
+            return CommandResult.FromError("Weapons can only be obtained from crates!");
         
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         RuntimeResult result = item switch
@@ -60,7 +62,7 @@ public class Goods : ModuleBase<SocketCommandContext>
         switch (item)
         {
             case Consumable or Crate:
-                return CommandResult.FromError("Consumables and crates cannot be discarded!");
+                return CommandResult.FromError("Consumables, crates, and weapons cannot be discarded!");
             case Collectible collectible:
                 if (!user.Collectibles.TryGetValue(item.Name, out int count) || count == 0)
                     return CommandResult.FromError($"You do not have a(n) {item}!");
@@ -88,6 +90,13 @@ public class Goods : ModuleBase<SocketCommandContext>
                 await user.SetCash(Context.User, user.Cash + item.Price * 0.9m);
                 await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **{item.Price * 0.9m:C2}**.");
                 break;
+            case Weapon:
+                if (!user.Weapons.Remove(item.Name))
+                    return CommandResult.FromError($"You do not have a(n) {item}!");
+
+                await user.SetCash(Context.User, user.Cash + 5000);
+                await Context.User.NotifyAsync(Context.Channel, $"You sold your {item} to some dude for **$5,000.00**.");
+                break;
             default:
                 return CommandResult.FromError("That is not an item!");
         }
@@ -110,8 +119,8 @@ public class Goods : ModuleBase<SocketCommandContext>
                 .WithColor(Color.Red)
                 .WithThumbnailUrl(collectible.Image)
                 .WithTitle(collectible.Name)
-                .AddField("Description", collectible.Description)
-                .AddField("Worth", collectible.Price != -1 ? collectible.Price.ToString("C2") : "Some amount of money"),
+                .AddField("Description", collectible.Description, true)
+                .AddField("Worth", collectible.Price != -1 ? collectible.Price.ToString("C2") : "Some amount of money", true),
             Consumable consumable => new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle(consumable.Name)
@@ -119,26 +128,37 @@ public class Goods : ModuleBase<SocketCommandContext>
             Crate crate => new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle($"{crate} Crate")
-                .AddField("Price", crate.Price.ToString("C2"))
-                .AddField("Cash", crate.Cash.ToString("C2"), condition: crate.Cash != 0)
-                .AddField("Consumables", crate.ConsumableCount, condition: crate.ConsumableCount != 0)
-                .AddField("Tools", crate.ToolCount, condition: crate.ToolCount != 0),
+                .AddField("Price", crate.Price.ToString("C2"), true)
+                .AddField("Cash", crate.Cash.ToString("C2"), crate.Cash != 0, true)
+                .AddField("Consumables", crate.ConsumableCount, crate.ConsumableCount != 0, true)
+                .AddField("Tools", crate.ToolCount, crate.ToolCount != 0, true),
             Perk perk => new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle(perk.Name)
                 .WithDescription(perk.Description)
-                .AddField("Type", "Perk")
-                .AddField("Price", perk.Price.ToString("C2"))
-                .AddField("Duration", TimeSpan.FromSeconds(perk.Duration).FormatCompound()),
+                .AddField("Type", "Perk", true)
+                .AddField("Price", perk.Price.ToString("C2"), true)
+                .AddField("Duration", TimeSpan.FromSeconds(perk.Duration).FormatCompound(), true),
             Tool tool => new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle(tool.Name)
-                .AddField("Type", "Tool")
-                .AddField("Price", tool.Price.ToString("C2"))
+                .AddField("Type", "Tool", true)
+                .AddField("Price", tool.Price.ToString("C2"), true)
                 .AddField("Cash Range", tool.Name.EndsWith("Pickaxe")
                     ? $"{128 * tool.Mult:C2} - {256 * tool.Mult:C2}"
-                    : $"{tool.GenericMin:C2} - {tool.GenericMax:C2}")
-                .AddField("Additional Info", "Only obtainable from Diamond crates", condition: tool.Name.StartsWith("Netherite")),
+                    : $"{tool.GenericMin:C2} - {tool.GenericMax:C2}",
+                    true)
+                .AddField("Additional Info", "Only obtainable from Diamond crates", tool.Name.StartsWith("Netherite"), true),
+            Weapon weapon => new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(weapon.Name)
+                .WithDescription(weapon.Information)
+                .AddField("Type", weapon.Type, true)
+                .AddField("Accuracy", weapon.Accuracy + "%", true)
+                .AddField("Ammo", weapon.Ammo, true)
+                .AddField("Damage Range", $"{weapon.DamageMin} - {weapon.DamageMax}", true)
+                .AddField("Drop Chance", weapon.DropChance + "%", true)
+                .AddField("Available In Crates", string.Join(", ", weapon.InsideCrates), true),
             _ => new EmbedBuilder()
         };
 
@@ -162,10 +182,16 @@ public class Goods : ModuleBase<SocketCommandContext>
         string crates = string.Join('\n', dbUser.Crates.Distinct().Select(c => $"{c} ({dbUser.Crates.Count(cr => cr == c)}x)"));
         string perks = string.Join('\n', sortedPerks);
         string tools = string.Join('\n', dbUser.Tools);
+        string weapons = string.Join('\n', dbUser.Weapons);
+
+        if (dbUser.Ammo.Any(k => k.Value > 0))
+            weapons += '\n' + string.Join('\n', dbUser.Ammo.Where(k => k.Value > 0).Select(a => $"{a.Key} ({a.Value}x)"));
 
         List<PageBuilder> pages = new();
         if (dbUser.Tools.Count > 0)
             pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools));
+        if (dbUser.Weapons.Count > 0)
+            pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Weapons").WithDescription(weapons));
         if (sortedPerks.Length > 0)
             pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(perks));
         if (!string.IsNullOrWhiteSpace(collectibles))
@@ -203,12 +229,26 @@ public class Goods : ModuleBase<SocketCommandContext>
         user.Cash += crate.Cash;
 
         List<Item> items = crate.Open(user);
-        List<string> consumables = items.Where(i => i is Consumable).Select(c => c.Name).ToList();
+        string[] ammos = items.Where(i => i is Ammo).Select(a => a.Name).ToArray();
+        string[] consumables = items.Where(i => i is Consumable).Select(c => c.Name).ToArray();
         IEnumerable<string> tools = items.Where(i => i is Tool).Select(t => t.Name);
+        IEnumerable<string> weapons = items.Where(i => i is Weapon).Select(t => t.Name);
 
         StringBuilder description = new();
         if (crate.Cash > 0)
             description.AppendLine($"**Cash** ({crate.Cash:C2})");
+
+        foreach (string ammo in ammos.Distinct())
+        {
+            int count = ammos.Count(a => a == ammo);
+            if (user.Ammo.ContainsKey(ammo))
+                user.Ammo[ammo] += count;
+            else
+                user.Ammo.Add(ammo, count);
+
+            description.AppendLine($"**{ammo}** ({count}x)");
+        }
+        
         foreach (string consumable in consumables.Distinct())
         {
             int count = consumables.Count(c => c == consumable);
@@ -219,10 +259,17 @@ public class Goods : ModuleBase<SocketCommandContext>
 
             description.AppendLine($"**{consumable}** ({count}x)");
         }
+
         foreach (string tool in tools)
         {
             user.Tools.Add(tool);
             description.AppendLine($"**{tool}**");
+        }
+
+        foreach (string weapon in weapons)
+        {
+            user.Weapons.Add(weapon);
+            description.AppendLine($"**{weapon}**");
         }
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -242,11 +289,13 @@ public class Goods : ModuleBase<SocketCommandContext>
         string crates = string.Join('\n', ItemSystem.Crates.Where(c => c.Name != "Daily").Select(c => $"**{c}**: {c.Price:C2}"));
         string perks = string.Join('\n', ItemSystem.Perks.Select(p => $"**{p}**: {p.Description}\nDuration: {TimeSpan.FromSeconds(p.Duration).FormatCompound()}\nPrice: {p.Price:C2}"));
         string tools = string.Join('\n', ItemSystem.Tools.Where(t => !t.Name.StartsWith("Netherite")).Select(t => $"**{t}**: {t.Price:C2}"));
+        string weapons = string.Join('\n', ItemSystem.Weapons.Select(w => $"**{w}**: {w.Information}"));
 
         IPageBuilder[] pages = {
-            new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools),
-            new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(perks),
-            new PageBuilder().WithColor(Color.Red).WithTitle("Crates").WithDescription(crates)
+            new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools).WithFooter("Buy tools with $buy!"),
+            new PageBuilder().WithColor(Color.Red).WithTitle("Weapons").WithDescription(weapons).WithFooter("Get weapons from crates!"),
+            new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(perks).WithFooter("Buy perks with $buy!"),
+            new PageBuilder().WithColor(Color.Red).WithTitle("Crates").WithDescription(crates).WithFooter("Buy crates with $buy!")
         };
 
         StaticPaginator paginator = new StaticPaginatorBuilder()

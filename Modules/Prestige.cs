@@ -37,6 +37,7 @@ public class Prestige : ModuleBase<SocketCommandContext>
         user.Crates.Clear();
         user.Perks.Clear();
         user.Tools.Clear();
+        user.Weapons.Clear();
         user.UsedConsumables = new Dictionary<string, int>
         {
             { "Black Hat", 0 },
