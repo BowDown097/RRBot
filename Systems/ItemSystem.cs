@@ -1,90 +1,17 @@
 ﻿namespace RRBot.Systems;
 public static class ItemSystem
 {
-    // Pistol Round, Rifle Round, Sniper Round, Rocket
-    public static readonly Ammo[] Ammo =
+    public static Item GetItem(string name)
     {
-        new("Pistol Round", 3),
-        new("Rifle Round", 2),
-        new("Sniper Round", 1),
-        new("Rocket", 0.5)
-    };
-
-    public static readonly Crate[] Crates =
-    {
-        new("Daily", 0, 0, 1, cash: 1500),
-        new("Bronze", 5000, 1, 2 ),
-        new("Silver", 10000, 2, 3, 1),
-        new("Gold", 15000, 3, 5, 2),
-        new("Diamond", 25000, 4, 10, 3)
-    };
-
-    private static readonly Collectible[] Collectibles =
-    {
-        new("Ape NFT", "Who actually likes these? Why does this have value?", 1000, "https://i.ibb.co/w0syJ61/nft.png"),
-        new("Bank Cheque", "Hey hey hey, we got ourselves some free money!", -1, "https://i.ibb.co/wCYcrP7/Blank-Cheque.png"),
-        new("Coconut", "Well this is cool, I guess.", 3, "https://i.ibb.co/svxvLKP/coconut.png"),
-        new("V Card", "Here you go, ya fuckin' virgin. Get a life bro", 69696969.69m, "https://i.ibb.co/rvKXgb5/vcard.png", false)
-    };
-
-    public static readonly Consumable[] Consumables =
-    {
-        new("Black Hat", "Become an epic hax0r.", "You might get busted by the feds and get fined.", "$hack chance increased by 10%.", Constants.BlackHatDuration, 1),
-        new("Cocaine", "Snorting a line of this funny sugar makes you HYPER and has some crazy effects.", "You have a chance of overdosing, which will make you lose all your remaining cocaine as well as not be able to use commands with cooldowns for a certain amount of time. The chance of overdosing and how long you can't use economy commands depends on how many lines you have in your system.", "Cooldowns are reduced by 10% for each line snorted.", Constants.CocaineDuration),
-        new("Romanian Flag", "A neat little good luck charm for $rob. Your Romanian pride makes stealing wallets much easier!", "A Romanian might notice you and take some of your money.", "$rob chance increased by 10%.", Constants.RomanianFlagDuration, 1),
-        new("Viagra", "Get it goin', if you know what I mean.", "The pill has a chance to backfire and give you ED.", "$rape chance increased by 10%.", Constants.ViagraDuration, 1)
-    };
-
-    public static readonly Perk[] Perks =
-    {
-        new("Enchanter", "Tasks are 20% more effective, but your tools have a 2% chance of breaking after use.", 5000, 172800),
-        new("Speed Demon", "Cooldowns are 15% shorter, but you have a 5% higher chance of failing any command that can fail.", 5000, 172800),
-        new("Multiperk", "Grants the ability to equip 2 perks, not including this one.", 10000, 604800),
-        new("Pacifist", "You are immune to all crimes, but you cannot use any crime commands and you also cannot appear on the leaderboard. Cannot be stacked with other perks, even if you have the Multiperk. Can be discarded, but cannot be used again for 3 days.", 0, -1)
-    };
-
-    public static readonly Tool[] Tools =
-    {
-        new("Wooden Pickaxe", 4500),
-        new("Stone Pickaxe", 6000, mult: Constants.MineStoneMultiplier),
-        new("Iron Pickaxe", 7500, mult: Constants.MineIronMultiplier),
-        new("Diamond Pickaxe", 9000, mult: Constants.MineDiamondMultiplier),
-        new("Netherite Pickaxe", 10500, mult: Constants.MineNetheriteMultiplier),
-        new("Wooden Sword", 4500, Constants.GenericTaskWoodMin * 2.5m, Constants.GenericTaskWoodMax * 2.5m),
-        new("Stone Sword", 6000, Constants.GenericTaskStoneMin * 2.5m, Constants.GenericTaskStoneMax * 2.5m),
-        new("Iron Sword", 7500, Constants.GenericTaskIronMin * 2.5m, Constants.GenericTaskIronMax * 2.5m),
-        new("Diamond Sword", 9000, Constants.GenericTaskDiamondMin * 2.5m, Constants.GenericTaskDiamondMax * 2.5m),
-        new("Netherite Sword", 10500, Constants.GenericTaskNetheriteMin * 2.5m, Constants.GenericTaskNetheriteMax * 2.5m),
-        new("Wooden Shovel", 4500, Constants.GenericTaskWoodMin * 2.5m, Constants.GenericTaskWoodMax * 2.5m),
-        new("Stone Shovel", 6000, Constants.GenericTaskStoneMin * 2.5m, Constants.GenericTaskStoneMax * 2.5m),
-        new("Iron Shovel", 7500, Constants.GenericTaskIronMin * 2.5m, Constants.GenericTaskIronMax * 2.5m),
-        new("Diamond Shovel", 9000, Constants.GenericTaskDiamondMin * 2.5m, Constants.GenericTaskDiamondMax * 2.5m),
-        new("Netherite Shovel", 10500, Constants.GenericTaskNetheriteMin * 2.5m, Constants.GenericTaskNetheriteMax * 2.5m),
-        new("Wooden Axe", 4500, Constants.GenericTaskWoodMin * 2.5m, Constants.GenericTaskWoodMax * 2.5m),
-        new("Stone Axe", 6000, Constants.GenericTaskStoneMin * 2.5m, Constants.GenericTaskStoneMax * 2.5m),
-        new("Iron Axe", 7500, Constants.GenericTaskIronMin * 2.5m, Constants.GenericTaskIronMax * 2.5m),
-        new("Diamond Axe", 9000, Constants.GenericTaskDiamondMin * 2.5m, Constants.GenericTaskDiamondMax * 2.5m),
-        new("Netherite Axe", 10500, Constants.GenericTaskNetheriteMin * 2.5m, Constants.GenericTaskNetheriteMax * 2.5m),
-        new("Wooden Hoe", 4500, Constants.GenericTaskWoodMin * 2.5m, Constants.GenericTaskWoodMax * 2.5m),
-        new("Stone Hoe", 6000, Constants.GenericTaskStoneMin * 2.5m, Constants.GenericTaskStoneMax * 2.5m),
-        new("Iron Hoe", 7500, Constants.GenericTaskIronMin * 2.5m, Constants.GenericTaskIronMax * 2.5m),
-        new("Diamond Hoe", 9000, Constants.GenericTaskDiamondMin * 2.5m, Constants.GenericTaskDiamondMax * 2.5m),
-        new("Netherite Hoe", 10500, Constants.GenericTaskNetheriteMin * 2.5m, Constants.GenericTaskNetheriteMax * 2.5m),
-        new("Fishing Rod", 7500, Constants.Fish.First().Value * 7, Constants.Fish.Last().Value * 15)
-    };
-
-    public static readonly Weapon[] Weapons =
-    {
-        new("Glock 17", 30, "Pistol Round", 13, 21, 40, "The classic. Also the weakest. Upgrade when?", new[] { "Bronze", "Silver", "Gold", "Diamond" }, "Gun"),
-        new("Python", 35, "Pistol Round", 20, 25, 30, "Nice, small, and hits like a truck. Like a Glock but it doesn't suck.", new[] { "Silver", "Gold", "Diamond" }, "Gun"),
-        new("AR-15", 50, "Rifle Round", 40, 45, 25, "\"Ummmm.. This is like a full on military weapon, we should ban it\" said some fucking loser no one cares about. This gun is awesome.", new[] { "Gold", "Diamond" }, "Gun"),
-        new("M16", 60, "Rifle Round", 35, 40, 20, "TA-TA-TA! Three round burst. Nice n' accurate. Absolute beauty.", new[] { "Gold", "Diamond" }, "Gun"),
-        new("Intervention", 70, "Sniper Round", 60, 80, 3, "Big dick energy in a weapon. Sexy. Accurate. Hard-hitting. The bros love it, the hoes love it. I love it.", new[] { "Gold", "Diamond" }, "Gun"),
-        new("Barrett M82", 60, "Sniper Round", 50, 70, 7, "Yawn. Gay. It's cool I guess, but why have this when you could have an Intervention?", new[] { "Gold", "Diamond" }, "Gun"),
-        new("RPG", 30, "Rocket", 100, 100, 15, "A FUCKIN' ROCKET LAUNCHER!!!! GUN GO BOOM!", new[] { "Diamond" }, "Gun")
-    };
-
-    public static Item GetItem(string name) => Array.Find(Crates.Cast<Item>().Concat(Collectibles).Concat(Consumables).Concat(Perks).Concat(Tools).Concat(Weapons).ToArray(), i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        Item[] allItems = Constants.Crates.Cast<Item>()
+            .Concat(Constants.Collectibles)
+            .Concat(Constants.Consumables)
+            .Concat(Constants.Perks)
+            .Concat(Constants.Tools)
+            .Concat(Constants.Weapons)
+            .ToArray();
+        return Array.Find(allItems, i => i.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+    }
 
     public static async Task<RuntimeResult> BuyCrate(Crate crate, IUser user, DbUser dbUser, ISocketMessageChannel channel, bool notify = true)
     {

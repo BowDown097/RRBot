@@ -277,7 +277,7 @@ public class Crime : ModuleBase<SocketCommandContext>
             return;
 
         JToken[] words = wordsToken.ToArray();
-        string originalWord = words[RandomUtil.Next(words.Length)].ToString();
+        string originalWord = RandomUtil.GetRandomElement(words).ToString();
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         if (originalWord.Any(c => !char.IsLetter(c) && !char.IsWhiteSpace(c)))
         {
@@ -411,7 +411,7 @@ public class Crime : ModuleBase<SocketCommandContext>
         }
         else
         {
-            string outcome = failOutcomes[RandomUtil.Next(failOutcomes.Length)];
+            string outcome = RandomUtil.GetRandomElement(failOutcomes);
             decimal lostCash = RandomUtil.NextDecimal(Constants.GenericCrimeLossMin, Constants.GenericCrimeLossMax);
             lostCash = user.Cash - lostCash < 0 ? lostCash - Math.Abs(user.Cash - lostCash) : lostCash;
             decimal totalCash = user.Cash - lostCash > 0 ? user.Cash - lostCash : 0;
@@ -423,10 +423,10 @@ public class Crime : ModuleBase<SocketCommandContext>
 
         if (RandomUtil.NextDouble(1, 101) < Constants.GenericCrimeToolOdds)
         {
-            string[] availableTools = ItemSystem.Tools.Where(t => !user.Tools.Contains(t.Name)).Select(t => t.Name).ToArray();
+            string[] availableTools = Constants.Tools.Where(t => !user.Tools.Contains(t.Name)).Select(t => t.Name).ToArray();
             if (availableTools.Length > 0)
             {
-                string tool = availableTools[RandomUtil.Next(availableTools.Length)];
+                string tool = RandomUtil.GetRandomElement(availableTools);
                 user.Tools.Add(tool);
                 await ReplyAsync($"Well I'll be damned! You also got yourself a(n) {tool}! Check out ``$module tasks`` to see how you can use it.");
             }

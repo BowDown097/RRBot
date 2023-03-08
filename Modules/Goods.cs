@@ -286,10 +286,10 @@ public class Goods : ModuleBase<SocketCommandContext>
     [Summary("Check out what's available for purchase in the shop.")]
     public async Task Shop()
     {
-        string crates = string.Join('\n', ItemSystem.Crates.Where(c => c.Name != "Daily").Select(c => $"**{c}**: {c.Price:C2}"));
-        string perks = string.Join('\n', ItemSystem.Perks.Select(p => $"**{p}**: {p.Description}\nDuration: {TimeSpan.FromSeconds(p.Duration).FormatCompound()}\nPrice: {p.Price:C2}"));
-        string tools = string.Join('\n', ItemSystem.Tools.Where(t => !t.Name.StartsWith("Netherite")).Select(t => $"**{t}**: {t.Price:C2}"));
-        string weapons = string.Join('\n', ItemSystem.Weapons.Select(w => $"**{w}**: {w.Information}"));
+        string crates = string.Join('\n', Constants.Crates.Where(c => c.Name != "Daily").Select(c => $"**{c}**: {c.Price:C2}"));
+        string perks = string.Join('\n', Constants.Perks.Select(p => $"**{p}**: {p.Description}\nDuration: {TimeSpan.FromSeconds(p.Duration).FormatCompound()}\nPrice: {p.Price:C2}"));
+        string tools = string.Join('\n', Constants.Tools.Where(t => !t.Name.StartsWith("Netherite")).Select(t => $"**{t}**: {t.Price:C2}"));
+        string weapons = string.Join('\n', Constants.Weapons.Select(w => $"**{w}**: {w.Information}"));
 
         IPageBuilder[] pages = {
             new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools).WithFooter("Buy tools with $buy!"),

@@ -7,7 +7,8 @@ public class Weapons : ModuleBase<SocketCommandContext>
     [RequireCooldown("ShootCooldown", "Woah woah woah! You got a killing addiction there or something? You've gotta wait {0}. Sorry.")]
     public async Task<RuntimeResult> Shoot(IGuildUser user, string gun)
     {
-        Weapon weapon = Array.Find(ItemSystem.Weapons, w => w.Name.Equals(gun, StringComparison.OrdinalIgnoreCase) && w.Type == "Gun");
+        Weapon weapon = Array.Find(Constants.Weapons,
+            w => w.Name.Equals(gun, StringComparison.OrdinalIgnoreCase) && w.Type == "Gun");
         if (weapon is null)
             return CommandResult.FromError("That is not a gun!");
 

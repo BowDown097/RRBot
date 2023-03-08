@@ -28,7 +28,7 @@ public class Tasks : ModuleBase<SocketCommandContext>
     public async Task Fish()
     {
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        KeyValuePair<string, decimal> fish = Constants.Fish.ElementAt(RandomUtil.Next(Constants.Fish.Count));
+        KeyValuePair<string, decimal> fish = RandomUtil.GetRandomElement(Constants.Fish);
         int numCaught = RandomUtil.Next(7, 15);
 
         if (user.Perks.ContainsKey("Enchanter"))

@@ -127,12 +127,12 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Command("magicconch")]
     [Summary("Ask the Magic Conch ANYTHING!")]
     [Remarks("$magicconch Will I get bitches?")]
-    public async Task MagicConch([Remainder] string question) // not discarded for $help
+    public async Task MagicConch([Remainder] string question)
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("The Magic Conch Shell says...")
-            .WithImageUrl(Constants.MagicConchImages[RandomUtil.Next(Constants.MagicConchImages.Length)]);
+            .WithImageUrl(RandomUtil.GetRandomElement(Constants.MagicConchImages));
         await ReplyAsync(embed: embed.Build());
     }
     #pragma warning restore IDE0060, RCS1163
@@ -286,12 +286,12 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Summary("Get yourself a random waifu from our vast and sexy collection of scrumptious waifus.")]
     public async Task Waifu()
     {
-        string waifu = Constants.Waifus.Keys.ElementAt(RandomUtil.Next(Constants.Waifus.Count));
+        KeyValuePair<string, string> waifu = RandomUtil.GetRandomElement(Constants.Waifus);
         EmbedBuilder waifuEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Say hello to your new waifu!")
-            .WithDescription($"Your waifu is **{waifu}**.")
-            .WithImageUrl(Constants.Waifus[waifu]);
+            .WithDescription($"Your waifu is **{waifu.Key}**.")
+            .WithImageUrl(waifu.Value);
         await ReplyAsync(embed: waifuEmbed.Build());
     }
     #endregion

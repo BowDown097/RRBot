@@ -8,6 +8,9 @@ public static class RandomUtil
     public static decimal NextDecimal(decimal max) => NextFloatingPoint(0m, max);
     public static decimal NextDecimal(decimal min, decimal max) => NextFloatingPoint(min, max);
 
+    public static T GetRandomElement<T>(T[] arr) => arr[Next(arr.Length)];
+    public static T GetRandomElement<T>(IEnumerable<T> enumerable) => GetRandomElement(enumerable.ToArray());
+
     private static T NextFloatingPoint<T>(T min, T max) where T : IFloatingPoint<T>
     {
         byte[] buf = RandomNumberGenerator.GetBytes(8);

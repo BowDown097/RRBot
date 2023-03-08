@@ -32,6 +32,7 @@ public class Prestige : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("Prestige canceled.");
 
         user.Btc = user.Eth = user.Ltc = user.Xrp = 0;
+        user.Ammo.Clear();
         user.Collectibles.Clear();
         user.Consumables.Clear();
         user.Crates.Clear();

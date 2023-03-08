@@ -26,44 +26,41 @@ public class Crate : Item
             int ammoRoll = RandomUtil.Next(Tier + 1);
             if (ammoRoll > 0)
             {
-                Ammo[] availableAmmo = ItemSystem.Ammo.Where(a => a.CrateMultiplier * ammoRoll >= 1).ToArray();
-                Ammo ammo = availableAmmo[RandomUtil.Next(availableAmmo.Length)];
-                for (int i = 0; i < ammo.CrateMultiplier * ammoRoll; i++)
-                {
-                    items.Add(ammo);
-                }
+                Ammo randomAmmo = RandomUtil.GetRandomElement(Constants.Ammo.Where(a => a.CrateMultiplier * ammoRoll >= 1));
+                for (int i = 0; i < randomAmmo.CrateMultiplier * ammoRoll; i++)
+                    items.Add(randomAmmo);
             }
         }
 
         for (int i = 0; i < ConsumableCount; i++)
-        {
-            items.Add(ItemSystem.Consumables[RandomUtil.Next(ItemSystem.Consumables.Length)]);
-        }
+            items.Add(RandomUtil.GetRandomElement(Constants.Consumables));
 
-        Tool[] availableTools = ItemSystem.Tools
+        Tool[] availableTools = Constants.Tools
             .Where(t => Tier == 4 ? !items.Contains(t) : !items.Contains(t) && !t.Name.StartsWith("Netherite"))
             .ToArray();
         for (int i = 0; i < ToolCount; i++)
-        {
-            items.Add(availableTools[RandomUtil.Next(availableTools.Length)]);
-        }
+            items.Add(RandomUtil.GetRandomElement(availableTools));
 
         int weaponRolls = RandomUtil.Next(Tier + 1);
         for (int i = 0; i < weaponRolls; i++)
         {
             int weaponDropRoll = RandomUtil.Next(1, 101);
-            Weapon[] availableWeapons = ItemSystem.Weapons
+            Weapon[] availableWeapons = Constants.Weapons
                 .Where(w => w.DropChance > weaponDropRoll && w.InsideCrates.Contains(Name))
                 .ToArray();
+
             if (availableWeapons.Length > 0)
-                items.Add(availableWeapons[RandomUtil.Next(availableWeapons.Length)]);
+            {
+                items.Add(RandomUtil.GetRandomElement(availableWeapons));
+                break;
+            }
         }
 
         foreach (Item item in items.ToList().Where(i => user.Tools.Contains(i.Name)))
         {
             items.Remove(item);
             for (int i = 0; i < 3; i++)
-                items.Add(ItemSystem.Consumables[RandomUtil.Next(ItemSystem.Consumables.Length)]);
+                items.Add(RandomUtil.GetRandomElement(Constants.Consumables));
         }
         
         return items;

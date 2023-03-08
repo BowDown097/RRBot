@@ -44,40 +44,48 @@ public static class Constants
     // ********************
     public const decimal CashMultiplier = 1.0m;
     public const decimal MessageCash = 30;
-    public const long MessageCashCooldown = 60;
     public const decimal TransactionMin = 100;
+    // ********************
+    //      COOLDOWNS
+    // ********************
+    public const long BullyCooldown = 600;
+    public const long ChopCooldown = 3600;
+    public const long DailyCooldown = 86400;
+    public const long DealCooldown = 3600;
+    public const long DigCooldown = 3600;
+    public const long FarmCooldown = 3600;
+    public const long FishCooldown = 3600;
+    public const long HackCooldown = 3600;
+    public const long HuntCooldown = 3600;
+    public const long LootCooldown = 3600;
+    public const long MessageCashCooldown = 60;
+    public const long MineCooldown = 3600;
+    public const long PrestigeCooldown = 43200;
+    public const long RapeCooldown = 3600;
+    public const long RobCooldown = 3600;
+    public const long ScavengeCooldown = 60;
+    public const long ShootCooldown = 14400;
+    public const long SlaveryCooldown = 3600;
+    public const long WhoreCooldown = 3600;
     // ********************
     //        CRIME
     // ********************
-    public const long BullyCooldown = 600;
-    public const long DealCooldown = 3600;
     public const double GenericCrimeWinOdds = 80;
     public const decimal GenericCrimeLossMax = 461;
     public const decimal GenericCrimeLossMin = 69;
     public const double GenericCrimeToolOdds = 4;
     public const decimal GenericCrimeWinMax = 691;
     public const decimal GenericCrimeWinMin = 69;
-    public const long HackCooldown = 3600;
     public const double HackOdds = 10;
-    public const long LootCooldown = 3600;
-    public const long RapeCooldown = 3600;
     public const double RapeOdds = 50;
     public const decimal RapeMaxPercent = 9;
     public const decimal RapeMinPercent = 5;
-    public const long RobCooldown = 3600;
     public const double RobOdds = 40;
     public const decimal RobMaxPercent = 20;
     public const decimal RobMinCash = 100;
-    public const long ScavengeCooldown = 60;
     public const decimal ScavengeMinCash = 50;
     public const decimal ScavengeMaxCash = 100;
     public const double ScavengeTimeout = 15;
-    public const long SlaveryCooldown = 3600;
-    public const long WhoreCooldown = 3600;
-    // ********************
-    //        ECONOMY
-    // ********************
-    public const long DailyCooldown = 86400;
     // ********************
     //         FUN
     // ********************
@@ -165,8 +173,8 @@ public static class Constants
     // ********************
     public const long BlackHatDuration = 3600;
     public const long CocaineDuration = 3600;
-    public const long ViagraDuration = 3600;
     public const long RomanianFlagDuration = 3600;
+    public const long ViagraDuration = 3600;
     // ********************
     //     INVESTMENTS
     // ********************
@@ -198,7 +206,6 @@ public static class Constants
     //      PRESTIGE
     // ********************
     public const int MaxPrestige = 10;
-    public const long PrestigeCooldown = 43200;
     public static readonly Dictionary<int, string> PrestigeImages = new()
     {
         { 1, "https://static.wikia.nocookie.net/callofduty/images/e/e8/Prestige_1_emblem_MW2.png/revision/latest/scale-to-width-down/64?cb=20121219030716" },
@@ -215,16 +222,12 @@ public static class Constants
     // ********************
     //        TASKS
     // ********************
-    public const long ChopCooldown = 3600;
-    public const long DigCooldown = 3600;
-    public const long FarmCooldown = 3600;
     public static readonly Dictionary<string, decimal> Fish = new()
     {
         { "carp", 24 },
         { "trout", 27 },
         { "goldfish", 30 }
     };
-    public const long FishCooldown = 3600;
     public const double FishCoconutOdds = 20;
     public const int GenericTaskWoodMax = 65;
     public const int GenericTaskWoodMin = 32;
@@ -236,14 +239,82 @@ public static class Constants
     public const int GenericTaskDiamondMin = 161;
     public const int GenericTaskNetheriteMax = 257;
     public const int GenericTaskNetheriteMin = 209;
-    public const long HuntCooldown = 3600;
-    public const long MineCooldown = 3600;
-    public const decimal MineStoneMultiplier = 1.33m;
-    public const decimal MineIronMultiplier = 1.66m;
-    public const decimal MineDiamondMultiplier = 2;
-    public const decimal MineNetheriteMultiplier = 2.33m;
     // ********************
-    //       WEAPONS
+    //        ITEMS
     // ********************
-    public const long ShootCooldown = 14400;
+    public static readonly Ammo[] Ammo =
+    {
+        new("Pistol Round", 3),
+        new("Rifle Round", 2),
+        new("Sniper Round", 1),
+        new("Rocket", 0.5)
+    };
+    public static readonly Crate[] Crates =
+    {
+        new("Daily", 0, 0, 1, cash: 1500),
+        new("Bronze", 5000, 1, 2 ),
+        new("Silver", 10000, 2, 2, 1),
+        new("Gold", 15000, 3, 4, 2),
+        new("Diamond", 25000, 4, 6, 3)
+    };
+    public static readonly Collectible[] Collectibles =
+    {
+        new("Ape NFT", "Who actually likes these? Why does this have value?", 1000, "https://i.ibb.co/w0syJ61/nft.png"),
+        new("Bank Cheque", "Hey hey hey, we got ourselves some free money!", -1, "https://i.ibb.co/wCYcrP7/Blank-Cheque.png"),
+        new("Coconut", "Well this is cool, I guess.", 3, "https://i.ibb.co/svxvLKP/coconut.png"),
+        new("V Card", "Here you go, ya fuckin' virgin. Get a life bro", 69696969.69m, "https://i.ibb.co/rvKXgb5/vcard.png", false)
+    };
+    public static readonly Consumable[] Consumables =
+    {
+        new("Black Hat", "Become an epic hax0r.", "You might get busted by the feds and get fined.", "$hack chance increased by 10%.", BlackHatDuration, 1),
+        new("Cocaine", "Snorting a line of this funny sugar makes you HYPER and has some crazy effects.", "You have a chance of overdosing, which will make you lose all your remaining cocaine as well as not be able to use commands with cooldowns for a certain amount of time. The chance of overdosing and how long you can't use economy commands depends on how many lines you have in your system.", "Cooldowns are reduced by 10% for each line snorted.", CocaineDuration),
+        new("Romanian Flag", "A neat little good luck charm for $rob. Your Romanian pride makes stealing wallets much easier!", "A Romanian might notice you and take some of your money.", "$rob chance increased by 10%.", RomanianFlagDuration, 1),
+        new("Viagra", "Get it goin', if you know what I mean.", "The pill has a chance to backfire and give you ED.", "$rape chance increased by 10%.", ViagraDuration, 1)
+    };
+    public static readonly Perk[] Perks =
+    {
+        new("Enchanter", "Tasks are 20% more effective, but your tools have a 2% chance of breaking after use.", 5000, 172800),
+        new("Speed Demon", "Cooldowns are 15% shorter, but you have a 5% higher chance of failing any command that can fail.", 5000, 172800),
+        new("Multiperk", "Grants the ability to equip 2 perks, not including this one.", 10000, 604800),
+        new("Pacifist", "You are immune to all crimes, but you cannot use any crime commands and you also cannot appear on the leaderboard. Cannot be stacked with other perks, even if you have the Multiperk. Can be discarded, but cannot be used again for 3 days.", 0, -1)
+    };
+    public static readonly Tool[] Tools =
+    {
+        new("Wooden Pickaxe", 4500),
+        new("Stone Pickaxe", 6000, mult: 1.33m),
+        new("Iron Pickaxe", 7500, mult: 1.66m),
+        new("Diamond Pickaxe", 9000, mult: 2),
+        new("Netherite Pickaxe", 10500, mult: 2.33m),
+        new("Wooden Sword", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
+        new("Stone Sword", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
+        new("Iron Sword", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
+        new("Diamond Sword", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
+        new("Netherite Sword", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
+        new("Wooden Shovel", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
+        new("Stone Shovel", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
+        new("Iron Shovel", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
+        new("Diamond Shovel", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
+        new("Netherite Shovel", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
+        new("Wooden Axe", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
+        new("Stone Axe", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
+        new("Iron Axe", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
+        new("Diamond Axe", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
+        new("Netherite Axe", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
+        new("Wooden Hoe", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
+        new("Stone Hoe", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
+        new("Iron Hoe", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
+        new("Diamond Hoe", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
+        new("Netherite Hoe", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
+        new("Fishing Rod", 7500, Fish.First().Value * 7, Fish.Last().Value * 15)
+    };
+    public static readonly Weapon[] Weapons =
+    {
+        new("Glock 17", 30, "Pistol Round", 13, 21, 40, "The classic. Also the weakest. Upgrade when?", new[] { "Bronze", "Silver", "Gold", "Diamond" }, "Gun"),
+        new("Python", 35, "Pistol Round", 20, 25, 30, "Nice, small, and hits like a truck. Like a Glock but it doesn't suck.", new[] { "Silver", "Gold", "Diamond" }, "Gun"),
+        new("AR-15", 50, "Rifle Round", 40, 45, 25, "\"Ummmm.. This is like a full on military weapon, we should ban it\" said some fucking loser no one cares about. This gun is awesome.", new[] { "Gold", "Diamond" }, "Gun"),
+        new("M16", 60, "Rifle Round", 35, 40, 20, "TA-TA-TA! Three round burst. Nice n' accurate. Absolute beauty.", new[] { "Gold", "Diamond" }, "Gun"),
+        new("Intervention", 70, "Sniper Round", 60, 80, 3, "Big dick energy in a weapon. Sexy. Accurate. Hard-hitting. The bros love it, the hoes love it. I love it.", new[] { "Gold", "Diamond" }, "Gun"),
+        new("Barrett M82", 60, "Sniper Round", 50, 70, 7, "Yawn. Gay. It's cool I guess, but why have this when you could have an Intervention?", new[] { "Gold", "Diamond" }, "Gun"),
+        new("RPG", 30, "Rocket", 100, 100, 15, "A FUCKIN' ROCKET LAUNCHER!!!! GUN GO BOOM!", new[] { "Diamond" }, "Gun")
+    };
 }
