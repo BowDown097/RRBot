@@ -149,7 +149,7 @@ public class Config : ModuleBase<SocketCommandContext>
     {
         string cmdLower = cmd.ToLower();
         if (cmdLower is "disablecmd" or "enablecmd")
-            return CommandResult.FromError("I don't think that's a good idea.");
+            return CommandResult.FromError("​I don't think that's a good idea.");
 
         SearchResult search = Commands.Search(cmd);
         if (!search.IsSuccess)
@@ -170,7 +170,7 @@ public class Config : ModuleBase<SocketCommandContext>
     {
         string moduleLower = module.ToLower();
         if (moduleLower == "config")
-            return CommandResult.FromError("I don't think that's a good idea.");
+            return CommandResult.FromError("​I don't think that's a good idea.");
 
         ModuleInfo moduleInfo = Commands.Modules.FirstOrDefault(m => m.Name.Equals(module, StringComparison.OrdinalIgnoreCase));
         if (moduleInfo == default)

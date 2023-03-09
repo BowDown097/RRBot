@@ -150,7 +150,7 @@ public class Moderation : ModuleBase<SocketCommandContext>
         }
         catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
         {
-            await user.NotifyAsync(Context.Channel, $"I couldn't DM you, so I hope this reaches you! You're getting MEME BANNED in 30 seconds lmao. If you aren't able to snag an invite, here's one: {invite.Url}");
+            await user.NotifyAsync(Context.Channel, $"​I couldn't DM you, so I hope this reaches you! You're getting MEME BANNED in 30 seconds lmao. If you aren't able to snag an invite, here's one: {invite.Url}");
             await Task.Delay(TimeSpan.FromSeconds(30));
         }
 

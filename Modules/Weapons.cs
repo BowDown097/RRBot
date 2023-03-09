@@ -7,6 +7,11 @@ public class Weapons : ModuleBase<SocketCommandContext>
     [RequireCooldown("ShootCooldown", "Woah woah woah! You got a killing addiction there or something? You've gotta wait {0}. Sorry.")]
     public async Task<RuntimeResult> Shoot(IGuildUser user, string gun)
     {
+        if (user.Id == Context.User.Id)
+            return CommandResult.FromError("​I don't think shooting yourself is a great idea.");
+        if (user.IsBot)
+            return CommandResult.FromError("Shoot a bot? Hell nah. Not a chance.");
+
         Weapon weapon = Array.Find(Constants.Weapons,
             w => w.Name.Equals(gun, StringComparison.OrdinalIgnoreCase) && w.Type == "Gun");
         if (weapon is null)
@@ -67,7 +72,7 @@ public class Weapons : ModuleBase<SocketCommandContext>
                 {
                     case 0:
                         await Context.User.NotifyAsync(Context.Channel,
-                            $"HIS HEAD FUCKING BLEW UP LMFAO 😂! GUTS AND GORE BABY! You got **{target.Cash:C2}**.");
+                            $"​HIS HEAD FUCKING BLEW UP LMFAO 😂! GUTS AND GORE BABY! You got **{target.Cash:C2}**.");
                         break;
                     case 1:
                         await Context.User.NotifyAsync(Context.Channel,

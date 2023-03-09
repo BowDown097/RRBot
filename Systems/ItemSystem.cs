@@ -4,6 +4,7 @@ public static class ItemSystem
     public static Item GetItem(string name)
     {
         Item[] allItems = Constants.Crates.Cast<Item>()
+            .Concat(Constants.Ammo)
             .Concat(Constants.Collectibles)
             .Concat(Constants.Consumables)
             .Concat(Constants.Perks)

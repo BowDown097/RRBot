@@ -16,15 +16,15 @@ public class Goods : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You cannot buy the Daily crate!");
         if (item?.Name.StartsWith("Netherite") == true)
             return CommandResult.FromError("​Netherite items can only be obtained from Diamond crates!");
-        if (item is Weapon)
-            return CommandResult.FromError("Weapons can only be obtained from crates!");
-        
+
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         RuntimeResult result = item switch
         {
+            Ammo => CommandResult.FromError("Ammo can only be obtained from crates!"),
             Crate crate => await ItemSystem.BuyCrate(crate, Context.User, user, Context.Channel),
             Perk perk => await ItemSystem.BuyPerk(perk, Context.User, user, Context.Channel),
             Tool tool => await ItemSystem.BuyTool(tool, Context.User, user, Context.Channel),
+            Weapon => CommandResult.FromError("Weapons can only be obtained from crates!"),
             _ => CommandResult.FromError("That is not an item!"),
         };
 
@@ -53,7 +53,7 @@ public class Goods : ModuleBase<SocketCommandContext>
 
     [Alias("sell")]
     [Command("discard")]
-    [Summary("Discard a tool, a collectible, or the Pacifist perk.")]
+    [Summary("Toss an item you don't want anymore for some cash.")]
     [Remarks("$discard Pacifist")]
     public async Task<RuntimeResult> Discard([Remainder] string itemName)
     {
@@ -61,8 +61,8 @@ public class Goods : ModuleBase<SocketCommandContext>
         Item item = ItemSystem.GetItem(itemName);
         switch (item)
         {
-            case Consumable or Crate:
-                return CommandResult.FromError("Consumables, crates, and weapons cannot be discarded!");
+            case Ammo or Consumable or Crate:
+                return CommandResult.FromError("Ammo, consumables and crates cannot be discarded!");
             case Collectible collectible:
                 if (!user.Collectibles.TryGetValue(item.Name, out int count) || count == 0)
                     return CommandResult.FromError($"You do not have a(n) {item}!");
@@ -113,8 +113,13 @@ public class Goods : ModuleBase<SocketCommandContext>
         Item item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
         if (item == null)
             return CommandResult.FromError("That is not an item!");
+
         EmbedBuilder embed = item switch
         {
+            Ammo ammo => new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle(ammo.Name)
+                .AddField("Accepted By", string.Join(", ", Constants.Weapons.Where(w => w.Ammo == ammo.Name).OrderBy(w => w.Name))),
             Collectible collectible => new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithThumbnailUrl(collectible.Image)
@@ -168,7 +173,7 @@ public class Goods : ModuleBase<SocketCommandContext>
 
     [Alias("inv", "inventory")]
     [Command("items", RunMode = RunMode.Async)]
-    [Summary("View your own or someone else's tools, active perks, and consumables.")]
+    [Summary("View your own or someone else's items.")]
     [Remarks("$items Zurmii#2208")]
     public async Task<RuntimeResult> Items([Remainder] IGuildUser user = null)
     {

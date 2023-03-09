@@ -35,7 +35,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
     {
         string cmdLower = cmd.ToLower();
         if (cmdLower is "disablecmdglobal" or "enablecmdglobal")
-            return CommandResult.FromError("I don't think that's a good idea.");
+            return CommandResult.FromError("​I don't think that's a good idea.");
 
         Discord.Commands.SearchResult search = Commands.Search(cmd);
         if (!search.IsSuccess)
