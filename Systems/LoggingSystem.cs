@@ -16,7 +16,7 @@ public static class LoggingSystem
                 _ => "Unknown Action"
             };
 
-            if (action.CustomMessage.IsSpecified)
+            if (!string.IsNullOrWhiteSpace(action.CustomMessage.GetValueOrDefault()))
                 actionDesc += $" and respond with \"{action.CustomMessage}\"";
 
             actionsBuilder.AppendLine(actionDesc);
@@ -46,13 +46,13 @@ public static class LoggingSystem
             .RrAddField("Name", rule.Name)
             .RrAddField("Enabled", rule.Enabled)
             .RrAddField("Trigger", Enum.GetName(rule.TriggerType).SplitPascalCase())
-            .RrAddField("Keywords", string.Join(", ", rule.KeywordFilter))
-            .RrAddField("Regex Patterns", string.Join(", ", rule.RegexPatterns.Select(StringCleaner.Sanitize)))
-            .RrAddField("Mention Limit", rule.MentionTotalLimit)
-            .RrAddField("Presets", string.Join(", ", rule.Presets.Select(p => Enum.GetName(p).SplitPascalCase())))
-            .RrAddField("Whitelist", string.Join(", ", rule.AllowList))
-            .RrAddField("Exempt Channels", string.Join(", ", rule.ExemptChannels.Select(c => c.Mention())))
-            .RrAddField("Exempt Roles", string.Join(", ", rule.ExemptRoles.Select(r => r.Mention)))
+            .RrAddField("Keywords", string.Join(", ", rule.KeywordFilter), false, false)
+            .RrAddField("Regex Patterns", string.Join(", ", rule.RegexPatterns.Select(StringCleaner.Sanitize)), false, false)
+            .RrAddField("Mention Limit", rule.MentionTotalLimit, false, false)
+            .RrAddField("Presets", string.Join(", ", rule.Presets.Select(p => Enum.GetName(p).SplitPascalCase())), false, false)
+            .RrAddField("Whitelist", string.Join(", ", rule.AllowList), false, false)
+            .RrAddField("Exempt Channels", string.Join(", ", rule.ExemptChannels.Select(c => c.Mention())), false, false)
+            .RrAddField("Exempt Roles", string.Join(", ", rule.ExemptRoles.Select(r => r.Mention)), false, false)
             .RrAddField("Actions", DescribeActions(rule.Actions));
         await WriteToLogs(rule.Guild, embed);
     }
@@ -83,10 +83,10 @@ public static class LoggingSystem
         string exemptChannelsAfter = string.Join(", ", after.ExemptChannels.Select(c => c.Mention()));
         string exemptRolesBefore = string.Join(", ", before.ExemptRoles.Select(r => r.Mention));
         string exemptRolesAfter = string.Join(", ", after.ExemptRoles.Select(r => r.Mention));
-        
+
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**AutoMod Rule Updated**")
-            .AddUpdateCompField("Name", before.Name, after.Name)
+            .RrAddField("Name", after.Name)
             .AddUpdateCompField("Enabled", before.Enabled, after.Enabled)
             .AddUpdateCompField("Trigger", triggerBefore, triggerAfter)
             .AddUpdateCompField("Keywords", keywordsBefore, keywordsAfter)

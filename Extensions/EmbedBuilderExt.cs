@@ -30,10 +30,11 @@ public static class EmbedBuilderExt
     }
 
     public static EmbedBuilder RrAddField(this EmbedBuilder builder, string name, object? value,
-        bool inline = false, string defaultValue = "N/A")
+        bool inline = false, bool showIfNotAvailable = true, string defaultValue = "N/A")
     {
         string? valueStr = value?.ToString();
-        string description = !string.IsNullOrWhiteSpace(valueStr) ? valueStr : defaultValue;
-        return builder.AddField(name, description, inline);
+        if (!string.IsNullOrWhiteSpace(valueStr) || showIfNotAvailable)
+            builder.AddField(name, valueStr ?? defaultValue, inline);
+        return builder;
     }
 }
