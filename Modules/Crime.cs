@@ -279,21 +279,15 @@ public class Crime : ModuleBase<SocketCommandContext>
         JToken[] words = wordsToken.ToArray();
         string originalWord = RandomUtil.GetRandomElement(words).ToString();
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        if (originalWord.Any(c => !char.IsLetter(c) && !char.IsWhiteSpace(c)))
-        {
-            await Scavenge();
-            return;
-        }
+        while (originalWord.Any(c => !char.IsLetter(c) && !char.IsWhiteSpace(c)))
+            originalWord = RandomUtil.GetRandomElement(words).ToString();
 
         switch (RandomUtil.Next(2))
         {
             case 0:
                 string scrambled = Regex.Replace(originalWord, @"\w+", ScrambleWord, RegexOptions.IgnorePatternWhitespace);
-                if (scrambled != "egg" && scrambled.Equals(originalWord, StringComparison.OrdinalIgnoreCase))
-                {
-                    await Scavenge();
-                    return;
-                }
+                while (scrambled.Equals(originalWord, StringComparison.OrdinalIgnoreCase) && scrambled != "egg")
+                    scrambled = Regex.Replace(originalWord, @"\w+", ScrambleWord, RegexOptions.IgnorePatternWhitespace);
 
                 EmbedBuilder scrambleEmbed = new EmbedBuilder()
                     .WithColor(Color.Red)
@@ -330,12 +324,6 @@ public class Crime : ModuleBase<SocketCommandContext>
                     return;
 
                 string translatedText = translatedToken.ToString();
-                if (translatedText.Equals(originalWord, StringComparison.OrdinalIgnoreCase))
-                {
-                    await Scavenge();
-                    return;
-                }
-
                 EmbedBuilder translateEmbed = new EmbedBuilder()
                     .WithColor(Color.Red)
                     .WithTitle("Translate!")

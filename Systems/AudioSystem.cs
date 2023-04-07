@@ -241,7 +241,7 @@ public sealed class AudioSystem
         VoteLavalinkPlayer player = _audioService.GetPlayer<VoteLavalinkPlayer>(context.Guild);
         TrackMetadata metadata = player.CurrentTrack.Context as TrackMetadata;
         await context.Channel.SendMessageAsync($"Skipped \"{metadata.Title}\".", allowedMentions: Constants.Mentions);
-        if (!player.Queue.TryDequeue(out LavalinkTrack track))
+        if (!player.Queue.TryDequeue(out LavalinkTrack track) || track is null)
         {
             await player.StopAsync(true);
         }

@@ -1,7 +1,7 @@
 namespace RRBot.Modules;
 public class FunnyContext
 {
-    public SocketCommandContext Context;
+    public SocketCommandContext Context { get; }
     public FunnyContext(SocketCommandContext context) => Context = context;
 }
 
@@ -37,7 +37,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         if (cmdLower is "disablecmdglobal" or "enablecmdglobal")
             return CommandResult.FromError("​I don't think that's a good idea.");
 
-        Discord.Commands.SearchResult search = Commands.Search(cmd);
+        SearchResult search = Commands.Search(cmd);
         if (!search.IsSuccess)
             return CommandResult.FromError($"**${cmdLower}** is not a command!");
         

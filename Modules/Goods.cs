@@ -327,9 +327,7 @@ public class Goods : ModuleBase<SocketCommandContext>
         if (user.UsedConsumables.TryGetValue(con.Name, out int used) && used == con.Max)
             return CommandResult.FromError($"You cannot use more than {con.Max} {con}!");
 
-        if (!user.UsedConsumables.ContainsKey(con.Name))
-            user.UsedConsumables.Add(con.Name, 0);
-
+        user.UsedConsumables.TryAdd(con.Name, 0);
         user.Consumables[con.Name]--;
         user.UsedConsumables[con.Name]++;
 
