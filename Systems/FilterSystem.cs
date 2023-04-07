@@ -43,19 +43,9 @@ public static class FilterSystem
         { 'z', new[]{"\U0001d49b", "\U0001d433", "\U0001d59f", "\U0001d63b", "\U0001d56b", "\U0001d607", "\U0001d537", "\U00001d22", "\U0001d4cf", "\U0000ab93", "\U0001d467", "\U0001d66f", "\U0001d6a3", "\U000118c4", "\U0001d503", "\U0001d5d3", "\U0000ff5a"} }
     };
     private static readonly Regex InviteRegex = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
-
-    public static async Task<bool> ContainsFilteredWord(IGuild guild, string input, DbConfigMisc misc = null)
-    {
-        string cleaned = new string(input.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToLower();
-        DbConfigMisc miscConfig = misc ?? await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
-        return miscConfig.FilterRegexes.Select(regexStr => new Regex(regexStr)).Any(regex => regex.IsMatch(cleaned));
-    }
-
+    
     public static async Task DoInviteCheckAsync(SocketUserMessage message, IGuild guild, DiscordSocketClient client)
     {
-        if (string.IsNullOrWhiteSpace(message.Content))
-            return;
-        
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
         if (!misc.InviteFilterEnabled || misc.NoFilterChannels.Contains(message.Channel.Id))
             return;
@@ -69,28 +59,8 @@ public static class FilterSystem
         }
     }
 
-    public static async Task DoFilteredWordCheckAsync(SocketUserMessage message, IGuild guild)
-    {
-        if (string.IsNullOrWhiteSpace(message.Content))
-            return;
-        
-        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
-        if (misc.NoFilterChannels.Contains(message.Channel.Id))
-            return;
-
-        if (await ContainsFilteredWord(guild, message.Content, misc))
-        {
-            if (message.Author is SocketGuildUser guildUser) 
-                await guildUser.SetTimeOutAsync(TimeSpan.FromMinutes(1));
-            await message.DeleteAsync();
-        }
-    }
-
     public static async Task DoScamCheckAsync(SocketUserMessage message, IGuild guild)
     {
-        if (string.IsNullOrWhiteSpace(message.Content))
-            return;
-        
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
         if (!misc.ScamFilterEnabled || misc.NoFilterChannels.Contains(message.Channel.Id))
             return;

@@ -30,8 +30,8 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [RequireCash((double)Constants.GangCreationCost)]
     public async Task<RuntimeResult> CreateGang([Remainder] string name)
     {
-        if (name.Length is <= 2 or > 32 || !Regex.IsMatch(name, "^[a-zA-Z0-9\x20]*$") || await FilterSystem.ContainsFilteredWord(Context.Guild, name))
-            return CommandResult.FromError("That gang name is not allowed.");
+        if (name.Length is <= 2 or > 32 || !Regex.IsMatch(name, "^[a-zA-Z0-9\x20]*$"))
+            return CommandResult.FromError("Gang names must be alphanumeric (including spaces) and between 2-32 characters.");
 
         IAsyncCursor<DbGang> cursor = await MongoManager.Gangs.FindAsync(g => g.GuildId == Context.Guild.Id);
         List<DbGang> gangs = await cursor.ToListAsync();
@@ -310,8 +310,8 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [RequireCash((double)Constants.GangRenameCost)]
     public async Task<RuntimeResult> RenameGang([Remainder] string name)
     {
-        if (name.Length is <= 2 or > 32 || !Regex.IsMatch(name, "^[a-zA-Z0-9\x20]*$") || await FilterSystem.ContainsFilteredWord(Context.Guild, name))
-            return CommandResult.FromError("That gang name is not allowed.");
+        if (name.Length is <= 2 or > 32 || !Regex.IsMatch(name, "^[a-zA-Z0-9\x20]*$"))
+            return CommandResult.FromError("Gang names must be alphanumeric (including spaces) and between 2-32 characters.");
         
         // ReSharper disable once SpecifyStringComparison
         IAsyncCursor<DbGang> cursor = await MongoManager.Gangs.FindAsync(g => g.GuildId == Context.Guild.Id

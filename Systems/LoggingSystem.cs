@@ -355,7 +355,8 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription("**Thread Created**")
             .RrAddField("Channel", threadChannel.ParentChannel.Mention())
-            .RrAddField("Name", threadChannel.Name);
+            .RrAddField("Name", threadChannel.Name)
+            .RrAddField("Owner", threadChannel.Owner.Mention);
 
         await WriteToLogs(threadChannel.Guild, embed);
     }

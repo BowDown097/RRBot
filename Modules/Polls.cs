@@ -100,7 +100,7 @@ public class Polls : ModuleBase<SocketCommandContext>
     [Remarks("$vote 2 *Jazzy Hands*")]
     public async Task<RuntimeResult> Vote(int electionId, [Remainder] IGuildUser user)
     {
-        if (user.IsBot || await FilterSystem.ContainsFilteredWord(Context.Guild, user.ToString()))
+        if (user.IsBot)
             return CommandResult.FromError("Nope.");
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("You can't vote for yourself!");

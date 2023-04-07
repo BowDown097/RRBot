@@ -24,7 +24,6 @@ public class EventSystem
     public void SubscribeEvents()
     {
         _client.ButtonExecuted += Client_ButtonExecuted;
-        _client.GuildMemberUpdated += Client_GuildMemberUpdated;
         _client.JoinedGuild += Client_JoinedGuild;
         _client.Log += Client_Log;
         _client.MessageReceived += Client_MessageReceived;
@@ -32,9 +31,6 @@ public class EventSystem
         _client.ReactionAdded += async (_, _, reaction) => await HandleReactionAsync(reaction, true);
         _client.ReactionRemoved += async (_, _, reaction) => await HandleReactionAsync(reaction, false);
         _client.Ready += Client_Ready;
-        _client.ThreadCreated += Client_ThreadCreated;
-        _client.ThreadUpdated += Client_ThreadUpdated;
-        _client.UserJoined += Client_UserJoined;
         _commands.CommandExecuted += Commands_CommandExecuted;
 
         _client.ChannelCreated += LoggingSystem.Client_ChannelCreated;
@@ -84,21 +80,6 @@ public class EventSystem
         await _interactions.ExecuteCommandAsync(context, _serviceProvider);
     }
 
-    private static async Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> userBeforeCached,
-        SocketGuildUser userAfter)
-    {
-        // this event gets hit a lot, so we need to run it in a separate task so the gateway task doesn't get blocked
-        await Task.Run(async () =>
-        {
-            SocketGuildUser userBefore = await userBeforeCached.GetOrDownloadAsync();
-            if (userBefore.Nickname == userAfter.Nickname)
-                return;
-
-            if (await FilterSystem.ContainsFilteredWord(userAfter.Guild, userAfter.Nickname))
-                await userAfter.ModifyAsync(properties => properties.Nickname = userAfter.Username);
-        });
-    }
-
     private static async Task Client_JoinedGuild(SocketGuild guild)
     {
         SocketTextChannel hopefullyGeneral = Array.Find(guild.TextChannels.ToArray(), c => c.Name == "general")
@@ -126,15 +107,11 @@ public class EventSystem
 
     private async Task Client_MessageReceived(SocketMessage msg)
     {
-        if (msg is not SocketUserMessage userMsg)
+        if (msg is not SocketUserMessage userMsg || msg.Author.IsBot || string.IsNullOrWhiteSpace(userMsg.Content))
             return;
 
         SocketCommandContext context = new(_client, userMsg);
-        if (context.User.IsBot || string.IsNullOrWhiteSpace(userMsg.Content))
-            return;
-
         await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, _client);
-        await FilterSystem.DoFilteredWordCheckAsync(userMsg, context.Guild);
         await FilterSystem.DoScamCheckAsync(userMsg, context.Guild);
 
         int argPos = 0;
@@ -210,11 +187,10 @@ public class EventSystem
 
     private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
     {
-        if (msgAfter is not SocketUserMessage userMsgAfter)
+        if (msgAfter is not SocketUserMessage userMsgAfter || string.IsNullOrWhiteSpace(userMsgAfter.Content))
             return;
 
         await FilterSystem.DoInviteCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild(), _client);
-        await FilterSystem.DoFilteredWordCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
         await FilterSystem.DoScamCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
     }
 
@@ -229,32 +205,10 @@ public class EventSystem
         _inactivityTracking.BeginTracking();
     }
 
-    private static async Task Client_ThreadCreated(SocketThreadChannel thread)
-    {
-        await thread.JoinAsync();
-        if (await FilterSystem.ContainsFilteredWord(thread.Guild, thread.Name))
-            await thread.DeleteAsync();
-    }
-
-    private static async Task Client_ThreadUpdated(Cacheable<SocketThreadChannel, ulong> threadBefore, SocketThreadChannel threadAfter)
-    {
-        if (await FilterSystem.ContainsFilteredWord(threadAfter.Guild, threadAfter.Name))
-            await threadAfter.DeleteAsync();
-    }
-
-    private static async Task Client_UserJoined(SocketGuildUser user)
-    {
-        if (await FilterSystem.ContainsFilteredWord(user.Guild, user.Username))
-            await user.KickAsync();
-    }
-
     private static async Task Commands_CommandExecuted(Discord.Optional<CommandInfo> commandOpt,
         ICommandContext context, Discord.Commands.IResult result)
     {
         string reason = StringCleaner.Sanitize(result.ErrorReason, new[] { "_", "`", "~", ">" });
-        if (await FilterSystem.ContainsFilteredWord(context.Guild, reason))
-            return;
-        
         CommandInfo command = commandOpt.GetValueOrDefault();
         string args = command.Parameters.Any(p => p.IsOptional)
             ? $"{command.Parameters.Count(p => !p.IsOptional)}-{command.Parameters.Count}"

@@ -25,9 +25,6 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Remarks("$define dog")]
     public async Task<RuntimeResult> Define([Remainder] string term)
     {
-        if (await FilterSystem.ContainsFilteredWord(Context.Guild, term))
-            return CommandResult.FromError("Nope.");
-
         using HttpClient client = new();
         string response = await client.GetStringAsync($"https://api.pearson.com/v2/dictionaries/ldoce5/entries?headword={term}");
         DefinitionResponse def = JsonConvert.DeserializeObject<DefinitionResponse>(response);
@@ -35,16 +32,15 @@ public class Fun : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("Couldn't find anything for that term, chief.");
 
         StringBuilder description = new();
-        Definition[] filtered = def.Results.Where(res => res.Headword.Equals(term, StringComparison.OrdinalIgnoreCase)
-            && res.Senses != null).ToArray();
-        for (int i = 1; i <= filtered.Length; i++)
+        Definition[] filtered = def.Results
+            .Where(res => res.Headword.Equals(term, StringComparison.OrdinalIgnoreCase) && res.Senses != null)
+            .ToArray();
+        for (int i = 0; i < filtered.Length; i++)
         {
-            Definition definition = filtered[i - 1];
-            description.AppendLine($"**{i}:**\n*{definition.PartOfSpeech}*");
+            Definition definition = filtered[i];
+            description.AppendLine($"**{i + 1}:**\n*{definition.PartOfSpeech}*");
             foreach (Sense sense in definition.Senses)
             {
-                if (await FilterSystem.ContainsFilteredWord(Context.Guild, sense.Definition[0]))
-                    return CommandResult.FromError("Nope.");
                 description.AppendLine($"Definition: {sense.Definition[0]}");
                 if (sense.Examples != null)
                     description.AppendLine($"Example: {sense.Examples[0].Text}");

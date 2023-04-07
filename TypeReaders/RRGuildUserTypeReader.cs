@@ -18,18 +18,18 @@ public class RrGuildUserTypeReader : TypeReader
         if (MentionUtils.TryParseUser(input, out var id))
         {
             if (context.Guild != null)
-                await AddResult(results, await context.Guild.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false), 1.00f);
+                AddResult(results, await context.Guild.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false), 1.00f);
             else
-                await AddResult(results, await context.Channel.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false) as IGuildUser, 1.00f);
+                AddResult(results, await context.Channel.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false) as IGuildUser, 1.00f);
         }
 
         //By Id (0.9)
         if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id))
         {
             if (context.Guild != null)
-                await AddResult(results, await context.Guild.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false), 0.90f);
+                AddResult(results, await context.Guild.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false), 0.90f);
             else
-                await AddResult(results, await context.Channel.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false) as IGuildUser, 0.90f);
+                AddResult(results, await context.Channel.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false) as IGuildUser, 0.90f);
         }
 
         //By Username + Discriminator (0.7-0.85)
@@ -41,28 +41,28 @@ public class RrGuildUserTypeReader : TypeReader
             {
                 var channelUser = Array.Find(channelUsers, x => x.DiscriminatorValue == discriminator &&
                     string.Equals(username, x.Username, StringComparison.OrdinalIgnoreCase)) as IGuildUser;
-                await AddResult(results, channelUser, channelUser?.Username == username ? 0.85f : 0.75f);
+                AddResult(results, channelUser, channelUser?.Username == username ? 0.85f : 0.75f);
                 
                 var guildUser = guildUsers.FirstOrDefault(x => x.DiscriminatorValue == discriminator &&
                     string.Equals(username, x.Username, StringComparison.OrdinalIgnoreCase));
-                await AddResult(results, guildUser, guildUser?.Username == username ? 0.80f : 0.70f);
+                AddResult(results, guildUser, guildUser?.Username == username ? 0.80f : 0.70f);
             }
         }
 
         //By Username (0.5-0.6)
         {
             foreach (var channelUser in channelUsers.Where(x => x.Username.StartsWith(input, StringComparison.OrdinalIgnoreCase)))
-                await AddResult(results, channelUser as IGuildUser, channelUser.Username == input ? 0.60f : 0.50f);
+                AddResult(results, channelUser as IGuildUser, channelUser.Username == input ? 0.60f : 0.50f);
             foreach (var guildUser in guildUsers.Where(x => x.Username.StartsWith(input, StringComparison.OrdinalIgnoreCase)))
-                await AddResult(results, guildUser, guildUser.Username == input ? 0.60f : 0.50f);
+                AddResult(results, guildUser, guildUser.Username == input ? 0.60f : 0.50f);
         }
 
         //By Nickname (0.5-0.6)
         {
             foreach (var channelUser in channelUsers.Where(x => (x as IGuildUser)?.Nickname?.StartsWith(input, StringComparison.OrdinalIgnoreCase) == true))
-                await AddResult(results, channelUser as IGuildUser, (channelUser as IGuildUser)?.Nickname == input ? 0.65f : 0.55f);
+                AddResult(results, channelUser as IGuildUser, (channelUser as IGuildUser)?.Nickname == input ? 0.65f : 0.55f);
             foreach (var guildUser in guildUsers.Where(x => x.Nickname?.StartsWith(input, StringComparison.OrdinalIgnoreCase) == true))
-                await AddResult(results, guildUser, guildUser.Nickname == input ? 0.60f : 0.50f);
+                AddResult(results, guildUser, guildUser.Nickname == input ? 0.60f : 0.50f);
         }
 
         return results.Count switch
@@ -76,9 +76,9 @@ public class RrGuildUserTypeReader : TypeReader
         };
     }
 
-    private static async Task AddResult(Dictionary<ulong, TypeReaderValue> results, IGuildUser user, float score)
+    private static void AddResult(Dictionary<ulong, TypeReaderValue> results, IGuildUser user, float score)
     {
-        if (user != null && !results.ContainsKey(user.Id) && !await FilterSystem.ContainsFilteredWord(user.Guild, user.Username))
+        if (user != null && !results.ContainsKey(user.Id))
             results.Add(user.Id, new TypeReaderValue(user, score));
     }
 }

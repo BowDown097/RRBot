@@ -86,7 +86,6 @@ public class Config : ModuleBase<SocketCommandContext>
         IEnumerable<string> noFilter = misc.NoFilterChannels.Select(MentionUtils.MentionChannel);
         description.AppendLine(Pair("Disabled Commands", string.Join(", ", misc.DisabledCommands)));
         description.AppendLine(Pair("Disabled Modules", string.Join(", ", misc.DisabledModules)));
-        description.AppendLine(Pair("Filtered Words", string.Join(", ", misc.FilteredWords)));
         description.AppendLine($"Invite Filter Enabled: {misc.InviteFilterEnabled}");
         description.AppendLine(Pair("No Filter Channels", string.Join(", ", noFilter)));
         description.AppendLine($"NSFW Enabled: {misc.NsfwEnabled}");
@@ -187,12 +186,16 @@ public class Config : ModuleBase<SocketCommandContext>
     [Command("disablefiltersinchannel")]
     [Summary("Disable filters for a specific channel.")]
     [Remarks("$disablefiltersinchannel \\#extremely-funny")]
-    public async Task DisableFiltersInChannel(ITextChannel channel)
+    public async Task<RuntimeResult> DisableFiltersInChannel(ITextChannel channel)
     {
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
+        if (!misc.InviteFilterEnabled && !misc.ScamFilterEnabled)
+            return CommandResult.FromError("There are no filters to disable!");
+
         misc.NoFilterChannels.Add(channel.Id);
         await Context.User.NotifyAsync(Context.Channel, $"Disabled filters in {channel.Mention}.");
         await MongoManager.UpdateObjectAsync(misc);
+        return CommandResult.FromSuccess();
     }
 
     [Command("enablecmd")]
@@ -221,29 +224,6 @@ public class Config : ModuleBase<SocketCommandContext>
             return CommandResult.FromError($"\"{module}\" is not disabled!");
 
         await Context.User.NotifyAsync(Context.Channel, $"Enabled the {module.ToTitleCase()} module.");
-        await MongoManager.UpdateObjectAsync(misc);
-        return CommandResult.FromSuccess();
-    }
-
-    [Command("filterword")]
-    [Summary("Add a word to filter using the filter system. Word must only contain the characters abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.")]
-    [Remarks("$filterword niggardly")]
-    [DoNotSanitize]
-    public async Task<RuntimeResult> FilterWord(string word)
-    {
-        StringBuilder regexString = new();
-        foreach (char c in word.ToLower())
-        {
-            if (!FilterSystem.Homoglyphs.ContainsKey(c))
-                return CommandResult.FromError($"Invalid character found in input: '{c}'.");
-            regexString.Append($"[{c}{string.Concat(FilterSystem.Homoglyphs[c])}]");
-        }
-        
-        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
-        misc.FilterRegexes.Add(regexString.ToString());
-        misc.FilteredWords.Add(word.ToLower());
-
-        await Context.User.NotifyAsync(Context.Channel, $"Added \"{word}\" as a filtered word.");
         await MongoManager.UpdateObjectAsync(misc);
         return CommandResult.FromSuccess();
     }
@@ -421,25 +401,6 @@ public class Config : ModuleBase<SocketCommandContext>
         misc.ScamFilterEnabled = !misc.ScamFilterEnabled;
         await Context.User.NotifyAsync(Context.Channel, $"Toggled scam filter {(misc.ScamFilterEnabled ? "ON" : "OFF")}.");
         await MongoManager.UpdateObjectAsync(misc);
-    }
-    
-    [Command("unfilterword")]
-    [Summary("Remove a word from the filter system.")]
-    [Remarks("$unfilterword niggardly")]
-    [DoNotSanitize]
-    public async Task<RuntimeResult> UnfilterWord(string word)
-    {
-        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
-        Regex regex = misc.FilterRegexes.Select(rs => new Regex(rs)).FirstOrDefault(r => r.IsMatch(word.ToLower()));
-        if (regex is null)
-            return CommandResult.FromError("That word appears to not be in the filter system.");
-
-        misc.FilterRegexes.Remove(regex.ToString());
-        misc.FilteredWords.Remove(word.ToLower());
-
-        await Context.User.NotifyAsync(Context.Channel, $"Removed \"{word}\" from the filter system.");
-        await MongoManager.UpdateObjectAsync(misc);
-        return CommandResult.FromSuccess();
     }
 
     [Alias("blacklistchannel")]

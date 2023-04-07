@@ -183,8 +183,6 @@ public sealed class AudioSystem
             return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
 
         TrackMetadata metadata = track.Context as TrackMetadata;
-        if (await FilterSystem.ContainsFilteredWord(context.Guild, metadata.Title))
-            return CommandResult.FromError("Nope.");
         int position = await player.PlayAsync(track, enqueue: true);
 
         if (position == 0)
