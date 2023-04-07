@@ -33,6 +33,9 @@ public class EventSystem
         _client.Ready += Client_Ready;
         _commands.CommandExecuted += Commands_CommandExecuted;
 
+        _client.AutoModRuleCreated += LoggingSystem.Client_AutoModRuleCreated;
+        _client.AutoModRuleDeleted += LoggingSystem.Client_AutoModRuleDeleted;
+        _client.AutoModRuleUpdated += LoggingSystem.Client_AutoModRuleUpdated;
         _client.ChannelCreated += LoggingSystem.Client_ChannelCreated;
         _client.ChannelDestroyed += LoggingSystem.Client_ChannelDestroyed;
         _client.ChannelUpdated += LoggingSystem.Client_ChannelUpdated;

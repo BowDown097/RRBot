@@ -2,6 +2,29 @@
 namespace RRBot.Systems;
 public static class LoggingSystem
 {
+    private static string DescribeActions(IEnumerable<AutoModRuleAction> actions)
+    {
+        StringBuilder actionsBuilder = new();
+
+        foreach (AutoModRuleAction action in actions)
+        {
+            string actionDesc = action.Type switch
+            {
+                AutoModActionType.BlockMessage => "Block flagged messages",
+                AutoModActionType.SendAlertMessage => $"Send an alert containing the flagged message to {MentionUtils.MentionChannel(action.ChannelId ?? 0)}",
+                AutoModActionType.Timeout => $"Timeout member for {action.TimeoutDuration?.FormatCompound()}",
+                _ => "Unknown Action"
+            };
+
+            if (action.CustomMessage.IsSpecified)
+                actionDesc += $" and respond with \"{action.CustomMessage}\"";
+
+            actionsBuilder.AppendLine(actionDesc);
+        }
+
+        return actionsBuilder.ToString();
+    }
+
     private static async Task WriteToLogs(IGuild guild, EmbedBuilder embed)
     {
         embed.Color = Color.Blue;
@@ -13,6 +36,68 @@ public static class LoggingSystem
         ITextChannel textChannel = await guild.GetTextChannelAsync(channels.LogsChannel);
         if (textChannel != null)
             await textChannel.SendMessageAsync(embed: embed.Build());
+    }
+
+    public static async Task Client_AutoModRuleCreated(SocketAutoModRule rule)
+    {
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithAuthor(rule.Creator)
+            .WithDescription("**AutoMod Rule Created**")
+            .RrAddField("Name", rule.Name)
+            .RrAddField("Enabled", rule.Enabled)
+            .RrAddField("Trigger", Enum.GetName(rule.TriggerType).SplitPascalCase())
+            .RrAddField("Keywords", string.Join(", ", rule.KeywordFilter))
+            .RrAddField("Regex Patterns", string.Join(", ", rule.RegexPatterns.Select(StringCleaner.Sanitize)))
+            .RrAddField("Mention Limit", rule.MentionTotalLimit)
+            .RrAddField("Presets", string.Join(", ", rule.Presets.Select(p => Enum.GetName(p).SplitPascalCase())))
+            .RrAddField("Whitelist", string.Join(", ", rule.AllowList))
+            .RrAddField("Exempt Channels", string.Join(", ", rule.ExemptChannels.Select(c => c.Mention())))
+            .RrAddField("Exempt Roles", string.Join(", ", rule.ExemptRoles.Select(r => r.Mention)))
+            .RrAddField("Actions", DescribeActions(rule.Actions));
+        await WriteToLogs(rule.Guild, embed);
+    }
+
+    public static async Task Client_AutoModRuleDeleted(SocketAutoModRule rule)
+    {
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithDescription("**AutoMod Rule Deleted**")
+            .AddField("Name", rule.Name);
+        await WriteToLogs(rule.Guild, embed);
+    }
+
+    public static async Task Client_AutoModRuleUpdated(Cacheable<SocketAutoModRule, ulong> beforeCached,
+        SocketAutoModRule after)
+    {
+        SocketAutoModRule before = await beforeCached.GetOrDownloadAsync();
+        string triggerBefore = Enum.GetName(before.TriggerType).SplitPascalCase();
+        string triggerAfter = Enum.GetName(after.TriggerType).SplitPascalCase();
+        string keywordsBefore = string.Join(", ", before.KeywordFilter);
+        string keywordsAfter = string.Join(", ", after.KeywordFilter);
+        string patternsBefore = string.Join(", ", before.RegexPatterns.Select(StringCleaner.Sanitize));
+        string patternsAfter = string.Join(", ", after.RegexPatterns.Select(StringCleaner.Sanitize));
+        string presetsBefore = string.Join(", ", before.Presets.Select(p => Enum.GetName(p).SplitPascalCase()));
+        string presetsAfter = string.Join(", ", after.Presets.Select(p => Enum.GetName(p).SplitPascalCase()));
+        string whitelistBefore = string.Join(", ", before.AllowList);
+        string whitelistAfter = string.Join(", ", after.AllowList);
+        string exemptChannelsBefore = string.Join(", ", before.ExemptChannels.Select(c => c.Mention()));
+        string exemptChannelsAfter = string.Join(", ", after.ExemptChannels.Select(c => c.Mention()));
+        string exemptRolesBefore = string.Join(", ", before.ExemptRoles.Select(r => r.Mention));
+        string exemptRolesAfter = string.Join(", ", after.ExemptRoles.Select(r => r.Mention));
+        
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithDescription("**AutoMod Rule Updated**")
+            .AddUpdateCompField("Name", before.Name, after.Name)
+            .AddUpdateCompField("Enabled", before.Enabled, after.Enabled)
+            .AddUpdateCompField("Trigger", triggerBefore, triggerAfter)
+            .AddUpdateCompField("Keywords", keywordsBefore, keywordsAfter)
+            .AddUpdateCompField("Regex Patterns", patternsBefore, patternsAfter)
+            .AddUpdateCompField("Mention Limit", before.MentionTotalLimit, after.MentionTotalLimit)
+            .AddUpdateCompField("Presets", presetsBefore, presetsAfter)
+            .AddUpdateCompField("Whitelist", whitelistBefore, whitelistAfter)
+            .AddUpdateCompField("Exempt Channels", exemptChannelsBefore, exemptChannelsAfter)
+            .AddUpdateCompField("Exempt Roles", exemptRolesBefore, exemptRolesAfter)
+            .AddUpdateCompField("Actions", DescribeActions(before.Actions), DescribeActions(after.Actions));
+        await WriteToLogs(after.Guild, embed);
     }
 
     public static async Task Client_ChannelCreated(SocketChannel channel)
@@ -203,6 +288,7 @@ public static class LoggingSystem
             .WithDescription("**Invite Created**")
             .RrAddField("URL", invite.Url)
             .RrAddField("Channel", invite.Channel.Mention())
+            .RrAddField("Expires At", invite.ExpiresAt != null ? $"<t:{invite.ExpiresAt}>" : "")
             .RrAddField("Max Age", invite.MaxAge)
             .RrAddField("Max Uses", invite.MaxUses);
 
