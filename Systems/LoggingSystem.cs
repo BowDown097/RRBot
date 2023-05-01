@@ -284,13 +284,15 @@ public static class LoggingSystem
     public static async Task Client_InviteCreated(SocketInvite invite)
     {
         EmbedBuilder embed = new EmbedBuilder()
-            .WithAuthor(invite.Inviter)
             .WithDescription("**Invite Created**")
             .RrAddField("URL", invite.Url)
             .RrAddField("Channel", invite.Channel.Mention())
             .RrAddField("Expires At", invite.ExpiresAt != null ? $"<t:{invite.ExpiresAt}>" : "")
             .RrAddField("Max Age", invite.MaxAge)
             .RrAddField("Max Uses", invite.MaxUses);
+
+        if (invite.Inviter != null)
+            embed.WithAuthor(invite.Inviter);
 
         await WriteToLogs(invite.Guild, embed);
     }
@@ -314,13 +316,13 @@ public static class LoggingSystem
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(msg.Author)
-            .WithDescription($"**Message Deleted in {channel.Mention()}**\n{msg.Content}")
+            .WithDescription($"**Message Deleted in {channel.Mention()}**\n{msg.Content.Elide(900)}")
             .WithFooter($"ID: {msg.Id}");
 
         foreach (Embed msgEmbed in msg.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)).Cast<Embed>())
         {
             embed.RrAddField("Embed Title", msgEmbed.Title)
-                .RrAddField("Embed Description", msgEmbed.Description);
+                .RrAddField("Embed Description", msgEmbed.Description.Elide(1000));
         }
 
         await WriteToLogs(channel.GetGuild(), embed);
@@ -335,19 +337,19 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(msgAfter.Author)
             .WithDescription($"**Message Updated in {channel.Mention()}**\n[Jump]({msgAfter.GetJumpUrl()})")
-            .RrAddField("Previous Content", msgBefore.Content);
+            .RrAddField("Previous Content", msgBefore.Content.Elide(1000));
 
         foreach (Embed msgEmbed in msgBefore.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)).Cast<Embed>())
         {
             embed.RrAddField("Embed Title", msgEmbed.Title)
-                .RrAddField("Embed Description", msgEmbed.Description);
+                .RrAddField("Embed Description", msgEmbed.Description.Elide(1000));
         }
 
-        embed.RrAddField("Current Content", msgAfter.Content);
+        embed.RrAddField("Current Content", msgAfter.Content.Elide(1000));
         foreach (Embed msgEmbed in msgAfter.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title) && !string.IsNullOrWhiteSpace(e.Description)))
         {
             embed.RrAddField("Embed Title", msgEmbed.Title)
-                .RrAddField("Embed Description", msgEmbed.Description);
+                .RrAddField("Embed Description", msgEmbed.Description.Elide(1000));
         }
 
         await WriteToLogs(channel.GetGuild(), embed);
