@@ -39,24 +39,26 @@ public class General : ModuleBase<SocketCommandContext>
 
         CommandInfo commandInfo = search.Commands[0].Command;
         StringBuilder preconditions = new();
-        if (commandInfo.TryGetPrecondition<CheckPacifistAttribute>())
-            preconditions.AppendLine("Requires not having the Pacifist perk equipped");
-        if (commandInfo.TryGetPrecondition(out RequireCashAttribute requireCashAttr))
-            preconditions.AppendLine($"Requires {(requireCashAttr.Cash > 0.01m ? requireCashAttr.Cash.ToString("C2") : "any amount of cash")}");
-        if (commandInfo.TryGetPrecondition<RequireDjAttribute>())
-            preconditions.AppendLine("Requires DJ");
-        if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>())
-            preconditions.AppendLine("Requires Bot Owner");
-        if (commandInfo.TryGetPrecondition(out RequireRankLevelAttribute rankLevelAttr))
-            preconditions.AppendLine($"Requires rank level {rankLevelAttr.RankLevel}");
-        if (commandInfo.TryGetPrecondition<RequireServerOwnerAttribute>())
-            preconditions.AppendLine("Requires Server Owner");
-        if (commandInfo.TryGetPrecondition<RequireStaffAttribute>())
-            preconditions.AppendLine("Requires Staff");
-        if (commandInfo.TryGetPrecondition(out RequireToolAttribute requireToolAttr))
-            preconditions.AppendLine(string.IsNullOrEmpty(requireToolAttr.ToolType) ? "Requires a tool" : $"Requires {requireToolAttr.ToolType}");
-        if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute requirePermAttr))
-            preconditions.AppendLine($"Requires {Enum.GetName(requirePermAttr.GuildPermission.GetValueOrDefault())} permission");
+
+        foreach (PreconditionAttribute precondition in commandInfo.Preconditions.Concat(commandInfo.Module.Preconditions))
+        {
+            string preconditionInfo = precondition switch
+            {
+                CheckPacifistAttribute => "Requires not having the Pacifist perk equipped",
+                RequireAdministratorAttribute => "Requires being a server administrator",
+                RequireCashAttribute rc => rc.Cash > 0.01m ? $"Requires {rc:C2}" : "Requires any amount of cash",
+                RequireDjAttribute => "Requires the DJ role",
+                RequireOwnerAttribute => "Requires being the bot owner",
+                RequireRankLevelAttribute rrl => "Requires rank level " + rrl.RankLevel,
+                RequireServerOwnerAttribute => "Requires being the server owner",
+                RequireStaffAttribute => "Requires Staff",
+                RequireToolAttribute rt => string.IsNullOrEmpty(rt.ToolType) ? "Requires a tool" : "Requires " + rt.ToolType,
+                RequireUserPermissionAttribute rup => $"Requires {Enum.GetName(rup.GuildPermission.GetValueOrDefault())} permission",
+                _ => ""
+            };
+            if (preconditionInfo != "")
+                preconditions.AppendLine(preconditionInfo);
+        }
 
         EmbedBuilder commandEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -67,6 +69,7 @@ public class General : ModuleBase<SocketCommandContext>
             .RrAddField("Aliases", string.Join(", ", commandInfo.Aliases.Where(a => a != commandInfo.Name)))
             .RrAddField("Preconditions", preconditions);
         await ReplyAsync(embed: commandEmbed.Build());
+
         return CommandResult.FromSuccess();
     }
 
