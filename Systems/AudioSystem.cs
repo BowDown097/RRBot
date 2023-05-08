@@ -203,8 +203,8 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> SeekAsync(SocketCommandContext context, string pos)
     {
-        if (!TimeSpan.TryParse(pos, out TimeSpan ts))
-            return CommandResult.FromError("Not a valid seek position!\nExample valid seek position: 00:13:08");
+        if (!TimeSpan.TryParseExact(pos, new[] { "%s", "m\\:s", "h\\:m\\:s" }, null, out TimeSpan ts))
+            return CommandResult.FromError("Not a valid seek position!\nExample valid seek position: 13:08");
         if (!_audioService.HasPlayer(context.Guild))
             return CommandResult.FromError("The bot is not currently being used.");
 

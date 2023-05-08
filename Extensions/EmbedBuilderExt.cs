@@ -34,7 +34,7 @@ public static class EmbedBuilderExt
     {
         string? valueStr = value?.ToString();
         if (!string.IsNullOrWhiteSpace(valueStr) || showIfNotAvailable)
-            builder.AddField(name, valueStr ?? defaultValue, inline);
+            builder.AddField(name, string.IsNullOrEmpty(valueStr) ? defaultValue : valueStr, inline);
         return builder;
     }
 }

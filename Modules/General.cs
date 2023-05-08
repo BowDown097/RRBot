@@ -47,16 +47,12 @@ public class General : ModuleBase<SocketCommandContext>
             preconditions.AppendLine("Requires DJ");
         if (commandInfo.TryGetPrecondition<RequireOwnerAttribute>())
             preconditions.AppendLine("Requires Bot Owner");
-        if (commandInfo.TryGetPrecondition<RequirePerkAttribute>())
-            preconditions.AppendLine("Requires a perk");
         if (commandInfo.TryGetPrecondition(out RequireRankLevelAttribute rankLevelAttr))
             preconditions.AppendLine($"Requires rank level {rankLevelAttr.RankLevel}");
         if (commandInfo.TryGetPrecondition<RequireServerOwnerAttribute>())
             preconditions.AppendLine("Requires Server Owner");
         if (commandInfo.TryGetPrecondition<RequireStaffAttribute>())
             preconditions.AppendLine("Requires Staff");
-        if (commandInfo.TryGetPrecondition(out RequireBeInChannelAttribute requireChannelAttr))
-            preconditions.AppendLine($"Must be in #{requireChannelAttr.Name}");
         if (commandInfo.TryGetPrecondition(out RequireToolAttribute requireToolAttr))
             preconditions.AppendLine(string.IsNullOrEmpty(requireToolAttr.ToolType) ? "Requires a tool" : $"Requires {requireToolAttr.ToolType}");
         if (commandInfo.TryGetPrecondition(out RequireUserPermissionAttribute requirePermAttr))
