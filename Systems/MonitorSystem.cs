@@ -1,11 +1,11 @@
 namespace RRBot.Systems;
 public class MonitorSystem
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
 
-    public MonitorSystem(DiscordSocketClient client) => _client = client;
+    public MonitorSystem(DiscordShardedClient client) => _client = client;
 
-    public async Task Initialise()
+    public async Task Initialize()
     {
         await Task.Factory.StartNew(async () => await StartBanMonitorAsync());
         await Task.Factory.StartNew(async () => await StartChillMonitorAsync());

@@ -6,7 +6,8 @@ public class EventSystem
 {
     private readonly IAudioService _audioService;
     private readonly CommandService _commands;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
+    private static bool _clientReady;
     private readonly InactivityTrackingService _inactivityTracking;
     private readonly InteractionService _interactions;
     private readonly ServiceProvider _serviceProvider;
@@ -16,7 +17,7 @@ public class EventSystem
         _serviceProvider = serviceProvider;
         _audioService = serviceProvider.GetRequiredService<IAudioService>();
         _commands = serviceProvider.GetRequiredService<CommandService>();
-        _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
+        _client = serviceProvider.GetRequiredService<DiscordShardedClient>();
         _inactivityTracking = serviceProvider.GetRequiredService<InactivityTrackingService>();
         _interactions = serviceProvider.GetRequiredService<InteractionService>();
     }
@@ -30,7 +31,7 @@ public class EventSystem
         _client.MessageUpdated += Client_MessageUpdated;
         _client.ReactionAdded += async (_, _, reaction) => await HandleReactionAsync(reaction, true);
         _client.ReactionRemoved += async (_, _, reaction) => await HandleReactionAsync(reaction, false);
-        _client.Ready += Client_Ready;
+        _client.ShardReady += Client_ShardReady;
         _commands.CommandExecuted += Commands_CommandExecuted;
 
         _client.AutoModRuleCreated += LoggingSystem.Client_AutoModRuleCreated;
@@ -79,7 +80,7 @@ public class EventSystem
         if (interaction.Message.Author.Id != _client.CurrentUser.Id) // don't wanna interfere with other bots' stuff
             return;
 
-        SocketInteractionContext<SocketMessageComponent> context = new(_client, interaction);
+        ShardedInteractionContext<SocketMessageComponent> context = new(_client, interaction);
         await _interactions.ExecuteCommandAsync(context, _serviceProvider);
     }
 
@@ -113,7 +114,7 @@ public class EventSystem
         if (msg is not SocketUserMessage userMsg || msg.Author.IsBot || string.IsNullOrWhiteSpace(userMsg.Content))
             return;
 
-        SocketCommandContext context = new(_client, userMsg);
+        ShardedCommandContext context = new(_client, userMsg);
         await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, _client);
         await FilterSystem.DoScamCheckAsync(userMsg, context.Guild);
 
@@ -197,13 +198,15 @@ public class EventSystem
         await FilterSystem.DoScamCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
     }
 
-    private async Task Client_Ready()
+    private async Task Client_ShardReady(DiscordSocketClient client)
     {
-        // reset usingSlots if someone happened to be using slots during bot restart
+        if (_clientReady) // everything we run in here only needs to run once
+            return;
+
+        _clientReady = true;
         await MongoManager.Users.UpdateManyAsync(u => u.UsingSlots,
             Builders<DbUser>.Update.Set(u => u.UsingSlots, false));
-
-        await new MonitorSystem(_client).Initialise();
+        await new MonitorSystem(_client).Initialize();
         await _audioService.InitializeAsync();
         _inactivityTracking.BeginTracking();
     }

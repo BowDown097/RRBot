@@ -44,7 +44,7 @@ public static class FilterSystem
     };
     private static readonly Regex InviteRegex = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
     
-    public static async Task DoInviteCheckAsync(SocketUserMessage message, IGuild guild, DiscordSocketClient client)
+    public static async Task DoInviteCheckAsync(SocketUserMessage message, IGuild guild, DiscordShardedClient client)
     {
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
         if (!misc.InviteFilterEnabled || misc.NoFilterChannels.Contains(message.Channel.Id))

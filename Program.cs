@@ -5,7 +5,7 @@ internal static class Program
 {
     private static async Task Main()
     {
-        DiscordSocketClient client = new(new DiscordSocketConfig
+        DiscordShardedClient client = new(new DiscordSocketConfig
         {
             AlwaysDownloadUsers = true,
             GatewayIntents = GatewayIntents.All,
