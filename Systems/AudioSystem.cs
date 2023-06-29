@@ -157,16 +157,16 @@ public sealed class AudioSystem
             SearchMode searchMode = uri.Host.Replace("www.", "") switch
             {
                 "soundcloud.com" or "snd.sc" => SearchMode.SoundCloud,
-                "youtube.com" or "youtu.be" => SearchMode.YouTube,
+                "music.youtube.com" or "youtube.com" or "youtu.be" => SearchMode.YouTube,
                 _ => SearchMode.None
             };
 
             track = searchMode switch
             {
-                SearchMode.None when !uri.ToString().Split('/').Last().Contains('.') => await _audioService
-                    .YtdlpGetTrackAsync(uri, context.User),
-                SearchMode.YouTube when uri.AbsolutePath == "/watch" => await _audioService.GetYtTrackAsync(uri,
-                    context.Guild, context.User),
+                SearchMode.None when !uri.ToString().Split('/').Last().Contains('.') =>
+                    await _audioService.YtdlpGetTrackAsync(uri, context.User),
+                SearchMode.YouTube when uri.AbsolutePath == "/watch" =>
+                    await _audioService.GetYtTrackAsync(uri, context.Guild, context.User),
                 _ => await _audioService.RrGetTrackAsync(query, context.User, searchMode)
             };
         }

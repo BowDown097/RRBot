@@ -85,7 +85,6 @@ public class General : ModuleBase<SocketCommandContext>
             .AddField("Serving", $"{usersCount} users across {Context.Client.Guilds.Count} servers", true)
             .AddField("Uptime", (DateTime.Now - Constants.StartTime).FormatCompound(), true)
             .AddField("Latency", Context.Client.Latency, true)
-            .AddField("Shard", Context.Client.ShardId, true)
             .AddField("Commands", Commands.Commands.Count(), true)
             .AddField("Modules", Commands.Modules.Count(), true)
             .AddField("Support Discord", "[Join](https://discord.gg/USpJnaaNap)", true)

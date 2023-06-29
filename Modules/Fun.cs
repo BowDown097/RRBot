@@ -118,6 +118,28 @@ public class Fun : ModuleBase<SocketCommandContext>
         await ReplyAsync(embed: embed.Build());
     }
 
+    [Command("godword")]
+    [Summary("God's word, sourced straight from TempleOS.")]
+    public async Task<RuntimeResult> GodWord(int amount = 1)
+    {
+        using HttpClient client = new();
+        string response = await client.GetStringAsync($"http://temple.xslendi.xyz/api/v1/godword?amount={amount}");
+
+        try
+        {
+            string words = JObject.Parse(response)["words"].ToString();
+            if (words.Length > 2000)
+                return CommandResult.FromError("All these words make up more than 2000 characters, so I can't send them!");
+            await ReplyAsync(words, allowedMentions: AllowedMentions.None);
+        }
+        catch (JsonReaderException)
+        {
+            return CommandResult.FromError("Couldn't get God's word. Is the API dead?");
+        }
+
+        return CommandResult.FromSuccess();
+    }
+
     #pragma warning disable IDE0060, RCS1163
     [Alias("conch")]
     [Command("magicconch")]
@@ -204,6 +226,28 @@ public class Fun : ModuleBase<SocketCommandContext>
     [Command("sneed")]
     [Summary("Sneed")]
     public async Task Sneed() => await ReplyAsync("https://static.wikia.nocookie.net/simpsons/images/1/14/Al_Sneed.png/revision/latest?cb=20210430000431");
+    
+    [Command("terryquote")]
+    [Summary("Behold a random Terry Davis quote.")]
+    public async Task<RuntimeResult> TerryQuote()
+    {
+        using HttpClient client = new();
+        string response = await client.GetStringAsync("http://temple.xslendi.xyz/api/v1/quote");
+
+        try
+        {
+            string quote = "\"" + JObject.Parse(response)["quote"] + "\"";
+            if (quote.Length > 2000)
+                return CommandResult.FromError("This quote is greater than 2000 characters, so I can't send it. Sorry.");
+            await ReplyAsync(quote, allowedMentions: AllowedMentions.None);
+        }
+        catch (JsonReaderException)
+        {
+            return CommandResult.FromError("Couldn't get God's word. Is the API dead?");
+        }
+
+        return CommandResult.FromSuccess();
+    }
 
     [Command("trivia")]
     [Summary("Generate a random trivia question.")]
