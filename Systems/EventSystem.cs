@@ -86,27 +86,20 @@ public class EventSystem
 
     private static async Task Client_JoinedGuild(SocketGuild guild)
     {
-        SocketTextChannel hopefullyGeneral = Array.Find(guild.TextChannels.ToArray(), c => c.Name == "general")
-            ?? guild.DefaultChannel;
-        await hopefullyGeneral.SendMessageAsync(@"Thank you for inviting me to your server!
-        You're gonna want to check out $modules. Use $module to view the commands in each module, and $help to see how to use a command.
-        The Config module will probably be the most important to look at as an admin or server owner.
-        There's a LOT to look at, so it's probably gonna take some time to get everything set up, but trust me, it's worth it.
-        Have fun!");
+        SocketTextChannel hopefullyGeneral = Array.Find(guild.TextChannels.ToArray(), c => c.Name == "general") ?? guild.DefaultChannel;
+        await hopefullyGeneral.SendMessageAsync("""
+                                                Thank you for inviting me to your server!
+                                                You're gonna want to check out $modules. Use $module to view the commands in each module, and $help to see how to use a command.
+                                                The Config module will probably be the most important to look at as an admin or server owner.
+                                                There's a LOT to look at, so it's probably gonna take some time to get everything set up, but trust me, it's worth it.
+                                                Have fun!
+                                                """);
     }
 
-    private static async Task Client_Log(LogMessage msg)
+    private static Task Client_Log(LogMessage msg)
     {
-        if (msg.Exception != null)
-        {
-            Console.WriteLine($"{msg.Exception.Message}\n{msg.Exception.StackTrace}");
-            if (msg.Exception is CommandException ex)
-                await ex.HandleDiscordErrors();
-        }
-        else
-        {
-            Console.WriteLine(msg);
-        }
+        Console.WriteLine(msg);
+        return Task.CompletedTask;
     }
 
     private async Task Client_MessageReceived(SocketMessage msg)
@@ -159,7 +152,14 @@ public class EventSystem
                 return;
             }
 
-            await _commands.ExecuteAsync(context, argPos, _serviceProvider);
+            Discord.Commands.IResult result = await _commands.ExecuteAsync(context, argPos, _serviceProvider);
+            if (result is not Discord.Commands.ExecuteResult executeResult)
+                return;
+            
+            if (executeResult.Exception is HttpException httpEx)
+                await ExceptionHandler.HandleHttpException(httpEx, context);
+            else if (executeResult.Exception != null)
+                Console.WriteLine(executeResult.Exception);
         }
         else
         {
@@ -208,7 +208,12 @@ public class EventSystem
             Builders<DbUser>.Update.Set(u => u.UsingSlots, false));
         await new MonitorSystem(_client).Initialize();
         await _audioService.InitializeAsync();
-        _inactivityTracking.BeginTracking();
+
+        try
+        {
+            _inactivityTracking.BeginTracking();
+        }
+        catch (InvalidOperationException) {}
     }
 
     private static async Task Commands_CommandExecuted(Discord.Optional<CommandInfo> commandOpt,

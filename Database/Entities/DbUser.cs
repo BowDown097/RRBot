@@ -145,8 +145,11 @@ public class DbUser : DbObject
         DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(guildUser.GuildId);
         foreach (KeyValuePair<int, decimal> kvp in ranks.Costs)
         {
-            decimal neededCash = kvp.Value * (1 + 0.5m * Prestige);
             ulong roleId = ranks.Ids[kvp.Key];
+            if (guildUser.Guild.Roles.All(r => r.Id != roleId))
+                return;
+            
+            decimal neededCash = kvp.Value * (1 + 0.5m * Prestige);
             if (Cash >= neededCash && !guildUser.RoleIds.Contains(roleId))
                 await guildUser.AddRoleAsync(roleId);
             else if (Cash <= neededCash && guildUser.RoleIds.Contains(roleId))
