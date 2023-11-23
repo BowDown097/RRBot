@@ -1,28 +1,25 @@
-#pragma warning disable RCS1163, IDE0060 // both warnings fire for events, which they shouldn't
 using Discord.Interactions;
 
-namespace RRBot.Systems;
-public class EventSystem
+namespace RRBot;
+internal sealed class DiscordClientHost : IHostedService
 {
-    private readonly IAudioService _audioService;
-    private readonly CommandService _commands;
     private readonly DiscordShardedClient _client;
-    private static bool _clientReady;
-    private readonly InactivityTrackingService _inactivityTracking;
+    private readonly CommandService _commands;
     private readonly InteractionService _interactions;
-    private readonly ServiceProvider _serviceProvider;
+    private readonly IServiceProvider _serviceProvider;
 
-    public EventSystem(ServiceProvider serviceProvider)
+    private static bool _clientReady;
+
+    public DiscordClientHost(DiscordShardedClient client, CommandService commands,
+        InteractionService interactions, IServiceProvider serviceProvider)
     {
+        _client = client;
+        _commands = commands;
+        _interactions = interactions;
         _serviceProvider = serviceProvider;
-        _audioService = serviceProvider.GetRequiredService<IAudioService>();
-        _commands = serviceProvider.GetRequiredService<CommandService>();
-        _client = serviceProvider.GetRequiredService<DiscordShardedClient>();
-        _inactivityTracking = serviceProvider.GetRequiredService<InactivityTrackingService>();
-        _interactions = serviceProvider.GetRequiredService<InteractionService>();
     }
 
-    public void SubscribeEvents()
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         _client.ButtonExecuted += Client_ButtonExecuted;
         _client.JoinedGuild += Client_JoinedGuild;
@@ -33,7 +30,7 @@ public class EventSystem
         _client.ReactionRemoved += async (_, _, reaction) => await HandleReactionAsync(reaction, false);
         _client.ShardReady += Client_ShardReady;
         _commands.CommandExecuted += Commands_CommandExecuted;
-
+        
         _client.AutoModRuleCreated += LoggingSystem.Client_AutoModRuleCreated;
         _client.AutoModRuleDeleted += LoggingSystem.Client_AutoModRuleDeleted;
         _client.AutoModRuleUpdated += LoggingSystem.Client_AutoModRuleUpdated;
@@ -73,35 +70,39 @@ public class EventSystem
         _client.UserLeft += LoggingSystem.Client_UserLeft;
         _client.UserUnbanned += LoggingSystem.Client_UserUnbanned;
         _client.UserVoiceStateUpdated += LoggingSystem.Client_UserVoiceStateUpdated;
+
+        await _client.LoginAsync(TokenType.Bot, Credentials.Token);
+        await _client.SetGameAsync(Constants.Activity, type: Constants.ActivityType);
+        await _client.StartAsync();
     }
 
+    public async Task StopAsync(CancellationToken cancellationToken) => await _client.StopAsync();
+    
     private async Task Client_ButtonExecuted(SocketMessageComponent interaction)
     {
-        if (interaction.Message.Author.Id != _client.CurrentUser.Id) // don't wanna interfere with other bots' stuff
-            return;
-
+        if (interaction.Message.Author.Id != _client.CurrentUser.Id) return;
         ShardedInteractionContext<SocketMessageComponent> context = new(_client, interaction);
         await _interactions.ExecuteCommandAsync(context, _serviceProvider);
     }
-
+    
     private static async Task Client_JoinedGuild(SocketGuild guild)
     {
         SocketTextChannel hopefullyGeneral = Array.Find(guild.TextChannels.ToArray(), c => c.Name == "general") ?? guild.DefaultChannel;
         await hopefullyGeneral.SendMessageAsync("""
-                                                Thank you for inviting me to your server!
-                                                You're gonna want to check out $modules. Use $module to view the commands in each module, and $help to see how to use a command.
-                                                The Config module will probably be the most important to look at as an admin or server owner.
-                                                There's a LOT to look at, so it's probably gonna take some time to get everything set up, but trust me, it's worth it.
-                                                Have fun!
-                                                """);
+        Thank you for inviting me to your server!
+        You're gonna want to check out $modules. Use $module to view the commands in each module, and $help to see how to use a command.
+        The Config module will probably be the most important to look at as an admin or server owner.
+        There's a LOT to look at, so it's probably gonna take some time to get everything set up, but trust me, it's worth it.
+        Have fun!
+        """);
     }
-
+    
     private static Task Client_Log(LogMessage msg)
     {
         Console.WriteLine(msg);
         return Task.CompletedTask;
     }
-
+    
     private async Task Client_MessageReceived(SocketMessage msg)
     {
         if (msg is not SocketUserMessage userMsg || msg.Author.IsBot || string.IsNullOrWhiteSpace(userMsg.Content))
@@ -188,34 +189,36 @@ public class EventSystem
             await MongoManager.UpdateObjectAsync(user);
         }
     }
-
+    
     private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
     {
         if (msgAfter is not SocketUserMessage userMsgAfter || string.IsNullOrWhiteSpace(userMsgAfter.Content))
             return;
-
+        
         await FilterSystem.DoInviteCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild(), _client);
         await FilterSystem.DoScamCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
     }
 
     private async Task Client_ShardReady(DiscordSocketClient client)
     {
-        if (_clientReady) // everything we run in here only needs to run once
-            return;
-
+        if (_clientReady) return;
         _clientReady = true;
-        await MongoManager.Users.UpdateManyAsync(u => u.UsingSlots,
-            Builders<DbUser>.Update.Set(u => u.UsingSlots, false));
+
+        _commands.AddTypeReader<decimal>(new DecimalTypeReader());
+        _commands.AddTypeReader<IEmote>(new EmoteTypeReader());
+        _commands.AddTypeReader<IGuildUser>(new RrGuildUserTypeReader());
+        _commands.AddTypeReader<List<ulong>>(new ListTypeReader<ulong>());
+        _commands.AddTypeReader<string>(new SanitizedStringTypeReader());
+
+        await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _serviceProvider);
+        await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), _serviceProvider);
+
+        await MongoManager.InitializeAsync(Credentials.ConnectionString);
+        await MongoManager.Users.UpdateManyAsync(u => u.UsingSlots, Builders<DbUser>.Update.Set(u => u.UsingSlots, false));
+
         await new MonitorSystem(_client).Initialize();
-        await _audioService.InitializeAsync();
-
-        try
-        {
-            _inactivityTracking.BeginTracking();
-        }
-        catch (InvalidOperationException) {}
     }
-
+    
     private static async Task Commands_CommandExecuted(Discord.Optional<CommandInfo> commandOpt,
         ICommandContext context, Discord.Commands.IResult result)
     {
@@ -242,10 +245,9 @@ public class EventSystem
         if (reaction.User.GetValueOrDefault() is not SocketGuildUser user || user.IsBot)
             return;
 
-        // selfroles check
         DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(user.Guild.Id);
-        string emote = reaction.Emote.ToString();
-        if (string.IsNullOrEmpty(emote) || reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(emote))
+        string emote = reaction.Emote.ToString()!;
+        if (reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(emote))
             return;
 
         ulong roleId = selfRoles.SelfRoles[emote];
