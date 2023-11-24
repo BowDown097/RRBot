@@ -28,5 +28,5 @@ public class RrTrack : ITrackQueueItem
     }
 
     private static string SanitizeOrUnknown(string str, string classifier)
-        => !string.IsNullOrWhiteSpace(str) ? Format.Sanitize(str) : "Unknown " + classifier;
+        => !string.IsNullOrWhiteSpace(str) ? StringCleaner.Sanitize(str) : "Unknown " + classifier;
 }

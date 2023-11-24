@@ -18,6 +18,8 @@ builder.Services.AddSingleton(client)
     .AddHostedService<DiscordClientHost>()
     .AddLavalink()
     .AddLogging(x => x.AddConsole().SetMinimumLevel(LogLevel.Warning))
+    .AddLyrics()
+    .ConfigureLyrics(options => options.SuppressExceptions = true)
     .AddInactivityTracking()
     .ConfigureInactivityTracking(options => options.DefaultTimeout = TimeSpan.FromSeconds(Constants.InactivityTimeoutSecs))
     .AddSingleton<AudioSystem>();

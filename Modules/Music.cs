@@ -28,6 +28,11 @@ public class Music : ModuleBase<SocketCommandContext>
     [RequireDj]
     public async Task<RuntimeResult> Loop() => await AudioSystem.LoopAsync(Context);
 
+    [Command("lyrics", RunMode = RunMode.Async)]
+    [Summary("Get the lyrics of the currently playing track.")]
+    [RequireDj]
+    public async Task<RuntimeResult> Lyrics() => await AudioSystem.LyricsAsync(Context);
+
     [Alias("np", "playing")]
     [Command("nowplaying", RunMode = RunMode.Async)]
     [Summary("Get details on the currently playing track, if there is one.")]

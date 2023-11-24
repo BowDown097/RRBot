@@ -2,8 +2,14 @@
 public sealed class AudioSystem
 {
     private readonly IAudioService _audioService;
+    private readonly ILyricsService _lyricsService;
     private static readonly IOptions<VoteLavalinkPlayerOptions> PlayerOptions = Options.Create(new VoteLavalinkPlayerOptions());
-    public AudioSystem(IAudioService audioService) => _audioService = audioService;
+
+    public AudioSystem(IAudioService audioService, ILyricsService lyricsService)
+    {
+        _audioService = audioService;
+        _lyricsService = lyricsService;
+    }
 
     private async ValueTask<PlayerResult<VoteLavalinkPlayer>> GetPlayerAsync(
         SocketCommandContext context,
@@ -25,13 +31,18 @@ public sealed class AudioSystem
         );
     }
 
+    private async ValueTask<PlayerResult<VoteLavalinkPlayer>> GetPlayerAsync(
+        SocketCommandContext context,
+        IPlayerPrecondition precondition,
+        PlayerChannelBehavior channelBehavior = PlayerChannelBehavior.None)
+        => await GetPlayerAsync(context, channelBehavior, ImmutableArray.Create(precondition));
+
     public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, float volume)
     {
         if (volume is < Constants.MinVolume or > Constants.MaxVolume)
             return CommandResult.FromError($"Volume must be between {Constants.MinVolume}% and {Constants.MaxVolume}%.");
 
-        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(
-            context, PlayerChannelBehavior.None, ImmutableArray.Create(PlayerPrecondition.Playing));
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
@@ -46,8 +57,7 @@ public sealed class AudioSystem
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
-        int count = await playerResult.Player.Queue.RemoveAllAsync(t =>
-            t.As<RrTrack>().Title.Equals(name, StringComparison.OrdinalIgnoreCase));
+        int count = await playerResult.Player.Queue.RemoveAllAsync(t => t.As<RrTrack>().Title.Equals(name, StringComparison.OrdinalIgnoreCase));
         if (count == 0)
             return CommandResult.FromError("There are no tracks in the queue with that name.");
         
@@ -69,25 +79,20 @@ public sealed class AudioSystem
         PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context);
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
-        if (index - 2 > playerResult.Player.Queue.Count)
-            return CommandResult.FromError("There are less tracks in the queue than your index.");
+        if (playerResult.Player.Queue.ElementAtOrDefault(index - 2) is not RrTrack track)
+            return CommandResult.FromError("There is no track at that index.");
 
-        RrTrack track = playerResult.Player.Queue.ElementAt(index - 2).As<RrTrack>();
         await playerResult.Player.Queue.RemoveAsync(track!);
-
-        await context.User.NotifyAsync(context.Channel,
-            $"Successfully removed the track at that index (\"{track.Title}\").");
+        await context.Channel.SendMessageAsync($"Successfully removed the track at that index (\"{track.Title}\").", allowedMentions: AllowedMentions.None);
         return CommandResult.FromSuccess();
     }
 
     public async Task<RuntimeResult> GetCurrentlyPlayingAsync(SocketCommandContext context)
     {
-        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(
-            context, PlayerChannelBehavior.None, ImmutableArray.Create(PlayerPrecondition.Playing));
-        if (!playerResult.IsSuccess)
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
+        if (!playerResult.IsSuccess || playerResult.Player.CurrentItem is not RrTrack track)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
-        RrTrack track = playerResult.Player.CurrentItem.As<RrTrack>();
         StringBuilder builder = new($"By: {track.Author}\n");
         if (!track.Track.IsLiveStream)
             builder.AppendLine($"Duration: {track.Track.Duration.Round()}\nPosition: {playerResult.Player.Position.GetValueOrDefault().Position.Round()}");
@@ -107,15 +112,13 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> ListAsync(SocketCommandContext context)
     {
-        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(
-            context, PlayerChannelBehavior.None, ImmutableArray.Create(PlayerPrecondition.Playing));
-        if (!playerResult.IsSuccess)
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
+        if (!playerResult.IsSuccess || playerResult.Player.CurrentItem is not RrTrack currentTrack)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
-        RrTrack currentTrack = playerResult.Player.CurrentItem.As<RrTrack>();
         if (playerResult.Player.Queue.IsEmpty)
         {
-            await context.Channel.SendMessageAsync($"Now playing: \"{currentTrack.Title}\". Nothing else is queued.", allowedMentions: Constants.Mentions);
+            await context.Channel.SendMessageAsync($"Now playing: \"{currentTrack.Title}\". Nothing else is queued.", allowedMentions: AllowedMentions.None);
             return CommandResult.FromSuccess();
         }
         
@@ -151,8 +154,7 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> LoopAsync(SocketCommandContext context)
     {
-        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(
-            context, PlayerChannelBehavior.None, ImmutableArray.Create(PlayerPrecondition.Playing));
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
@@ -161,6 +163,25 @@ public sealed class AudioSystem
 
         string loopStatus = playerResult.Player.RepeatMode == TrackRepeatMode.Track ? "ON" : "OFF";
         await context.Channel.SendMessageAsync($"Looping turned {loopStatus}.");
+        return CommandResult.FromSuccess();
+    }
+
+    public async Task<RuntimeResult> LyricsAsync(SocketCommandContext context)
+    {
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
+        if (!playerResult.IsSuccess || playerResult.Player.CurrentItem is not RrTrack track)
+            return CommandResult.FromError(playerResult.ErrorMessage());
+
+        string lyrics = await _lyricsService.GetLyricsAsync(track.Track!);
+        if (string.IsNullOrEmpty(lyrics))
+            return CommandResult.FromError("No lyrics were found.");
+
+        EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Red)
+            .WithTitle($"\"{track.Title}\" by {track.Author}")
+            .WithDescription(StringCleaner.Sanitize(lyrics));
+
+        await context.Channel.SendMessageAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
     }
 
@@ -214,11 +235,11 @@ public sealed class AudioSystem
             StringBuilder message = new($"Now playing: \"{track.Title}\"\nBy: {track.Author}\n");
             if (!track.Track.IsLiveStream)
                 message.AppendLine($"Length: {track.Track.Duration.Round()}");
-            await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: Constants.Mentions);
+            await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: AllowedMentions.None);
         }
         else
         {
-            await context.Channel.SendMessageAsync($"**{track.Title}** has been added to the queue.", allowedMentions: Constants.Mentions);
+            await context.Channel.SendMessageAsync($"**{track.Title}** has been added to the queue.", allowedMentions: AllowedMentions.None);
         }
 
         await LoggingSystem.Custom_TrackStarted(context.User as SocketGuildUser, track.Track.Uri.ToString());
@@ -230,8 +251,7 @@ public sealed class AudioSystem
         if (!TimeSpan.TryParseExact(pos, new[] { "%s", @"m\:s", @"h\:m\:s" }, null, out TimeSpan ts))
             return CommandResult.FromError("Not a valid seek position!\nExample valid seek position: 13:08");
 
-        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(
-            context, PlayerChannelBehavior.None, ImmutableArray.Create(PlayerPrecondition.Playing));
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
         if (ts < TimeSpan.Zero || ts > playerResult.Player.CurrentTrack.Duration)
@@ -259,22 +279,18 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> SkipTrackAsync(SocketCommandContext context)
     {
-        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(
-            context, PlayerChannelBehavior.None, ImmutableArray.Create(PlayerPrecondition.Playing));
-        if (!playerResult.IsSuccess)
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
+        if (!playerResult.IsSuccess || playerResult.Player.CurrentItem is not RrTrack track)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
-        RrTrack skippedTrack = playerResult.Player.CurrentItem.As<RrTrack>();
         await playerResult.Player.SkipAsync();
-  
-        await context.Channel.SendMessageAsync($"Skipped \"{skippedTrack.Title}\".", allowedMentions: Constants.Mentions);
+        await context.Channel.SendMessageAsync($"Skipped \"{track.Title}\".", allowedMentions: AllowedMentions.None);
         return CommandResult.FromSuccess();
     }
 
     public async Task<RuntimeResult> StopAsync(SocketCommandContext context)
     {
-        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(
-            context, PlayerChannelBehavior.None, ImmutableArray.Create(PlayerPrecondition.Playing));
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
@@ -285,21 +301,18 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> VoteSkipTrackAsync(SocketCommandContext context)
     {
-        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(
-            context, PlayerChannelBehavior.None, ImmutableArray.Create(PlayerPrecondition.Playing));
-        if (!playerResult.IsSuccess)
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
+        if (!playerResult.IsSuccess || playerResult.Player.CurrentItem is not RrTrack track)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
-        RrTrack track = playerResult.Player.CurrentItem.As<RrTrack>();
         UserVoteResult vote = await playerResult.Player.VoteAsync(context.User.Id, default);
-
         // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
         switch (vote)
         {
             case UserVoteResult.AlreadySubmitted:
                 return CommandResult.FromError("You already voted to skip!");
             case UserVoteResult.Skipped:
-                await context.Channel.SendMessageAsync($"Skipped \"{track.Title}\".", allowedMentions: Constants.Mentions);
+                await context.Channel.SendMessageAsync($"Skipped \"{track.Title}\".", allowedMentions: AllowedMentions.None);
                 break;
             case UserVoteResult.Submitted:
             {
