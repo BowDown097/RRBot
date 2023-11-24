@@ -35,7 +35,7 @@ public sealed class AudioSystem
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
-        await playerResult.Player.SetVolumeAsync(volume);
+        await playerResult.Player.SetVolumeAsync(volume / 100f);
         await context.Channel.SendMessageAsync($"Set volume to {volume}%.");
         return CommandResult.FromSuccess();
     }
@@ -266,11 +266,8 @@ public sealed class AudioSystem
 
         RrTrack skippedTrack = playerResult.Player.CurrentItem.As<RrTrack>();
         await playerResult.Player.SkipAsync();
+  
         await context.Channel.SendMessageAsync($"Skipped \"{skippedTrack.Title}\".", allowedMentions: Constants.Mentions);
-
-        if (playerResult.Player.CurrentTrack is null)
-            await playerResult.Player.StopAsync();
-
         return CommandResult.FromSuccess();
     }
 
