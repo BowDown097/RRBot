@@ -10,7 +10,6 @@ public sealed class AudioSystem
         PlayerChannelBehavior channelBehavior = PlayerChannelBehavior.None,
         ImmutableArray<IPlayerPrecondition> preconditions = default)
     {
-        SocketGuildUser guildUser = context.User as SocketGuildUser;
         PlayerRetrieveOptions retrieveOptions = new(
             ChannelBehavior: channelBehavior,
             Preconditions: preconditions,
@@ -19,7 +18,7 @@ public sealed class AudioSystem
 
         return await _audioService.Players.RetrieveAsync(
             context.Guild.Id,
-            guildUser.VoiceChannel.Id,
+            (context.User as SocketGuildUser)?.VoiceChannel?.Id,
             PlayerFactory.Vote,
             PlayerOptions,
             retrieveOptions
@@ -177,8 +176,8 @@ public sealed class AudioSystem
         PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerChannelBehavior.Join);
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
-        
-        RrTrack track = null;
+
+        RrTrack track;
         if (Uri.TryCreate(query, UriKind.Absolute, out Uri uri))
         {
             TrackSearchMode searchMode = uri.Host.Replace("www.", "") switch
@@ -190,11 +189,11 @@ public sealed class AudioSystem
             };
             
             if (searchMode == TrackSearchMode.None && !uri.Segments.LastOrDefault().Contains('.'))
-                await _audioService.YtDlpGetTrackAsync(uri, context.User);
+                track = await _audioService.YtDlpGetTrackAsync(uri, context.User);
             else if (searchMode == TrackSearchMode.YouTube)
-                await _audioService.GetYtTrackAsync(uri, context.Guild, context.User);
+                track = await _audioService.GetYtTrackAsync(uri, context.Guild, context.User);
             else
-                await _audioService.RrGetTrackAsync(query, context.User, searchMode);
+                track = await _audioService.RrGetTrackAsync(query, context.User, searchMode);
         }
         else
         {

@@ -1,4 +1,5 @@
 ﻿using Discord.Interactions;
+using Microsoft.Extensions.Logging;
 using RRBot;
 
 DiscordShardedClient client = new(new DiscordSocketConfig
@@ -16,7 +17,7 @@ builder.Services.AddSingleton(client)
     .AddSingleton<InteractiveService>()
     .AddHostedService<DiscordClientHost>()
     .AddLavalink()
-    .AddLogging()
+    .AddLogging(x => x.AddConsole().SetMinimumLevel(LogLevel.Warning))
     .AddInactivityTracking()
     .ConfigureInactivityTracking(options => options.DefaultTimeout = TimeSpan.FromSeconds(Constants.InactivityTimeoutSecs))
     .AddSingleton<AudioSystem>();

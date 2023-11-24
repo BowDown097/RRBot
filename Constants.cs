@@ -29,7 +29,7 @@ public static class Constants
     // ********************
     //     AUDIO SYSTEM
     // ********************
-    public const double InactivityTimeoutSecs = 30;
+    public const double InactivityTimeoutSecs = 10;
     public const float MaxVolume = 200;
     public const float MinVolume = 5;
     // ********************
