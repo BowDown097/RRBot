@@ -1,6 +1,9 @@
 ﻿namespace RRBot.Extensions;
 public static class TimeSpanExt
 {
+    public static string Condense(this TimeSpan ts)
+        => (int)ts.TotalHours > 0 ? ts.ToString(@"h\:mm\:ss") : ts.ToString(@"m\:ss");
+
     public static string FormatCompound(this TimeSpan ts)
     {
         StringBuilder formatted = new();
@@ -13,6 +16,4 @@ public static class TimeSpanExt
 
         return formatted.Length > 0 ? formatted.ToString()[1..] : "N/A";
     }
-
-    public static TimeSpan Round(this TimeSpan ts) => TimeSpan.FromSeconds(Math.Round(ts.TotalSeconds));
 }

@@ -95,7 +95,7 @@ public sealed class AudioSystem
 
         StringBuilder builder = new($"By: {track.Author}\n");
         if (!track.Track.IsLiveStream)
-            builder.AppendLine($"Duration: {track.Track.Duration.Round()}\nPosition: {playerResult.Player.Position.GetValueOrDefault().Position.Round()}");
+            builder.AppendLine($"Duration: {track.Track.Duration.Condense()}\nPosition: {playerResult.Player.Position.GetValueOrDefault().Position.Condense()}");
 
         using ArtworkService artworkService = new();
         Uri artworkUri = track.ArtworkUri ?? await artworkService.ResolveAsync(track.Track);
@@ -121,10 +121,10 @@ public sealed class AudioSystem
             await context.Channel.SendMessageAsync($"Now playing: \"{currentTrack.Title}\". Nothing else is queued.", allowedMentions: AllowedMentions.None);
             return CommandResult.FromSuccess();
         }
-        
+
+        StringBuilder playlist = new();
         ITrackQueueItem[] tracks = playerResult.Player.Queue.Prepend(currentTrack).ToArray();
         TimeSpan totalLength = TimeSpan.Zero;
-        StringBuilder playlist = new();
 
         for (int i = 0; i < tracks.Length; i++)
         {
@@ -133,15 +133,14 @@ public sealed class AudioSystem
 
             if (!track.Track.IsLiveStream)
             {
-                TimeSpan duration = track.Track.Duration.Round();
-                playlist.Append($" ({duration})");
-                totalLength += duration.Round();
+                playlist.Append($" ({track.Track.Duration.Condense()})");
+                totalLength += track.Track.Duration;
             }
             
             playlist.AppendLine($" | Added by: {track.Requester}");
         }
         
-        playlist.AppendLine($"\n**Total Length: {totalLength}**");
+        playlist.AppendLine($"\n**Total Length: {totalLength.Condense()}**");
         
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -234,7 +233,7 @@ public sealed class AudioSystem
         {
             StringBuilder message = new($"Now playing: \"{track.Title}\"\nBy: {track.Author}\n");
             if (!track.Track.IsLiveStream)
-                message.AppendLine($"Length: {track.Track.Duration.Round()}");
+                message.AppendLine($"Length: {track.Track.Duration.Condense()}");
             await context.Channel.SendMessageAsync(message.ToString(), allowedMentions: AllowedMentions.None);
         }
         else
@@ -255,10 +254,10 @@ public sealed class AudioSystem
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
         if (ts < TimeSpan.Zero || ts > playerResult.Player.CurrentTrack.Duration)
-            return CommandResult.FromError($"You can't seek to a negative position or a position longer than the track duration ({playerResult.Player.CurrentTrack.Duration.Round()}).");
+            return CommandResult.FromError($"You can't seek to a negative position or a position longer than the track duration ({playerResult.Player.CurrentTrack.Duration.Condense()}).");
 
         await playerResult.Player.SeekAsync(ts);
-        await context.Channel.SendMessageAsync($"Seeked to **{ts.Round()}**.");
+        await context.Channel.SendMessageAsync($"Seeked to **{ts.Condense()}**.");
         return CommandResult.FromSuccess();
     }
 
@@ -318,7 +317,7 @@ public sealed class AudioSystem
             {
                 VoteSkipInformation skipInfo = await playerResult.Player.GetVotesAsync();
                 int votesNeeded = (int)Math.Ceiling(skipInfo.TotalUsers * PlayerOptions.Value.SkipThreshold) - skipInfo.Votes.Length;
-                await context.Channel.SendMessageAsync($"Vote received! **{votesNeeded}** more votes are needed.");
+                await context.Channel.SendMessageAsync($"Vote received! **{votesNeeded}** more vote(s) are needed.");
                 break;
             }
         }
