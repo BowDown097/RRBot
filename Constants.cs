@@ -315,6 +315,6 @@ public static class Constants
         new("M16", 60, "Rifle Round", 35, 40, 20, "TA-TA-TA! Three round burst. Nice n' accurate. Absolute beauty.", new[] { "Gold", "Diamond" }, "Gun"),
         new("Intervention", 70, "Sniper Round", 60, 80, 3, "Big dick energy in a weapon. Sexy. Accurate. Hard-hitting. The bros love it, the hoes love it. I love it.", new[] { "Gold", "Diamond" }, "Gun"),
         new("Barrett M82", 60, "Sniper Round", 50, 70, 7, "Yawn. Gay. It's cool I guess, but why have this when you could have an Intervention?", new[] { "Gold", "Diamond" }, "Gun"),
-        new("RPG", 30, "Rocket", 100, 100, 15, "A FUCKIN' ROCKET LAUNCHER!!!! GUN GO BOOM!", new[] { "Diamond" }, "Gun")
+        new("RPG", 30, "Rocket", 99, 100, 15, "A FUCKIN' ROCKET LAUNCHER!!!! GUN GO BOOM!", new[] { "Diamond" }, "Gun")
     };
 }
