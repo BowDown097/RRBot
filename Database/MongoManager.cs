@@ -84,9 +84,8 @@ public class MongoManager
 
     public static async Task<DbGang> FetchGangAsync(string name, ulong guildId)
     {
-        // ReSharper disable once SpecifyStringComparison
         IAsyncCursor<DbGang> cursor = await Gangs.FindAsync(g => g.GuildId == guildId
-            && g.Name.ToLower() == name.ToLower());
+            && g.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         return await cursor.FirstOrDefaultAsync();
     }
 

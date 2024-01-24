@@ -1,11 +1,7 @@
 namespace RRBot.Common;
-
 public static class StringCleaner
 {
-    private static readonly string[] SensitiveCharacters =
-    {
-        "*", "_", "`", "~", ">"
-    };
+    private static readonly string[] SensitiveCharacters = ["*", "_", "`", "~", ">"];
 
     public static string Sanitize(string text)
     {

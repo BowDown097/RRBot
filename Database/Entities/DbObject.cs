@@ -1,10 +1,9 @@
 namespace RRBot.Database.Entities;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public class BsonCollectionAttribute : Attribute
+public class BsonCollectionAttribute(string collectionName) : Attribute
 {
-    public string CollectionName { get; }
-    public BsonCollectionAttribute(string collectionName) => CollectionName = collectionName;
+    public string CollectionName { get; } = collectionName;
 }
 
 public abstract class DbObject

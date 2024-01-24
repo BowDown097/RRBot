@@ -1,14 +1,7 @@
 namespace RRBot.Entities;
-public struct Achievement
+public readonly struct Achievement(string name, string description, int reward = 0)
 {
-    public string Name { get; }
-    public string Description { get; }
-    public int Reward { get; }
-
-    public Achievement(string name, string description, int reward = 0)
-    {
-        Name = name;
-        Description = description;
-        Reward = reward;
-    }
+    public string Name { get; } = name;
+    public string Description { get; } = description;
+    public int Reward { get; } = reward;
 }

@@ -1,8 +1,7 @@
-
 namespace RRBot.Extensions;
 public static class FileInfoExt
 {
-    internal static string GetFullPath(this FileInfo fileInfo)
+    public static string GetFullPath(this FileInfo fileInfo)
     {
         if (File.Exists(fileInfo.Name))
             return Path.GetFullPath(fileInfo.Name);

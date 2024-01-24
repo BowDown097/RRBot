@@ -14,5 +14,5 @@ public class DbConfigChannels : DbConfig
     public ulong LogsChannel { get; set; }
     public ulong PollsChannel { get; set; }
     public ulong PotChannel { get; set; }
-    public List<ulong> WhitelistedChannels { get; set; } = new();
+    public List<ulong> WhitelistedChannels { get; set; } = [];
 }

@@ -583,7 +583,7 @@ public static class LoggingSystem
         string hbKey = JObject.Parse(await response.Content.ReadAsStringAsync())["key"]?.ToString();
 
         EmbedBuilder embed = new EmbedBuilder()
-            .WithDescription($"**{messageList.Count() - 1} Messages Purged**\nSee them [here](https://hastebin.com/{hbKey})");
+            .WithDescription($"**{messageList.Count - 1} Messages Purged**\nSee them [here](https://hastebin.com/{hbKey})");
 
         await WriteToLogs(guild, embed);
     }

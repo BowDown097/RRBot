@@ -1,20 +1,12 @@
 namespace RRBot.Entities.Goods;
-public class Consumable : Item
+public class Consumable(string name, string information, string negEffect, string posEffect, long duration, int max = -1)
+    : Item(name, 0)
 {
-    public long Duration { get; }
-    public string Information { get; }
-    public int Max { get; }
-    public string NegEffect { get; }
-    public string PosEffect { get; }
+    public long Duration { get; } = duration;
+    public string Information { get; } = information;
+    public int Max { get; } = max;
+    public string NegEffect { get; } = negEffect;
+    public string PosEffect { get; } = posEffect;
     public override string Name { get; protected init; }
     public override decimal Price { get; protected init; }
-
-    public Consumable(string name, string information, string negEffect, string posEffect, long duration, int max = -1) : base(name, 0)
-    {
-        Information = information;
-        Max = max;
-        NegEffect = negEffect;
-        PosEffect = posEffect;
-        Duration = duration;
-    }
 }

@@ -7,25 +7,25 @@ public static class Constants
     //     ACHIEVEMENTS
     // ********************
     public static readonly Achievement[] DefaultAchievements =
-    {
-        new("Hard Boiled Egg", "Find a hard boiled egg.", 1337),
-        new("I Just Feel Bad", "Take a million dollar L."),
-        new("Jackpot!", "Get a jackpot with $slots."),
-        new("Luckiest Dude Alive", "Win $69.69."),
-        new("Literally 1984", "Get muted."),
-        new("Maxed!", "Reach the max prestige.", 1420),
-        new("OH BABY A TRIPLE", "Roll triples in $dice."),
-        new("Prestiged!", "Get your first prestige.", 1000),
-        new("Pretty Damn Lucky", "Win $99+.")
-    };
+    [
+        new Achievement("Hard Boiled Egg", "Find a hard boiled egg.", 1337),
+        new Achievement("I Just Feel Bad", "Take a million dollar L."),
+        new Achievement("Jackpot!", "Get a jackpot with $slots."),
+        new Achievement("Luckiest Dude Alive", "Win $69.69."),
+        new Achievement("Literally 1984", "Get muted."),
+        new Achievement("Maxed!", "Reach the max prestige.", 1420),
+        new Achievement("OH BABY A TRIPLE", "Roll triples in $dice."),
+        new Achievement("Prestiged!", "Get your first prestige.", 1000),
+        new Achievement("Pretty Damn Lucky", "Win $99+.")
+    ];
     public static readonly string[] GamblingAchievements =
-    {
+    [
         "I Just Feel Bad",
         "Jackpot!",
         "Luckiest Dude Alive",
         "OH BABY A TRIPLE",
         "Pretty Damn Lucky"
-    };
+    ];
     // ********************
     //     AUDIO SYSTEM
     // ********************
@@ -90,13 +90,13 @@ public static class Constants
     //         FUN
     // ********************
     public static readonly string[] MagicConchImages =
-    {
+    [
         "https://i.imgur.com/kJmUvt2.png", // i don't think so
         "https://i.imgur.com/h1GvIe6.png", // maybe someday
         "https://i.imgur.com/ozPmMUQ.png", // no
         "https://i.imgur.com/uRynAAx.png", // try asking again
-        "https://i.imgur.com/qVjaDSs.png", // yes
-    };
+        "https://i.imgur.com/qVjaDSs.png" // yes
+    ];
     public static readonly Dictionary<string, string> Waifus = new()
     {
         { "Adolf Dripler", "https://i.redd.it/cd9v84v46ma21.jpg" },
@@ -243,78 +243,78 @@ public static class Constants
     //        ITEMS
     // ********************
     public static readonly Ammo[] Ammo =
-    {
-        new("Pistol Round", 3),
-        new("Rifle Round", 2),
-        new("Sniper Round", 1),
-        new("Rocket", 0.5)
-    };
+    [
+        new Ammo("Pistol Round", 3),
+        new Ammo("Rifle Round", 2),
+        new Ammo("Sniper Round", 1),
+        new Ammo("Rocket", 0.5)
+    ];
     public static readonly Crate[] Crates =
-    {
-        new("Daily", 0, 0, 1, cash: 1500),
-        new("Bronze", 5000, 1, 2 ),
-        new("Silver", 10000, 2, 2, 1),
-        new("Gold", 15000, 3, 4, 2),
-        new("Diamond", 25000, 4, 6, 3)
-    };
+    [
+        new Crate("Daily", 0, 0, 1, cash: 1500),
+        new Crate("Bronze", 5000, 1, 2 ),
+        new Crate("Silver", 10000, 2, 2, 1),
+        new Crate("Gold", 15000, 3, 4, 2),
+        new Crate("Diamond", 25000, 4, 6, 3)
+    ];
     public static readonly Collectible[] Collectibles =
-    {
-        new("Ape NFT", "Who actually likes these? Why does this have value?", 1000, "https://i.ibb.co/w0syJ61/nft.png"),
-        new("Bank Cheque", "Hey hey hey, we got ourselves some free money!", -1, "https://i.ibb.co/wCYcrP7/Blank-Cheque.png"),
-        new("Coconut", "Well this is cool, I guess.", 3, "https://i.ibb.co/svxvLKP/coconut.png"),
-        new("V Card", "Here you go, ya fuckin' virgin. Get a life bro", 69696969.69m, "https://i.ibb.co/rvKXgb5/vcard.png", false)
-    };
+    [
+        new Collectible("Ape NFT", "Who actually likes these? Why does this have value?", 1000, "https://i.ibb.co/w0syJ61/nft.png"),
+        new Collectible("Bank Cheque", "Hey hey hey, we got ourselves some free money!", -1, "https://i.ibb.co/wCYcrP7/Blank-Cheque.png"),
+        new Collectible("Coconut", "Well this is cool, I guess.", 3, "https://i.ibb.co/svxvLKP/coconut.png"),
+        new Collectible("V Card", "Here you go, ya fuckin' virgin. Get a life bro", 69696969.69m, "https://i.ibb.co/rvKXgb5/vcard.png", false)
+    ];
     public static readonly Consumable[] Consumables =
-    {
-        new("Black Hat", "Become an epic hax0r.", "You might get busted by the feds and get fined.", "$hack chance increased by 10%.", BlackHatDuration, 1),
-        new("Cocaine", "Snorting a line of this funny sugar makes you HYPER and has some crazy effects.", "You have a chance of overdosing, which will make you lose all your remaining cocaine as well as not be able to use commands with cooldowns for a certain amount of time. The chance of overdosing and how long you can't use economy commands depends on how many lines you have in your system.", "Cooldowns are reduced by 10% for each line snorted.", CocaineDuration),
-        new("Romanian Flag", "A neat little good luck charm for $rob. Your Romanian pride makes stealing wallets much easier!", "A Romanian might notice you and take some of your money.", "$rob chance increased by 10%.", RomanianFlagDuration, 1),
-        new("Viagra", "Get it goin', if you know what I mean.", "The pill has a chance to backfire and give you ED.", "$rape chance increased by 10%.", ViagraDuration, 1)
-    };
+    [
+        new Consumable("Black Hat", "Become an epic hax0r.", "You might get busted by the feds and get fined.", "$hack chance increased by 10%.", BlackHatDuration, 1),
+        new Consumable("Cocaine", "Snorting a line of this funny sugar makes you HYPER and has some crazy effects.", "You have a chance of overdosing, which will make you lose all your remaining cocaine as well as not be able to use commands with cooldowns for a certain amount of time. The chance of overdosing and how long you can't use economy commands depends on how many lines you have in your system.", "Cooldowns are reduced by 10% for each line snorted.", CocaineDuration),
+        new Consumable("Romanian Flag", "A neat little good luck charm for $rob. Your Romanian pride makes stealing wallets much easier!", "A Romanian might notice you and take some of your money.", "$rob chance increased by 10%.", RomanianFlagDuration, 1),
+        new Consumable("Viagra", "Get it goin', if you know what I mean.", "The pill has a chance to backfire and give you ED.", "$rape chance increased by 10%.", ViagraDuration, 1)
+    ];
     public static readonly Perk[] Perks =
-    {
-        new("Enchanter", "Tasks are 20% more effective, but your tools have a 2% chance of breaking after use.", 5000, 172800),
-        new("Speed Demon", "Cooldowns are 15% shorter, but you have a 5% higher chance of failing any command that can fail.", 5000, 172800),
-        new("Multiperk", "Grants the ability to equip 2 perks, not including this one.", 10000, 604800),
-        new("Pacifist", "You are immune to all crimes, but you cannot use any crime commands and you also cannot appear on the leaderboard. Cannot be stacked with other perks, even if you have the Multiperk. Can be discarded, but cannot be used again for 3 days.", 0, -1)
-    };
+    [
+        new Perk("Enchanter", "Tasks are 20% more effective, but your tools have a 2% chance of breaking after use.", 5000, 172800),
+        new Perk("Speed Demon", "Cooldowns are 15% shorter, but you have a 5% higher chance of failing any command that can fail.", 5000, 172800),
+        new Perk("Multiperk", "Grants the ability to equip 2 perks, not including this one.", 10000, 604800),
+        new Perk("Pacifist", "You are immune to all crimes, but you cannot use any crime commands and you also cannot appear on the leaderboard. Cannot be stacked with other perks, even if you have the Multiperk. Can be discarded, but cannot be used again for 3 days.", 0, -1)
+    ];
     public static readonly Tool[] Tools =
-    {
-        new("Wooden Pickaxe", 4500),
-        new("Stone Pickaxe", 6000, mult: 1.33m),
-        new("Iron Pickaxe", 7500, mult: 1.66m),
-        new("Diamond Pickaxe", 9000, mult: 2),
-        new("Netherite Pickaxe", 10500, mult: 2.33m),
-        new("Wooden Sword", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
-        new("Stone Sword", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
-        new("Iron Sword", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
-        new("Diamond Sword", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
-        new("Netherite Sword", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
-        new("Wooden Shovel", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
-        new("Stone Shovel", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
-        new("Iron Shovel", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
-        new("Diamond Shovel", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
-        new("Netherite Shovel", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
-        new("Wooden Axe", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
-        new("Stone Axe", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
-        new("Iron Axe", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
-        new("Diamond Axe", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
-        new("Netherite Axe", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
-        new("Wooden Hoe", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
-        new("Stone Hoe", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
-        new("Iron Hoe", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
-        new("Diamond Hoe", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
-        new("Netherite Hoe", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
-        new("Fishing Rod", 7500, Fish.First().Value * 7, Fish.Last().Value * 15)
-    };
+    [
+        new Tool("Wooden Pickaxe", 4500),
+        new Tool("Stone Pickaxe", 6000, mult: 1.33m),
+        new Tool("Iron Pickaxe", 7500, mult: 1.66m),
+        new Tool("Diamond Pickaxe", 9000, mult: 2),
+        new Tool("Netherite Pickaxe", 10500, mult: 2.33m),
+        new Tool("Wooden Sword", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
+        new Tool("Stone Sword", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
+        new Tool("Iron Sword", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
+        new Tool("Diamond Sword", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
+        new Tool("Netherite Sword", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
+        new Tool("Wooden Shovel", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
+        new Tool("Stone Shovel", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
+        new Tool("Iron Shovel", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
+        new Tool("Diamond Shovel", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
+        new Tool("Netherite Shovel", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
+        new Tool("Wooden Axe", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
+        new Tool("Stone Axe", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
+        new Tool("Iron Axe", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
+        new Tool("Diamond Axe", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
+        new Tool("Netherite Axe", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
+        new Tool("Wooden Hoe", 4500, GenericTaskWoodMin * 2.5m, GenericTaskWoodMax * 2.5m),
+        new Tool("Stone Hoe", 6000, GenericTaskStoneMin * 2.5m, GenericTaskStoneMax * 2.5m),
+        new Tool("Iron Hoe", 7500, GenericTaskIronMin * 2.5m, GenericTaskIronMax * 2.5m),
+        new Tool("Diamond Hoe", 9000, GenericTaskDiamondMin * 2.5m, GenericTaskDiamondMax * 2.5m),
+        new Tool("Netherite Hoe", 10500, GenericTaskNetheriteMin * 2.5m, GenericTaskNetheriteMax * 2.5m),
+        new Tool("Fishing Rod", 7500, Fish.First().Value * 7, Fish.Last().Value * 15)
+    ];
     public static readonly Weapon[] Weapons =
-    {
-        new("Glock 17", 30, "Pistol Round", 13, 21, 40, "The classic. Also the weakest. Upgrade when?", new[] { "Bronze", "Silver", "Gold", "Diamond" }, "Gun"),
-        new("Python", 35, "Pistol Round", 20, 25, 30, "Nice, small, and hits like a truck. Like a Glock but it doesn't suck.", new[] { "Silver", "Gold", "Diamond" }, "Gun"),
-        new("AR-15", 50, "Rifle Round", 40, 45, 25, "\"Ummmm.. This is like a full on military weapon, we should ban it\" said some fucking loser no one cares about. This gun is awesome.", new[] { "Gold", "Diamond" }, "Gun"),
-        new("M16", 60, "Rifle Round", 35, 40, 20, "TA-TA-TA! Three round burst. Nice n' accurate. Absolute beauty.", new[] { "Gold", "Diamond" }, "Gun"),
-        new("Intervention", 70, "Sniper Round", 60, 80, 3, "Big dick energy in a weapon. Sexy. Accurate. Hard-hitting. The bros love it, the hoes love it. I love it.", new[] { "Gold", "Diamond" }, "Gun"),
-        new("Barrett M82", 60, "Sniper Round", 50, 70, 7, "Yawn. Gay. It's cool I guess, but why have this when you could have an Intervention?", new[] { "Gold", "Diamond" }, "Gun"),
-        new("RPG", 30, "Rocket", 99, 100, 15, "A FUCKIN' ROCKET LAUNCHER!!!! GUN GO BOOM!", new[] { "Diamond" }, "Gun")
-    };
+    [
+        new Weapon("Glock 17", 30, "Pistol Round", 13, 21, 40, "The classic. Also the weakest. Upgrade when?", new[] { "Bronze", "Silver", "Gold", "Diamond" }, "Gun"),
+        new Weapon("Python", 35, "Pistol Round", 20, 25, 30, "Nice, small, and hits like a truck. Like a Glock but it doesn't suck.", new[] { "Silver", "Gold", "Diamond" }, "Gun"),
+        new Weapon("AR-15", 50, "Rifle Round", 40, 45, 25, "\"Ummmm.. This is like a full on military weapon, we should ban it\" said some fucking loser no one cares about. This gun is awesome.", new[] { "Gold", "Diamond" }, "Gun"),
+        new Weapon("M16", 60, "Rifle Round", 35, 40, 20, "TA-TA-TA! Three round burst. Nice n' accurate. Absolute beauty.", new[] { "Gold", "Diamond" }, "Gun"),
+        new Weapon("Intervention", 70, "Sniper Round", 60, 80, 3, "Big dick energy in a weapon. Sexy. Accurate. Hard-hitting. The bros love it, the hoes love it. I love it.", new[] { "Gold", "Diamond" }, "Gun"),
+        new Weapon("Barrett M82", 60, "Sniper Round", 50, 70, 7, "Yawn. Gay. It's cool I guess, but why have this when you could have an Intervention?", new[] { "Gold", "Diamond" }, "Gun"),
+        new Weapon("RPG", 30, "Rocket", 99, 100, 15, "A FUCKIN' ROCKET LAUNCHER!!!! GUN GO BOOM!", new[] { "Diamond" }, "Gun")
+    ];
 }

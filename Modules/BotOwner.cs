@@ -1,8 +1,7 @@
 namespace RRBot.Modules;
-public class FunnyContext
+public class FunnyContext(SocketCommandContext context)
 {
-    public SocketCommandContext Context { get; }
-    public FunnyContext(SocketCommandContext context) => Context = context;
+    public SocketCommandContext Context { get; } = context;
 }
 
 [RequireOwner]
@@ -73,8 +72,12 @@ public class BotOwner : ModuleBase<SocketCommandContext>
         try
         {
             code = code.Replace("```cs", "").Trim('`');
-            string[] imports = { "System", "System.Collections.Generic", "System.Text" };
-            object evaluation = await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context));
+            string[] imports = ["System", "System.Collections.Generic", "System.Text"];
+            object evaluation = await CSharpScript.EvaluateAsync(
+                code,
+                ScriptOptions.Default.WithImports(imports),
+                new FunnyContext(Context)
+            );
 
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
@@ -101,7 +104,7 @@ public class BotOwner : ModuleBase<SocketCommandContext>
     {
         await Context.Message.DeleteAsync();
         code = code.Replace("```cs", "").Trim('`');
-        string[] imports = { "System", "System.Collections.Generic", "System.Text" };
+        string[] imports = ["System", "System.Collections.Generic", "System.Text"];
         await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(imports), new FunnyContext(Context));
     }
 

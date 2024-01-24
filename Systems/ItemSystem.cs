@@ -96,10 +96,8 @@ public static class ItemSystem
             .WithTitle("Collectible found!")
             .WithDescription($"**{collectible}:** {collectible.Description}\n\nWorth {(collectible.Price != -1 ? collectible.Price.ToString("C2") : "some amount of money")} - $discard this item to cash in!");
 
-        if (user.Collectibles.ContainsKey(collectible.Name))
+        if (!user.Collectibles.TryAdd(collectible.Name, 1))
             user.Collectibles[collectible.Name]++;
-        else
-            user.Collectibles.Add(collectible.Name, 1);
 
         await channel.SendMessageAsync(embed: embed.Build());
     }

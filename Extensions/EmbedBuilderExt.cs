@@ -23,7 +23,9 @@ public static class EmbedBuilderExt
         {
             string desc1 = !string.IsNullOrWhiteSpace(value1Str) ? value1Str : defaultValue;
             string desc2 = !string.IsNullOrWhiteSpace(value2Str) ? value2Str : defaultValue;
-            builder.AddField($"Previous {name}", desc1, true).AddField($"Current {name}", desc2, true).AddSeparatorField();
+            builder
+                .AddField($"Previous {name}", desc1, true).AddField($"Current {name}", desc2, true)
+                .AddSeparatorField();
         }
 
         return builder;

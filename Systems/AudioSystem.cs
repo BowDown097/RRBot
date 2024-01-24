@@ -1,15 +1,7 @@
 ﻿namespace RRBot.Systems;
-public sealed class AudioSystem
+public sealed class AudioSystem(IAudioService audioService, ILyricsService lyricsService)
 {
-    private readonly IAudioService _audioService;
-    private readonly ILyricsService _lyricsService;
     private static readonly IOptions<VoteLavalinkPlayerOptions> PlayerOptions = Options.Create(new VoteLavalinkPlayerOptions());
-
-    public AudioSystem(IAudioService audioService, ILyricsService lyricsService)
-    {
-        _audioService = audioService;
-        _lyricsService = lyricsService;
-    }
 
     private async ValueTask<PlayerResult<VoteLavalinkPlayer>> GetPlayerAsync(
         SocketCommandContext context,
@@ -22,7 +14,7 @@ public sealed class AudioSystem
             VoiceStateBehavior: MemberVoiceStateBehavior.RequireSame
         );
 
-        return await _audioService.Players.RetrieveAsync(
+        return await audioService.Players.RetrieveAsync(
             context.Guild.Id,
             (context.User as SocketGuildUser)?.VoiceChannel?.Id,
             PlayerFactory.Vote,
@@ -174,7 +166,7 @@ public sealed class AudioSystem
         if (!playerResult.IsSuccess || playerResult.Player.CurrentItem is not RrTrack track)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
-        string lyrics = await _lyricsService.GetLyricsAsync(track.Track!);
+        string lyrics = await lyricsService.GetLyricsAsync(track.Track!);
         if (string.IsNullOrEmpty(lyrics))
             return CommandResult.FromError("No lyrics were found.");
 
@@ -215,21 +207,21 @@ public sealed class AudioSystem
             {
                 string lastSegment = uri.Segments.LastOrDefault();
                 track = lastSegment.Contains('.') // check for direct link, use yt-dlp if not
-                    ? await _audioService.RrGetTrackAsync(query, context.User, searchMode, lastSegment)
-                    : await _audioService.YtDlpGetTrackAsync(uri, context.User);
+                    ? await audioService.RrGetTrackAsync(query, context.User, searchMode, lastSegment)
+                    : await audioService.YtDlpGetTrackAsync(uri, context.User);
             }
             else if (searchMode == TrackSearchMode.YouTube)
             {
-                track = await _audioService.GetYtTrackAsync(uri, context.Guild, context.User);
+                track = await audioService.GetYtTrackAsync(uri, context.Guild, context.User);
             }
             else
             {
-                track = await _audioService.RrGetTrackAsync(query, context.User, searchMode);
+                track = await audioService.RrGetTrackAsync(query, context.User, searchMode);
             }
         }
         else
         {
-            track = await _audioService.RrGetTrackAsync(query, context.User, TrackSearchMode.YouTube);
+            track = await audioService.RrGetTrackAsync(query, context.User, TrackSearchMode.YouTube);
         }
         
         if (track is null)
@@ -259,7 +251,7 @@ public sealed class AudioSystem
 
     public async Task<RuntimeResult> SeekAsync(SocketCommandContext context, string pos)
     {
-        if (!TimeSpan.TryParseExact(pos, new[] { "%s", @"m\:s", @"h\:m\:s" }, null, out TimeSpan ts))
+        if (!TimeSpan.TryParseExact(pos, ["%s", @"m\:s", @"h\:m\:s"], null, out TimeSpan ts))
             return CommandResult.FromError("Not a valid seek position!\nExample valid seek position: 13:08");
 
         PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);

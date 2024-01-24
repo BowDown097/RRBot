@@ -59,10 +59,8 @@ public class Administration : ModuleBase<SocketCommandContext>
                 await ItemSystem.GiveCollectible(item.Name, Context.Channel, dbUser);
                 break;
             case Consumable:
-                if (dbUser.Consumables.ContainsKey(item.Name))
+                if (!dbUser.Consumables.TryAdd(item.Name, 1))
                     dbUser.Consumables[item.Name]++;
-                else
-                    dbUser.Consumables.Add(item.Name, 1);
                 break;
             case Crate:
                 dbUser.Crates.Add(item.Name);
@@ -108,7 +106,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     public async Task RemoveCrates([Remainder] IGuildUser user)
     {
         DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
-        dbUser.Crates = new List<string>();
+        dbUser.Crates = [];
         await Context.User.NotifyAsync(Context.Channel, $"Removed **{user.Sanitize()}**'s crates.");
         await MongoManager.UpdateObjectAsync(dbUser);
     }

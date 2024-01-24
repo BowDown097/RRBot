@@ -1,15 +1,9 @@
 ﻿namespace RRBot.Preconditions;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-public class RequireCooldownAttribute : PreconditionAttribute
+public class RequireCooldownAttribute(string cooldownNode, string message) : PreconditionAttribute
 {
-    private string CooldownNode { get; }
-    private string Message { get; }
-
-    public RequireCooldownAttribute(string cooldownNode, string message)
-    {
-        CooldownNode = cooldownNode;
-        Message = message;
-    }
+    private string CooldownNode { get; } = cooldownNode;
+    private string Message { get; } = message;
 
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {

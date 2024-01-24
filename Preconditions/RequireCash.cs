@@ -1,10 +1,8 @@
 ﻿namespace RRBot.Preconditions;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-public class RequireCashAttribute : PreconditionAttribute
+public class RequireCashAttribute(double cash = 0.01) : PreconditionAttribute
 {
-    public decimal Cash { get; }
-
-    public RequireCashAttribute(double cash = 0.01) => Cash = (decimal)cash;
+    public decimal Cash { get; } = (decimal)cash;
 
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {

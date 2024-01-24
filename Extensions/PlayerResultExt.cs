@@ -1,5 +1,4 @@
 namespace RRBot.Extensions;
-
 public static class PlayerResultExt
 {
     public static string ErrorMessage<T>(this PlayerResult<T> playerResult) where T : class, ILavalinkPlayer

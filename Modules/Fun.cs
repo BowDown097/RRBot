@@ -2,7 +2,7 @@ namespace RRBot.Modules;
 [Summary("Commands that don't do anything related to the bot's systems: they just exist for fun (hence the name).")]
 public class Fun : ModuleBase<SocketCommandContext>
 {
-    private static readonly BoardPos[] Adjacents = { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
+    private static readonly BoardPos[] Adjacents = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)];
 
     #region Commands
     [Alias("gato", "kitty")]

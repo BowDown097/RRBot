@@ -1,10 +1,8 @@
 ﻿namespace RRBot.Preconditions;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-public class RequireToolAttribute : PreconditionAttribute
+public class RequireToolAttribute(string toolType = "") : PreconditionAttribute
 {
-    public string ToolType { get; }
-
-    public RequireToolAttribute(string toolType = "") => ToolType = toolType;
+    public string ToolType { get; } = toolType;
 
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {

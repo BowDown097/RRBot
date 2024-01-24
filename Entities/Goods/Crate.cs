@@ -1,25 +1,17 @@
 namespace RRBot.Entities.Goods;
-public class Crate : Item
+public class Crate(string name, decimal price, int tier, int consumableCount = 0, int toolCount = 0, decimal cash = 0)
+    : Item(name, price)
 {
-    public decimal Cash { get; }
-    public int ConsumableCount { get; }
-    private int Tier { get; }
-    public int ToolCount { get; }
+    public decimal Cash { get; } = cash;
+    public int ConsumableCount { get; } = consumableCount;
+    private int Tier { get; } = tier;
+    public int ToolCount { get; } = toolCount;
     public override string Name { get; protected init; }
     public override decimal Price { get; protected init; }
 
-    public Crate(string name, decimal price, int tier, int consumableCount = 0, int toolCount = 0, decimal cash = 0)
-        : base(name, price)
-    {
-        Cash = cash;
-        ConsumableCount = consumableCount;
-        Tier = tier;
-        ToolCount = toolCount;
-    }
-
     public List<Item> Open(DbUser user)
     {
-        List<Item> items = new();
+        List<Item> items = [];
 
         if (Tier > 0)
         {

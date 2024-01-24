@@ -1,14 +1,9 @@
 namespace RRBot.Entities.Goods;
-public class Perk : Item
+public class Perk(string name, string description, decimal price, long duration)
+    : Item(name, price)
 {
-    public string Description { get; }
-    public long Duration { get; }
+    public string Description { get; } = description;
+    public long Duration { get; } = duration;
     public override string Name { get; protected init; }
     public override decimal Price { get; protected init; }
-
-    public Perk(string name, string description, decimal price, long duration) : base(name, price)
-    {
-        Description = description;
-        Duration = duration;
-    }
 }

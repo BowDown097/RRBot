@@ -2,8 +2,11 @@
 [Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
 public class Economy : ModuleBase<SocketCommandContext>
 {
-    public static readonly string[] CmdsWithCooldown = { "Deal", "Loot", "Rape", "Rob", "Scavenge",
-        "Slavery", "Whore", "Bully",  "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Hack", "Daily", "Prestige", "Shoot" };
+    public static readonly string[] CmdsWithCooldown =
+    [
+        "Deal", "Loot", "Rape", "Rob", "Scavenge", "Slavery", "Whore", "Bully",
+        "Chop", "Dig", "Farm", "Fish", "Hunt", "Mine", "Hack", "Daily", "Prestige", "Shoot"
+    ];
 
     #region Commands
     [Alias("bal", "cash")]

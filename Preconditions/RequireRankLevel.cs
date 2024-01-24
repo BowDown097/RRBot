@@ -1,10 +1,8 @@
 ﻿namespace RRBot.Preconditions;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-public class RequireRankLevelAttribute : PreconditionAttribute
+public class RequireRankLevelAttribute(int level) : PreconditionAttribute
 {
-    public int RankLevel { get; }
-
-    public RequireRankLevelAttribute(int level) => RankLevel = level;
+    public int RankLevel { get; } = level;
 
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {

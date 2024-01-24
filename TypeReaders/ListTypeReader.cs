@@ -5,9 +5,7 @@ public class ListTypeReader<T> : TypeReader
     {
         try
         {
-            string[] split = input.Contains(',') 
-                ? input.Split(',', StringSplitOptions.TrimEntries) 
-                : new[] { input };
+            string[] split = input.Contains(',') ? input.Split(',', StringSplitOptions.TrimEntries) : [input];
             List<T> result = split.Select(v => (T)Convert.ChangeType(v, typeof(T))).ToList();
             return Task.FromResult(TypeReaderResult.FromSuccess(result));
         }

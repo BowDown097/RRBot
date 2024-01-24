@@ -1,5 +1,4 @@
 namespace RRBot.Systems;
-
 public static class ExceptionHandler
 {
     public static async Task HandleHttpException(HttpException ex, ShardedCommandContext context)

@@ -192,7 +192,7 @@ public class Goods : ModuleBase<SocketCommandContext>
         if (dbUser.Ammo.Any(k => k.Value > 0))
             weapons += '\n' + string.Join('\n', dbUser.Ammo.Where(k => k.Value > 0).Select(a => $"{a.Key} ({a.Value}x)"));
 
-        List<PageBuilder> pages = new();
+        List<PageBuilder> pages = [];
         if (dbUser.Tools.Count > 0)
             pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools));
         if (dbUser.Weapons.Count > 0)
@@ -246,21 +246,16 @@ public class Goods : ModuleBase<SocketCommandContext>
         foreach (string ammo in ammos.Distinct())
         {
             int count = ammos.Count(a => a == ammo);
-            if (user.Ammo.ContainsKey(ammo))
+            if (!user.Ammo.TryAdd(ammo, count))
                 user.Ammo[ammo] += count;
-            else
-                user.Ammo.Add(ammo, count);
-
             description.AppendLine($"**{ammo}** ({count}x)");
         }
         
         foreach (string consumable in consumables.Distinct())
         {
             int count = consumables.Count(c => c == consumable);
-            if (user.Consumables.ContainsKey(consumable))
+            if (!user.Consumables.TryAdd(consumable, count))
                 user.Consumables[consumable] += count;
-            else
-                user.Consumables.Add(consumable, count);
 
             description.AppendLine($"**{consumable}** ({count}x)");
         }
@@ -296,12 +291,13 @@ public class Goods : ModuleBase<SocketCommandContext>
         string tools = string.Join('\n', Constants.Tools.Where(t => !t.Name.StartsWith("Netherite")).Select(t => $"**{t}**: {t.Price:C2}"));
         string weapons = string.Join('\n', Constants.Weapons.Select(w => $"**{w}**: {w.Information}"));
 
-        IPageBuilder[] pages = {
+        IPageBuilder[] pages =
+        [
             new PageBuilder().WithColor(Color.Red).WithTitle("Tools").WithDescription(tools).WithFooter("Buy tools with $buy!"),
             new PageBuilder().WithColor(Color.Red).WithTitle("Weapons").WithDescription(weapons).WithFooter("Get weapons from crates!"),
             new PageBuilder().WithColor(Color.Red).WithTitle("Perks").WithDescription(perks).WithFooter("Buy perks with $buy!"),
             new PageBuilder().WithColor(Color.Red).WithTitle("Crates").WithDescription(crates).WithFooter("Buy crates with $buy!")
-        };
+        ];
 
         StaticPaginator paginator = new StaticPaginatorBuilder()
             .AddUser(Context.User)

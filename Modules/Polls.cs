@@ -131,15 +131,13 @@ public class Polls : ModuleBase<SocketCommandContext>
             }
         }
 
-        if (!election.Candidates.ContainsKey(user.Id))
-            election.Candidates.Add(user.Id, 1);
-        else
+        if (!election.Candidates.TryAdd(user.Id, 1))
             election.Candidates[user.Id]++;
 
-        if (!election.Voters.ContainsKey(Context.User.Id))
-            election.Voters.Add(Context.User.Id, new List<ulong> { user.Id });
+        if (!election.Voters.TryGetValue(Context.User.Id, out List<ulong> value))
+            election.Voters.Add(Context.User.Id, [user.Id]);
         else
-            election.Voters[Context.User.Id].Add(user.Id);
+            value.Add(user.Id);
 
         await UpdateElection(election, channels, Context.Guild);
         await Context.User.NotifyAsync(Context.Channel, $"Voted for {user.Sanitize()}.");

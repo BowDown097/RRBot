@@ -49,11 +49,10 @@ public class Prestige : ModuleBase<SocketCommandContext>
         user.Prestige++;
 
         // grab all cds/times via reflection to reduce maintenance of the command
-        foreach (PropertyInfo property in typeof(DbUser).GetProperties()
-                     .Where(p => p.Name.EndsWith("Cooldown") || p.Name.EndsWith("Time")))
-        {
+        IEnumerable<PropertyInfo> waitProperties = typeof(DbUser).GetProperties()
+            .Where(p => p.Name.EndsWith("Cooldown") || p.Name.EndsWith("Time"));
+        foreach (PropertyInfo property in waitProperties)
             property.SetValue(user, 0);
-        }
 
         await user.SetCashWithoutAdjustment(Context.User, 0);
         await user.SetCooldown("PrestigeCooldown", Constants.PrestigeCooldown, Context.Guild, Context.User);

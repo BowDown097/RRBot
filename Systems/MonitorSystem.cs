@@ -1,10 +1,6 @@
 namespace RRBot.Systems;
-public class MonitorSystem
+public class MonitorSystem(BaseSocketClient client)
 {
-    private readonly DiscordShardedClient _client;
-
-    public MonitorSystem(DiscordShardedClient client) => _client = client;
-
     public async Task Initialize()
     {
         await Task.Factory.StartNew(async () => await StartBanMonitorAsync());
@@ -22,7 +18,7 @@ public class MonitorSystem
             await Task.Delay(TimeSpan.FromSeconds(30));
             foreach (DbBan ban in await MongoManager.Bans.Aggregate().ToListAsync())
             {
-                SocketGuild guild = _client.GetGuild(ban.GuildId);
+                SocketGuild guild = client.GetGuild(ban.GuildId);
                 if (await guild.GetBanAsync(ban.UserId) is null)
                 {
                     await MongoManager.DeleteObjectAsync(ban);
@@ -44,7 +40,7 @@ public class MonitorSystem
             await Task.Delay(TimeSpan.FromSeconds(30));
             foreach (DbChill chill in await MongoManager.Chills.Aggregate().ToListAsync())
             {
-                SocketGuild guild = _client.GetGuild(chill.GuildId);
+                SocketGuild guild = client.GetGuild(chill.GuildId);
                 SocketTextChannel channel = guild.GetTextChannel(chill.ChannelId);
                 OverwritePermissions perms = channel.GetPermissionOverwrite(guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
 
@@ -63,7 +59,7 @@ public class MonitorSystem
         }
     }
 
-    private async Task StartConsumableMonitorAsync()
+    private static async Task StartConsumableMonitorAsync()
     {
         while (true)
         {
@@ -85,7 +81,7 @@ public class MonitorSystem
                 e.EndTime <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && e.EndTime != -1);
             await elections.ForEachAsync(async election =>
             {
-                SocketGuild guild = _client.GetGuild(election.GuildId);
+                SocketGuild guild = client.GetGuild(election.GuildId);
                 DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(election.GuildId);
                 await Polls.ConcludeElection(election, channels, guild);
                 await MongoManager.UpdateObjectAsync(election);
@@ -112,7 +108,7 @@ public class MonitorSystem
                     string lastPerk = user.Perks.Last().Key;
                     Perk perk = ItemSystem.GetItem(lastPerk) as Perk;
 
-                    SocketGuild guild = _client.GetGuild(user.GuildId);
+                    SocketGuild guild = client.GetGuild(user.GuildId);
                     SocketUser socketUser = guild.GetUser(user.UserId);
                     await user.SetCash(socketUser, user.Cash + perk.Price);
                     user.Perks.Remove(lastPerk);
@@ -133,7 +129,7 @@ public class MonitorSystem
             await pots.ForEachAsync(async pot =>
             {
                 ulong luckyGuy = pot.DrawMember();
-                SocketGuild guild = _client.GetGuild(pot.GuildId);
+                SocketGuild guild = client.GetGuild(pot.GuildId);
                 SocketGuildUser luckyUser = guild.GetUser(luckyGuy);
                 DbUser luckyDbUser = await MongoManager.FetchUserAsync(luckyGuy, guild.Id);
 

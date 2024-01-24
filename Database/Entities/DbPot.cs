@@ -15,7 +15,7 @@ public class DbPot : DbObject
 
     public ulong DrawMember()
     {
-        decimal[] ranges = {0, 0};
+        decimal[] ranges = [0, 0];
         decimal roll = RandomUtil.NextDecimal(100);
         foreach (KeyValuePair<ulong, decimal> mem in Members)
         {

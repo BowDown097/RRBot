@@ -21,7 +21,7 @@ public class Config : ModuleBase<SocketCommandContext>
 
     [Command("addselfrole")]
     [Summary("Add a self role for the self role message.")]
-    [Remarks("$addselfrole \\:Sperg\\: 809512856713166918")]
+    [Remarks(@"$addselfrole \:Sperg\: 809512856713166918")]
     public async Task<RuntimeResult> AddSelfRole(IEmote emote, [Remainder] SocketRole role)
     {
         SocketRole authorHighest = (Context.User as SocketGuildUser)?.Roles.MaxBy(r => r.Position);
@@ -432,6 +432,10 @@ public class Config : ModuleBase<SocketCommandContext>
 
     #region Helpers
     private static string Pair(string descriptor, object obj)
-        => obj is string s ? $"{descriptor}: {(!string.IsNullOrWhiteSpace(s) ? s : "N/A")}" : $"{descriptor}: {obj ?? "N/A"}";
+    {
+        return obj is string s
+            ? $"{descriptor}: {(!string.IsNullOrWhiteSpace(s) ? s : "N/A")}"
+            : $"{descriptor}: {obj ?? "N/A"}";
+    }
     #endregion
 }

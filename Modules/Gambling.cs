@@ -2,8 +2,14 @@
 [Summary("Do you want to test your luck? Do you want to probably go broke? Here you go! By the way, you don't need to be 21 or over in this joint ;)")]
 public class Gambling : ModuleBase<SocketCommandContext>
 {
-    private static readonly Emoji[] Emojis = { new("\uD83C\uDF4E"), new("\uD83C\uDF47"), new("7️⃣"),  new("\uD83C\uDF52"),
-        new("\uD83C\uDF4A"), new("\uD83C\uDF48"), new("\uD83C\uDF4B") }; // apple, grape, seven, cherry, orange, melon, lemon
+    // apple, grape, seven, cherry, orange, melon, lemon
+    private static readonly Emoji[] Emojis =
+    [
+        new Emoji("\uD83C\uDF4E"), new Emoji("\uD83C\uDF47"), new Emoji("7️⃣"),
+        new Emoji("\uD83C\uDF52"), new Emoji("\uD83C\uDF4A"),
+        new Emoji("\uD83C\uDF48"), new Emoji("\uD83C\uDF4B")
+    ];
+
     public InteractiveService Interactive { get; set; }
 
     #region Commands
@@ -55,9 +61,11 @@ public class Gambling : ModuleBase<SocketCommandContext>
         EmbedBuilder betEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Bet")
-            .WithDescription($@"{Context.User.Mention} is betting **{bet:C2}** against {user.Mention}. 
-                Their number is **{number}**.
-                {user.Mention}, if you want to accept this bet, respond with a number between 1 and 100 in the next 30 seconds.");
+            .WithDescription($"""
+                              {Context.User.Mention} is betting **{bet:C2}** against {user.Mention}.
+                              Their number is **{number}**.
+                              {user.Mention}, if you want to accept this bet, respond with a number between 1 and 100 in the next 30 seconds.
+                              """);
         await ReplyAsync(embed: betEmbed.Build());
 
         InteractiveResult<SocketMessage> betResult = await Interactive.NextMessageAsync(
@@ -129,7 +137,7 @@ public class Gambling : ModuleBase<SocketCommandContext>
         if (user.Cash < bet)
             return CommandResult.FromError("You can't bet more than what you have!");
 
-        int[] rolls = { RandomUtil.Next(1, 7), RandomUtil.Next(1, 7), RandomUtil.Next(1, 7) };
+        int[] rolls = [RandomUtil.Next(1, 7), RandomUtil.Next(1, 7), RandomUtil.Next(1, 7)];
         int matches = rolls.Count(r => r == number);
         string rollsText = string.Join(' ', new[]
         {

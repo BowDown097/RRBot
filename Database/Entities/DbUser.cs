@@ -20,7 +20,7 @@ public class DbUser : DbObject
     public long CocaineTime { get; set; }
     public Dictionary<string, int> Collectibles { get; set; } = new();
     public Dictionary<string, int> Consumables { get; set;  } = new();
-    public List<string> Crates { get; set; } = new();
+    public List<string> Crates { get; set; } = [];
     public long DailyCooldown { get; set; }
     public long DealCooldown { get; set; }
     public long DigCooldown { get; set; }
@@ -38,7 +38,7 @@ public class DbUser : DbObject
     public decimal Ltc { get; set; }
     public long MineCooldown { get; set; }
     public long PacifistCooldown { get; set; }
-    public List<string> PendingGangInvites { get; set; } = new();
+    public List<string> PendingGangInvites { get; set; } = [];
     public Dictionary<string, long> Perks { get; set; } = new();
     public string PreferredBibleTranslation { get; set; }
     public int Prestige { get; set; }
@@ -51,7 +51,7 @@ public class DbUser : DbObject
     public Dictionary<string, string> Stats { get; set; } = new();
     public long SlaveryCooldown { get; set; }
     public long TimeTillCash { get; set; }
-    public List<string> Tools { get; set; } = new();
+    public List<string> Tools { get; set; } = [];
     public Dictionary<string, int> UsedConsumables { get; set; } = new() {
         { "Black Hat", 0 },
         { "Cocaine", 0 },
@@ -61,7 +61,7 @@ public class DbUser : DbObject
     public bool UsingSlots { get; set; }
     public bool WantsReplyPings { get; set; } = true;
     public long ViagraTime { get; set; }
-    public List<string> Weapons { get; set; } = new();
+    public List<string> Weapons { get; set; } = [];
     public long WhoreCooldown { get; set; }
     public decimal Xrp { get; set; }
 
@@ -91,17 +91,17 @@ public class DbUser : DbObject
         culture.NumberFormat.CurrencyNegativePattern = 2;
         foreach (KeyValuePair<string, string> kvp in statsToAddTo)
         {
-            if (Stats.ContainsKey(kvp.Key))
+            if (Stats.TryGetValue(kvp.Key, out string value))
             {
                 if (kvp.Value[0] == '$')
                 {
-                    decimal oldValue = decimal.Parse(Stats[kvp.Key][1..]);
+                    decimal oldValue = decimal.Parse(value[1..]);
                     decimal toAdd = decimal.Parse(kvp.Value[1..]);
                     Stats[kvp.Key] = (oldValue + toAdd).ToString("C2", culture);
                 }
                 else
                 {
-                    decimal oldValue = decimal.Parse(Stats[kvp.Key]);
+                    decimal oldValue = decimal.Parse(value);
                     decimal toAdd = decimal.Parse(kvp.Value);
                     Stats[kvp.Key] = (oldValue + toAdd).ToString("0.####");
                 }

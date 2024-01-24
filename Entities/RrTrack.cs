@@ -1,5 +1,4 @@
 namespace RRBot.Entities;
-
 public class RrTrack : ITrackQueueItem
 {
     public Uri ArtworkUri { get; }
