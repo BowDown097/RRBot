@@ -1,9 +1,8 @@
 ﻿namespace RRBot.Modules;
 [Summary("Impose an Orwellian life on the poor normies in chat, through bans, kicks, mutes, you name it.")]
 [RequireStaff]
-public class Moderation : ModuleBase<SocketCommandContext>
+public partial class Moderation : ModuleBase<SocketCommandContext>
 {
-    #region Commands
     [Alias("seethe")]
     [Command("ban")]
     [Summary("Ban any member.")]
@@ -271,26 +270,4 @@ public class Moderation : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"Unmuted **{user.Sanitize()}**.");
         return CommandResult.FromSuccess();
     }
-    #endregion
-
-    #region Helpers
-    private static Tuple<TimeSpan, string> ResolveDuration(string duration, int time, string action, string reason)
-    {
-        TimeSpan ts = char.ToLower(duration[^1]) switch
-        {
-            's' => TimeSpan.FromSeconds(time),
-            'm' => TimeSpan.FromMinutes(time),
-            'h' => TimeSpan.FromHours(time),
-            'd' => TimeSpan.FromDays(time),
-            _ => TimeSpan.Zero
-        };
-
-        string response = $"{action} for {ts.FormatCompound()}";
-        if (!string.IsNullOrWhiteSpace(reason))
-            response += $" for \"{reason}\"";
-        response += ".";
-
-        return new Tuple<TimeSpan, string>(ts, response);
-    }
-    #endregion
 }

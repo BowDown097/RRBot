@@ -1,10 +1,9 @@
 namespace RRBot.Modules;
 [Summary("Items, crates, and everything about em.")]
-public class Goods : ModuleBase<SocketCommandContext>
+public partial class Goods : ModuleBase<SocketCommandContext>
 {
     public InteractiveService Interactive { get; set; }
 
-    #region Commands
     [Alias("purchase")]
     [Command("buy")]
     [Summary("Buy an item from the shop.")]
@@ -374,23 +373,4 @@ public class Goods : ModuleBase<SocketCommandContext>
         await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }
-    #endregion
-
-    #region Helpers
-    private static async Task GenericUse(Consumable con, DbUser user, SocketCommandContext context, string successMsg, string loseMsg, string cdKey, long cdDuration, decimal divMin = 2, decimal divMax = 5)
-    {
-        if (RandomUtil.Next(5) == 1)
-        {
-            user.Consumables[con.Name] = 0;
-            user.UsedConsumables[con.Name] = 0;
-            decimal lostCash = user.Cash / RandomUtil.NextDecimal(divMin, divMax);
-            await user.SetCash(context.User, user.Cash - lostCash);
-            await context.User.NotifyAsync(context.Channel, string.Format(loseMsg, lostCash));
-            return;
-        }
-
-        await context.User.NotifyAsync(context.Channel, successMsg);
-        user[cdKey] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(cdDuration);
-    }
-    #endregion
 }

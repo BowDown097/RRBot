@@ -1,11 +1,10 @@
 ﻿namespace RRBot.Modules;
 [Summary("This is where all the BORING administration stuff goes. Here, you can change how the bot does things in the server in a variety of ways. Huge generalization, but that's the best I can do.")]
 [RequireAdministrator]
-public class Config : ModuleBase<SocketCommandContext>
+public partial class Config : ModuleBase<SocketCommandContext>
 {
     public CommandService Commands { get; set; }
 
-    #region Commands
     [Command("addrank")]
     [Summary("Register a rank, its level, and the money required to get it.")]
     [Remarks("$addrank 1 10000 809512753081483294")]
@@ -428,14 +427,4 @@ public class Config : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"Whitelisted {channel.Mention}.");
         await MongoManager.UpdateObjectAsync(channels);
     }
-    #endregion Commands
-
-    #region Helpers
-    private static string Pair(string descriptor, object obj)
-    {
-        return obj is string s
-            ? $"{descriptor}: {(!string.IsNullOrWhiteSpace(s) ? s : "N/A")}"
-            : $"{descriptor}: {obj ?? "N/A"}";
-    }
-    #endregion
 }

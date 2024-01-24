@@ -313,9 +313,8 @@ public class Gangs : ModuleBase<SocketCommandContext>
         if (name.Length is <= 2 or > 32 || !Regex.IsMatch(name, "^[a-zA-Z0-9\x20]*$"))
             return CommandResult.FromError("Gang names must be alphanumeric (including spaces) and between 2-32 characters.");
         
-        // ReSharper disable once SpecifyStringComparison
         IAsyncCursor<DbGang> cursor = await MongoManager.Gangs.FindAsync(g => g.GuildId == Context.Guild.Id
-            && g.Name.ToLower() == name.ToLower());
+            && string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase));
         if (await cursor.AnyAsync())
             return CommandResult.FromError("There is already a gang with that name.");
 

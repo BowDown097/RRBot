@@ -129,7 +129,7 @@ public class Administration : ModuleBase<SocketCommandContext>
 
     [Command("resetcd")]
     [Summary("Reset a user's crime cooldowns.")]
-    [Remarks("$resetcd \\*Jazzy Hands\\*")]
+    [Remarks(@"$resetcd \*Jazzy Hands\*")]
     public async Task ResetCooldowns([Remainder] IGuildUser user)
     {
         DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
