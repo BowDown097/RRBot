@@ -95,7 +95,8 @@ public sealed class AudioSystem
 
         StringBuilder builder = new($"By: {track.Author}\n");
         if (!track.Track.IsLiveStream)
-            builder.AppendLine($"Duration: {track.Track.Duration.Condense()}\nPosition: {playerResult.Player.Position.GetValueOrDefault().Position.Condense()}");
+            builder.AppendLine(
+                $"Duration: {track.Track.Duration.Condense()}\nPosition: {playerResult.Player.Position.GetValueOrDefault().Position.Condense()}");
 
         using ArtworkService artworkService = new();
         Uri artworkUri = track.ArtworkUri ?? await artworkService.ResolveAsync(track.Track);
@@ -103,8 +104,10 @@ public sealed class AudioSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle(track.Title)
-            .WithThumbnailUrl(artworkUri.ToString())
             .WithDescription(builder.ToString());
+
+        if (artworkUri is not null)
+            embed.WithThumbnailUrl(artworkUri.ToString());
 
         await context.Channel.SendMessageAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
@@ -207,13 +210,22 @@ public sealed class AudioSystem
                 "youtube.com" or "youtu.be" => TrackSearchMode.YouTube,
                 _ => TrackSearchMode.None
             };
-            
-            if (searchMode == TrackSearchMode.None && !uri.Segments.LastOrDefault().Contains('.'))
-                track = await _audioService.YtDlpGetTrackAsync(uri, context.User);
+
+            if (searchMode == TrackSearchMode.None)
+            {
+                string lastSegment = uri.Segments.LastOrDefault();
+                track = lastSegment.Contains('.') // check for direct link, use yt-dlp if not
+                    ? await _audioService.RrGetTrackAsync(query, context.User, searchMode, lastSegment)
+                    : await _audioService.YtDlpGetTrackAsync(uri, context.User);
+            }
             else if (searchMode == TrackSearchMode.YouTube)
+            {
                 track = await _audioService.GetYtTrackAsync(uri, context.Guild, context.User);
+            }
             else
+            {
                 track = await _audioService.RrGetTrackAsync(query, context.User, searchMode);
+            }
         }
         else
         {

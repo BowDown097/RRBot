@@ -12,21 +12,21 @@ public class RrTrack : ITrackQueueItem
     public RrTrack(LavalinkTrack track, IUser requester)
     {
         ArtworkUri = track.ArtworkUri;
-        Author = SanitizeOrUnknown(track.Author, "author");
+        Author = SanitizeOr(track.Author, "Unknown author");
         Reference = new TrackReference(track);
         Requester = requester.Sanitize();
-        Title = SanitizeOrUnknown(track.Title, "title");
+        Title = SanitizeOr(track.Title, "Unknown title");
     }
 
     public RrTrack(LavalinkTrack track, string artwork, string author, string title, IUser requester)
     {
         ArtworkUri = Uri.TryCreate(artwork, UriKind.Absolute, out Uri uri) ? uri : null;
-        Author = SanitizeOrUnknown(author, "author");
+        Author = SanitizeOr(author, "Unknown author");
         Reference = new TrackReference(track);
         Requester = requester.Sanitize();
-        Title = SanitizeOrUnknown(title, "title");
+        Title = SanitizeOr(title, "Unknown title");
     }
 
-    private static string SanitizeOrUnknown(string str, string classifier)
-        => !string.IsNullOrWhiteSpace(str) ? StringCleaner.Sanitize(str) : "Unknown " + classifier;
+    private static string SanitizeOr(string str, string fallback)
+        => !string.IsNullOrWhiteSpace(str) ? StringCleaner.Sanitize(str) : fallback;
 }
