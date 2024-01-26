@@ -2,6 +2,21 @@
 using Microsoft.Extensions.Logging;
 using RRBot;
 
+Credentials.ValidationResult validation = Credentials.Instance.Validate();
+// ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+switch (validation)
+{
+    case Credentials.ValidationResult.MissingCredentialsFile:
+        Console.WriteLine("The credentials.json file is missing.");
+        return;
+    case Credentials.ValidationResult.NeedMongoConnectionString:
+        Console.WriteLine("A MongoDB connection string was not supplied in the credentials.json.");
+        return;
+    case Credentials.ValidationResult.NeedToken:
+        Console.WriteLine("A token was not supplied in the credentials.json.");
+        return;
+}
+
 DiscordShardedClient client = new(new DiscordSocketConfig
 {
     AlwaysDownloadUsers = true,

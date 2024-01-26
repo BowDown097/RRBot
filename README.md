@@ -37,17 +37,17 @@ The bot is constantly in development, and issues are bound to come up (especiall
 If you know what you're doing, it is encouraged that you create a pull request. I will make sure to go over it and respond as quickly as possible, and you will receive a role in the Discord for your work if it makes it in.
 
 ## Running your own instance of the bot
-In order to build the bot, you will need to create a file named Credentials.cs in the bot's main directory. The code will need to look exactly like this:
-```cs
-namespace RRBot;
-public static class Credentials
+In order to get the bot running good n' gold, you will need to supply appropriate credentials in the credentials.json file in the bot's build directory. Here's what it looks like:
+```json
 {
-    public const string ConnectionString = "[CONNECTION STRING]";
-    public const string Token = "[DISCORD BOT TOKEN]";
+    "mongoConnectionString": "[CONNECTION STRING]",
+    "token": "[DISCORD BOT TOKEN]"
 }
 ```
-``Token`` is the bot token, which you can get from your instance of the bot's application at https://discord.com/developers, under the "Bot" tab. 
 
-``ConnectionString`` is a MongoDB connection string. If you don't know what that is and how to get it, get Googling. By the way, I highly recommend you use a self-hosted database.
+``mongoConnectionString`` is a MongoDB connection string. If you don't know what that is and how to get it, get Googling. By the way, I highly recommend you use a self-hosted database.
 
-In order to use the music features of the bot, you will need to get the [latest release of Lavalink](https://github.com/freyacodes/Lavalink/releases) and throw it in the bot's main directory. You will need to run it alongside the bot. [yt-dlp](https://github.com/yt-dlp/yt-dlp) is also optionally required for support for more platforms than just YouTube and SoundCloud. Keep in mind that not everything that works with yt-dlp will work with Lavalink (ie. Pornhub, Vimeo).
+``token`` is the bot token, which you can get from your instance of the bot's application at https://discord.com/developers, under the "Bot" tab. 
+
+
+In order to use the music features of the bot, you will need to get the [latest release of Lavalink](https://github.com/freyacodes/Lavalink/releases) and ideally throw it in the bot's build directory. You will need to run it alongside the bot. [yt-dlp](https://github.com/yt-dlp/yt-dlp) is also required for support for more platforms than just YouTube and SoundCloud. **Not everything that works with yt-dlp will work with Lavalink.**

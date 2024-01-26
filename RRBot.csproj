@@ -18,4 +18,9 @@
 		<PackageReference Include="Fergun.Interactive" Version="1.7.5" />
 		<PackageReference Include="Discord.Net" Version="3.13.0" />
 	</ItemGroup>
+	<Target Name="CopyCustomContent" AfterTargets="AfterBuild">
+		<Copy SourceFiles="credentials.json"
+			  DestinationFolder="$(OutDir)"
+			  Condition="!Exists($([System.IO.Path]::Combine('$(OutDir)', 'credentials.json')))"/>
+	</Target>
 </Project>

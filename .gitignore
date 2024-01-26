@@ -225,8 +225,6 @@ logs/
 *.pfx
 *.publishsettings
 orleans.codegen.cs
-Lavalink.jar
-Credentials.cs
 
 # Including strong name files can present a security risk
 # (https://github.com/github/gitignore/pull/2483#issue-259490424)

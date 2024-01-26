@@ -5,6 +5,7 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
     InteractionService interactions, IServiceProvider serviceProvider) : IHostedService
 {
     private static bool _clientReady;
+    private static readonly string[] SensitiveCommandErrorCharacters = ["_", "`", "~", ">"];
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -58,7 +59,7 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
         client.UserUnbanned += LoggingSystem.Client_UserUnbanned;
         client.UserVoiceStateUpdated += LoggingSystem.Client_UserVoiceStateUpdated;
 
-        await client.LoginAsync(TokenType.Bot, Credentials.Token);
+        await client.LoginAsync(TokenType.Bot, Credentials.Instance.Token);
         await client.SetGameAsync(Constants.Activity, type: Constants.ActivityType);
         await client.StartAsync();
     }
@@ -186,7 +187,7 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
         await FilterSystem.DoScamCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
     }
 
-    private async Task Client_ShardReady(DiscordSocketClient client1)
+    private async Task Client_ShardReady(DiscordSocketClient _)
     {
         if (_clientReady) return;
         _clientReady = true;
@@ -200,7 +201,7 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
         await commands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
         await interactions.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
 
-        await MongoManager.InitializeAsync(Credentials.ConnectionString);
+        await MongoManager.InitializeAsync(Credentials.Instance.MongoConnectionString);
         await MongoManager.Users.UpdateManyAsync(u => u.UsingSlots, Builders<DbUser>.Update.Set(u => u.UsingSlots, false));
 
         await new MonitorSystem(client).Initialize();
@@ -209,7 +210,7 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
     private static async Task Commands_CommandExecuted(Discord.Optional<CommandInfo> commandOpt,
         ICommandContext context, Discord.Commands.IResult result)
     {
-        string reason = StringCleaner.Sanitize(result.ErrorReason, new[] { "_", "`", "~", ">" });
+        string reason = StringCleaner.Sanitize(result.ErrorReason, SensitiveCommandErrorCharacters);
         CommandInfo command = commandOpt.GetValueOrDefault();
         string args = command.Parameters.Any(p => p.IsOptional)
             ? $"{command.Parameters.Count(p => !p.IsOptional)}-{command.Parameters.Count}"
@@ -234,13 +235,12 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
 
         DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(user.Guild.Id);
         string emote = reaction.Emote.ToString()!;
-        if (reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.ContainsKey(emote))
+        if (reaction.MessageId != selfRoles.Message || !selfRoles.SelfRoles.TryGetValue(emote, out ulong value))
             return;
 
-        ulong roleId = selfRoles.SelfRoles[emote];
         if (addedReaction)
-            await user.AddRoleAsync(roleId);
+            await user.AddRoleAsync(value);
         else
-            await user.RemoveRoleAsync(roleId);
+            await user.RemoveRoleAsync(value);
     }
 }

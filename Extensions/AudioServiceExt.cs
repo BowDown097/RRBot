@@ -39,7 +39,11 @@ public static class AudioServiceExt
         IUser requester, TrackSearchMode mode, string filename = null)
     {
         LavalinkTrack track = await service.Tracks.LoadTrackAsync(query, mode);
-        return track is null ? null : new RrTrack(track, track.ArtworkUri?.ToString(), track.Author, filename ?? track.Title, requester);
+        if (track is null)
+            return null;
+
+        return new RrTrack(track, track.ArtworkUri?.ToString(), track.Author,
+            HttpUtility.UrlDecode(filename) ?? track.Title, requester);
     }
 
     public static async Task<RrTrack> YtDlpGetTrackAsync(this IAudioService service, Uri uri, IUser requester)
