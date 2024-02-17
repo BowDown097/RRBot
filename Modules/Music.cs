@@ -37,6 +37,12 @@ public class Music : ModuleBase<SocketCommandContext>
     [Command("nowplaying", RunMode = RunMode.Async)]
     [Summary("Get details on the currently playing track, if there is one.")]
     public async Task<RuntimeResult> NowPlaying() => await AudioSystem.GetCurrentlyPlayingAsync(Context);
+    
+    [Command("pitch", RunMode = RunMode.Async)]
+    [Summary($"Change the pitch of the currently playing track (must be between ${Constants.MinPitchString}% and ${Constants.MaxPitchString}%).")]
+    [Remarks("$pitch 200")]
+    [RequireDj]
+    public async Task<RuntimeResult> Pitch(float pitch) => await AudioSystem.ChangePitchAsync(Context, pitch);
 
     [Command("play", RunMode = RunMode.Async)]
     [Summary("Play something from YouTube or SoundCloud.")]
@@ -64,14 +70,26 @@ public class Music : ModuleBase<SocketCommandContext>
     [Command("skip", RunMode = RunMode.Async)]
     [Summary("Vote to skip the currently playing track.")]
     public async Task<RuntimeResult> Skip() => await AudioSystem.VoteSkipTrackAsync(Context);
+    
+    [Command("speed", RunMode = RunMode.Async)]
+    [Summary($"Change the speed (tempo + pitch) of the currently playing track (must be between ${Constants.MinSpeedString}% and ${Constants.MaxSpeedString}%).")]
+    [Remarks("$speed 200")]
+    [RequireDj]
+    public async Task<RuntimeResult> Speed(float speed) => await AudioSystem.ChangeSpeedAsync(Context, speed);
 
     [Command("stop", RunMode = RunMode.Async)]
     [Summary("Stop playing entirely.")]
     [RequireDj]
     public async Task<RuntimeResult> Stop() => await AudioSystem.StopAsync(Context);
+    
+    [Command("tempo", RunMode = RunMode.Async)]
+    [Summary($"Change the tempo of the currently playing track (must be between ${Constants.MinTempoString}% and ${Constants.MaxTempoString}%).")]
+    [Remarks("$tempo 200")]
+    [RequireDj]
+    public async Task<RuntimeResult> Tempo(float tempo) => await AudioSystem.ChangeTempoAsync(Context, tempo);
 
     [Command("volume", RunMode = RunMode.Async)]
-    [Summary("Change the volume of the currently playing track (must be between 5% and 200%).")]
+    [Summary($"Change the volume of the currently playing track (must be between ${Constants.MinVolumeString}% and ${Constants.MaxVolumeString}%).")]
     [Remarks("$volume 200")]
     [RequireDj]
     public async Task<RuntimeResult> Volume(float volume) => await AudioSystem.ChangeVolumeAsync(Context, volume);

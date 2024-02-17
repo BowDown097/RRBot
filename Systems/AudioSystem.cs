@@ -1,4 +1,6 @@
-﻿namespace RRBot.Systems;
+﻿using Lavalink4NET.Filters;
+
+namespace RRBot.Systems;
 public sealed class AudioSystem(IAudioService audioService, ILyricsService lyricsService)
 {
     private static readonly IOptions<VoteLavalinkPlayerOptions> PlayerOptions = Options.Create(new VoteLavalinkPlayerOptions());
@@ -28,11 +30,71 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
         IPlayerPrecondition precondition,
         PlayerChannelBehavior channelBehavior = PlayerChannelBehavior.None)
         => await GetPlayerAsync(context, channelBehavior, ImmutableArray.Create(precondition));
+    
+    public async Task<RuntimeResult> ChangePitchAsync(SocketCommandContext context, float pitch)
+    {
+        if (pitch is < Constants.MinPitch or > Constants.MaxPitch)
+            return CommandResult.FromError($"Pitch must be between {Constants.MinPitchString}% and {Constants.MaxPitchString}%.");
+
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
+        if (!playerResult.IsSuccess)
+            return CommandResult.FromError(playerResult.ErrorMessage());
+        
+        playerResult.Player.Filters.Timescale = new TimescaleFilterOptions
+        {
+            Pitch = pitch / 100f,
+            Speed = playerResult.Player.Filters.Timescale?.Speed
+        };
+
+        await playerResult.Player.Filters.CommitAsync();
+        await context.Channel.SendMessageAsync($"Set pitch to {pitch}%.");
+        return CommandResult.FromSuccess(); 
+    }
+    
+    public async Task<RuntimeResult> ChangeSpeedAsync(SocketCommandContext context, float speed)
+    {
+        if (speed is < Constants.MinSpeed or > Constants.MaxSpeed)
+            return CommandResult.FromError($"Speed must be between {Constants.MinSpeedString}% and {Constants.MaxSpeedString}%.");
+
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
+        if (!playerResult.IsSuccess)
+            return CommandResult.FromError(playerResult.ErrorMessage());
+
+        playerResult.Player.Filters.Timescale = new TimescaleFilterOptions
+        {
+            Pitch = speed / 100f,
+            Speed = speed / 100f
+        };
+
+        await playerResult.Player.Filters.CommitAsync();
+        await context.Channel.SendMessageAsync($"Set speed to {speed}%.");
+        return CommandResult.FromSuccess();
+    }
+
+    public async Task<RuntimeResult> ChangeTempoAsync(SocketCommandContext context, float tempo)
+    {
+        if (tempo is < Constants.MinTempo or > Constants.MaxTempo)
+            return CommandResult.FromError($"Tempo must be between {Constants.MinTempoString}% and {Constants.MaxTempoString}%.");
+
+        PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
+        if (!playerResult.IsSuccess)
+            return CommandResult.FromError(playerResult.ErrorMessage());
+
+        playerResult.Player.Filters.Timescale = new TimescaleFilterOptions
+        {
+            Pitch = playerResult.Player.Filters.Timescale?.Pitch,
+            Speed = tempo / 100f
+        };
+        
+        await playerResult.Player.Filters.CommitAsync();
+        await context.Channel.SendMessageAsync($"Set tempo to {tempo}%.");
+        return CommandResult.FromSuccess();
+    }
 
     public async Task<RuntimeResult> ChangeVolumeAsync(SocketCommandContext context, float volume)
     {
         if (volume is < Constants.MinVolume or > Constants.MaxVolume)
-            return CommandResult.FromError($"Volume must be between {Constants.MinVolume}% and {Constants.MaxVolume}%.");
+            return CommandResult.FromError($"Volume must be between {Constants.MinVolumeString}% and {Constants.MaxVolumeString}%.");
 
         PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
         if (!playerResult.IsSuccess)

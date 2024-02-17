@@ -26,12 +26,27 @@ public static class Constants
         "OH BABY A TRIPLE",
         "Pretty Damn Lucky"
     ];
-    // ********************
-    //     AUDIO SYSTEM
-    // ********************
+    // *************************************************
+    //                   AUDIO SYSTEM
+    // (string fields required because of C# limitation)
+    // *************************************************
     public const double InactivityTimeoutSecs = 10;
+    public const float MaxPitch = 500;
+    public const string MaxPitchString = "500";
+    public const float MaxSpeed = 500;
+    public const string MaxSpeedString = "500";
+    public const float MaxTempo = 500;
+    public const string MaxTempoString = "500";
     public const float MaxVolume = 200;
+    public const string MaxVolumeString = "200";
+    public const float MinPitch = 5;
+    public const string MinPitchString = "5";
+    public const float MinSpeed = 5;
+    public const string MinSpeedString = "5";
+    public const float MinTempo = 5;
+    public const string MinTempoString = "5";
     public const float MinVolume = 5;
+    public const string MinVolumeString = "5";
     // ********************
     //         BOT
     // ********************
