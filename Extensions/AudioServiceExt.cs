@@ -27,8 +27,11 @@ public static class AudioServiceExt
 
         using HttpResponseMessage resMsg = await client.SendAsync(reqMsg, HttpCompletionOption.ResponseHeadersRead);
         string response = await resMsg.Content.ReadAsStringAsync();
-        if (JObject.Parse(response)["playabilityStatus"]?["status"]?.ToString() != "LOGIN_REQUIRED")
+        if (JObjectExt.TryParse(response, out JObject responseObj) &&
+            responseObj["playabilityStatus"]?["status"].ToString() != "LOGIN_REQUIRED")
+        {
             return await service.RrGetTrackAsync(uri.ToString(), requester, TrackSearchMode.YouTube);
+        }
 
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
         return misc.NsfwEnabled
@@ -60,11 +63,16 @@ public static class AudioServiceExt
         string output = await proc.StandardOutput.ReadToEndAsync();
         await proc.WaitForExitAsync();
 
-        JObject obj = JObject.Parse(output.Split('\n')[0]);
-        if (!Uri.TryCreate(obj["uri"]?.ToString(), UriKind.Absolute, out Uri directUri))
+        if (!JObjectExt.TryParse(output.Split('\n')[0], out JObject obj) ||
+            !Uri.TryCreate(obj["url"]?.ToString(), UriKind.Absolute, out Uri directUri))
+        {
             return null;
+        }
 
         LavalinkTrack track = await service.Tracks.LoadTrackAsync(directUri.ToString(), TrackSearchMode.None);
+        if (track is null)
+            return null;
+
         string author = obj.TryGetValue("uploader", out JToken value)
             ? value.ToString() : obj["channel"]?.ToString();
         string thumbnail = obj["thumbnail"]?.ToString();
