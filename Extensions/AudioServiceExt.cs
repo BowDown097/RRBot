@@ -7,9 +7,10 @@ public static class AudioServiceExt
         using HttpClient client = new();
         NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
 
+        string videoId = query.Get("v");
         var ctx = new
         {
-            videoId = query.TryGetValue("v", out string videoId) ? videoId : uri.Segments.LastOrDefault(),
+            videoId = videoId ?? uri.Segments.LastOrDefault(),
             context = new
             {
                 client = new
