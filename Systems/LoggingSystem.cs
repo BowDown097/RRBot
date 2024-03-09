@@ -34,7 +34,7 @@ public static class LoggingSystem
         
         DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(guild.Id);
         ITextChannel textChannel = await guild.GetTextChannelAsync(channels.LogsChannel);
-        if (textChannel != null)
+        if (textChannel is not null)
             await textChannel.SendMessageAsync(embed: embed.Build());
     }
 
@@ -141,7 +141,7 @@ public static class LoggingSystem
         await Task.Run(async () =>
         {
             SocketGuildUser userBefore = await userBeforeCached.GetOrDownloadAsync();
-            if (userBefore.Nickname == userAfter.Nickname && userBefore.Roles.SequenceEqual(userAfter.Roles))
+            if (userBefore is null || (userBefore.Nickname == userAfter.Nickname && userBefore.Roles.SequenceEqual(userAfter.Roles)))
                 return;
 
             string rolesBefore = string.Join(" ", userBefore.Roles.Select(r => r.Mention));
@@ -248,7 +248,7 @@ public static class LoggingSystem
             .RrAddField("Name", sticker.Name)
             .RrAddField("Description", sticker.Description);
 
-        if (sticker.Author != null) // sticker.Author can randomly be null :(
+        if (sticker.Author is not null) // sticker.Author can randomly be null :(
             embed.WithAuthor(sticker.Author);
 
         await WriteToLogs(sticker.Guild, embed);
@@ -262,7 +262,7 @@ public static class LoggingSystem
             .RrAddField("Name", sticker.Name)
             .RrAddField("Description", sticker.Description);
 
-        if (sticker.Author != null) // sticker.Author can randomly be null :(
+        if (sticker.Author is not null) // sticker.Author can randomly be null :(
             embed.WithAuthor(sticker.Author);
 
         await WriteToLogs(sticker.Guild, embed);
@@ -287,11 +287,11 @@ public static class LoggingSystem
             .WithDescription("**Invite Created**")
             .RrAddField("URL", invite.Url)
             .RrAddField("Channel", invite.Channel.Mention())
-            .RrAddField("Expires At", invite.ExpiresAt != null ? $"<t:{invite.ExpiresAt}>" : "")
+            .RrAddField("Expires At", invite.ExpiresAt is not null ? $"<t:{invite.ExpiresAt}>" : "")
             .RrAddField("Max Age", invite.MaxAge)
             .RrAddField("Max Uses", invite.MaxUses);
 
-        if (invite.Inviter != null)
+        if (invite.Inviter is not null)
             embed.WithAuthor(invite.Inviter);
 
         await WriteToLogs(invite.Guild, embed);
@@ -311,7 +311,7 @@ public static class LoggingSystem
     {
         IMessage msg = await msgCached.GetOrDownloadAsync();
         IMessageChannel channel = await channelCached.GetOrDownloadAsync();
-        if (channel == null || msg == null) // they're not cached sometimes :(
+        if (channel is null || msg is null) // they're not cached sometimes :(
             return;
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -484,6 +484,9 @@ public static class LoggingSystem
     public static async Task Client_ThreadUpdated(Cacheable<SocketThreadChannel, ulong> threadBeforeCached, SocketThreadChannel threadAfter)
     {
         SocketThreadChannel threadBefore = await threadBeforeCached.GetOrDownloadAsync();
+        if (threadBefore is null)
+            return;
+
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription($"**Thread Updated**\n*(If nothing here appears changed, then the thread permissions were updated)*{threadAfter}")
             .AddUpdateCompField("Name", threadBefore, threadAfter)
@@ -534,13 +537,13 @@ public static class LoggingSystem
     {
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(user)
-            .WithDescription(voiceState.VoiceChannel == null
+            .WithDescription(voiceState.VoiceChannel is null
                 ? $"{user}\nIn: {voiceStateOrig.VoiceChannel}"
                 : $"{user}\nIn: {voiceState.VoiceChannel}");
 
-        if (voiceStateOrig.VoiceChannel == null)
+        if (voiceStateOrig.VoiceChannel is null)
             embed.WithTitle("User Joined Voice Channel");
-        else if (voiceState.VoiceChannel == null)
+        else if (voiceState.VoiceChannel is null)
             embed.WithTitle("User Left Voice Channel");
         else if (!voiceStateOrig.IsDeafened && voiceState.IsDeafened)
             embed.WithTitle("User Server Deafened");

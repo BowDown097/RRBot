@@ -34,7 +34,7 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
                 break;
 
             IGuildUser guildUser = Context.Guild.GetUser(user.UserId);
-            if (guildUser == null || user.Perks.ContainsKey("Pacifist")) 
+            if (guildUser is null || user.Perks.ContainsKey("Pacifist")) 
             {
                 if (!back) failedUsers++;
                 continue;

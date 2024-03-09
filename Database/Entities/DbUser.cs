@@ -123,7 +123,7 @@ public class DbUser : DbObject
         amount = Math.Round(amount, 2) * Constants.CashMultiplier;
 
         decimal difference = amount - Cash;
-        if (Prestige > 0 && difference > 0 && channel != null)
+        if (Prestige > 0 && difference > 0 && channel is not null)
         {
             decimal prestigeCash = difference * 0.20m * Prestige;
             difference += prestigeCash;
@@ -139,7 +139,7 @@ public class DbUser : DbObject
         IGuildUser guildUser = user as IGuildUser;
         Cash = amount;
         
-        if (channel != null)
+        if (channel is not null)
             await user.NotifyAsync(channel, message);
 
         DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(guildUser.GuildId);

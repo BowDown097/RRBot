@@ -11,13 +11,13 @@ public class RrGuildUserTypeReader : TypeReader
         IUser[] channelUsers = await context.Channel.GetUsersAsync(CacheMode.CacheOnly).Flatten().ToArrayAsync();
         IReadOnlyCollection<IGuildUser> guildUsers = ImmutableArray.Create<IGuildUser>();
 
-        if (context.Guild != null)
+        if (context.Guild is not null)
             guildUsers = await context.Guild.GetUsersAsync(CacheMode.CacheOnly).ConfigureAwait(false);
 
         //By Mention (1.0)
         if (MentionUtils.TryParseUser(input, out var id))
         {
-            if (context.Guild != null)
+            if (context.Guild is not null)
                 AddResult(results, await context.Guild.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false), 1.00f);
             else
                 AddResult(results, await context.Channel.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false) as IGuildUser, 1.00f);
@@ -26,7 +26,7 @@ public class RrGuildUserTypeReader : TypeReader
         //By Id (0.9)
         if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id))
         {
-            if (context.Guild != null)
+            if (context.Guild is not null)
                 AddResult(results, await context.Guild.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false), 0.90f);
             else
                 AddResult(results, await context.Channel.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false) as IGuildUser, 0.90f);
@@ -78,7 +78,7 @@ public class RrGuildUserTypeReader : TypeReader
 
     private static void AddResult(Dictionary<ulong, TypeReaderValue> results, IGuildUser user, float score)
     {
-        if (user != null && !results.ContainsKey(user.Id))
+        if (user is not null && !results.ContainsKey(user.Id))
             results.Add(user.Id, new TypeReaderValue(user, score));
     }
 }

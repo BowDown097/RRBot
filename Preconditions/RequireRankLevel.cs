@@ -12,7 +12,7 @@ public class RequireRankLevelAttribute(int level) : PreconditionAttribute
 
         ulong roleId = ranks.Ids[RankLevel];
         IRole role = context.Guild.GetRole(roleId);
-        if (role == null)
+        if (role is null)
             return PreconditionResult.FromError($"A rank is configured at level {RankLevel}, but its role no longer exists.");
 
         return context.User.GetRoleIds().Contains(roleId)

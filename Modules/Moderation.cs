@@ -87,7 +87,7 @@ public partial class Moderation : ModuleBase<SocketCommandContext>
             await Context.Guild.AddBanAsync(userId, 0, reason);
 
             IUser user = await Context.Client.GetUserAsync(userId);
-            string userPart = user != null ? $"**{user.Sanitize()}**" : "the user with that ID";
+            string userPart = user is not null ? $"**{user.Sanitize()}**" : "the user with that ID";
             if (!string.IsNullOrWhiteSpace(reason))
                 userPart += $" for \"{reason}\"";
 
@@ -212,7 +212,7 @@ public partial class Moderation : ModuleBase<SocketCommandContext>
 
         IEnumerable<IMessage> messagesEnum = await Context.Channel.GetMessagesAsync(count + 1).FlattenAsync();
         messagesEnum = messagesEnum.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
-        if (user != null)
+        if (user is not null)
             messagesEnum = messagesEnum.Where(msg => msg.Author.Id == user.Id);
         if (exclude?.Count > 0)
             messagesEnum = messagesEnum.Where(msg => !exclude.Contains(msg.Id));
@@ -233,7 +233,7 @@ public partial class Moderation : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Unban(ulong userId)
     {
         RestBan ban = await Context.Guild.GetBanAsync(userId);
-        if (ban == null)
+        if (ban is null)
             return CommandResult.FromError("That user is not currently banned.");
 
         await Context.Guild.RemoveBanAsync(ban.User);

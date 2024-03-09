@@ -32,7 +32,7 @@ public partial class Fun : ModuleBase<SocketCommandContext>
 
         StringBuilder description = new();
         Definition[] filtered = def.Results
-            .Where(res => res.Headword.Equals(term, StringComparison.OrdinalIgnoreCase) && res.Senses != null)
+            .Where(res => res.Headword.Equals(term, StringComparison.OrdinalIgnoreCase) && res.Senses is not null)
             .ToArray();
         for (int i = 0; i < filtered.Length; i++)
         {
@@ -41,7 +41,7 @@ public partial class Fun : ModuleBase<SocketCommandContext>
             foreach (Sense sense in definition.Senses)
             {
                 description.AppendLine($"Definition: {sense.Definition[0]}");
-                if (sense.Examples != null)
+                if (sense.Examples is not null)
                     description.AppendLine($"Example: {sense.Examples[0].Text}");
             }
         }

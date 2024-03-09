@@ -45,7 +45,7 @@ public partial class Polls
                 break;
 
             IGuildUser user = guild.GetUser(Convert.ToUInt64(kvp.Key));
-            if (user == null)
+            if (user is null)
                 continue;
 
             description.AppendLine($"**{processedUsers + 1}**: {user.Sanitize()} - {kvp.Value} votes");

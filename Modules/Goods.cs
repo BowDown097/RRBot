@@ -110,7 +110,7 @@ public partial class Goods : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> ItemInfo([Remainder] string itemName)
     {
         Item item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
-        if (item == null)
+        if (item is null)
             return CommandResult.FromError("That is not an item!");
 
         EmbedBuilder embed = item switch
@@ -206,7 +206,7 @@ public partial class Goods : ModuleBase<SocketCommandContext>
             pages.Add(new PageBuilder().WithColor(Color.Red).WithTitle("Crates").WithDescription(crates));
 
         if (pages.Count == 0)
-            return CommandResult.FromError(user == null ? "You've got nothing!" : $"**{user.Sanitize()}**'s got nothing!");
+            return CommandResult.FromError(user is null ? "You've got nothing!" : $"**{user.Sanitize()}**'s got nothing!");
 
         StaticPaginator paginator = new StaticPaginatorBuilder()
             .AddUser(Context.User)

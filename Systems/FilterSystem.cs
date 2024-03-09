@@ -55,7 +55,7 @@ public static class FilterSystem
         {
             string inviteCode = match.Groups[1].Value;
             RestInviteMetadata invite = await client.GetInviteAsync(inviteCode);
-            if (invite != null)
+            if (invite is not null)
                 await message.DeleteAsync();
         }
     }

@@ -122,7 +122,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Remarks("$gang Sex Havers")]
     public async Task<RuntimeResult> Gang([Remainder] string name = null)
     {
-        if (name == null)
+        if (name is null)
         {
             DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
             if (string.IsNullOrWhiteSpace(user.Gang))
@@ -131,7 +131,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
         }
         
         DbGang gang = await MongoManager.FetchGangAsync(name, Context.Guild.Id);
-        if (gang == null)
+        if (gang is null)
             return CommandResult.FromError("There is no gang with that name.");
 
         EmbedBuilder embed = new EmbedBuilder()
@@ -226,7 +226,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> JoinGang([Remainder] string name)
     {
         DbGang gang = await MongoManager.FetchGangAsync(name, Context.Guild.Id);
-        if (gang == null)
+        if (gang is null)
             return CommandResult.FromError("There is no gang with that name.");
 
         if (gang.Members.Count == Constants.GangMaxMembers)
@@ -353,7 +353,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("Nope.");
 
         string foundPosition = Array.Find(Constants.GangPositions, p => p.Equals(position, StringComparison.OrdinalIgnoreCase));
-        if (foundPosition == null)
+        if (foundPosition is null)
             return CommandResult.FromError("That is not a valid gang position!");
         if (foundPosition == Constants.GangPositions[0])
             return CommandResult.FromError("Use $transferleadership.");

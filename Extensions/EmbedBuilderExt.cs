@@ -39,4 +39,7 @@ public static class EmbedBuilderExt
             builder.AddField(name, string.IsNullOrEmpty(valueStr) ? defaultValue : valueStr, inline);
         return builder;
     }
+
+    public static EmbedBuilder WithElidedDescription(this EmbedBuilder builder, string description)
+        => builder.WithDescription(description.Elide(4096));
 }

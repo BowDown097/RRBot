@@ -147,7 +147,7 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
             
             if (executeResult.Exception is HttpException httpEx)
                 await ExceptionHandler.HandleHttpException(httpEx, context);
-            else if (executeResult.Exception != null)
+            else if (executeResult.Exception is not null)
                 Console.WriteLine(executeResult.Exception);
         }
         else

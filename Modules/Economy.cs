@@ -19,9 +19,9 @@ public partial class Economy : ModuleBase<SocketCommandContext>
         
         DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
         if (dbUser.Cash < 0.01m)
-            return CommandResult.FromError(user == null ? "You're broke!" : $"**{user.Sanitize()}** is broke!");
+            return CommandResult.FromError(user is null ? "You're broke!" : $"**{user.Sanitize()}** is broke!");
 
-        await Context.User.NotifyAsync(Context.Channel, user == null ? $"You have **{dbUser.Cash:C2}**." : $"**{user.Sanitize()}** has **{dbUser.Cash:C2}**.");
+        await Context.User.NotifyAsync(Context.Channel, user is null ? $"You have **{dbUser.Cash:C2}**." : $"**{user.Sanitize()}** has **{dbUser.Cash:C2}**.");
         return CommandResult.FromSuccess();
     }
 
@@ -77,7 +77,7 @@ public partial class Economy : ModuleBase<SocketCommandContext>
                 break;
 
             SocketGuildUser guildUser = Context.Guild.GetUser(user.UserId);
-            if (guildUser == null || user.Perks.ContainsKey("Pacifist"))
+            if (guildUser is null || user.Perks.ContainsKey("Pacifist"))
             {
                 failedUsers++;
                 continue;
@@ -150,7 +150,7 @@ public partial class Economy : ModuleBase<SocketCommandContext>
         {
             SocketRole role = Context.Guild.GetRole(ranks.Ids[kvp.Key]);
             decimal cost = kvp.Value * (1 + 0.5m * user.Prestige);
-            if (role == null) continue;
+            if (role is null) continue;
             description.AppendLine($"**{role.Name}**: {cost:C2}");
         }
 

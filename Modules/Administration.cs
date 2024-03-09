@@ -229,7 +229,7 @@ public class Administration : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> SetVotes(int electionId, IGuildUser user, int votes)
     {
         DbElection election = await MongoManager.FetchElectionAsync(Context.Guild.Id, electionId, false);
-        if (election == null)
+        if (election is null)
             return CommandResult.FromError("There is no election with that ID!");
         
         DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);

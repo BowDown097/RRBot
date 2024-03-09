@@ -24,7 +24,7 @@ public partial class Config : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> AddSelfRole(IEmote emote, [Remainder] SocketRole role)
     {
         SocketRole authorHighest = (Context.User as SocketGuildUser)?.Roles.MaxBy(r => r.Position);
-        if (authorHighest != null && role.Position >= authorHighest.Position)
+        if (authorHighest is not null && role.Position >= authorHighest.Position)
             return CommandResult.FromError("Cannot create this selfrole because it is higher than or is the same as your highest role.");
         
         DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(Context.Guild.Id);
@@ -120,7 +120,7 @@ public partial class Config : ModuleBase<SocketCommandContext>
         {
             IMessage message = await Context.Guild.GetTextChannel(selfRoles.Channel)?
                 .GetMessageAsync(selfRoles.Message);
-            string messageContent = message != null ? $"[Jump]({message.GetJumpUrl()})" : "(deleted)";
+            string messageContent = message is not null ? $"[Jump]({message.GetJumpUrl()})" : "(deleted)";
             description.AppendLine($"Message: {messageContent}");
             foreach (KeyValuePair<string, ulong> kvp in selfRoles.SelfRoles)
             {

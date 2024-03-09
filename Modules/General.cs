@@ -171,7 +171,7 @@ public class General : ModuleBase<SocketCommandContext>
         
         DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
         if (dbUser.Stats.Count == 0)
-            return CommandResult.FromError(user == null ? "You have no available stats!" : $"**{user.Sanitize()}** has no available stats!");
+            return CommandResult.FromError(user is null ? "You have no available stats!" : $"**{user.Sanitize()}** has no available stats!");
 
         StringBuilder description = new();
         foreach (string key in dbUser.Stats.Keys.ToList().OrderBy(s => s))
@@ -205,7 +205,7 @@ public class General : ModuleBase<SocketCommandContext>
             .RrAddField("Joined At", user.JoinedAt ?? DateTimeOffset.MinValue, true)
             .RrAddField("Created At", user.CreatedAt, true)
             .AddSeparatorField()
-            .RrAddField("Permissions", string.Join(", ", perms.Where(p => p != null)))
+            .RrAddField("Permissions", string.Join(", ", perms.Where(p => p is not null)))
             .RrAddField("Roles", string.Join(" ", user.Roles.Select(r => r.Mention)));
 
         await ReplyAsync(embed: embed.Build());

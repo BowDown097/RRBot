@@ -176,7 +176,7 @@ public static class Constants
     public const int GangMaxMembers = 10;
     public const decimal GangRenameCost = 2000;
     public const decimal GangVaultCost = 5000;
-    public static readonly string[] GangPositions = { "Leader", "Elder", "Member" };
+    public static readonly string[] GangPositions = ["Leader", "Elder", "Member"];
     public const int MaxGangsPerGuild = 50;
     public const decimal VaultTaxPercent = 1.5m;
     // ********************

@@ -14,7 +14,7 @@ public static class FileInfoExt
         }
 
         string environmentVariable = Environment.GetEnvironmentVariable("PATH");
-        if (environmentVariable == null) return null;
+        if (environmentVariable is null) return null;
         foreach (string path in environmentVariable.Split(Path.PathSeparator))
         {
             string fullPath = Path.Combine(path, fileInfo.Name);

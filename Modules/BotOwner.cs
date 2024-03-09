@@ -79,10 +79,11 @@ public class BotOwner : ModuleBase<SocketCommandContext>
                 new FunnyContext(Context)
             );
 
+            string codeOutput = $"Your code, ```cs\n{code}``` evaluates to: ```cs\n\"{evaluation}\"```";
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle("Code Evaluation")
-                .WithDescription($"Your code, ```cs\n{code}``` evaluates to: ```cs\n\"{evaluation}\"```");
+                .WithDescription(codeOutput.Length <= 4096 ? codeOutput : evaluation.ToString());
             await ReplyAsync(embed: embed.Build());
             return CommandResult.FromSuccess();
         }

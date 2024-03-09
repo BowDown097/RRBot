@@ -197,11 +197,11 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
         }
         
         playlist.AppendLine($"\n**Total Length: {totalLength.Condense()}**");
-        
+
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Playlist")
-            .WithDescription(playlist.ToString());
+            .WithElidedDescription(playlist.ToString());
 
         await context.Channel.SendMessageAsync(embed: embed.Build());
         return CommandResult.FromSuccess();
@@ -289,7 +289,7 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
             return CommandResult.FromError("No results were found. Either your search query didn't return anything or your URL is unsupported.");
         if (track.Track.Identifier == "restricted")
             return CommandResult.FromError("A result was found, but is age restricted. Age restricted content can be enabled if an admin runs $togglensfw.");
-        if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && !track.Track.IsLiveStream && track.Track.Duration.TotalSeconds > 7200)
+        if ((context.User as IGuildUser)?.GuildPermissions.Has(GuildPermission.Administrator) == false && track.Track is { IsLiveStream: false, Duration.TotalSeconds: > 7200 })
             return CommandResult.FromError("This is too long for me to play! It must be 2 hours or shorter in length.");
 
         int position = await playerResult.Player.PlayAsync(track);

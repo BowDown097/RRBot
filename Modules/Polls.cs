@@ -42,7 +42,7 @@ public partial class Polls : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> EndElection(int electionId)
     {
         DbElection election = await MongoManager.FetchElectionAsync(Context.Guild.Id, electionId, false);
-        if (election == null)
+        if (election is null)
             return CommandResult.FromError("There is no election with that ID!");
         
         DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);
@@ -105,7 +105,7 @@ public partial class Polls : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("You can't vote for yourself!");
         
         DbElection election = await MongoManager.FetchElectionAsync(Context.Guild.Id, electionId, false);
-        if (election == null)
+        if (election is null)
             return CommandResult.FromError("There is no election with that ID!");
         
         DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);

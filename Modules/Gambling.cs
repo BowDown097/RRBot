@@ -73,7 +73,7 @@ public partial class Gambling : ModuleBase<SocketCommandContext>
             timeout: TimeSpan.FromSeconds(30)
         );
         
-        if (!betResult.IsSuccess || betResult.IsTimeout || betResult.Value == null)
+        if (!betResult.IsSuccess || betResult.IsTimeout || betResult.Value is null)
             return CommandResult.FromError($"**{user.Sanitize()}** didn't respond in time.");
         
         int targetNumber = int.Parse(betResult.Value.Content);

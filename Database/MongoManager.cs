@@ -27,7 +27,7 @@ public class MongoManager
     {
         IAsyncCursor<DbBan> cursor = await Bans.FindAsync(b => b.GuildId == guildId && b.UserId == userId);
         DbBan ban = await cursor.FirstOrDefaultAsync();
-        if (ban != null)
+        if (ban is not null)
             return ban;
 
         DbBan newBan = new() { GuildId = guildId, UserId = userId };
@@ -39,7 +39,7 @@ public class MongoManager
     {
         IAsyncCursor<DbChill> cursor = await Chills.FindAsync(c => c.ChannelId == channelId && c.GuildId == guildId);
         DbChill chill = await cursor.FirstOrDefaultAsync();
-        if (chill != null)
+        if (chill is not null)
             return chill;
 
         DbChill newChill = new() { ChannelId = channelId, GuildId = guildId };
@@ -52,7 +52,7 @@ public class MongoManager
         string collection = typeof(T).GetCustomAttribute<BsonCollectionAttribute>(true).CollectionName;
         IAsyncCursor<T> cursor = await Database.GetCollection<T>(collection).FindAsync(c => c.GuildId == guildId);
         T config = await cursor.FirstOrDefaultAsync();
-        if (config != null)
+        if (config is not null)
             return config;
 
         T newConfig = new() { GuildId = guildId };
@@ -62,19 +62,19 @@ public class MongoManager
 
     public static async Task<DbElection> FetchElectionAsync(ulong guildId, int? electionId = null, bool makeNew = true)
     {
-        if (electionId == null)
+        if (electionId is null)
         {
             SortDefinition<DbElection> sort = Builders<DbElection>.Sort.Descending(e => e.ElectionId);
             IAsyncCursor<DbElection> sortCursor = await Elections.FindAsync(e => e.GuildId == guildId,
                 new FindOptions<DbElection> { Sort = sort });
             DbElection highestIdElection = await sortCursor.FirstOrDefaultAsync();
-            electionId = highestIdElection != null ? highestIdElection.ElectionId + 1 : 1;
+            electionId = highestIdElection is not null ? highestIdElection.ElectionId + 1 : 1;
         }
 
         IAsyncCursor<DbElection> cursor = await Elections.FindAsync(e =>
             e.ElectionId == electionId && e.GuildId == guildId);
         DbElection election = await cursor.FirstOrDefaultAsync();
-        if (!makeNew || election != null)
+        if (!makeNew || election is not null)
             return election;
 
         DbElection newElection = new() { ElectionId = electionId.GetValueOrDefault(), GuildId = guildId };
@@ -92,7 +92,7 @@ public class MongoManager
     public static async Task<DbGlobalConfig> FetchGlobalConfigAsync()
     {
         DbGlobalConfig globalConfig = await GlobalConfig.Aggregate().FirstOrDefaultAsync();
-        if (globalConfig != null)
+        if (globalConfig is not null)
             return globalConfig;
 
         DbGlobalConfig newGlobalConfig = new();
@@ -104,7 +104,7 @@ public class MongoManager
     {
         IAsyncCursor<DbPot> cursor = await Pots.FindAsync(p => p.GuildId == guildId);
         DbPot pot = await cursor.FirstOrDefaultAsync();
-        if (pot != null)
+        if (pot is not null)
             return pot;
 
         DbPot newPot = new() { GuildId = guildId };
@@ -116,7 +116,7 @@ public class MongoManager
     {
         IAsyncCursor<DbUser> cursor = await Users.FindAsync(u => u.UserId == userId && u.GuildId == guildId);
         DbUser user = await cursor.FirstOrDefaultAsync();
-        if (user != null) 
+        if (user is not null) 
             return user;
 
         DbUser newUser = new() { GuildId = guildId, UserId = userId };
