@@ -282,7 +282,7 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
         }
         else
         {
-            track = await audioService.RrGetTrackAsync(query, context.User, TrackSearchMode.YouTube);
+            track = await audioService.SearchYtTrackAsync(query, context.Guild, context.User);
         }
         
         if (track is null)

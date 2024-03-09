@@ -1,16 +1,44 @@
 namespace RRBot.Extensions;
 public static class AudioServiceExt
 {
-    public static async Task<RrTrack> GetYtTrackAsync(this IAudioService service, Uri uri,
-        SocketGuild guild, IUser requester)
+    private static async Task<string> GetFirstSearchResultIdAsync(string query)
     {
+        // IOS_UPTIME is used because it's fast
         using HttpClient client = new();
-        NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
-
-        string videoId = query.Get("v");
         var ctx = new
         {
-            videoId = videoId ?? uri.Segments.LastOrDefault(),
+            query,
+            context = new
+            {
+                client = new
+                {
+                    clientName = "IOS_UPTIME",
+                    clientVersion = "1.0"
+                }
+            }
+        };
+        
+        using HttpRequestMessage reqMsg = new(HttpMethod.Post,
+            "https://www.youtube.com/youtubei/v1/search?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8");
+        reqMsg.Content = new StringContent(JsonConvert.SerializeObject(ctx), Encoding.UTF8, "application/json");
+        
+        using HttpResponseMessage resMsg = await client.SendAsync(reqMsg, HttpCompletionOption.ResponseHeadersRead);
+        string response = await resMsg.Content.ReadAsStringAsync();
+
+        if (!JObjectExt.TryParse(response, out JObject responseObj))
+            return null;
+
+        return responseObj["contents"]?["sectionListRenderer"]?["contents"]?[0]?["itemSectionRenderer"]?
+            ["contents"]?[0]?["compactVideoRenderer"]?["videoId"].ToString();
+    }
+
+    private static async Task<bool> IsAgeRestrictedAsync(string videoId)
+    {
+        // XBOXONEGUIDE is used because it's fast
+        using HttpClient client = new();
+        var ctx = new
+        {
+            videoId,
             context = new
             {
                 client = new
@@ -20,23 +48,34 @@ public static class AudioServiceExt
                 }
             }
         };
-
+        
         using HttpRequestMessage reqMsg = new(HttpMethod.Post,
             "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8");
         reqMsg.Content = new StringContent(JsonConvert.SerializeObject(ctx), Encoding.UTF8, "application/json");
-
+        
         using HttpResponseMessage resMsg = await client.SendAsync(reqMsg, HttpCompletionOption.ResponseHeadersRead);
         string response = await resMsg.Content.ReadAsStringAsync();
-        if (JObjectExt.TryParse(response, out JObject responseObj) &&
-            responseObj["playabilityStatus"]?["status"].ToString() != "LOGIN_REQUIRED")
+
+        return !JObjectExt.TryParse(response, out JObject responseObj) ||
+               responseObj["playabilityStatus"]?["status"].ToString() == "LOGIN_REQUIRED";
+    }
+
+    public static async Task<RrTrack> GetYtTrackAsync(this IAudioService service, Uri uri,
+        SocketGuild guild, IUser requester)
+    {
+        NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
+        string videoId = query.Get("v") ?? uri.Segments.LastOrDefault();
+
+        if (await IsAgeRestrictedAsync(videoId))
         {
-            return await service.RrGetTrackAsync(uri.ToString(), requester, TrackSearchMode.YouTube);
+            DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
+            return misc.NsfwEnabled
+                ? await service.YtDlpGetTrackAsync(uri, requester)
+                : new RrTrack(new LavalinkTrack { Author = "", Identifier = "restricted", Title = "" }, requester);
         }
 
-        DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
-        return misc.NsfwEnabled
-            ? await service.YtDlpGetTrackAsync(uri, requester)
-            : new RrTrack(new LavalinkTrack { Author = "", Identifier = "restricted", Title = "" }, requester);
+        RrTrack lavalinkTrack = await service.RrGetTrackAsync(uri.ToString(), requester, TrackSearchMode.YouTube);
+        return lavalinkTrack ?? await service.YtDlpGetTrackAsync(uri, requester);
     }
 
     public static async Task<RrTrack> RrGetTrackAsync(this IAudioService service, string query,
@@ -48,6 +87,20 @@ public static class AudioServiceExt
 
         return new RrTrack(track, track.ArtworkUri?.ToString(), track.Author,
             HttpUtility.UrlDecode(filename) ?? track.Title, requester);
+    }
+
+    public static async Task<RrTrack> SearchYtTrackAsync(this IAudioService service, string query,
+        SocketGuild guild, IUser requester)
+    {
+        LavalinkTrack lavalinkTrack = await service.Tracks.LoadTrackAsync(query, TrackSearchMode.YouTube);
+        if (lavalinkTrack is not null)
+            return new RrTrack(lavalinkTrack, requester);
+
+        string videoId = await GetFirstSearchResultIdAsync(query);
+        if (videoId is null)
+            return null;
+
+        return await service.GetYtTrackAsync(new Uri($"https://www.youtube.com/watch?v={videoId}"), guild, requester);
     }
 
     public static async Task<RrTrack> YtDlpGetTrackAsync(this IAudioService service, Uri uri, IUser requester)
