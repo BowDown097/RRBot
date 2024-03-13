@@ -28,7 +28,7 @@ public class DbUser : DbObject
     public decimal Eth { get; set; }
     public long FarmCooldown { get; set; }
     public long FishCooldown { get; set; }
-    public decimal GamblingMultiplier { get; set; } = 1;
+    public decimal GamblingMultiplier { get; private set; } = 1;
     public string Gang { get; set; }
     public long HackCooldown { get; set; }
     public bool HasReachedAMilli { get; set; }
@@ -150,10 +150,15 @@ public class DbUser : DbObject
                 return;
             
             decimal neededCash = kvp.Value * (1 + 0.5m * Prestige);
-            if (Cash >= neededCash && !guildUser.RoleIds.Contains(roleId))
-                await guildUser.AddRoleAsync(roleId);
-            else if (Cash <= neededCash && guildUser.RoleIds.Contains(roleId))
-                await guildUser.RemoveRoleAsync(roleId);
+
+            try
+            {
+                if (Cash >= neededCash && !guildUser.RoleIds.Contains(roleId))
+                    await guildUser.AddRoleAsync(roleId);
+                else if (Cash <= neededCash && guildUser.RoleIds.Contains(roleId))
+                    await guildUser.RemoveRoleAsync(roleId);
+            }
+            catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.InsufficientPermissions) {}
         }
     }
 

@@ -99,7 +99,11 @@ public static class ItemSystem
         if (!user.Collectibles.TryAdd(collectible.Name, 1))
             user.Collectibles[collectible.Name]++;
 
-        await channel.SendMessageAsync(embed: embed.Build());
+        try
+        {
+            await channel.SendMessageAsync(embed: embed.Build());
+        }
+        catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.InsufficientPermissions) {}
     }
 
     public static string GetBestTool(IEnumerable<string> tools, string type)

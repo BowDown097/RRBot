@@ -45,7 +45,7 @@ public static class FilterSystem
 
     private static readonly Regex InviteRegex = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
     
-    public static async Task DoInviteCheckAsync(SocketUserMessage message, IGuild guild, DiscordShardedClient client)
+    public static async Task DoInviteCheckAsync(SocketMessage message, IGuild guild, DiscordShardedClient client)
     {
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
         if (!misc.InviteFilterEnabled || misc.NoFilterChannels.Contains(message.Channel.Id))
@@ -60,7 +60,7 @@ public static class FilterSystem
         }
     }
 
-    public static async Task DoScamCheckAsync(SocketUserMessage message, IGuild guild)
+    public static async Task DoScamCheckAsync(SocketMessage message, IGuild guild)
     {
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
         if (!misc.ScamFilterEnabled || misc.NoFilterChannels.Contains(message.Channel.Id))

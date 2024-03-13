@@ -93,12 +93,12 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
     
     private async Task Client_MessageReceived(SocketMessage msg)
     {
-        if (msg is not SocketUserMessage userMsg || msg.Author.IsBot || string.IsNullOrWhiteSpace(userMsg.Content))
+        if (msg is not SocketUserMessage userMsg || msg.Author.IsBot || string.IsNullOrWhiteSpace(msg.Content))
             return;
 
         ShardedCommandContext context = new(client, userMsg);
-        await FilterSystem.DoInviteCheckAsync(userMsg, context.Guild, client);
-        await FilterSystem.DoScamCheckAsync(userMsg, context.Guild);
+        await FilterSystem.DoInviteCheckAsync(msg, context.Guild, client);
+        await FilterSystem.DoScamCheckAsync(msg, context.Guild);
 
         int argPos = 0;
         DbUser user = await MongoManager.FetchUserAsync(context.User.Id, context.Guild.Id);
@@ -180,11 +180,11 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
     
     private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
     {
-        if (msgAfter is not SocketUserMessage userMsgAfter || string.IsNullOrWhiteSpace(userMsgAfter.Content))
+        if (string.IsNullOrWhiteSpace(msgAfter.Content))
             return;
         
-        await FilterSystem.DoInviteCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild(), client);
-        await FilterSystem.DoScamCheckAsync(userMsgAfter, userMsgAfter.Author.GetGuild());
+        await FilterSystem.DoInviteCheckAsync(msgAfter, msgAfter.Author.GetGuild(), client);
+        await FilterSystem.DoScamCheckAsync(msgAfter, msgAfter.Author.GetGuild());
     }
 
     private async Task Client_ShardReady(DiscordSocketClient _)

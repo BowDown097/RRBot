@@ -3,7 +3,6 @@ public static class AudioServiceExt
 {
     private static async Task<string> GetFirstSearchResultIdAsync(string query)
     {
-        // IOS_UPTIME is used because it's fast
         using HttpClient client = new();
         var ctx = new
         {
@@ -12,8 +11,8 @@ public static class AudioServiceExt
             {
                 client = new
                 {
-                    clientName = "IOS_UPTIME",
-                    clientVersion = "1.0"
+                    clientName = "WEB",
+                    clientVersion = "2.20240312.01.00"
                 }
             }
         };
@@ -75,7 +74,11 @@ public static class AudioServiceExt
         }
 
         RrTrack lavalinkTrack = await service.RrGetTrackAsync(uri.ToString(), requester, TrackSearchMode.YouTube);
-        return lavalinkTrack ?? await service.YtDlpGetTrackAsync(uri, requester);
+        if (lavalinkTrack is not null)
+            return lavalinkTrack;
+
+        Console.WriteLine($"RrGetTrackAsync failed for YouTube video {videoId} - falling back to yt-dlp");
+        return await service.YtDlpGetTrackAsync(uri, requester);
     }
 
     public static async Task<RrTrack> RrGetTrackAsync(this IAudioService service, string query,
@@ -95,7 +98,8 @@ public static class AudioServiceExt
         LavalinkTrack lavalinkTrack = await service.Tracks.LoadTrackAsync(query, TrackSearchMode.YouTube);
         if (lavalinkTrack is not null)
             return new RrTrack(lavalinkTrack, requester);
-
+        
+        Console.WriteLine($"Lavalink YouTube search failed for query \"{query}\" - making manual search request");
         string videoId = await GetFirstSearchResultIdAsync(query);
         if (videoId is null)
             return null;
