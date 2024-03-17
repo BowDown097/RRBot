@@ -27,8 +27,9 @@ public static class AudioServiceExt
         if (!JObjectExt.TryParse(response, out JObject responseObj))
             return null;
 
-        return responseObj["contents"]?["sectionListRenderer"]?["contents"]?[0]?["itemSectionRenderer"]?
-            ["contents"]?[0]?["compactVideoRenderer"]?["videoId"].ToString();
+        return responseObj["contents"]?["twoColumnSearchResultsRenderer"]?["primaryContents"]?
+            ["sectionListRenderer"]?["contents"]?[0]?["itemSectionRenderer"]?["contents"]?[0]?
+            ["videoRenderer"]?["videoId"].ToString();
     }
 
     private static async Task<bool> IsAgeRestrictedAsync(string videoId)

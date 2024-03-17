@@ -9,7 +9,7 @@ public static class ExceptionHandler
         List<GuildPermissions> rolePerms = context.Guild.CurrentUser.Roles.Select(r => r.Permissions).ToList();
         ChannelPermissions channelPerms = context.Guild.CurrentUser.GetPermissions(context.Channel as IGuildChannel);
 
-        List<string> missingPerms = new();
+        List<string> missingPerms = [];
         if (!rolePerms.Any(perm => perm.Administrator))
         {
             if (!rolePerms.Any(perm => perm.BanMembers))

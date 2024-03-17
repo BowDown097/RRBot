@@ -1,9 +1,8 @@
-﻿using Discord.Interactions;
-using Microsoft.Extensions.Logging;
+﻿// ReSharper disable SwitchStatementMissingSomeEnumCasesNoDefault
+using Discord.Interactions;
 using RRBot;
 
 Credentials.ValidationResult validation = Credentials.Instance.Validate();
-// ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
 switch (validation)
 {
     case Credentials.ValidationResult.MissingCredentialsFile:

@@ -4,7 +4,6 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<NoWarn>RCS1197</NoWarn>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Lavalink4NET.Artwork" Version="4.0.14" />

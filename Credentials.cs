@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace RRBot;
 internal sealed class Credentials
 {
@@ -15,7 +13,7 @@ internal sealed class Credentials
         MissingCredentialsFile,
         NeedMongoConnectionString,
         NeedToken
-    };
+    }
 
     [JsonProperty("mongoConnectionString")] public string MongoConnectionString { get; set; } = "";
     [JsonProperty("token")] public string Token { get; set; } = "";
@@ -27,7 +25,7 @@ internal sealed class Credentials
         Credentials c = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(jsonPath));
         if (c is null)
         {
-            Console.WriteLine("credentials.json file not found or is not a valid JSON file. Exiting.");
+            Console.WriteLine("credentials.json file not found or is not a valid JSON file.");
             Environment.Exit(1);
         }
 
