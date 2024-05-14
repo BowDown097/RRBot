@@ -28,7 +28,7 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
         SocketCommandContext context,
         IPlayerPrecondition precondition,
         PlayerChannelBehavior channelBehavior = PlayerChannelBehavior.None)
-        => await GetPlayerAsync(context, channelBehavior, ImmutableArray.Create(precondition));
+        => await GetPlayerAsync(context, channelBehavior, [precondition]);
     
     public async Task<RuntimeResult> ChangePitchAsync(SocketCommandContext context, float pitch)
     {
