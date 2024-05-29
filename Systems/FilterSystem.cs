@@ -1,5 +1,5 @@
 namespace RRBot.Systems;
-public static class FilterSystem
+public static partial class FilterSystem
 {
     public static readonly Dictionary<char, string[]> Homoglyphs = new()
 	{
@@ -43,15 +43,13 @@ public static class FilterSystem
         { 'z', ["\U0001d49b", "\U0001d433", "\U0001d59f", "\U0001d63b", "\U0001d56b", "\U0001d607", "\U0001d537", "\U00001d22", "\U0001d4cf", "\U0000ab93", "\U0001d467", "\U0001d66f", "\U0001d6a3", "\U000118c4", "\U0001d503", "\U0001d5d3", "\U0000ff5a"] }
     };
 
-    private static readonly Regex InviteRegex = new(@"discord(?:app.com\/invite|.gg|.me|.io)(?:[\\]+)?\/([a-zA-Z0-9\-]+)");
-    
     public static async Task DoInviteCheckAsync(SocketMessage message, IGuild guild, DiscordShardedClient client)
     {
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(guild.Id);
         if (!misc.InviteFilterEnabled || misc.NoFilterChannels.Contains(message.Channel.Id))
             return;
 
-        foreach (Match match in InviteRegex.Matches(message.Content).Cast<Match>())
+        foreach (Match match in InviteRegex().Matches(message.Content))
         {
             string inviteCode = match.Groups[1].Value;
             RestInviteMetadata invite = await client.GetInviteAsync(inviteCode);
@@ -91,4 +89,7 @@ public static class FilterSystem
             }
         }
     }
+
+    [GeneratedRegex(@"discord(?:\.com\/invite|app\.com\/invite|\.gg|\.me|\.io)\/([a-zA-Z0-9\-]+)")]
+    private static partial Regex InviteRegex();
 }
