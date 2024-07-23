@@ -280,23 +280,15 @@ public partial class Crime : ModuleBase<SocketCommandContext>
     public async Task Scavenge()
     {
         using HttpClient client = new();
-        string response = await client.GetStringAsync("https://www.thegamegal.com/wordgenerator/generator.php?game=2&category=6");
-        JToken wordsToken = JObject.Parse(response)["words"];
-        if (wordsToken is null)
-            return;
-
-        JToken[] words = wordsToken.ToArray();
-        string originalWord = RandomUtil.GetRandomElement(words).ToString();
+        (string word, string espanol) = RandomUtil.GetRandomElement(Constants.ScavengeWordSet);
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        while (originalWord.Any(c => !char.IsLetter(c) && !char.IsWhiteSpace(c)))
-            originalWord = RandomUtil.GetRandomElement(words).ToString();
 
         switch (RandomUtil.Next(2))
         {
             case 0:
-                string scrambled = Regex.Replace(originalWord, @"\w+", ScrambleWord, RegexOptions.IgnorePatternWhitespace);
-                while (scrambled.Equals(originalWord, StringComparison.OrdinalIgnoreCase) && scrambled != "egg")
-                    scrambled = Regex.Replace(originalWord, @"\w+", ScrambleWord, RegexOptions.IgnorePatternWhitespace);
+                string scrambled = AlphanumericRegex().Replace(word, ScrambleWord);
+                while (scrambled.Equals(word, StringComparison.OrdinalIgnoreCase) && scrambled != "egg")
+                    scrambled = AlphanumericRegex().Replace(word, ScrambleWord);
 
                 EmbedBuilder scrambleEmbed = new EmbedBuilder()
                     .WithColor(Color.Red)
@@ -314,29 +306,16 @@ public partial class Crime : ModuleBase<SocketCommandContext>
                     timeout: TimeSpan.FromSeconds(Constants.ScavengeTimeout)
                 );
                 string scrambleContent = scrambleResult.Value?.Content ?? string.Empty;
-                await HandleScavenge(scrambleMsg, scrambleResult, user, scrambleContent.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
-                    $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
-                    $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{originalWord}**.",
-                    $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{originalWord}**.");
+                await HandleScavenge(scrambleMsg, scrambleResult, user, scrambleContent.Equals(word, StringComparison.OrdinalIgnoreCase),
+                    $"**{Context.User.Sanitize()}**, that's right! The answer was **{word}**.",
+                    $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{word}**.",
+                    $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{word}**.");
                 break;
             case 1:
-                FormUrlEncodedContent content = new(new Dictionary<string, string>()
-                {
-                    { "q", originalWord },
-                    { "source", "en" },
-                    { "target", "es" }
-                });
-                HttpResponseMessage message = await client.PostAsync("https://libretranslate.de/translate", content);
-
-                JToken translatedToken = JObject.Parse(await message.Content.ReadAsStringAsync())["translatedText"];
-                if (translatedToken is null)
-                    return;
-
-                string translatedText = translatedToken.ToString();
                 EmbedBuilder translateEmbed = new EmbedBuilder()
                     .WithColor(Color.Red)
                     .WithTitle("Translate!")
-                    .WithDescription($"**Translate this Spanish word/phrase to English:**\n{translatedText}\n*Type your response in the chat. You have {Constants.ScavengeTimeout} seconds!*");
+                    .WithDescription($"**Translate this Spanish word/phrase to English:**\n{espanol}\n*Type your response in the chat. You have {Constants.ScavengeTimeout} seconds!*");
                 IUserMessage translateMsg = await ReplyAsync(embed: translateEmbed.Build());
 
                 InteractiveResult<SocketMessage> translateResult = await Interactive.NextMessageAsync(
@@ -344,10 +323,10 @@ public partial class Crime : ModuleBase<SocketCommandContext>
                     timeout: TimeSpan.FromSeconds(Constants.ScavengeTimeout)
                 );
                 string translateContent = translateResult.Value?.Content ?? string.Empty;
-                await HandleScavenge(translateMsg, translateResult, user, translateContent.Equals(originalWord, StringComparison.OrdinalIgnoreCase),
-                    $"**{Context.User.Sanitize()}**, that's right! The answer was **{originalWord}**.",
-                    $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{originalWord}**.",
-                    $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{originalWord}**.");
+                await HandleScavenge(translateMsg, translateResult, user, translateContent.Equals(word, StringComparison.OrdinalIgnoreCase),
+                    $"**{Context.User.Sanitize()}**, that's right! The answer was **{word}**.",
+                    $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{word}**.",
+                    $"**{Context.User.Sanitize()}**, F and an L, broski. That was not the right answer. It was **{word}**.");
 
                 break;
         }
@@ -398,4 +377,7 @@ public partial class Crime : ModuleBase<SocketCommandContext>
         ];
         return await GenericCrime(successes, fails, "WhoreCooldown", Constants.WhoreCooldown);
     }
+
+    [GeneratedRegex(@"\w+", RegexOptions.IgnorePatternWhitespace)]
+    private static partial Regex AlphanumericRegex();
 }

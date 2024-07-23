@@ -36,6 +36,7 @@ builder.Services.AddSingleton(client)
     .ConfigureLyrics(options => options.SuppressExceptions = true)
     .AddInactivityTracking()
     .ConfigureInactivityTracking(options => options.DefaultTimeout = TimeSpan.FromSeconds(Constants.InactivityTimeoutSecs))
-    .AddSingleton<AudioSystem>();
+    .AddSingleton<AudioSystem>()
+    .AddSingleton<IRestClientProvider>(x => x.GetRequiredService<DiscordShardedClient>());
 
 builder.Build().Run();
