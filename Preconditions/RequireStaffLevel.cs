@@ -20,8 +20,8 @@ public class RequireStaffLevelAttribute(int level) : PreconditionAttribute
 
         IEnumerable<ulong> roleIds = context.User.GetRoleIds();
         bool success = StaffLevel >= 2
-            ? roleIds.Any(id => id == roles.StaffLvl1Role || id == roles.StaffLvl2Role)
-            : roleIds.Contains(roles.StaffLvl1Role);
+            ? roleIds.Contains(roleId)
+            : roleIds.Any(id => id == roles.StaffLvl1Role || id == roles.StaffLvl2Role);
 
         if (!success)
         {
