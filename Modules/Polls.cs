@@ -5,7 +5,7 @@ public partial class Polls : ModuleBase<SocketCommandContext>
     [Command("createpoll")]
     [Summary("Create a poll.")]
     [Remarks("$createpoll \"Is John gay?\" yes|yes|yes|yes|yes|yes|for sure|100%|confident")]
-    [RequireStaff]
+    [RequireStaffLevel(1)]
     [DoNotSanitize]
     public async Task<RuntimeResult> CreatePoll(string title, [Remainder] string choices)
     {
@@ -38,7 +38,7 @@ public partial class Polls : ModuleBase<SocketCommandContext>
     [Command("endelection")]
     [Summary("Preemptively end an ongoing election.")]
     [Remarks("$endelection 1")]
-    [RequireAdministrator]
+    [RequireStaffLevel(2)]
     public async Task<RuntimeResult> EndElection(int electionId)
     {
         DbElection election = await MongoManager.FetchElectionAsync(Context.Guild.Id, electionId, false);
@@ -60,7 +60,7 @@ public partial class Polls : ModuleBase<SocketCommandContext>
     [Command("startelection")]
     [Summary("Start an election.")]
     [Remarks("$startelection John \"Obesity Contest\" 72 3")]
-    [RequireAdministrator]
+    [RequireStaffLevel(2)]
     public async Task<RuntimeResult> StartElection(IGuildUser firstCandidate, string role, long hours = Constants.ElectionDuration / 3600, int numWinners = 1)
     {
         DbConfigChannels channels = await MongoManager.FetchConfigAsync<DbConfigChannels>(Context.Guild.Id);

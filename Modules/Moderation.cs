@@ -1,6 +1,6 @@
 ﻿namespace RRBot.Modules;
 [Summary("Impose an Orwellian life on the poor normies in chat, through bans, kicks, mutes, you name it.")]
-[RequireStaff]
+[RequireStaffLevel(1)]
 public partial class Moderation : ModuleBase<SocketCommandContext>
 {
     [Alias("seethe")]
@@ -17,7 +17,7 @@ public partial class Moderation : ModuleBase<SocketCommandContext>
         DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
         if (int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
         {
-            Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"Banned **{user.Sanitize()}**", reason);
+            Tuple<TimeSpan, string> resolved = duration.ResolveDuration(time, $"Banned **{user.Sanitize()}**", reason);
             if (resolved.Item1 == TimeSpan.Zero)
                 return CommandResult.FromError("You specified an invalid amount of time!");
             
@@ -36,40 +36,6 @@ public partial class Moderation : ModuleBase<SocketCommandContext>
 
         dbUser.AddToStat("Bans", "1");
         await MongoManager.UpdateObjectAsync(dbUser);
-        return CommandResult.FromSuccess();
-    }
-
-    [Command("chill")]
-    [Summary("Shut chat the fuck up for a specific amount of time.")]
-    [Remarks("$chill 60s")]
-    public async Task<RuntimeResult> Chill(string duration)
-    {
-        if (!int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
-            return CommandResult.FromError("You specified an invalid amount of time!");
-
-        Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, "Chilled the chat", "");
-        if (resolved.Item1 == TimeSpan.Zero)
-            return CommandResult.FromError("You specified an invalid amount of time!");
-        switch (resolved.Item1.TotalSeconds)
-        {
-            case < Constants.ChillMinSeconds:
-                return CommandResult.FromError($"You cannot chill the chat for less than {Constants.ChillMinSeconds} seconds.");
-            case > Constants.ChillMaxSeconds:
-                return CommandResult.FromError($"You cannot chill the chat for more than {Constants.ChillMaxSeconds} seconds.");
-        }
-
-        SocketTextChannel channel = Context.Channel as SocketTextChannel;
-        OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
-        if (perms.SendMessages == PermValue.Deny)
-            return CommandResult.FromError("This chat is already chilled.");
-
-        await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
-        await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
-        
-        DbChill chill = await MongoManager.FetchChillAsync(Context.Channel.Id, Context.Guild.Id);
-        chill.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)resolved.Item1.TotalSeconds);
-
-        await MongoManager.UpdateObjectAsync(chill);
         return CommandResult.FromSuccess();
     }
     
@@ -182,7 +148,7 @@ public partial class Moderation : ModuleBase<SocketCommandContext>
             return CommandResult.FromError($"You cannot mute **{user.Sanitize()}** because they are either already muted or a staff member.");
         }
 
-        Tuple<TimeSpan, string> resolved = ResolveDuration(duration, time, $"Muted **{user.Sanitize()}**", reason);
+        Tuple<TimeSpan, string> resolved = duration.ResolveDuration(time, $"Muted **{user.Sanitize()}**", reason);
         if (resolved.Item1 == TimeSpan.Zero)
             return CommandResult.FromError("You specified an invalid amount of time!");
         if (resolved.Item1 > TimeSpan.FromDays(28))

@@ -5,7 +5,7 @@ public class Weapons : ModuleBase<SocketCommandContext>
     [Command("shoot")]
     [Summary("Blast someone into oblivion with your gun.")]
     [RequireCooldown("ShootCooldown", "Woah woah woah! You got a killing addiction there or something? You've gotta wait {0}. Sorry.")]
-    public async Task<RuntimeResult> Shoot(IGuildUser user, string gun)
+    public async Task<RuntimeResult> Shoot(IGuildUser user, [Remainder] string gun)
     {
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("​I don't think shooting yourself is a great idea.");

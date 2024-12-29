@@ -45,15 +45,14 @@ public class General : ModuleBase<SocketCommandContext>
             string preconditionInfo = precondition switch
             {
                 CheckPacifistAttribute => "Requires not having the Pacifist perk equipped",
-                RequireAdministratorAttribute => "Requires being a server administrator",
                 RequireCashAttribute rc => rc.Cash > 0.01m ? $"Requires {rc:C2}" : "Requires any amount of cash",
                 RequireDjAttribute => "Requires the DJ role",
                 RequireOwnerAttribute => "Requires being the bot owner",
                 RequireRankLevelAttribute rrl => "Requires rank level " + rrl.RankLevel,
                 RequireServerOwnerAttribute => "Requires being the server owner",
-                RequireStaffAttribute => "Requires Staff",
+                RequireStaffLevelAttribute rsl => "Requires staff level " + rsl.StaffLevel + " or the Administrator permission",
                 RequireToolAttribute rt => string.IsNullOrEmpty(rt.ToolType) ? "Requires a tool" : "Requires " + rt.ToolType,
-                RequireUserPermissionAttribute rup => $"Requires {Enum.GetName(rup.GuildPermission.GetValueOrDefault())} permission",
+                RequireUserPermissionAttribute rup => $"Requires the {Enum.GetName(rup.GuildPermission.GetValueOrDefault())} permission",
                 _ => ""
             };
             if (preconditionInfo != "")

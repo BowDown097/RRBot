@@ -1,9 +1,43 @@
 ﻿namespace RRBot.Modules;
 [Summary("Commands for admin stuff. Whether you wanna screw with the economy or fuck someone over, I'm sure you'll have fun. However, you'll need to have a very high role to have all this fun. Sorry!")]
-[RequireAdministrator]
+[RequireStaffLevel(2)]
 public class Administration : ModuleBase<SocketCommandContext>
 {
     public InteractiveService Interactive { get; set; }
+
+    [Command("chill")]
+    [Summary("Shut chat the fuck up for a specific amount of time.")]
+    [Remarks("$chill 60s")]
+    public async Task<RuntimeResult> Chill(string duration)
+    {
+        if (!int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
+            return CommandResult.FromError("You specified an invalid amount of time!");
+
+        Tuple<TimeSpan, string> resolved = duration.ResolveDuration(time, "Chilled the chat", "");
+        if (resolved.Item1 == TimeSpan.Zero)
+            return CommandResult.FromError("You specified an invalid amount of time!");
+        switch (resolved.Item1.TotalSeconds)
+        {
+            case < Constants.ChillMinSeconds:
+                return CommandResult.FromError($"You cannot chill the chat for less than {Constants.ChillMinSeconds} seconds.");
+            case > Constants.ChillMaxSeconds:
+                return CommandResult.FromError($"You cannot chill the chat for more than {Constants.ChillMaxSeconds} seconds.");
+        }
+
+        SocketTextChannel channel = Context.Channel as SocketTextChannel;
+        OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
+        if (perms.SendMessages == PermValue.Deny)
+            return CommandResult.FromError("This chat is already chilled.");
+
+        await Context.User.NotifyAsync(Context.Channel, resolved.Item2);
+        await channel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, perms.Modify(sendMessages: PermValue.Deny));
+        
+        DbChill chill = await MongoManager.FetchChillAsync(Context.Channel.Id, Context.Guild.Id);
+        chill.Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds((long)resolved.Item1.TotalSeconds);
+
+        await MongoManager.UpdateObjectAsync(chill);
+        return CommandResult.FromSuccess();
+    }
     
     [Command("cleartextchannel")]
     [Summary("Deletes and recreates a text channel, effectively wiping its messages.")]
