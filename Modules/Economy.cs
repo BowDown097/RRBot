@@ -1,5 +1,5 @@
 ﻿namespace RRBot.Modules;
-[Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out le shoppe? It's all here.")]
+[Summary("This is the hub for checking and managing your economy stuff. Wanna know how much cash you have? Or what items you have? Or do you want to check out the shop? It's all here.")]
 public partial class Economy : ModuleBase<SocketCommandContext>
 {
     public static readonly string[] CmdsWithCooldown =

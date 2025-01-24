@@ -1,5 +1,5 @@
 namespace RRBot.Modules;
-[Summary("Items, crates, and everything about em.")]
+[Summary("Items, crates, and everything about 'em.")]
 public partial class Goods : ModuleBase<SocketCommandContext>
 {
     public InteractiveService Interactive { get; set; }

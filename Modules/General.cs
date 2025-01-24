@@ -116,7 +116,8 @@ public class General : ModuleBase<SocketCommandContext>
         EmbedBuilder modulesEmbed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle("Modules")
-            .WithDescription(string.Join(", ", Commands.Modules.Select(x => x.Name).ToList()));
+            .WithDescription(string.Join(", ", Commands.Modules.Select(x => x.Name).ToList()))
+            .WithFooter("Use $module to learn more about a specific module.");
         await ReplyAsync(embed: modulesEmbed.Build());
     }
 

@@ -1,5 +1,5 @@
 namespace RRBot.Modules;
-[Summary("So you've chosen the path of death huh? The rewards here may be pretty large, but be warned - I don't want to hear about any of this \"guilt\" stuff. Proceed with caution.")]
+[Summary("For when the crime commands have become too tame.")]
 public class Weapons : ModuleBase<SocketCommandContext>
 {
     [Command("shoot")]

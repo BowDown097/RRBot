@@ -1,5 +1,5 @@
 ﻿namespace RRBot.Modules;
-[Summary("Hell yeah! Crime! Reject the ways of being a law-abiding citizen for some cold hard cash and maybe even a tool. Or, maybe not. Depends how good you are at being a criminal.")]
+[Summary("Throw your morals out the window. It's time to make dough.")]
 [CheckPacifist]
 public partial class Crime : ModuleBase<SocketCommandContext>
 {

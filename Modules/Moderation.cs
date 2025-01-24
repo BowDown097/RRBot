@@ -1,5 +1,5 @@
 ﻿namespace RRBot.Modules;
-[Summary("Impose an Orwellian life on the poor normies in chat, through bans, kicks, mutes, you name it.")]
+[Summary("Abuse your powers. Become Big Brother.")]
 [RequireStaffLevel(1)]
 public partial class Moderation : ModuleBase<SocketCommandContext>
 {
