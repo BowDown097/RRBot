@@ -118,10 +118,18 @@ public partial class Config : ModuleBase<SocketCommandContext>
         DbConfigSelfRoles selfRoles = await MongoManager.FetchConfigAsync<DbConfigSelfRoles>(Context.Guild.Id);
         if (selfRoles.Channel != default)
         {
-            IMessage message = await Context.Guild.GetTextChannel(selfRoles.Channel)?
-                .GetMessageAsync(selfRoles.Message);
-            string messageContent = message is not null ? $"[Jump]({message.GetJumpUrl()})" : "(deleted)";
-            description.AppendLine($"Message: {messageContent}");
+            SocketTextChannel selfRolesChannel = Context.Guild.GetTextChannel(selfRoles.Channel);
+            if (selfRolesChannel is not null)
+            {
+                IMessage message = await selfRolesChannel.GetMessageAsync(selfRoles.Message);
+                string messageContent = message is not null ? $"[Jump]({message.GetJumpUrl()})" : "(deleted)";
+                description.AppendLine($"Message: {messageContent}");
+            }
+            else
+            {
+                description.AppendLine("Message: (deleted)");
+            }
+
             foreach (KeyValuePair<string, ulong> kvp in selfRoles.SelfRoles)
             {
                 SocketRole role = Context.Guild.GetRole(kvp.Value);

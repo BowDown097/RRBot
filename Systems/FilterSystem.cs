@@ -42,6 +42,7 @@ public static partial class FilterSystem
         { 'y', ["\U0000ab5a", "\U00001eff", "\U00000443", "\U0000028f", "\U0001d606", "\U0000213d", "\U0001d772", "\U000004af", "\U000010e7", "\U0001d56a", "\U0001d4ce", "\U0001d6c4", "\U0001d63a", "\U0000ff59", "\U0001d66e", "\U0001d738", "\U00000263", "\U0001d7ac", "\U0001d502", "\U0001d466", "\U0001d6a2", "\U000003b3", "\U0001d536", "\U00001d8c", "\U0001d49a", "\U000118dc", "\U0001d432", "\U0001d59e", "\U0001d6fe", "\U0001d5d2"] },
         { 'z', ["\U0001d49b", "\U0001d433", "\U0001d59f", "\U0001d63b", "\U0001d56b", "\U0001d607", "\U0001d537", "\U00001d22", "\U0001d4cf", "\U0000ab93", "\U0001d467", "\U0001d66f", "\U0001d6a3", "\U000118c4", "\U0001d503", "\U0001d5d3", "\U0000ff5a"] }
     };
+    private static readonly string[] SteamScamTitles = ["trade offer", "steam community", "steam gift"];
 
     public static async Task DoInviteCheckAsync(SocketMessage message, IGuild guild, DiscordShardedClient client)
     {
@@ -80,10 +81,9 @@ public static partial class FilterSystem
 
             string host = uri.Host.Replace("www.", "").ToLower();
             string title = epicEmbed.Title.ToLower();
-            if ((title.Contains("Trade offer") && host != "steamcommunity.com")
-                || (title.Contains("Steam Community") && host != "steamcommunity.com")
-                || (title.Contains("You've been gifted") && host != "discord.gift")
-                || (title.Contains("nitro") && title.Contains("steam")))
+            if ((SteamScamTitles.Any(title.Contains) && host != "steamcommunity.com") ||
+                (title.Contains("you've been gifted") && host != "discord.gift") ||
+                (title.Contains("nitro") && title.Contains("steam")))
             {
                 await message.DeleteAsync();
             }

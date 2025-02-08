@@ -6,16 +6,16 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Lavalink4NET.Artwork" Version="4.0.18" />
-		<PackageReference Include="Lavalink4NET.InactivityTracking" Version="4.0.18" />
-		<PackageReference Include="Lavalink4NET.Lyrics" Version="4.0.18" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.10.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-		<PackageReference Include="MongoDB.Driver" Version="2.27.0" />
-		<PackageReference Include="Lavalink4NET.Discord.NET" Version="4.0.18" />
-		<PackageReference Include="Fergun.Interactive" Version="1.7.7" />
-		<PackageReference Include="Discord.Net" Version="3.15.2" />
+		<PackageReference Include="Lavalink4NET.Artwork" Version="4.0.25" />
+		<PackageReference Include="Lavalink4NET.InactivityTracking" Version="4.0.25" />
+		<PackageReference Include="Lavalink4NET.Lyrics" Version="4.0.25" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.12.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.1" />
+		<PackageReference Include="MongoDB.Driver" Version="3.1.0" />
+		<PackageReference Include="Lavalink4NET.Discord.NET" Version="4.0.25" />
+		<PackageReference Include="Fergun.Interactive" Version="1.8.1" />
+		<PackageReference Include="Discord.Net" Version="3.17.1" />
 	</ItemGroup>
 	<Target Name="CopyCustomContent" AfterTargets="AfterBuild">
 		<Copy SourceFiles="credentials.json" DestinationFolder="$(OutDir)" Condition="!Exists($([System.IO.Path]::Combine('$(OutDir)', 'credentials.json')))" />
