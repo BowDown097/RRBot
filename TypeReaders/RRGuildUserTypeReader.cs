@@ -1,6 +1,6 @@
 namespace RRBot.TypeReaders;
 /// <summary>
-///     A UserTypeReader, but StartsWith is used instead of Equals for usernames/nicknames
+///     A UserTypeReader, but StartsWith is used instead of Equals for names, and returns IGuildUsers
 /// </summary>
 public class RrGuildUserTypeReader : TypeReader
 {
@@ -35,33 +35,33 @@ public class RrGuildUserTypeReader : TypeReader
         //By Global (Display) Name (0.7-0.8)
         {
             await channelUsers
-                .Where(x => string.Equals(input, x.GlobalName, StringComparison.OrdinalIgnoreCase))
+                .Where(x => x.GlobalName.StartsWith(input, StringComparison.OrdinalIgnoreCase))
                 .ForEachAsync(channelUser => AddResult(results, channelUser as IGuildUser, channelUser.GlobalName == input ? 0.85f : 0.75f))
                 .ConfigureAwait(false);
 
-            foreach (IGuildUser guildUser in guildUsers.Where(x => string.Equals(input, x.GlobalName, StringComparison.OrdinalIgnoreCase)))
+            foreach (IGuildUser guildUser in guildUsers.Where(x => x.GlobalName.StartsWith(input, StringComparison.OrdinalIgnoreCase)))
                 AddResult(results, guildUser, guildUser.Username == input ? 0.80f : 0.70f);
         }
 
         //By Username (0.7-0.8)
         {
             await channelUsers
-                .Where(x => string.Equals(input, x.Username, StringComparison.OrdinalIgnoreCase))
+                .Where(x => x.Username.StartsWith(input, StringComparison.OrdinalIgnoreCase))
                 .ForEachAsync(channelUser => AddResult(results, channelUser as IGuildUser, channelUser.Username == input ? 0.85f : 0.75f))
                 .ConfigureAwait(false);
 
-            foreach (IGuildUser guildUser in guildUsers.Where(x => string.Equals(input, x.Username, StringComparison.OrdinalIgnoreCase)))
+            foreach (IGuildUser guildUser in guildUsers.Where(x => x.Username.StartsWith(input, StringComparison.OrdinalIgnoreCase)))
                 AddResult(results, guildUser, guildUser.Username == input ? 0.80f : 0.70f);
         }
 
         //By Nickname (0.7-0.8)
         {
             await channelUsers
-                .Where(x => string.Equals(input, (x as IGuildUser)?.Nickname, StringComparison.OrdinalIgnoreCase))
-                .ForEachAsync(channelUser => AddResult(results, channelUser as IGuildUser, (channelUser as IGuildUser).Nickname == input ? 0.85f : 0.75f))
+                .Where(x => (x as IGuildUser)?.Nickname.StartsWith(input, StringComparison.OrdinalIgnoreCase) == true)
+                .ForEachAsync(channelUser => AddResult(results, channelUser as IGuildUser, (channelUser as IGuildUser)?.Nickname == input ? 0.85f : 0.75f))
                 .ConfigureAwait(false);
 
-            foreach (IGuildUser guildUser in guildUsers.Where(x => string.Equals(input, x.Nickname, StringComparison.OrdinalIgnoreCase)))
+            foreach (IGuildUser guildUser in guildUsers.Where(x => x.Nickname.StartsWith(input, StringComparison.OrdinalIgnoreCase)))
                 AddResult(results, guildUser, guildUser.Nickname == input ? 0.80f : 0.70f);
         }
 
