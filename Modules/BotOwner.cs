@@ -8,7 +8,7 @@ public class FunnyContext(SocketCommandContext context)
 [Summary("Commands for bot owners only.")]
 public class BotOwner : ModuleBase<SocketCommandContext>
 {
-    public CommandService Commands { get; set; }
+    public CommandService Commands { get; set; } = null!;
 
     [Alias("botban")]
     [Command("blacklist")]

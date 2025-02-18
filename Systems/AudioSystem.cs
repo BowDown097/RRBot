@@ -110,7 +110,7 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
-        int count = await playerResult.Player.Queue.RemoveAllAsync(t => t.As<RrTrack>().Title.Equals(name, StringComparison.OrdinalIgnoreCase));
+        int count = await playerResult.Player.Queue.RemoveAllAsync(t => t.As<RrTrack>()!.Title.Equals(name, StringComparison.OrdinalIgnoreCase));
         if (count == 0)
             return CommandResult.FromError("There are no tracks in the queue with that name.");
         
@@ -152,7 +152,7 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
                 $"Duration: {track.Track.Duration.Condense()}\nPosition: {playerResult.Player.Position.GetValueOrDefault().Position.Condense()}");
 
         using ArtworkService artworkService = new();
-        Uri artworkUri = track.ArtworkUri ?? await artworkService.ResolveAsync(track.Track);
+        Uri? artworkUri = track.ArtworkUri ?? await artworkService.ResolveAsync(track.Track);
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
@@ -184,7 +184,7 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
 
         for (int i = 0; i < tracks.Length; i++)
         {
-            RrTrack track = tracks[i].As<RrTrack>();
+            RrTrack track = tracks[i].As<RrTrack>()!;
             playlist.Append($"**{i + 1}**: [\"{track.Title}\" by {track.Author}]({track.Track.Uri})");
 
             if (!track.Track.IsLiveStream)
@@ -227,7 +227,7 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
         if (!playerResult.IsSuccess || playerResult.Player.CurrentItem is not RrTrack track)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
-        string lyrics = await lyricsService.GetLyricsAsync(track.Track!);
+        string? lyrics = await lyricsService.GetLyricsAsync(track.Track!);
         if (string.IsNullOrEmpty(lyrics))
             return CommandResult.FromError("No lyrics were found.");
 
@@ -242,7 +242,7 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
 
     public async Task<RuntimeResult> PlayAsync(SocketCommandContext context, string query)
     {
-        Attachment attachment = context.Message.Attachments.FirstOrDefault();
+        Attachment? attachment = context.Message.Attachments.FirstOrDefault();
         if (attachment?.ContentType?.StartsWith("video/") == true || attachment?.ContentType?.StartsWith("audio/") == true)
             query = attachment.Url;
 
@@ -253,8 +253,8 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
         if (!playerResult.IsSuccess)
             return CommandResult.FromError(playerResult.ErrorMessage());
 
-        RrTrack track;
-        if (Uri.TryCreate(query, UriKind.Absolute, out Uri uri))
+        RrTrack? track;
+        if (Uri.TryCreate(query, UriKind.Absolute, out Uri? uri))
         {
             TrackSearchMode searchMode = uri.Host.Replace("www.", "") switch
             {
@@ -266,8 +266,8 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
 
             if (searchMode == TrackSearchMode.None)
             {
-                string lastSegment = uri.Segments.LastOrDefault();
-                track = lastSegment.Contains('.') // check for direct link, use yt-dlp if not
+                string? lastSegment = uri.Segments.LastOrDefault();
+                track = lastSegment?.Contains('.') == true // check for direct link, use yt-dlp if not
                     ? await audioService.RrGetTrackAsync(query, context.User, searchMode, lastSegment)
                     : await audioService.YtDlpGetTrackAsync(uri, context.User);
             }
@@ -306,7 +306,7 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
             await context.Channel.SendMessageAsync($"**{track.Title}** has been added to the queue.", allowedMentions: AllowedMentions.None);
         }
 
-        await LoggingSystem.Custom_TrackStarted(context.User as SocketGuildUser, track.Track.Uri.ToString());
+        await LoggingSystem.Custom_TrackStarted((SocketGuildUser)context.User, track.Track.Uri!.ToString());
         return CommandResult.FromSuccess();
     }
 
@@ -316,7 +316,7 @@ public sealed class AudioSystem(IAudioService audioService, ILyricsService lyric
             return CommandResult.FromError("Not a valid seek position!\nExample valid seek position: 13:08");
 
         PlayerResult<VoteLavalinkPlayer> playerResult = await GetPlayerAsync(context, PlayerPrecondition.Playing);
-        if (!playerResult.IsSuccess)
+        if (!playerResult.IsSuccess || playerResult.Player.CurrentTrack is null)
             return CommandResult.FromError(playerResult.ErrorMessage());
         if (ts < TimeSpan.Zero || ts > playerResult.Player.CurrentTrack.Duration)
             return CommandResult.FromError($"You can't seek to a negative position or a position longer than the track duration ({playerResult.Player.CurrentTrack.Duration.Condense()}).");

@@ -1,7 +1,7 @@
 namespace RRBot.Entities.Goods;
-public class Ammo(string name, double crateMultiplier) : Item(name, -1)
+public class Ammo(string name, double crateMultiplier) : Item
 {
-    public double CrateMultiplier { get; } = crateMultiplier;
-    public override string Name { get; protected init; }
-    public override decimal Price { get; protected init; }
+    public double CrateMultiplier => crateMultiplier;
+    public override string Name => name;
+    public override decimal Price => -1;
 }

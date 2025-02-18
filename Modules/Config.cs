@@ -3,7 +3,7 @@
 [RequireStaffLevel(2)]
 public partial class Config : ModuleBase<SocketCommandContext>
 {
-    public CommandService Commands { get; set; }
+    public CommandService Commands { get; set; } = null!;
 
     [Command("addrank")]
     [Summary("Register a rank, its level, and the money required to get it.")]
@@ -23,7 +23,7 @@ public partial class Config : ModuleBase<SocketCommandContext>
     [Remarks(@"$addselfrole \:Sperg\: 809512856713166918")]
     public async Task<RuntimeResult> AddSelfRole(IEmote emote, [Remainder] SocketRole role)
     {
-        SocketRole authorHighest = (Context.User as SocketGuildUser)?.Roles.MaxBy(r => r.Position);
+        SocketRole? authorHighest = (Context.User as SocketGuildUser)!.Roles.MaxBy(r => r.Position);
         if (authorHighest is not null && role.Position >= authorHighest.Position)
             return CommandResult.FromError("Cannot create this selfrole because it is higher than or is the same as your highest role.");
         
@@ -178,8 +178,9 @@ public partial class Config : ModuleBase<SocketCommandContext>
         if (moduleLower == "config")
             return CommandResult.FromError("​I don't think that's a good idea.");
 
-        ModuleInfo moduleInfo = Commands.Modules.FirstOrDefault(m => m.Name.Equals(module, StringComparison.OrdinalIgnoreCase));
-        if (moduleInfo == default)
+        ModuleInfo? moduleInfo = Commands.Modules.FirstOrDefault(
+            m => m.Name.Equals(module, StringComparison.OrdinalIgnoreCase));
+        if (moduleInfo is null)
             return CommandResult.FromError($"\"{module}\" is not a module.");
         
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
@@ -225,9 +226,8 @@ public partial class Config : ModuleBase<SocketCommandContext>
     [Remarks("$enablemodule fun")]
     public async Task<RuntimeResult> EnableModule(string module)
     {
-        string moduleLower = module.ToLower();
         DbConfigMisc misc = await MongoManager.FetchConfigAsync<DbConfigMisc>(Context.Guild.Id);
-        if (!misc.DisabledModules.Remove(moduleLower))
+        if (!misc.DisabledModules.Remove(module.ToLower()))
             return CommandResult.FromError($"\"{module}\" is not disabled!");
 
         await Context.User.NotifyAsync(Context.Channel, $"Enabled the {module.ToTitleCase()} module.");

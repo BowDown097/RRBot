@@ -41,7 +41,7 @@ public partial class Tasks
         });
 
         await user.SetCash(Context.User, totalCash, Context.Channel, $"You {activity} {numMined} {thing} with your {tool} and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        await user.SetCooldown(cooldown, duration, Context.Guild, Context.User);
+        await user.SetCooldown(cooldown, duration, Context.User);
         await MongoManager.UpdateObjectAsync(user);
     }
 }

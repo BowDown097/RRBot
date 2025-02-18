@@ -11,7 +11,7 @@ public partial class Investments : ModuleBase<SocketCommandContext>
         if (amount < Constants.TransactionMin)
             return CommandResult.FromError($"You need to invest at least {Constants.TransactionMin:C2}.");
 
-        string abbreviation = ResolveAbbreviation(crypto);
+        string? abbreviation = ResolveAbbreviation(crypto);
         if (abbreviation is null)
             return CommandResult.FromError("That is not a currently accepted currency!");
         
@@ -45,7 +45,7 @@ public partial class Investments : ModuleBase<SocketCommandContext>
     [Command("investments")]
     [Summary("Check your investments, or someone else's, and their value.")]
     [Remarks("$investments gurrenm4")]
-    public async Task<RuntimeResult> InvestmentsView([Remainder] IGuildUser user = null)
+    public async Task<RuntimeResult> InvestmentsView([Remainder] IGuildUser? user = null)
     {
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
@@ -98,7 +98,7 @@ public partial class Investments : ModuleBase<SocketCommandContext>
         if (amount < Constants.InvestmentMinAmount)
             return CommandResult.FromError($"You must withdraw {Constants.InvestmentMinAmount} or more of the crypto.");
 
-        string abbreviation = ResolveAbbreviation(crypto);
+        string? abbreviation = ResolveAbbreviation(crypto);
         if (abbreviation is null)
             return CommandResult.FromError("That is not a currently accepted currency!");
             

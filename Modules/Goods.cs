@@ -2,7 +2,7 @@ namespace RRBot.Modules;
 [Summary("Items, crates, and everything about 'em.")]
 public partial class Goods : ModuleBase<SocketCommandContext>
 {
-    public InteractiveService Interactive { get; set; }
+    public InteractiveService Interactive { get; set; } = null!;
 
     [Alias("purchase")]
     [Command("buy")]
@@ -10,10 +10,12 @@ public partial class Goods : ModuleBase<SocketCommandContext>
     [Remarks("$buy Fishing Rod")]
     public async Task<RuntimeResult> Buy([Remainder] string itemName)
     {
-        Item item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
-        if (item?.Name == "Daily")
+        Item? item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
+        if (item is null)
+            return CommandResult.FromError("That is not an item!");
+        if (item.Name == "Daily")
             return CommandResult.FromError("You cannot buy the Daily crate!");
-        if (item?.Name.StartsWith("Netherite") == true)
+        if (item.Name.StartsWith("Netherite"))
             return CommandResult.FromError("​Netherite items can only be obtained from Diamond crates!");
 
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
@@ -38,13 +40,13 @@ public partial class Goods : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Daily()
     {
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        RuntimeResult result = await ItemSystem.BuyCrate(ItemSystem.GetItem("Daily") as Crate, Context.User,
+        RuntimeResult result = await ItemSystem.BuyCrate((Crate)ItemSystem.GetItem("Daily")!, Context.User,
             user, Context.Channel, false);
         if (!result.IsSuccess) 
             return result;
 
         await Context.User.NotifyAsync(Context.Channel, "Here's a Daily crate, my good man! Best of luck.");
-        await user.SetCooldown("DailyCooldown", Constants.DailyCooldown, Context.Guild, Context.User);
+        await user.SetCooldown("DailyCooldown", Constants.DailyCooldown, Context.User);
         await MongoManager.UpdateObjectAsync(user);
 
         return result;
@@ -57,7 +59,7 @@ public partial class Goods : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> Discard([Remainder] string itemName)
     {
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        Item item = ItemSystem.GetItem(itemName);
+        Item? item = ItemSystem.GetItem(itemName);
         switch (item)
         {
             case Ammo or Consumable or Crate:
@@ -79,7 +81,7 @@ public partial class Goods : ModuleBase<SocketCommandContext>
                 if (!user.Perks.Remove("Pacifist"))
                     return CommandResult.FromError("You do not have the Pacifist perk!");
 
-                await user.SetCooldown("PacifistCooldown", 259200, Context.Guild, Context.User);
+                await user.SetCooldown("PacifistCooldown", 259200, Context.User);
                 await Context.User.NotifyAsync(Context.Channel, "You discarded your Pacifist perk. If you wish to buy it again, you will have to wait 3 days.");
                 break;
             case Tool:
@@ -109,7 +111,7 @@ public partial class Goods : ModuleBase<SocketCommandContext>
     [Remarks("$item Cocaine")]
     public async Task<RuntimeResult> ItemInfo([Remainder] string itemName)
     {
-        Item item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
+        Item? item = ItemSystem.GetItem(itemName.ToLower().Replace(" crate", ""));
         if (item is null)
             return CommandResult.FromError("That is not an item!");
 
@@ -174,12 +176,12 @@ public partial class Goods : ModuleBase<SocketCommandContext>
     [Command("items", RunMode = RunMode.Async)]
     [Summary("View your own or someone else's items.")]
     [Remarks("$items Zurmii#2208")]
-    public async Task<RuntimeResult> Items([Remainder] IGuildUser user = null)
+    public async Task<RuntimeResult> Items([Remainder] IGuildUser? user = null)
     {
         DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
-        string[] sortedPerks = dbUser.Perks
+        string[] sortedPerks = [..dbUser.Perks
             .Where(k => k.Value > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-            .Select(p => p.Key).ToArray();
+            .Select(p => p.Key)];
 
         string collectibles = string.Join('\n', dbUser.Collectibles.Where(k => k.Value > 0).Select(c => $"{c.Key} ({c.Value}x)"));
         string consumables = string.Join('\n', dbUser.Consumables.Where(k => k.Value > 0).Select(c => $"{c.Key} ({c.Value}x)"));
@@ -233,8 +235,8 @@ public partial class Goods : ModuleBase<SocketCommandContext>
         user.Cash += crate.Cash;
 
         List<Item> items = crate.Open(user);
-        string[] ammos = items.Where(i => i is Ammo).Select(a => a.Name).ToArray();
-        string[] consumables = items.Where(i => i is Consumable).Select(c => c.Name).ToArray();
+        string[] ammos = [..items.Where(i => i is Ammo).Select(a => a.Name)];
+        string[] consumables = [..items.Where(i => i is Consumable).Select(c => c.Name)];
         IEnumerable<string> tools = items.Where(i => i is Tool).Select(t => t.Name);
         IEnumerable<string> weapons = items.Where(i => i is Weapon).Select(t => t.Name);
 
@@ -310,7 +312,7 @@ public partial class Goods : ModuleBase<SocketCommandContext>
     [Summary("Use a consumable.")]
     public async Task<RuntimeResult> Use([Remainder] string name)
     {
-        Item item = ItemSystem.GetItem(name);
+        Item? item = ItemSystem.GetItem(name);
         if (item is null)
             return CommandResult.FromError("That is not an item!");
         if (item is not Consumable con)

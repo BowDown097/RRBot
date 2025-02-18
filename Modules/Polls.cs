@@ -117,7 +117,7 @@ public partial class Polls : ModuleBase<SocketCommandContext>
         if (Context.Channel.Id != channels.ElectionsVotingChannel)
             return CommandResult.FromError($"You must vote in {MentionUtils.MentionChannel(channels.ElectionsVotingChannel)}.");
 
-        if (election.Voters.TryGetValue(Context.User.Id, out List<ulong> votes))
+        if (election.Voters.TryGetValue(Context.User.Id, out List<ulong>? votes))
         {
             if (votes.Contains(user.Id))
                 return CommandResult.FromError($"You already voted for {user.Sanitize()}!");
@@ -133,7 +133,7 @@ public partial class Polls : ModuleBase<SocketCommandContext>
         if (!election.Candidates.TryAdd(user.Id, 1))
             election.Candidates[user.Id]++;
 
-        if (!election.Voters.TryGetValue(Context.User.Id, out List<ulong> value))
+        if (!election.Voters.TryGetValue(Context.User.Id, out List<ulong>? value))
             election.Voters.Add(Context.User.Id, [user.Id]);
         else
             value.Add(user.Id);

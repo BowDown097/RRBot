@@ -2,11 +2,11 @@ namespace RRBot.Database.Entities.Config;
 
 [BsonCollection("channelconfigs")]
 [BsonIgnoreExtraElements]
-public class DbConfigChannels : DbConfig
+public class DbConfigChannels(ulong guildId) : DbConfig
 {
     public override ObjectId Id { get; set; }
     
-    public override ulong GuildId { get; init; }
+    public override ulong GuildId { get; init; } = guildId;
 
     public ulong ElectionsAnnounceChannel { get; set; }
     public ulong ElectionsVotingChannel { get; set; }

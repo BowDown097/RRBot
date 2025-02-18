@@ -12,7 +12,7 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
             return;
         }
 
-        Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault();
+        Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault()!;
         decimal cryptoValue = currency != "Cash" ? await Investments.QueryCryptoValue(currency) : 0;
 
         SortDefinition<DbUser> sort = Builders<DbUser>.Sort.Descending(currency);
@@ -72,7 +72,7 @@ public class Leaderboard : InteractionModuleBase<SocketInteractionContext<Socket
             return;
         }
 
-        Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault();
+        Embed embed = Context.Interaction.Message.Embeds.FirstOrDefault()!;
         
         SortDefinition<DbGang> sort = Builders<DbGang>.Sort.Descending(g => g.VaultBalance);
         FindOptions<DbGang> opts = new()

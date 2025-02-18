@@ -76,7 +76,7 @@ public static partial class FilterSystem
 
         foreach (Embed epicEmbed in message.Embeds.Where(e => !string.IsNullOrWhiteSpace(e.Title)))
         {
-            if (!Uri.TryCreate(epicEmbed.Url, UriKind.Absolute, out Uri uri) || string.IsNullOrWhiteSpace(uri.Host))
+            if (!Uri.TryCreate(epicEmbed.Url, UriKind.Absolute, out Uri? uri) || string.IsNullOrWhiteSpace(uri.Host))
                 continue;
 
             string host = uri.Host.Replace("www.", "").ToLower();

@@ -6,8 +6,9 @@ public partial class Economy
         StringBuilder builder = new();
         foreach (string prop in properties)
         {
-            object obj = dbUser[prop];
-            if (obj is null) continue;
+            object? obj = dbUser[prop];
+            if (obj is null)
+                continue;
 
             string propS = prop.SplitPascalCase();
             switch (obj)

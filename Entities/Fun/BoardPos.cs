@@ -13,7 +13,7 @@ public readonly struct BoardPos
 
     public static implicit operator BoardPos((int x, int y) point) => new(point.x, point.y);
 
-    public override bool Equals(object obj) => obj is BoardPos pos && this == pos;
+    public override bool Equals(object? obj) => obj is BoardPos pos && this == pos;
     public override int GetHashCode() => X.GetHashCode() ^ Y.GetHashCode();
 
     public static bool operator ==(BoardPos pos1, BoardPos pos2) => pos1.X == pos2.X && pos1.Y == pos2.Y;

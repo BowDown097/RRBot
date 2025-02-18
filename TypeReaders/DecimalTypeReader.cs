@@ -18,12 +18,14 @@ public class DecimalTypeReader : TypeReader
             case "hack":
             case "withdraw":
                 string crypto = command == "hack" ? components[2] : components[1];
-                string abbreviation = Investments.ResolveAbbreviation(crypto);
+                string? abbreviation = Investments.ResolveAbbreviation(crypto);
                 return abbreviation is null
                     ? TypeReaderResult.FromError(CommandError.ParseFailed, $"**{crypto}** is not a currently accepted currency!")
                     : TypeReaderResult.FromSuccess((decimal)user[abbreviation]);
             case "withdrawvault":
             case "wv":
+                if (string.IsNullOrWhiteSpace(user.Gang))
+                    return TypeReaderResult.FromError(CommandError.Unsuccessful, "You are not in a gang!");
                 DbGang gang = await MongoManager.FetchGangAsync(user.Gang, context.Guild.Id);
                 return TypeReaderResult.FromSuccess(gang.VaultBalance);
             default:

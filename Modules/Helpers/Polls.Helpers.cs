@@ -8,13 +8,18 @@ public partial class Polls
         if (await announcementsChannel.GetMessageAsync(election.AnnouncementMessage) is not IUserMessage announcementMessage)
             return;
 
-        List<SocketGuildUser> winners = election.Candidates
-            .OrderByDescending(kvp => kvp.Value)
-            .Take(election.NumWinners)
-            .Select(kvp => guild.GetUser(Convert.ToUInt64(kvp.Key)))
-            .ToList();
-        string winnerList = string.Join(", ", winners.Take(winners.Count - 1).Select(u => u.Sanitize())) +
-            (winners.Count > 1 ? " and " : "") + winners.LastOrDefault().Sanitize();
+        List<string> winners = new(election.NumWinners);
+        foreach ((ulong id, _) in election.Candidates.OrderByDescending(kvp => kvp.Value))
+        {
+            if (winners.Count == winners.Capacity)
+                break;
+            SocketGuildUser user = guild.GetUser(id);
+            if (user is not null)
+                winners.Add(user.Sanitize());
+        }
+
+        string winnerList = string.Join(", ", winners.Take(winners.Count - 1)) +
+            (winners.Count > 1 ? " and " : "") + winners.LastOrDefault();
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)

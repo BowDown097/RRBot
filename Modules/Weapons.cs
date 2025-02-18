@@ -12,7 +12,7 @@ public class Weapons : ModuleBase<SocketCommandContext>
         if (user.IsBot)
             return CommandResult.FromError("Shoot a bot? Hell nah. Not a chance.");
 
-        Weapon weapon = Array.Find(Constants.Weapons,
+        Weapon? weapon = Array.Find(Constants.Weapons,
             w => w.Name.Equals(gun, StringComparison.OrdinalIgnoreCase) && w.Type == "Gun");
         if (weapon is null)
             return CommandResult.FromError("That is not a gun!");
@@ -86,7 +86,7 @@ public class Weapons : ModuleBase<SocketCommandContext>
             }
         }
 
-        await author.SetCooldown("ShootCooldown", Constants.ShootCooldown, Context.Guild, Context.User);
+        await author.SetCooldown("ShootCooldown", Constants.ShootCooldown, Context.User);
         await MongoManager.UpdateObjectAsync(author);
         await MongoManager.UpdateObjectAsync(target);
         return CommandResult.FromSuccess();

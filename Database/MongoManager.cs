@@ -1,7 +1,7 @@
 namespace RRBot.Database;
 public class MongoManager
 {
-    private static MongoClient Client { get; set; }
+    private static MongoClient Client { get; set; } = null!;
     private static IMongoDatabase Database => Client.GetDatabase("RR");
 
     public static IMongoCollection<DbBan> Bans => Database.GetCollection<DbBan>("bans");
@@ -30,7 +30,7 @@ public class MongoManager
         if (ban is not null)
             return ban;
 
-        DbBan newBan = new() { GuildId = guildId, UserId = userId };
+        DbBan newBan = new(guildId, userId);
         await Bans.InsertOneAsync(newBan);
         return newBan;
     }
@@ -42,20 +42,21 @@ public class MongoManager
         if (chill is not null)
             return chill;
 
-        DbChill newChill = new() { ChannelId = channelId, GuildId = guildId };
+        DbChill newChill = new(guildId, channelId);
         await Chills.InsertOneAsync(newChill);
         return newChill;
     }
 
-    public static async Task<T> FetchConfigAsync<T>(ulong guildId) where T : DbConfig, new()
+    public static async Task<T> FetchConfigAsync<T>(ulong guildId) where T : DbConfig
     {
-        string collection = typeof(T).GetCustomAttribute<BsonCollectionAttribute>(true).CollectionName;
+        string collection = typeof(T).GetCustomAttribute<BsonCollectionAttribute>(true)!.CollectionName;
         IAsyncCursor<T> cursor = await Database.GetCollection<T>(collection).FindAsync(c => c.GuildId == guildId);
         T config = await cursor.FirstOrDefaultAsync();
         if (config is not null)
             return config;
 
-        T newConfig = new() { GuildId = guildId };
+        // technically unsafe, but constructor should always exist
+        T newConfig = (T)Activator.CreateInstance(typeof(T), [guildId])!;
         await Database.GetCollection<T>(collection).InsertOneAsync(newConfig);
         return newConfig;
     }
@@ -77,7 +78,7 @@ public class MongoManager
         if (!makeNew || election is not null)
             return election;
 
-        DbElection newElection = new() { ElectionId = electionId.GetValueOrDefault(), GuildId = guildId };
+        DbElection newElection = new(guildId, electionId.GetValueOrDefault());
         await Elections.InsertOneAsync(newElection);
         return newElection;
     }
@@ -107,7 +108,7 @@ public class MongoManager
         if (pot is not null)
             return pot;
 
-        DbPot newPot = new() { GuildId = guildId };
+        DbPot newPot = new(guildId);
         await Pots.InsertOneAsync(newPot);
         return newPot;
     }
@@ -119,7 +120,7 @@ public class MongoManager
         if (user is not null) 
             return user;
 
-        DbUser newUser = new() { GuildId = guildId, UserId = userId };
+        DbUser newUser = new(guildId, userId);
         await Users.InsertOneAsync(newUser);
         return newUser;
     }
@@ -138,13 +139,13 @@ public class MongoManager
 
     public static async Task DeleteObjectAsync<T>(T obj) where T : DbObject
     {
-        string collection = obj.GetType().GetCustomAttribute<BsonCollectionAttribute>(true).CollectionName;
+        string collection = obj.GetType().GetCustomAttribute<BsonCollectionAttribute>(true)!.CollectionName;
         await Database.GetCollection<T>(collection).DeleteOneAsync(o => o.Id == obj.Id);
     }
 
     public static async Task UpdateObjectAsync<T>(T obj) where T : DbObject
     {
-        string collection = obj.GetType().GetCustomAttribute<BsonCollectionAttribute>(true).CollectionName;
+        string collection = obj.GetType().GetCustomAttribute<BsonCollectionAttribute>(true)!.CollectionName;
         await Database.GetCollection<T>(collection).ReplaceOneAsync(o => o.Id == obj.Id, obj);
     }
 }

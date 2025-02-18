@@ -1,12 +1,12 @@
 namespace RRBot.Entities;
 public class RrTrack : ITrackQueueItem
 {
-    public Uri ArtworkUri { get; }
+    public Uri? ArtworkUri { get; }
     public string Author { get; }
     public TrackReference Reference { get; }
     public string Requester { get; }
     public string Title { get; }
-    public LavalinkTrack Track => Reference.Track;
+    public LavalinkTrack Track => Reference.Track!;
 
     public RrTrack(LavalinkTrack track, IUser requester)
     {
@@ -19,7 +19,7 @@ public class RrTrack : ITrackQueueItem
 
     public RrTrack(LavalinkTrack track, string artwork, string author, string title, IUser requester)
     {
-        ArtworkUri = Uri.TryCreate(artwork, UriKind.Absolute, out Uri uri) ? uri : null;
+        ArtworkUri = Uri.TryCreate(artwork, UriKind.Absolute, out Uri? uri) ? uri : null;
         Author = SanitizeOr(author, "Unknown author");
         Reference = new TrackReference(track);
         Requester = requester.Sanitize();

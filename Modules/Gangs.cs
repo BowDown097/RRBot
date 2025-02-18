@@ -47,12 +47,10 @@ public class Gangs : ModuleBase<SocketCommandContext>
         user.Gang = name;
         await user.SetCash(Context.User, user.Cash - Constants.GangCreationCost);
 
-        await MongoManager.Gangs.InsertOneAsync(new DbGang
+        await MongoManager.Gangs.InsertOneAsync(new DbGang(Context.Guild.Id, name)
         {
-            GuildId = Context.Guild.Id,
             Leader = Context.User.Id,
-            Members = new Dictionary<ulong, string> {{Context.User.Id, Constants.GangPositions[0]}},
-            Name = name
+            Members = new Dictionary<ulong, string> { { Context.User.Id, Constants.GangPositions[0] } }
         });
 
         await Context.User.NotifyAsync(Context.Channel, $"Created a gang with the name **{name}** for {Constants.GangCreationCost:C2}.");
@@ -120,9 +118,9 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Command("gang")]
     [Summary("View info about your own gang or another.")]
     [Remarks("$gang Sex Havers")]
-    public async Task<RuntimeResult> Gang([Remainder] string name = null)
+    public async Task<RuntimeResult> Gang([Remainder] string? name = null)
     {
-        if (name is null)
+        if (string.IsNullOrWhiteSpace(name))
         {
             DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
             if (string.IsNullOrWhiteSpace(user.Gang))
@@ -137,13 +135,14 @@ public class Gangs : ModuleBase<SocketCommandContext>
         EmbedBuilder embed = new EmbedBuilder()
             .WithColor(Color.Red)
             .WithTitle(gang.Name)
-            .RrAddField("Leader", Context.Guild.GetUser(gang.Leader).Sanitize());
+            .RrAddField("Leader", await UserExt.SanitizeById(gang.Leader, Context));
 
         foreach (string position in Constants.GangPositions.Take(1..))
         {
-            var posMems = gang.Members.Where(m => m.Value == position);
-            IEnumerable<string> posMemNames = posMems.Select(m => Context.Guild.GetUser(m.Key).Sanitize());
-            embed.RrAddField($"{position}s", string.Join('\n', posMemNames));
+            StringBuilder memberNames = new();
+            foreach ((ulong id, _) in gang.Members.Where(m => m.Value == position))
+                memberNames.AppendLine(await UserExt.SanitizeById(id, Context));
+            embed.RrAddField($"{position}s", memberNames);
         }
 
         if (gang.VaultBalance >= 0.01m)
@@ -252,7 +251,7 @@ public class Gangs : ModuleBase<SocketCommandContext>
     [Command("kickgangmember")]
     [Summary("Kick a member from your gang.")]
     [Remarks("$kickgangmember Thunderstar")]
-    public async Task<RuntimeResult> KickGangMember([Remainder] IGuildUser user)
+    public async Task<RuntimeResult> KickGangMember([Remainder] IUser user)
     {
         if (user.Id == Context.User.Id)
             return CommandResult.FromError("Sorry bro! You'll have to transfer leadership and leave the gang.");
@@ -352,7 +351,8 @@ public class Gangs : ModuleBase<SocketCommandContext>
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
 
-        string foundPosition = Array.Find(Constants.GangPositions, p => p.Equals(position, StringComparison.OrdinalIgnoreCase));
+        string? foundPosition = Array.Find(Constants.GangPositions,
+            p => p.Equals(position, StringComparison.OrdinalIgnoreCase));
         if (foundPosition is null)
             return CommandResult.FromError("That is not a valid gang position!");
         if (foundPosition == Constants.GangPositions[0])

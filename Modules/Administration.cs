@@ -3,7 +3,7 @@
 [RequireStaffLevel(2)]
 public class Administration : ModuleBase<SocketCommandContext>
 {
-    public InteractiveService Interactive { get; set; }
+    public InteractiveService Interactive { get; set; } = null!;
 
     [Command("chill")]
     [Summary("Shut chat the fuck up for a specific amount of time.")]
@@ -12,6 +12,8 @@ public class Administration : ModuleBase<SocketCommandContext>
     {
         if (!int.TryParse(Regex.Match(duration, @"\d+").Value, out int time))
             return CommandResult.FromError("You specified an invalid amount of time!");
+        if (Context.Channel is not SocketTextChannel channel)
+            return CommandResult.FromError("This channel cannot be chilled!");
 
         Tuple<TimeSpan, string> resolved = duration.ResolveDuration(time, "Chilled the chat", "");
         if (resolved.Item1 == TimeSpan.Zero)
@@ -24,7 +26,6 @@ public class Administration : ModuleBase<SocketCommandContext>
                 return CommandResult.FromError($"You cannot chill the chat for more than {Constants.ChillMaxSeconds} seconds.");
         }
 
-        SocketTextChannel channel = Context.Channel as SocketTextChannel;
         OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
         if (perms.SendMessages == PermValue.Deny)
             return CommandResult.FromError("This chat is already chilled.");
@@ -86,7 +87,7 @@ public class Administration : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("Nope.");
         
         DbUser dbUser = await MongoManager.FetchUserAsync(user.Id, Context.Guild.Id);
-        Item item = ItemSystem.GetItem(name);
+        Item? item = ItemSystem.GetItem(name);
         switch (item)
         {
             case Collectible:
@@ -180,11 +181,11 @@ public class Administration : ModuleBase<SocketCommandContext>
     public async Task<RuntimeResult> ResetEconomy()
     {
         await Context.User.NotifyAsync(Context.Channel, "Are you SURE you want to reset the economy?\n**Respond with YES if you're sure. There is no turning back!**");
-        InteractiveResult<SocketMessage> iResult = await Interactive.NextMessageAsync(
+        InteractiveResult<SocketMessage?> iResult = await Interactive.NextMessageAsync(
             x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
             timeout: TimeSpan.FromSeconds(20)
         );
-        if (!iResult.IsSuccess || !iResult.Value.Content.Equals("yes", StringComparison.OrdinalIgnoreCase))
+        if (!iResult.IsSuccess || iResult.Value?.Content.Equals("yes", StringComparison.OrdinalIgnoreCase) == false)
             return CommandResult.FromError("Reset canceled.");
 
         await Context.User.NotifyAsync(Context.Channel, "Doing as you say! This may take a while.");

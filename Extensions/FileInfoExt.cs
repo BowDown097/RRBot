@@ -1,7 +1,7 @@
 namespace RRBot.Extensions;
 public static class FileInfoExt
 {
-    public static string GetFullPath(this FileInfo fileInfo)
+    public static string? GetFullPath(this FileInfo fileInfo)
     {
         if (File.Exists(fileInfo.Name))
             return Path.GetFullPath(fileInfo.Name);
@@ -13,9 +13,10 @@ public static class FileInfoExt
                 return Path.GetFullPath(filePath);
         }
 
-        string environmentVariable = Environment.GetEnvironmentVariable("PATH");
-        if (environmentVariable is null) return null;
-        foreach (string path in environmentVariable.Split(Path.PathSeparator))
+        string envpath = Environment.GetEnvironmentVariable("PATH")
+            ?? throw new Exception("PATH does not exist? How is this possible?");
+
+        foreach (string path in envpath.Split(Path.PathSeparator))
         {
             string fullPath = Path.Combine(path, fileInfo.Name);
             if (File.Exists(fullPath))

@@ -2,7 +2,7 @@
 [Summary("Jam out with the hombres!")]
 public class Music : ModuleBase<SocketCommandContext>
 {
-    public AudioSystem AudioSystem { get; set; }
+    public AudioSystem AudioSystem { get; set; } = null!;
 
     [Command("dequeue", RunMode = RunMode.Async)]
     [Summary("Dequeue all tracks with a specific name.")]

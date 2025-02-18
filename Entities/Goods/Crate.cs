@@ -1,13 +1,13 @@
 namespace RRBot.Entities.Goods;
-public class Crate(string name, decimal price, int tier, int consumableCount = 0, int toolCount = 0, decimal cash = 0)
-    : Item(name, price)
+public class Crate(
+    string name, decimal price, int tier, int consumableCount = 0, int toolCount = 0, decimal cash = 0) : Item
 {
-    public decimal Cash { get; } = cash;
-    public int ConsumableCount { get; } = consumableCount;
-    private int Tier { get; } = tier;
-    public int ToolCount { get; } = toolCount;
-    public override string Name { get; protected init; }
-    public override decimal Price { get; protected init; }
+    public decimal Cash => cash;
+    public int ConsumableCount => consumableCount;
+    private int Tier => tier;
+    public int ToolCount => toolCount;
+    public override string Name => name;
+    public override decimal Price => price;
 
     public List<Item> Open(DbUser user)
     {
@@ -18,7 +18,8 @@ public class Crate(string name, decimal price, int tier, int consumableCount = 0
             int ammoRoll = RandomUtil.Next(Tier + 1);
             if (ammoRoll > 0)
             {
-                Ammo randomAmmo = RandomUtil.GetRandomElement(Constants.Ammo.Where(a => a.CrateMultiplier * ammoRoll >= 1));
+                Ammo randomAmmo = RandomUtil.GetRandomElement(
+                    Constants.Ammo.Where(a => a.CrateMultiplier * ammoRoll >= 1));
                 for (int i = 0; i < randomAmmo.CrateMultiplier * ammoRoll; i++)
                     items.Add(randomAmmo);
             }
@@ -27,9 +28,8 @@ public class Crate(string name, decimal price, int tier, int consumableCount = 0
         for (int i = 0; i < ConsumableCount; i++)
             items.Add(RandomUtil.GetRandomElement(Constants.Consumables));
 
-        Tool[] availableTools = Constants.Tools
-            .Where(t => Tier == 4 ? !items.Contains(t) : !items.Contains(t) && !t.Name.StartsWith("Netherite"))
-            .ToArray();
+        Tool[] availableTools = [..Constants.Tools.Where(
+            t => Tier == 4 ? !items.Contains(t) : !items.Contains(t) &&!t.Name.StartsWith("Netherite"))];
         for (int i = 0; i < ToolCount; i++)
             items.Add(RandomUtil.GetRandomElement(availableTools));
 
@@ -37,9 +37,8 @@ public class Crate(string name, decimal price, int tier, int consumableCount = 0
         for (int i = 0; i < weaponRolls; i++)
         {
             int weaponDropRoll = RandomUtil.Next(1, 101);
-            Weapon[] availableWeapons = Constants.Weapons
-                .Where(w => w.DropChance > weaponDropRoll && w.InsideCrates.Contains(Name))
-                .ToArray();
+            Weapon[] availableWeapons = [..Constants.Weapons.Where(
+                w => w.DropChance > weaponDropRoll && w.InsideCrates.Contains(Name))];
 
             if (availableWeapons.Length > 0)
             {

@@ -6,7 +6,7 @@ public static class ExceptionHandler
         if (ex.DiscordCode != DiscordErrorCode.InsufficientPermissions)
             return;
 
-        List<GuildPermissions> rolePerms = context.Guild.CurrentUser.Roles.Select(r => r.Permissions).ToList();
+        List<GuildPermissions> rolePerms = [..context.Guild.CurrentUser.Roles.Select(r => r.Permissions)];
         ChannelPermissions channelPerms = context.Guild.CurrentUser.GetPermissions(context.Channel as IGuildChannel);
 
         List<string> missingPerms = [];

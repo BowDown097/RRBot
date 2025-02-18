@@ -2,13 +2,13 @@
 [Summary("The name really explains it all. Fun fact, you used one of the commands under this module to view info about this module.")]
 public class General : ModuleBase<SocketCommandContext>
 {
-    public CommandService Commands { get; set; }
+    public CommandService Commands { get; set; } = null!;
 
     [Alias("ach")]
     [Command("achievements")]
     [Summary("View your own or someone else's achievements.")]
     [Remarks("$achievements toes69ing")]
-    public async Task Achievements([Remainder] IGuildUser user = null)
+    public async Task Achievements([Remainder] IGuildUser? user = null)
     {
         DbUser dbUser = await MongoManager.FetchUserAsync(user?.Id ?? Context.User.Id, Context.Guild.Id);
         StringBuilder description = new();
@@ -96,8 +96,9 @@ public class General : ModuleBase<SocketCommandContext>
     [Remarks("$module administration")]
     public async Task<RuntimeResult> Module(string module)
     {
-        ModuleInfo moduleInfo = Commands.Modules.FirstOrDefault(m => m.Name.Equals(module, StringComparison.OrdinalIgnoreCase));
-        if (moduleInfo == default)
+        ModuleInfo? moduleInfo = Commands.Modules.FirstOrDefault(
+            m => m.Name.Equals(module, StringComparison.OrdinalIgnoreCase));
+        if (moduleInfo is null)
             return CommandResult.FromError("You have specified a nonexistent module!");
 
         EmbedBuilder moduleEmbed = new EmbedBuilder()
@@ -164,7 +165,7 @@ public class General : ModuleBase<SocketCommandContext>
     [Command("stats")]
     [Summary("View various statistics about your own, or another user's, bot usage.")]
     [Remarks("$stats Ross")]
-    public async Task<RuntimeResult> Stats([Remainder] IGuildUser user = null)
+    public async Task<RuntimeResult> Stats([Remainder] IGuildUser? user = null)
     {
         if (user?.IsBot == true)
             return CommandResult.FromError("Nope.");
@@ -189,10 +190,10 @@ public class General : ModuleBase<SocketCommandContext>
     [Command("userinfo")]
     [Summary("View info about yourself or another user.")]
     [Remarks("$userinfo Moth")]
-    public async Task UserInfo([Remainder] SocketGuildUser user = null)
+    public async Task UserInfo([Remainder] SocketGuildUser? user = null)
     {
-        user ??= Context.User as SocketGuildUser;
-        IEnumerable<string> perms = user.GuildPermissions.ToList().Select(p => Enum.GetName(p).SplitPascalCase());
+        user ??= (SocketGuildUser)Context.User;
+        IEnumerable<string?> perms = user.GuildPermissions.ToList().Select(p => Enum.GetName(p)?.SplitPascalCase());
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithAuthor(user)

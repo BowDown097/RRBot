@@ -2,15 +2,15 @@ namespace RRBot.Database.Entities;
 
 [BsonCollection("pots")]
 [BsonIgnoreExtraElements]
-public class DbPot : DbObject
+public class DbPot(ulong guildId) : DbObject
 {
     public override ObjectId Id { get; set; }
     
-    public ulong GuildId { get; init; }
+    public ulong GuildId { get; init; } = guildId;
 
     public long EndTime { get; set; } = -1;
     [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfArrays)]
-    public Dictionary<ulong, decimal> Members { get; set; } = new();
+    public Dictionary<ulong, decimal> Members { get; set; } = [];
     public decimal Value { get; set; }
 
     public ulong DrawMember()

@@ -2,7 +2,7 @@ namespace RRBot.Modules;
 [Summary("All prestige-related stuffs.")]
 public class Prestige : ModuleBase<SocketCommandContext>
 {
-    public InteractiveService Interactive { get; set; }
+    public InteractiveService Interactive { get; set; } = null!;
 
     [Command("prestige", RunMode = RunMode.Async)]
     [Summary("Prestige!\n\nUpon prestige, you will **GET**:\n- +20% cash multiplier\n- +50% rank cost multiplier\n- A shiny, cool new badge on $prestigeinfo\n\nand you will **LOSE**:\n- All money, including in crypto investments\n- All cooldowns\n- All items")]
@@ -24,11 +24,11 @@ public class Prestige : ModuleBase<SocketCommandContext>
 
         await Context.User.NotifyAsync(Context.Channel,
             "Are you SURE you want to prestige? If you don't know already,\nyou will **GET**:\n- +20% cash multiplier\n- +50% rank cost multiplier\n- A shiny, cool new badge on $prestigeinfo\n\nand you will **LOSE**:\n- All money, including in crypto investments\n- All cooldowns\n- All items\n**Respond with \"YES\" if you are sure that you want to prestige. You have 20 seconds.**");
-        InteractiveResult<SocketMessage> iResult = await Interactive.NextMessageAsync(
+        InteractiveResult<SocketMessage?> iResult = await Interactive.NextMessageAsync(
             x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
             timeout: TimeSpan.FromSeconds(20)
         );
-        if (!iResult.IsSuccess || !iResult.Value.Content.Equals("yes", StringComparison.OrdinalIgnoreCase))
+        if (!iResult.IsSuccess || iResult.Value?.Content.Equals("yes", StringComparison.OrdinalIgnoreCase) == false)
             return CommandResult.FromError("Prestige canceled.");
 
         user.Btc = user.Eth = user.Ltc = user.Xrp = 0;
@@ -55,7 +55,7 @@ public class Prestige : ModuleBase<SocketCommandContext>
             property.SetValue(user, 0);
 
         await user.SetCashWithoutAdjustment(Context.User, 0);
-        await user.SetCooldown("PrestigeCooldown", Constants.PrestigeCooldown, Context.Guild, Context.User);
+        await user.SetCooldown("PrestigeCooldown", Constants.PrestigeCooldown, Context.User);
         await Context.User.NotifyAsync(Context.Channel,
             $"Congratulations, homie! You're now Prestige {user.Prestige}. Check $prestigeinfo for your new prestige perks. Hope you said your goodbyes to all of your stuff, cause it's gone!");
         await user.UnlockAchievement("Prestiged!", Context.User, Context.Channel);

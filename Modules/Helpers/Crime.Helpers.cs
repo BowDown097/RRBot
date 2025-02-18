@@ -41,7 +41,7 @@ public partial class Crime
             }
         }
 
-        await user.SetCooldown(cdKey, duration, Context.Guild, Context.User);
+        await user.SetCooldown(cdKey, duration, Context.User);
         await MongoManager.UpdateObjectAsync(user);
         return CommandResult.FromSuccess();
     }

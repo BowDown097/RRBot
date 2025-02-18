@@ -1,7 +1,7 @@
 ﻿namespace RRBot.Systems;
 public static class ItemSystem
 {
-    public static Item GetItem(string name)
+    public static Item? GetItem(string name)
     {
         Item[] allItems = Constants.Crates.Cast<Item>()
             .Concat(Constants.Ammo)
@@ -109,6 +109,6 @@ public static class ItemSystem
     public static string GetBestTool(IEnumerable<string> tools, string type)
     {
         IEnumerable<string> toolsOfType = tools.Where(tool => tool.EndsWith(type));
-        return toolsOfType.OrderByDescending(tool => GetItem(tool).Price).First();
+        return toolsOfType.OrderByDescending(tool => GetItem(tool)!.Price).First();
     }
 }

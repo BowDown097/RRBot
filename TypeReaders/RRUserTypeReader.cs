@@ -1,8 +1,8 @@
 namespace RRBot.TypeReaders;
 /// <summary>
-///     A UserTypeReader, but StartsWith is used instead of Equals for names, and returns IGuildUsers
+///     A UserTypeReader, but StartsWith is used instead of Equals for names, and supports grabbing from REST
 /// </summary>
-public class RrGuildUserTypeReader : TypeReader
+public class RrUserTypeReader : TypeReader
 {
     /// <inheritdoc />
     public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
@@ -16,21 +16,11 @@ public class RrGuildUserTypeReader : TypeReader
 
         //By Mention (1.0)
         if (MentionUtils.TryParseUser(input, out ulong id))
-        {
-            if (context.Guild is not null)
-                AddResult(results, await context.Guild.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false), 1.00f);
-            else
-                AddResult(results, await context.Channel.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false) as IGuildUser, 1.00f);
-        }
+            await HandleUserId(results, id, context);
 
         //By Id (0.9)
         if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id))
-        {
-            if (context.Guild is not null)
-                AddResult(results, await context.Guild.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false), 0.90f);
-            else
-                AddResult(results, await context.Channel.GetUserAsync(id, CacheMode.CacheOnly).ConfigureAwait(false) as IGuildUser, 0.90f);
-        }
+            await HandleUserId(results, id, context);
 
         //By Global (Display) Name (0.7-0.8)
         {
@@ -76,9 +66,24 @@ public class RrGuildUserTypeReader : TypeReader
         };
     }
 
-    private static void AddResult(Dictionary<ulong, TypeReaderValue> results, IGuildUser? user, float score)
+    private static void AddResult(Dictionary<ulong, TypeReaderValue> results, IUser? user, float score)
     {
         if (user is not null && !results.ContainsKey(user.Id))
             results.Add(user.Id, new TypeReaderValue(user, score));
+    }
+
+    private static async Task HandleUserId(
+        Dictionary<ulong, TypeReaderValue> results, ulong userId, ICommandContext context)
+    {
+        if (results.ContainsKey(userId))
+            return;
+
+        IUser? user;
+        if (context.Guild is not null && (user = await context.Guild.GetUserAsync(userId, CacheMode.CacheOnly).ConfigureAwait(false)) is not null)
+            results.Add(userId, new TypeReaderValue(user, 1.00f));
+        else if ((user = await context.Channel.GetUserAsync(userId, CacheMode.CacheOnly).ConfigureAwait(false)) is not null)
+            results.Add(userId, new TypeReaderValue(user, 1.00f));
+        else if ((user = await context.Client.GetUserAsync(userId).ConfigureAwait(false)) is not null)
+            results.Add(userId, new TypeReaderValue(user, 1.00f));
     }
 }

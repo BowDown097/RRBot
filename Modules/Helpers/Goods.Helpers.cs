@@ -1,7 +1,10 @@
 namespace RRBot.Modules;
 public partial class Goods
 {
-    private static async Task GenericUse(Consumable con, DbUser user, SocketCommandContext context, string successMsg, string loseMsg, string cdKey, long cdDuration, decimal divMin = 2, decimal divMax = 5)
+    private static async Task GenericUse(
+        Consumable con, DbUser user, SocketCommandContext context,
+        string successMsg, string loseMsg, string cdKey, long cdDuration,
+        decimal divMin = 2, decimal divMax = 5)
     {
         if (RandomUtil.Next(5) == 1)
         {

@@ -56,7 +56,7 @@ public partial class Tasks : ModuleBase<SocketCommandContext>
         });
 
         await user.SetCash(Context.User, totalCash, Context.Channel, $"You caught {numCaught} {fish.Key} with your rod and earned **{cashGained:C2}**.\nBalance: {totalCash:C2}");
-        await user.SetCooldown("FishCooldown", Constants.FishCooldown, Context.Guild, Context.User);
+        await user.SetCooldown("FishCooldown", Constants.FishCooldown, Context.User);
         await MongoManager.UpdateObjectAsync(user);
     }
 
@@ -74,7 +74,7 @@ public partial class Tasks : ModuleBase<SocketCommandContext>
     {
         DbUser user = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
         string toolName = ItemSystem.GetBestTool(user.Tools, "Pickaxe");
-        Tool tool = ItemSystem.GetItem(toolName) as Tool;
+        Tool tool = (Tool)ItemSystem.GetItem(toolName)!;
 
         int numMined = RandomUtil.Next(32, 65);
         if (user.Perks.ContainsKey("Enchanter"))
@@ -109,7 +109,7 @@ public partial class Tasks : ModuleBase<SocketCommandContext>
         });
 
         await user.SetCash(Context.User, totalCash, Context.Channel, response);
-        await user.SetCooldown("MineCooldown", Constants.MineCooldown, Context.Guild, Context.User);
+        await user.SetCooldown("MineCooldown", Constants.MineCooldown, Context.User);
         await MongoManager.UpdateObjectAsync(user);
     }
 }

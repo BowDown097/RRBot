@@ -2,15 +2,15 @@ namespace RRBot.Database.Entities;
 
 [BsonCollection("users")]
 [BsonIgnoreExtraElements]
-public class DbUser : DbObject
+public class DbUser(ulong guildId, ulong userId) : DbObject
 {
     public override ObjectId Id { get; set; }
     
-    public ulong GuildId { get; init; }
-    public ulong UserId { get; init; }
+    public ulong GuildId { get; init; } = guildId;
+    public ulong UserId { get; init; } = userId;
 
-    public Dictionary<string, string> Achievements { get; set; } = new();
-    public Dictionary<string, int> Ammo { get; set; } = new();
+    public Dictionary<string, string> Achievements { get; set; } = [];
+    public Dictionary<string, int> Ammo { get; set; } = [];
     public long BlackHatTime { get; set; }
     public decimal Btc { get; set; }
     public long BullyCooldown { get; set; }
@@ -18,8 +18,8 @@ public class DbUser : DbObject
     public long ChopCooldown { get; set; }
     public long CocaineRecoveryTime { get; set; }
     public long CocaineTime { get; set; }
-    public Dictionary<string, int> Collectibles { get; set; } = new();
-    public Dictionary<string, int> Consumables { get; set;  } = new();
+    public Dictionary<string, int> Collectibles { get; set; } = [];
+    public Dictionary<string, int> Consumables { get; set;  } = [];
     public List<string> Crates { get; set; } = [];
     public long DailyCooldown { get; set; }
     public long DealCooldown { get; set; }
@@ -29,7 +29,7 @@ public class DbUser : DbObject
     public long FarmCooldown { get; set; }
     public long FishCooldown { get; set; }
     public decimal GamblingMultiplier { get; private set; } = 1;
-    public string Gang { get; set; }
+    public string? Gang { get; set; }
     public long HackCooldown { get; set; }
     public bool HasReachedAMilli { get; set; }
     public int Health { get; set; } = 100;
@@ -39,8 +39,8 @@ public class DbUser : DbObject
     public long MineCooldown { get; set; }
     public long PacifistCooldown { get; set; }
     public List<string> PendingGangInvites { get; set; } = [];
-    public Dictionary<string, long> Perks { get; set; } = new();
-    public string PreferredBibleTranslation { get; set; }
+    public Dictionary<string, long> Perks { get; set; } = [];
+    public string PreferredBibleTranslation { get; set; } = "";
     public int Prestige { get; set; }
     public long PrestigeCooldown { get; set; }
     public long RapeCooldown { get; set; }
@@ -48,7 +48,7 @@ public class DbUser : DbObject
     public long RobCooldown { get; set; }
     public long ScavengeCooldown { get; set; }
     public long ShootCooldown { get; set; }
-    public Dictionary<string, string> Stats { get; set; } = new();
+    public Dictionary<string, string> Stats { get; set; } = [];
     public long SlaveryCooldown { get; set; }
     public long TimeTillCash { get; set; }
     public List<string> Tools { get; set; } = [];
@@ -69,17 +69,19 @@ public class DbUser : DbObject
     {
         get
         {
-            PropertyInfo property = typeof(DbUser).GetProperty(name);
-            if (property?.CanRead == false)
-                throw new ArgumentException("Property does not exist");
-            return property?.GetValue(this, null);
+            PropertyInfo property = typeof(DbUser).GetProperty(name) ??
+                throw new ArgumentException($"Property '{name}' does not exist");
+            if (!property.CanRead)
+                throw new ArgumentException($"Property '{name}' is unreadable");
+            return property.GetValue(this, null)!;
         }
         set
         {
-            PropertyInfo property = typeof(DbUser).GetProperty(name);
-            if (property?.CanWrite == false)
-                throw new ArgumentException("Property does not exist");
-            property?.SetValue(this, value);
+            PropertyInfo property = typeof(DbUser).GetProperty(name) ??
+                throw new ArgumentException($"Property '{name}' does not exist");
+            if (!property.CanWrite)
+                throw new ArgumentException($"Property '{name}' is unwriteable");
+            property.SetValue(this, value);
         }
     }
 
@@ -91,7 +93,7 @@ public class DbUser : DbObject
         culture.NumberFormat.CurrencyNegativePattern = 2;
         foreach (KeyValuePair<string, string> kvp in statsToAddTo)
         {
-            if (Stats.TryGetValue(kvp.Key, out string value))
+            if (Stats.TryGetValue(kvp.Key, out string? value) && value is not null)
             {
                 if (kvp.Value[0] == '$')
                 {
@@ -113,7 +115,9 @@ public class DbUser : DbObject
         }
     }
 
-    public async Task SetCash(IUser user, decimal amount, IMessageChannel channel = null, string message = "", bool showPrestigeMessage = true)
+    public async Task SetCash(
+        IGuildUser user, decimal amount, IMessageChannel? channel = null,
+        string message = "", bool showPrestigeMessage = true)
     {
         if (user.IsBot)
             return;
@@ -134,43 +138,58 @@ public class DbUser : DbObject
         await SetCashWithoutAdjustment(user, Cash + difference, channel, message);
     }
 
-    public async Task SetCashWithoutAdjustment(IUser user, decimal amount, IMessageChannel channel = null, string message = "")
+    public async Task SetCash(
+        IUser user, decimal amount, IMessageChannel? channel = null,
+        string message = "", bool showPrestigeMessage = true)
     {
-        IGuildUser guildUser = user as IGuildUser;
+        if (user is IGuildUser guildUser)
+            await SetCash(guildUser, amount, channel, message, showPrestigeMessage);
+    }
+
+    public async Task SetCashWithoutAdjustment(
+        IGuildUser user, decimal amount, IMessageChannel? channel = null, string message = "")
+    {
         Cash = amount;
         
         if (channel is not null)
             await user.NotifyAsync(channel, message);
 
-        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(guildUser.GuildId);
+        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(user.GuildId);
         foreach (KeyValuePair<int, decimal> kvp in ranks.Costs)
         {
             ulong roleId = ranks.Ids[kvp.Key];
-            if (guildUser.Guild.Roles.All(r => r.Id != roleId))
+            if (user.Guild.Roles.All(r => r.Id != roleId))
                 return;
             
             decimal neededCash = kvp.Value * (1 + 0.5m * Prestige);
 
             try
             {
-                if (Cash >= neededCash && !guildUser.RoleIds.Contains(roleId))
-                    await guildUser.AddRoleAsync(roleId);
-                else if (Cash <= neededCash && guildUser.RoleIds.Contains(roleId))
-                    await guildUser.RemoveRoleAsync(roleId);
+                if (Cash >= neededCash && !user.RoleIds.Contains(roleId))
+                    await user.AddRoleAsync(roleId);
+                else if (Cash <= neededCash && user.RoleIds.Contains(roleId))
+                    await user.RemoveRoleAsync(roleId);
             }
             catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.InsufficientPermissions) {}
         }
     }
 
-    public async Task SetCooldown(string name, long secs, IGuild guild, IUser user)
+    public async Task SetCashWithoutAdjustment(
+        IUser user, decimal amount, IMessageChannel? channel = null, string message = "")
+    {
+        if (user is IGuildUser guildUser)
+            await SetCashWithoutAdjustment(guildUser, amount, channel, message);
+    }
+
+    public async Task SetCooldown(string name, long secs, IGuildUser user)
     {
         // speed demon cooldown reducer
         if (Perks.ContainsKey("Speed Demon"))
             secs = (long)(secs * 0.85);
         // 4th rank cooldown reducer
-        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(guild.Id);
+        DbConfigRanks ranks = await MongoManager.FetchConfigAsync<DbConfigRanks>(user.GuildId);
         ulong fourth = ranks.Ids.FirstOrDefault(kvp => kvp.Key == 4).Value;
-        if (user.GetRoleIds().Contains(fourth))
+        if (user.RoleIds.Contains(fourth))
             secs = (long)(secs * 0.8);
         // cocaine cooldown reducer
         secs = (long)(secs * (1 - 0.10 * UsedConsumables["Cocaine"]));
@@ -178,13 +197,22 @@ public class DbUser : DbObject
         this[name] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(secs);
     }
 
-    public async Task UnlockAchievement(string name, IUser user, IMessageChannel channel)
+    public async Task SetCooldown(string name, long secs, IUser user)
+    {
+        if (user is IGuildUser guildUser)
+            await SetCooldown(name, secs, guildUser);
+    }
+
+    public async Task UnlockAchievement(string name, IGuildUser user, IMessageChannel channel)
     {
         if (Achievements.Any(kvp => kvp.Key.Equals(name, StringComparison.OrdinalIgnoreCase)))
             return;
 
-        Achievement ach = Array.Find(Constants.DefaultAchievements, ach => ach.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        Achievement ach = Array.Find(
+            Constants.DefaultAchievements, ach => ach.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            ?? throw new ArgumentException($"Tried to fetch non-existent achievement '{name}'");
         Achievements.Add(ach.Name, ach.Description);
+
         string description = $"GG {user}, you unlocked an achievement.\n**{ach.Name}**: {ach.Description}";
         if (ach.Reward > 0)
         {
@@ -203,5 +231,11 @@ public class DbUser : DbObject
             GamblingMultiplier = 1.1m;
             await user.NotifyAsync(channel, "Congratulations! You've acquired every gambling achievement. Enjoy this **1.1x gambling multiplier**!");
         }
+    }
+
+    public async Task UnlockAchievement(string name, IUser user, IMessageChannel channel)
+    {
+        if (user is IGuildUser guildUser)
+            await UnlockAchievement(name, guildUser, channel);
     }
 }

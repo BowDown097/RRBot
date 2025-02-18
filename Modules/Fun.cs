@@ -26,7 +26,7 @@ public partial class Fun : ModuleBase<SocketCommandContext>
     {
         using HttpClient client = new();
         string response = await client.GetStringAsync($"https://api.pearson.com/v2/dictionaries/ldoce5/entries?headword={term}");
-        DefinitionResponse def = JsonConvert.DeserializeObject<DefinitionResponse>(response);
+        DefinitionResponse? def = JsonConvert.DeserializeObject<DefinitionResponse>(response);
         if (def is null || def.Count == 0)
             return CommandResult.FromError("Couldn't find anything for that term, chief.");
 
@@ -96,9 +96,9 @@ public partial class Fun : ModuleBase<SocketCommandContext>
     [Command("gay")]
     [Summary("See how gay you or another user is.")]
     [Remarks("$gay luner")]
-    public async Task Gay([Remainder] IGuildUser user = null)
+    public async Task Gay([Remainder] IGuildUser? user = null)
     {
-        user ??= Context.User as IGuildUser;
+        user ??= (IGuildUser)Context.User;
         int gay = !user.IsBot ? RandomUtil.Next(1, 101) : 0;
         string title = gay switch
         {
@@ -126,7 +126,9 @@ public partial class Fun : ModuleBase<SocketCommandContext>
 
         try
         {
-            string words = JObject.Parse(response)["words"].ToString();
+            string? words = JObject.Parse(response)["words"]?.ToString();
+            if (words is null)
+                return CommandResult.FromError("Couldn't get God's word. Is the API dead?");
             if (words.Length > 2000)
                 return CommandResult.FromError("All these words make up more than 2000 characters, so I can't send them!");
             await ReplyAsync(words, allowedMentions: AllowedMentions.None);
@@ -182,9 +184,9 @@ public partial class Fun : ModuleBase<SocketCommandContext>
     [Command("penis")]
     [Summary("See how big a user's penis is, or your own.")]
     [Remarks("$penis Arctic Hawk")]
-    public async Task Penis([Remainder] IGuildUser user = null)
+    public async Task Penis([Remainder] IGuildUser? user = null)
     {
-        user ??= Context.User as IGuildUser;
+        user ??= (IGuildUser)Context.User;
         int equals = !user.IsBot ? RandomUtil.Next(1, 16) : 20;
         string title = equals switch
         {
@@ -235,7 +237,7 @@ public partial class Fun : ModuleBase<SocketCommandContext>
 
         try
         {
-            string quote = "\"" + JObject.Parse(response)["quote"] + "\"";
+            string quote = "\"" + JObject.Parse(response)["quote"]?.ToString() + "\"";
             if (quote.Length > 2000)
                 return CommandResult.FromError("This quote is greater than 2000 characters, so I can't send it. Sorry.");
             await ReplyAsync(quote, allowedMentions: AllowedMentions.None);
@@ -250,14 +252,18 @@ public partial class Fun : ModuleBase<SocketCommandContext>
 
     [Command("trivia")]
     [Summary("Generate a random trivia question.")]
-    public async Task Trivia()
+    public async Task<CommandResult> Trivia()
     {
         // get all the stuff we need
         using HttpClient client = new();
         string response = await client.GetStringAsync("https://opentdb.com/api.php?amount=1");
-        TriviaQuestion trivia = JsonConvert.DeserializeObject<Trivia>(response).Results[0];
+
+        TriviaQuestion? trivia = JsonConvert.DeserializeObject<Trivia>(response)?.Results?[0];
+        if (trivia is null)
+            return CommandResult.FromError("Couldn't get trivia.");
+
         trivia.DecodeMembers();
-        string[] answers = trivia.IncorrectAnswers.Append(trivia.CorrectAnswer).ToArray();
+        string[] answers = [..trivia.IncorrectAnswers, trivia.CorrectAnswer];
 
         // set up and randomize answers array
         for (int i = 0; i < answers.Length - 1; i++)
@@ -279,7 +285,9 @@ public partial class Fun : ModuleBase<SocketCommandContext>
             .WithColor(Color.Red)
             .WithTitle("Trivia!")
             .WithDescription(description.ToString());
+
         await ReplyAsync(embed: embed.Build(), components: components.Build());
+        return CommandResult.FromSuccess();
     }
     
     [Alias("bible")]
@@ -297,14 +305,15 @@ public partial class Fun : ModuleBase<SocketCommandContext>
             return CommandResult.FromError("Invalid verse input! Here's an example to help you out: ``John 3:16-19``");
 
         JObject responseObj = JObject.Parse(response);
-        string reference = responseObj["reference"].ToString();
-        string translationName = responseObj["translation_name"].ToString();
-        JArray verses = responseObj["verses"] as JArray;
+        string? reference = responseObj["reference"]?.ToString();
+        string? translationName = responseObj["translation_name"]?.ToString();
+        if (reference is null || translationName is null || responseObj["verses"] is not JArray verses || verses.Count == 0)
+            return CommandResult.FromError("Failed to get bible verse. Has the API changed, or is it dead?");
 
         StringBuilder description = new();
-        foreach (JToken verseObj in verses)
+        foreach (JToken? verseObj in verses)
         {
-            string text = verseObj["text"].ToString().Trim().ReplaceLineEndings("") + " ";
+            string text = verseObj["text"]?.ToString().Trim().ReplaceLineEndings("") + " ";
             int verseNum = verseObj["verse"]?.Value<int>() ?? 0;
             if (verses.Count > 1)
                 text = $"**[{verseNum}]** " + text;

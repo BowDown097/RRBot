@@ -10,7 +10,7 @@ public partial class Gambling : ModuleBase<SocketCommandContext>
         new Emoji("\uD83C\uDF48"), new Emoji("\uD83C\uDF4B")
     ];
 
-    public InteractiveService Interactive { get; set; }
+    public InteractiveService Interactive { get; set; } = null!;
 
     [Command("55x2")]
     [Summary("Roll 55 or higher on a 100 sided die, get 2x what you put in.")]
@@ -67,7 +67,7 @@ public partial class Gambling : ModuleBase<SocketCommandContext>
                               """);
         await ReplyAsync(embed: betEmbed.Build());
 
-        InteractiveResult<SocketMessage> betResult = await Interactive.NextMessageAsync(
+        InteractiveResult<SocketMessage?> betResult = await Interactive.NextMessageAsync(
             x => x.Channel.Id == Context.Channel.Id && x.Author.Id == user.Id
                 && int.TryParse(x.Content.Trim(), out int targetNumber) && targetNumber is >= 1 and <= 100,
             timeout: TimeSpan.FromSeconds(30)
@@ -224,8 +224,7 @@ public partial class Gambling : ModuleBase<SocketCommandContext>
             StringBuilder memberInfo = new();
             foreach (KeyValuePair<ulong, decimal> mem in pot.Members)
             {
-                SocketGuildUser guildUser = Context.Guild.GetUser(mem.Key);
-                memberInfo.AppendLine($"**{guildUser.Sanitize()}**: {mem.Value:C2} ({pot.GetMemberOdds(mem.Key)}%)");
+                memberInfo.AppendLine($"**{await UserExt.SanitizeById(mem.Key, Context)}**: {mem.Value:C2} ({pot.GetMemberOdds(mem.Key)}%)");
             }
 
             embed.RrAddField("Members", memberInfo);

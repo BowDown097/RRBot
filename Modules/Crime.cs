@@ -3,7 +3,7 @@
 [CheckPacifist]
 public partial class Crime : ModuleBase<SocketCommandContext>
 {
-    public InteractiveService Interactive { get; set; }
+    public InteractiveService Interactive { get; set; } = null!;
 
     [Command("bully")]
     [Summary("Change the nickname of any victim you wish!")]
@@ -32,7 +32,7 @@ public partial class Crime : ModuleBase<SocketCommandContext>
         await Context.User.NotifyAsync(Context.Channel, $"You BULLIED **{user.Sanitize()}** to **{StringCleaner.Sanitize(nickname)}**!");
         
         DbUser author = await MongoManager.FetchUserAsync(Context.User.Id, Context.Guild.Id);
-        await author.SetCooldown("BullyCooldown", Constants.BullyCooldown, Context.Guild, Context.User);
+        await author.SetCooldown("BullyCooldown", Constants.BullyCooldown, Context.User);
         await MongoManager.UpdateObjectAsync(author);
 
         return CommandResult.FromSuccess();
@@ -70,7 +70,7 @@ public partial class Crime : ModuleBase<SocketCommandContext>
         if (user.IsBot)
             return CommandResult.FromError("Nope.");
 
-        string abbreviation = Investments.ResolveAbbreviation(crypto);
+        string? abbreviation = Investments.ResolveAbbreviation(crypto);
         if (abbreviation is null)
             return CommandResult.FromError($"**{crypto}** is not a currently accepted currency!");
         
@@ -129,7 +129,7 @@ public partial class Crime : ModuleBase<SocketCommandContext>
             }
         }
 
-        await author.SetCooldown("HackCooldown", Constants.HackCooldown, Context.Guild, Context.User);
+        await author.SetCooldown("HackCooldown", Constants.HackCooldown, Context.User);
         await MongoManager.UpdateObjectAsync(author);
         await MongoManager.UpdateObjectAsync(target);
         return CommandResult.FromSuccess();
@@ -197,7 +197,7 @@ public partial class Crime : ModuleBase<SocketCommandContext>
                 $"You got COUNTER-RAPED by **{user.Sanitize()}**! You just paid **{repairs:C2}** in asshole repairs.");
         }
 
-        await author.SetCooldown("RapeCooldown", Constants.RapeCooldown, Context.Guild, Context.User);
+        await author.SetCooldown("RapeCooldown", Constants.RapeCooldown, Context.User);
         await MongoManager.UpdateObjectAsync(author);
         await MongoManager.UpdateObjectAsync(target);
         return CommandResult.FromSuccess();
@@ -268,7 +268,7 @@ public partial class Crime : ModuleBase<SocketCommandContext>
             }
         }
 
-        await author.SetCooldown("RobCooldown", Constants.RobCooldown, Context.Guild, Context.User);
+        await author.SetCooldown("RobCooldown", Constants.RobCooldown, Context.User);
         await MongoManager.UpdateObjectAsync(author);
         await MongoManager.UpdateObjectAsync(target);
         return CommandResult.FromSuccess();
@@ -301,11 +301,11 @@ public partial class Crime : ModuleBase<SocketCommandContext>
                     await user.UnlockAchievement("Hard Boiled Egg", Context.User, Context.Channel);
                 }
 
-                InteractiveResult<SocketMessage> scrambleResult = await Interactive.NextMessageAsync(
+                InteractiveResult<SocketMessage?> scrambleResult = await Interactive.NextMessageAsync(
                     x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
                     timeout: TimeSpan.FromSeconds(Constants.ScavengeTimeout)
                 );
-                string scrambleContent = scrambleResult.Value?.Content ?? string.Empty;
+                string scrambleContent = scrambleResult.Value?.Content ?? "";
                 await HandleScavenge(scrambleMsg, scrambleResult, user, scrambleContent.Equals(word, StringComparison.OrdinalIgnoreCase),
                     $"**{Context.User.Sanitize()}**, that's right! The answer was **{word}**.",
                     $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{word}**.",
@@ -318,11 +318,11 @@ public partial class Crime : ModuleBase<SocketCommandContext>
                     .WithDescription($"**Translate this Spanish word/phrase to English:**\n{espanol}\n*Type your response in the chat. You have {Constants.ScavengeTimeout} seconds!*");
                 IUserMessage translateMsg = await ReplyAsync(embed: translateEmbed.Build());
 
-                InteractiveResult<SocketMessage> translateResult = await Interactive.NextMessageAsync(
+                InteractiveResult<SocketMessage?> translateResult = await Interactive.NextMessageAsync(
                     x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id,
                     timeout: TimeSpan.FromSeconds(Constants.ScavengeTimeout)
                 );
-                string translateContent = translateResult.Value?.Content ?? string.Empty;
+                string translateContent = translateResult.Value?.Content ?? "";
                 await HandleScavenge(translateMsg, translateResult, user, translateContent.Equals(word, StringComparison.OrdinalIgnoreCase),
                     $"**{Context.User.Sanitize()}**, that's right! The answer was **{word}**.",
                     $"**{Context.User.Sanitize()}**, TIMEOUT! You failed to respond within 15 seconds. Well, the answer was **{word}**.",
@@ -334,7 +334,7 @@ public partial class Crime : ModuleBase<SocketCommandContext>
         if (RandomUtil.Next(50) == 1)
             await ItemSystem.GiveCollectible("Ape NFT", Context.Channel, user);
 
-        await user.SetCooldown("ScavengeCooldown", Constants.ScavengeCooldown, Context.Guild, Context.User);
+        await user.SetCooldown("ScavengeCooldown", Constants.ScavengeCooldown, Context.User);
         await MongoManager.UpdateObjectAsync(user);
     }
 

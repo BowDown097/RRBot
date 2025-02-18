@@ -180,11 +180,11 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
     
     private async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
     {
-        if (string.IsNullOrWhiteSpace(msgAfter.Content))
+        if (string.IsNullOrWhiteSpace(msgAfter.Content) || msgAfter.Author is not SocketGuildUser user)
             return;
         
-        await FilterSystem.DoInviteCheckAsync(msgAfter, msgAfter.Author.GetGuild(), client);
-        await FilterSystem.DoScamCheckAsync(msgAfter, msgAfter.Author.GetGuild());
+        await FilterSystem.DoInviteCheckAsync(msgAfter, user.Guild, client);
+        await FilterSystem.DoScamCheckAsync(msgAfter, user.Guild);
     }
 
     private async Task Client_ShardReady(DiscordSocketClient _)
@@ -195,6 +195,7 @@ internal sealed class DiscordClientHost(DiscordShardedClient client, CommandServ
         commands.AddTypeReader<decimal>(new DecimalTypeReader());
         commands.AddTypeReader<IEmote>(new EmoteTypeReader());
         commands.AddTypeReader<IGuildUser>(new RrGuildUserTypeReader());
+        commands.AddTypeReader<IUser>(new RrUserTypeReader());
         commands.AddTypeReader<List<ulong>>(new ListTypeReader<ulong>());
         commands.AddTypeReader<string>(new SanitizedStringTypeReader());
 

@@ -171,10 +171,12 @@ public partial class Moderation : ModuleBase<SocketCommandContext>
     [Summary("Purge any amount of messages (Note: messages that are two weeks old or older will fail to delete).")]
     [Remarks("$purge 30 1051632557403410512,1051638063333380156 Woob#3770")]
     [RequireUserPermission(GuildPermission.ManageMessages)]
-    public async Task<RuntimeResult> Purge(int count, List<ulong> exclude = null, [Remainder] IGuildUser user = null)
+    public async Task<RuntimeResult> Purge(int count, List<ulong>? exclude = null, [Remainder] IGuildUser? user = null)
     {
         if (count <= 0)
             return CommandResult.FromError("You want me to delete NO messages? Are you dense?");
+        if (Context.Channel is not SocketTextChannel channel)
+            return CommandResult.FromError("This channel can't be purged.");
 
         IEnumerable<IMessage> messagesEnum = await Context.Channel.GetMessagesAsync(count + 1).FlattenAsync();
         messagesEnum = messagesEnum.Where(msg => (DateTimeOffset.UtcNow - msg.Timestamp).TotalDays <= 14);
@@ -183,11 +185,11 @@ public partial class Moderation : ModuleBase<SocketCommandContext>
         if (exclude?.Count > 0)
             messagesEnum = messagesEnum.Where(msg => !exclude.Contains(msg.Id));
         
-        IMessage[] messages = messagesEnum.ToArray();
+        IMessage[] messages = [..messagesEnum];
         if (messages.Length == 0)
             return CommandResult.FromError("There are no messages to delete given your input.");
 
-        await (Context.Channel as SocketTextChannel)?.DeleteMessagesAsync(messages);
+        await channel.DeleteMessagesAsync(messages);
         await LoggingSystem.Custom_MessagesPurged(messages, Context.Guild);
         return CommandResult.FromSuccess();
     }
@@ -212,7 +214,9 @@ public partial class Moderation : ModuleBase<SocketCommandContext>
     [Summary("Let chat talk now.")]
     public async Task<RuntimeResult> Unchill()
     {
-        SocketTextChannel channel = Context.Channel as SocketTextChannel;
+        if (Context.Channel is not SocketTextChannel channel)
+            return CommandResult.FromError("This channel cannot be chilled.");
+
         OverwritePermissions perms = channel.GetPermissionOverwrite(Context.Guild.EveryoneRole) ?? OverwritePermissions.InheritAll;
         if (perms.SendMessages != PermValue.Deny)
             return CommandResult.FromError("This chat is not chilled.");

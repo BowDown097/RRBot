@@ -99,14 +99,14 @@ public class MonitorSystem(BaseSocketClient client)
             await users.ForEachAsync(async user =>
             {
                 foreach (KeyValuePair<string, long> kvp in user.Perks
-                             .Where(kvp => kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist"))
+                    .Where(kvp => kvp.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() && kvp.Key != "Pacifist"))
                 {
                     user.Perks.Remove(kvp.Key);
                     if (kvp.Key != "Multiperk" || user.Perks.Count < 2)
                         continue;
  
                     string lastPerk = user.Perks.Last().Key;
-                    Perk perk = ItemSystem.GetItem(lastPerk) as Perk;
+                    Perk perk = (Perk)ItemSystem.GetItem(lastPerk)!;
 
                     SocketGuild guild = client.GetGuild(user.GuildId);
                     SocketUser socketUser = guild.GetUser(user.UserId);

@@ -24,12 +24,12 @@ public static class AudioServiceExt
         using HttpResponseMessage resMsg = await client.SendAsync(reqMsg, HttpCompletionOption.ResponseHeadersRead);
         string response = await resMsg.Content.ReadAsStringAsync();
 
-        if (!JObjectExt.TryParse(response, out JObject responseObj))
-            return null;
+        if (!JObjectExt.TryParse(response, out JObject? responseObj))
+            return "";
 
-        return responseObj["contents"]?["twoColumnSearchResultsRenderer"]?["primaryContents"]?
+        return responseObj?["contents"]?["twoColumnSearchResultsRenderer"]?["primaryContents"]?
             ["sectionListRenderer"]?["contents"]?[0]?["itemSectionRenderer"]?["contents"]?[0]?
-            ["videoRenderer"]?["videoId"].ToString();
+            ["videoRenderer"]?["videoId"]?.ToString() ?? "";
     }
 
     private static async Task<bool> IsAgeRestrictedAsync(string videoId)
@@ -56,15 +56,17 @@ public static class AudioServiceExt
         using HttpResponseMessage resMsg = await client.SendAsync(reqMsg, HttpCompletionOption.ResponseHeadersRead);
         string response = await resMsg.Content.ReadAsStringAsync();
 
-        return !JObjectExt.TryParse(response, out JObject responseObj) ||
-               responseObj["playabilityStatus"]?["status"].ToString() == "LOGIN_REQUIRED";
+        return !JObjectExt.TryParse(response, out JObject? responseObj) ||
+               responseObj?["playabilityStatus"]?["status"]?.ToString() == "LOGIN_REQUIRED";
     }
 
-    public static async Task<RrTrack> GetYtTrackAsync(this IAudioService service, Uri uri,
+    public static async Task<RrTrack?> GetYtTrackAsync(this IAudioService service, Uri uri,
         SocketGuild guild, IUser requester)
     {
         NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
-        string videoId = query.Get("v") ?? uri.Segments.LastOrDefault();
+        string? videoId = query.Get("v") ?? uri.Segments.LastOrDefault();
+        if (videoId is null)
+            return null;
 
         if (await IsAgeRestrictedAsync(videoId))
         {
@@ -74,7 +76,7 @@ public static class AudioServiceExt
                 : new RrTrack(new LavalinkTrack { Author = "", Identifier = "restricted", Title = "" }, requester);
         }
 
-        RrTrack lavalinkTrack = await service.RrGetTrackAsync(uri.ToString(), requester, TrackSearchMode.YouTube);
+        RrTrack? lavalinkTrack = await service.RrGetTrackAsync(uri.ToString(), requester, TrackSearchMode.YouTube);
         if (lavalinkTrack is not null)
             return lavalinkTrack;
 
@@ -82,21 +84,21 @@ public static class AudioServiceExt
         return await service.YtDlpGetTrackAsync(uri, requester);
     }
 
-    public static async Task<RrTrack> RrGetTrackAsync(this IAudioService service, string query,
-        IUser requester, TrackSearchMode mode, string filename = null)
+    public static async Task<RrTrack?> RrGetTrackAsync(this IAudioService service, string query,
+        IUser requester, TrackSearchMode mode, string? filename = null)
     {
-        LavalinkTrack track = await service.Tracks.LoadTrackAsync(query, mode);
+        LavalinkTrack? track = await service.Tracks.LoadTrackAsync(query, mode);
         if (track is null)
             return null;
 
-        return new RrTrack(track, track.ArtworkUri?.ToString(), track.Author,
+        return new RrTrack(track, track.ArtworkUri?.ToString() ?? "", track.Author,
             HttpUtility.UrlDecode(filename) ?? track.Title, requester);
     }
 
-    public static async Task<RrTrack> SearchYtTrackAsync(this IAudioService service, string query,
+    public static async Task<RrTrack?> SearchYtTrackAsync(this IAudioService service, string query,
         SocketGuild guild, IUser requester)
     {
-        LavalinkTrack lavalinkTrack = await service.Tracks.LoadTrackAsync(query, TrackSearchMode.YouTube);
+        LavalinkTrack? lavalinkTrack = await service.Tracks.LoadTrackAsync(query, TrackSearchMode.YouTube);
         if (lavalinkTrack is not null)
             return new RrTrack(lavalinkTrack, requester);
         
@@ -108,7 +110,7 @@ public static class AudioServiceExt
         return await service.GetYtTrackAsync(new Uri($"https://www.youtube.com/watch?v={videoId}"), guild, requester);
     }
 
-    public static async Task<RrTrack> YtDlpGetTrackAsync(this IAudioService service, Uri uri, IUser requester)
+    public static async Task<RrTrack?> YtDlpGetTrackAsync(this IAudioService service, Uri uri, IUser requester)
     {
         using Process proc = new();
         proc.StartInfo.FileName = new FileInfo("yt-dlp").GetFullPath();
@@ -121,20 +123,20 @@ public static class AudioServiceExt
         string output = await proc.StandardOutput.ReadToEndAsync();
         await proc.WaitForExitAsync();
 
-        if (!JObjectExt.TryParse(output.Split('\n')[0], out JObject obj) ||
-            !Uri.TryCreate(obj["url"]?.ToString(), UriKind.Absolute, out Uri directUri))
+        if (!JObjectExt.TryParse(output.Split('\n')[0], out JObject? obj) ||
+            !Uri.TryCreate(obj?["url"]?.ToString(), UriKind.Absolute, out Uri? directUri))
         {
             return null;
         }
 
-        LavalinkTrack track = await service.Tracks.LoadTrackAsync(directUri.ToString(), TrackSearchMode.None);
+        LavalinkTrack? track = await service.Tracks.LoadTrackAsync(directUri.ToString(), TrackSearchMode.None);
         if (track is null)
             return null;
 
-        string author = obj.TryGetValue("uploader", out JToken value)
-            ? value.ToString() : obj["channel"]?.ToString();
-        string thumbnail = obj["thumbnail"]?.ToString();
-        string title = obj.TryGetValue("title", out JToken titleToken)
+        string author = obj.TryGetValue("uploader", out JToken? value)
+            ? value.ToString() ?? "" : obj["channel"]?.ToString() ?? "";
+        string thumbnail = obj["thumbnail"]?.ToString() ?? "";
+        string title = obj.TryGetValue("title", out JToken? titleToken)
             ? titleToken.ToString() : Path.GetFileName(directUri.LocalPath);
 
         return new RrTrack(track, thumbnail, author, title, requester);

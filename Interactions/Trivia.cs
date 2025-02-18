@@ -7,7 +7,7 @@ public class Trivia : InteractionModuleBase<SocketInteractionContext<SocketMessa
     public async Task Respond(string num, bool correct)
     {
         Embed embed = Context.Interaction.Message.Embeds.First();
-        string answer = Array.Find(embed.Description.Split('\n'), l => l.StartsWith(num))?[3..];
+        string answer = Array.Find(embed.Description.Split('\n'), l => l.StartsWith(num))?[3..]!;
 
         if (correct)
         {

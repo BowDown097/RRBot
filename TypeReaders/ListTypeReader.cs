@@ -6,7 +6,7 @@ public class ListTypeReader<T> : TypeReader
         try
         {
             string[] split = input.Contains(',') ? input.Split(',', StringSplitOptions.TrimEntries) : [input];
-            List<T> result = split.Select(v => (T)Convert.ChangeType(v, typeof(T))).ToList();
+            List<T> result = [..split.Select(v => (T)Convert.ChangeType(v, typeof(T)))];
             return Task.FromResult(TypeReaderResult.FromSuccess(result));
         }
         catch (Exception ex) when (ex is FormatException or InvalidCastException)

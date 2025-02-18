@@ -45,11 +45,11 @@ public static class LoggingSystem
             .WithDescription("**AutoMod Rule Created**")
             .RrAddField("Name", rule.Name)
             .RrAddField("Enabled", rule.Enabled)
-            .RrAddField("Trigger", Enum.GetName(rule.TriggerType).SplitPascalCase())
+            .RrAddField("Trigger", Enum.GetName(rule.TriggerType)?.SplitPascalCase())
             .RrAddField("Keywords", string.Join(", ", rule.KeywordFilter), false, false)
             .RrAddField("Regex Patterns", string.Join(", ", rule.RegexPatterns.Select(StringCleaner.Sanitize)), false, false)
             .RrAddField("Mention Limit", rule.MentionTotalLimit, false, false)
-            .RrAddField("Presets", string.Join(", ", rule.Presets.Select(p => Enum.GetName(p).SplitPascalCase())), false, false)
+            .RrAddField("Presets", string.Join(", ", rule.Presets.Select(p => Enum.GetName(p)?.SplitPascalCase())), false, false)
             .RrAddField("Whitelist", string.Join(", ", rule.AllowList), false, false)
             .RrAddField("Exempt Channels", string.Join(", ", rule.ExemptChannels.Select(c => c.Mention())), false, false)
             .RrAddField("Exempt Roles", string.Join(", ", rule.ExemptRoles.Select(r => r.Mention)), false, false)
@@ -69,14 +69,14 @@ public static class LoggingSystem
         SocketAutoModRule after)
     {
         SocketAutoModRule before = await beforeCached.GetOrDownloadAsync();
-        string triggerBefore = Enum.GetName(before.TriggerType).SplitPascalCase();
-        string triggerAfter = Enum.GetName(after.TriggerType).SplitPascalCase();
+        string? triggerBefore = Enum.GetName(before.TriggerType)?.SplitPascalCase();
+        string? triggerAfter = Enum.GetName(after.TriggerType)?.SplitPascalCase();
         string keywordsBefore = string.Join(", ", before.KeywordFilter);
         string keywordsAfter = string.Join(", ", after.KeywordFilter);
         string patternsBefore = string.Join(", ", before.RegexPatterns.Select(StringCleaner.Sanitize));
         string patternsAfter = string.Join(", ", after.RegexPatterns.Select(StringCleaner.Sanitize));
-        string presetsBefore = string.Join(", ", before.Presets.Select(p => Enum.GetName(p).SplitPascalCase()));
-        string presetsAfter = string.Join(", ", after.Presets.Select(p => Enum.GetName(p).SplitPascalCase()));
+        string presetsBefore = string.Join(", ", before.Presets.Select(p => Enum.GetName(p)?.SplitPascalCase()));
+        string presetsAfter = string.Join(", ", after.Presets.Select(p => Enum.GetName(p)?.SplitPascalCase()));
         string whitelistBefore = string.Join(", ", before.AllowList);
         string whitelistAfter = string.Join(", ", after.AllowList);
         string exemptChannelsBefore = string.Join(", ", before.ExemptChannels.Select(c => c.Mention()));
@@ -105,7 +105,7 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription($"**Channel Created**\n{channel.Mention()}");
 
-        await WriteToLogs(channel.GetGuild(), embed);
+        await WriteToLogs(((SocketGuildChannel)channel).Guild, embed);
     }
 
     public static async Task Client_ChannelDestroyed(SocketChannel channel)
@@ -113,7 +113,7 @@ public static class LoggingSystem
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription($"**Channel Deleted**\n{channel.Mention()}");
 
-        await WriteToLogs(channel.GetGuild(), embed);
+        await WriteToLogs(((SocketGuildChannel)channel).Guild, embed);
     }
 
     public static async Task Client_ChannelUpdated(SocketChannel before, SocketChannel after)
@@ -131,7 +131,7 @@ public static class LoggingSystem
                 .AddUpdateCompField("Slow Mode Interval", beforeText.SlowModeInterval, afterText.SlowModeInterval);
         }
 
-        await WriteToLogs((before as SocketGuildChannel)?.Guild, embed);
+        await WriteToLogs(((SocketGuildChannel)after).Guild, embed);
     }
 
     public static async Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> userBeforeCached,
@@ -325,7 +325,7 @@ public static class LoggingSystem
                 .RrAddField("Embed Description", msgEmbed.Description.Elide(1000));
         }
 
-        await WriteToLogs(channel.GetGuild(), embed);
+        await WriteToLogs(((IGuildChannel)channel).Guild, embed);
     }
 
     public static async Task Client_MessageUpdated(Cacheable<IMessage, ulong> msgBeforeCached, SocketMessage msgAfter, ISocketMessageChannel channel)
@@ -352,7 +352,7 @@ public static class LoggingSystem
                 .RrAddField("Embed Description", msgEmbed.Description.Elide(1000));
         }
 
-        await WriteToLogs(channel.GetGuild(), embed);
+        await WriteToLogs(((SocketGuildChannel)channel).Guild, embed);
     }
 
     public static async Task Client_RoleCreated(SocketRole role)
@@ -570,20 +570,20 @@ public static class LoggingSystem
         else
             embed.WithTitle("User Voice Status Changed");
 
-        await WriteToLogs(user.GetGuild(), embed);
+        await WriteToLogs(((SocketGuildUser)user).Guild, embed);
     }
 
     public static async Task Custom_MessagesPurged(IEnumerable<IMessage> messages, SocketGuild guild)
     {
         StringBuilder msgLogs = new();
-        List<IMessage> messageList = messages.ToList();
+        List<IMessage> messageList = [..messages];
         foreach (IMessage message in messageList)
             msgLogs.AppendLine($"{message.Author} @ {message.Timestamp}: {message.Content}");
 
         using HttpClient client = new();
         HttpContent content = new StringContent(msgLogs.ToString());
         HttpResponseMessage response = await client.PostAsync("https://hastebin.com/documents", content);
-        string hbKey = JObject.Parse(await response.Content.ReadAsStringAsync())["key"]?.ToString();
+        string? hbKey = JObject.Parse(await response.Content.ReadAsStringAsync())["key"]?.ToString();
 
         EmbedBuilder embed = new EmbedBuilder()
             .WithDescription($"**{messageList.Count - 1} Messages Purged**\nSee them [here](https://hastebin.com/{hbKey})");
